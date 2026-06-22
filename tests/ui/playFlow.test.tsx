@@ -1,26 +1,51 @@
-import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { describe, it, expect, vi } from 'vitest'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { PlayFlow } from '@/components/screens/PlayFlow'
 import { BALANCE } from '@/data/constants'
+
+// Render Framer Motion synchronously without AnimatePresence's exit-deferral.
+// This test verifies the draft→team flow wiring, not the animation. Without
+// the mock, exiting cards linger in the DOM during the popLayout transition,
+// so `getAllByRole('button')[0]` can grab a stale exiting card under parallel
+// test load — making the test flaky. Stripping the animation makes each click
+// land deterministically on the current screen's cards.
+vi.mock('framer-motion', () => {
+  const passthrough = (tag: string) => {
+    const Comp = ({ children, ...props }: Record<string, unknown> & { children?: React.ReactNode }) => {
+      // Drop motion-only props so they don't hit the DOM.
+      const { initial: _i, animate: _a, exit: _e, transition: _t, whileHover: _h, layout: _l, ...rest } = props
+      void _i; void _a; void _e; void _t; void _h; void _l
+      return require('react').createElement(tag, rest, children)
+    }
+    return Comp
+  }
+  return {
+    AnimatePresence: ({ children }: { children?: React.ReactNode }) => children,
+    motion: new Proxy({}, { get: (_t, tag: string) => passthrough(tag) }),
+  }
+})
+
+// Import AFTER the mock is registered.
+const { PlayFlow } = await import('@/components/screens/PlayFlow')
 
 describe('PlayFlow', () => {
   it('starts in draft and reaches the team screen after a full draft', async () => {
     render(<PlayFlow seed="flow-seed" />)
-    // draft phase: progress visible
+    const total = BALANCE.draft.teamSize
+
+    // draft phase: first screen visible
     expect(screen.getByText(/Mago 1 \//i)).toBeInTheDocument()
 
-    // pick the first card teamSize times by clicking the first visible card each round
-    for (let i = 0; i < BALANCE.draft.teamSize; i++) {
+    for (let i = 0; i < total; i++) {
+      // With animations stripped, the only role=button elements are the current
+      // screen's wizard cards. Re-query each round and click the first.
       const cards = screen.getAllByRole('button')
-      // the wizard cards are role=button; click the first card-like button
-      // find a card button (has a tabindex via WizardCard) — click the first one that isn't a nav
-      const card = cards[0]!
-      await userEvent.click(card)
+      await userEvent.click(cards[0]!)
     }
 
-    // team phase
+    // After the final pick the flow transitions to the team screen.
     expect(await screen.findByText(/La tua squadra/i)).toBeInTheDocument()
-    expect(screen.getByText(/Sinergie attive/i)).toBeInTheDocument()
+    const main = screen.getByRole('main')
+    expect(within(main).getByText(/Sinergie attive/i)).toBeInTheDocument()
   })
 })
