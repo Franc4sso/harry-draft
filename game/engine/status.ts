@@ -1,4 +1,4 @@
-import type { ActiveEffect, BattleUnit, LogEntry, Stat, Stats } from '@/types'
+import type { ActionGate, ActiveEffect, BattleUnit, LogEntry, Stat, Stats } from '@/types'
 import { STATUS_BY_ID } from '@/data/statuses'
 
 /** statMod for an active effect: prefer its StatusDef, fall back to legacy inline fields. */
@@ -81,4 +81,32 @@ export function tickStatuses(turn: number, unit: BattleUnit): LogEntry[] {
     unit.cooldowns[id] = Math.max(0, (unit.cooldowns[id] ?? 0) - 1)
   }
   return logs
+}
+
+function preventsOf(e: ActiveEffect): ActionGate[] {
+  if (e.statusId) return STATUS_BY_ID[e.statusId]?.prevents ?? []
+  return e.kind === 'stun' ? ['action'] : []
+}
+
+function gated(unit: BattleUnit, gate: ActionGate): boolean {
+  return unit.statusEffects.some(e => preventsOf(e).includes(gate))
+}
+
+export function canAct(unit: BattleUnit): boolean { return !gated(unit, 'action') }
+export function canCastSpell(unit: BattleUnit): boolean { return canAct(unit) && !gated(unit, 'spell') }
+export function canAttack(unit: BattleUnit): boolean { return canAct(unit) && !gated(unit, 'attack') }
+
+export function absorbDamage(unit: BattleUnit, dmg: number): number {
+  let remaining = dmg
+  const shields = unit.statusEffects
+    .filter(e => e.statusId === 'shield' && (e.absorbLeft ?? 0) > 0)
+    .sort((a, b) => a.remaining - b.remaining || (a.sourceId ?? '').localeCompare(b.sourceId ?? ''))
+  for (const s of shields) {
+    if (remaining <= 0) break
+    const left = s.absorbLeft ?? 0
+    const used = Math.min(left, remaining)
+    s.absorbLeft = left - used
+    remaining -= used
+  }
+  return remaining
 }

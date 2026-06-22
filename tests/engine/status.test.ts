@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { effectiveStats, tickStatuses, applyStatus, applyInlineEffect } from '@/game/engine/status'
+import { effectiveStats, tickStatuses, applyStatus, applyInlineEffect, absorbDamage, canAct, canCastSpell, canAttack } from '@/game/engine/status'
 import type { BattleUnit, DraftedWizard } from '@/types'
 import { SPELL_BY_ID } from '@/data/spells'
 
@@ -55,5 +55,35 @@ describe('status core', () => {
     const u = unit()
     applyInlineEffect(u, { kind: 'debuff', stat: 'def', amount: 20, duration: 2 })
     expect(u.statusEffects[0]).toMatchObject({ kind: 'debuff', stat: 'def', amount: 20, remaining: 2 })
+  })
+})
+
+describe('status guards', () => {
+  it('shield absorbs damage before hp', () => {
+    const u = unit()
+    applyStatus(u, 'shield', { duration: 3 }) // absorb 50
+    const residual = absorbDamage(u, 30)
+    expect(residual).toBe(0)
+    expect(u.statusEffects.find(e => e.statusId === 'shield')?.absorbLeft).toBe(20)
+    const residual2 = absorbDamage(u, 30)
+    expect(residual2).toBe(10) // 30 - 20 remaining
+  })
+  it('stun blocks action, allows nothing extra', () => {
+    const u = unit(); applyStatus(u, 'stun')
+    expect(canAct(u)).toBe(false)
+  })
+  it('legacy inline stun also blocks action', () => {
+    const u = unit({ statusEffects: [{ kind: 'stun', remaining: 1 }] })
+    expect(canAct(u)).toBe(false)
+  })
+  it('silence blocks spells but not action', () => {
+    const u = unit(); applyStatus(u, 'silence')
+    expect(canCastSpell(u)).toBe(false)
+    expect(canAct(u)).toBe(true)
+  })
+  it('disarm blocks attacks but not spells', () => {
+    const u = unit(); applyStatus(u, 'disarm')
+    expect(canAttack(u)).toBe(false)
+    expect(canCastSpell(u)).toBe(true)
   })
 })
