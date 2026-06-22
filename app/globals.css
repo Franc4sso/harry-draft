@@ -1,26 +1,41 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #070a10;
+  --foreground: #e8ecf3;
+  --panel: #0e1320;
+  --house-grifondoro: #ae0001;
+  --house-grifondoro-glow: #ffc500;
+  --house-serpeverde: #1a472a;
+  --house-serpeverde-glow: #aaaaaa;
+  --house-corvonero: #222f5b;
+  --house-corvonero-glow: #946b2d;
+  --house-tassorosso: #ecb939;
+  --house-tassorosso-glow: #372e29;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-panel: var(--panel);
+  --color-house-grifondoro: var(--house-grifondoro);
+  --color-house-serpeverde: var(--house-serpeverde);
+  --color-house-corvonero: var(--house-corvonero);
+  --color-house-tassorosso: var(--house-tassorosso);
+  --font-display: var(--font-display);
+  --font-sans: var(--font-sans);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-body {
-  background: var(--background);
+html, body {
+  background:
+    radial-gradient(1200px 600px at 50% -10%, #131b2e 0%, transparent 60%),
+    var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100%;
+}
+
+.glass {
+  background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255,255,255,0.08);
 }
