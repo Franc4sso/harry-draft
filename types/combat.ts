@@ -1,4 +1,5 @@
 import type { Spell, SpellType, Stat } from './spell'
+import type { StatusKind } from './status'
 import type { Stats, Wizard } from './wizard'
 
 export interface DraftedWizard {
@@ -9,10 +10,14 @@ export interface DraftedWizard {
 }
 
 export interface ActiveEffect {
-  kind: 'buff' | 'debuff' | 'dot' | 'stun'
+  kind: StatusKind
   stat?: Stat
   amount?: number
   remaining: number
+  statusId?: string
+  stacks?: number
+  sourceId?: string
+  absorbLeft?: number
 }
 
 export type Side = 'left' | 'right'
@@ -31,8 +36,12 @@ export type LogFlag = 'crit' | 'dodge' | 'kill' | 'heal' | 'block' | 'stun' | 'd
 export interface LogEntry {
   turn: number
   actorId: string
+  /** Side of the acting unit. Optional for backwards-compat; populated by the engine. */
+  actorSide?: Side
   action: string
   targetId?: string
+  /** Side of the targeted unit. Optional for backwards-compat; populated by the engine. */
+  targetSide?: Side
   type: SpellType | 'system'
   value?: number
   flags: LogFlag[]

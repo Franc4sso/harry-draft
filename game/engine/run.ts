@@ -1,4 +1,4 @@
-import type { BattleResult, DraftedWizard, RunState } from '@/types'
+import type { ActiveSynergy, BattleResult, DraftedWizard, RunState } from '@/types'
 import { createRng } from './rng'
 import { detectSynergies } from './synergy'
 import { simulateBattle } from './combat/simulate'
@@ -17,7 +17,16 @@ export function confirmTeam(state: RunState, team: DraftedWizard[]): RunState {
   return { ...state, team, activeSynergies: detectSynergies(team), phase: 'team' }
 }
 
-export function nextBattle(state: RunState): { state: RunState; result: BattleResult } {
+export interface BattleOutcome {
+  state: RunState
+  result: BattleResult
+  /** The enemy team faced this battle — needed to render/replay the fight. */
+  enemy: DraftedWizard[]
+  enemySyn: ActiveSynergy[]
+  isBoss: boolean
+}
+
+export function nextBattle(state: RunState): BattleOutcome {
   const isBoss = state.stage >= BALANCE.campaign.enemyCount
   const base = createRng(state.seed).fork(combatRngChannel)
   const enemyRng = base.fork(state.stage + 1)
@@ -38,5 +47,8 @@ export function nextBattle(state: RunState): { state: RunState; result: BattleRe
     ? 'defeat'
     : isBoss ? 'win' : 'victory'
 
-  return { state: { ...state, stage: nextStage, lastBattle: result, phase }, result }
+  return {
+    state: { ...state, stage: nextStage, lastBattle: result, phase },
+    result, enemy, enemySyn, isBoss,
+  }
 }

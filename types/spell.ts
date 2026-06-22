@@ -1,3 +1,5 @@
+import type { EffectSpec, EffectTarget } from './status'
+
 export type SpellType = 'Attacco' | 'Difesa' | 'Cura' | 'Controllo'
 export type Stat = 'hp' | 'atk' | 'def' | 'spd'
 
@@ -18,4 +20,7 @@ export interface Spell {
   hitChance: number
   cooldown?: number
   effects?: SpellEffect[]
+  spec?: EffectSpec[]
+  target?: EffectTarget
+  priority?: number
 }

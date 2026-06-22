@@ -3,6 +3,7 @@ import { selectSpell } from '@/game/engine/combat/selectSpell'
 import { selectTarget } from '@/game/engine/combat/targeting'
 import type { BattleUnit, DraftedWizard } from '@/types'
 import { SPELL_BY_ID } from '@/data/spells'
+import { canCastSpell } from '@/game/engine/status'
 
 function unit(over: Partial<BattleUnit> & { id: string; role: BattleUnit['wizard']['role'] }): BattleUnit {
   const { id, role, ...rest } = over
@@ -43,5 +44,18 @@ describe('combat selection', () => {
     const fine = unit({ id: 'fine', role: 'Attaccante', hp: 95, maxHp: 100 })
     const enemy = unit({ id: 'e', role: 'Attaccante', side: 'right' })
     expect(selectTarget(actor, [actor, hurt, fine], [enemy])?.wizard.id).toBe('hurt')
+  })
+})
+
+describe('silence fallback', () => {
+  it('silenced unit selects base attack instead of its spell', () => {
+    // build a unit whose spell is a non-attack spell, then silence it — role is irrelevant here
+    const u = unit({
+      id: 's', role: 'Attaccante',
+      spell: SPELL_BY_ID['vulnera']!,
+      statusEffects: [{ kind: 'silence' as const, statusId: 'silence', remaining: 2 }],
+    })
+    expect(canCastSpell(u)).toBe(false)
+    expect(selectSpell(u).id).toBe('base_attack')
   })
 })

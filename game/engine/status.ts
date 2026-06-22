@@ -1,0 +1,113 @@
+import type { ActionGate, ActiveEffect, BattleUnit, LogEntry, Stat, Stats } from '@/types'
+import { STATUS_BY_ID } from '@/data/statuses'
+
+/** statMod for an active effect: prefer its StatusDef, fall back to legacy inline fields. */
+function statModOf(e: ActiveEffect): { stat: Stat; delta: number; pct: boolean } | null {
+  if (e.statusId) {
+    const def = STATUS_BY_ID[e.statusId]
+    if (def?.statMod) {
+      const sign = def.kind === 'debuff' ? -1 : 1
+      return { stat: def.statMod.stat, delta: sign * def.statMod.amount, pct: def.statMod.pct ?? false }
+    }
+    return null
+  }
+  if ((e.kind === 'buff' || e.kind === 'debuff') && e.stat && e.amount) {
+    return { stat: e.stat, delta: e.kind === 'buff' ? e.amount : -e.amount, pct: false }
+  }
+  return null
+}
+
+export function effectiveStats(unit: BattleUnit): Stats {
+  const s: Stats = { ...unit.buffedStats }
+  const mods = unit.statusEffects
+    .map(statModOf)
+    .filter((m): m is { stat: Stat; delta: number; pct: boolean } => m !== null)
+  // deterministic: flat mods first, then pct; stable by nothing else needed (commutative sums)
+  for (const m of mods.filter(m => !m.pct)) s[m.stat] = Math.max(1, s[m.stat] + m.delta)
+  for (const m of mods.filter(m => m.pct)) s[m.stat] = Math.max(1, Math.round(s[m.stat] * (1 + m.delta / 100)))
+  return s
+}
+
+export function applyStatus(
+  unit: BattleUnit, statusId: string, opts: { duration?: number; sourceId?: string } = {},
+): void {
+  const def = STATUS_BY_ID[statusId]
+  if (!def) return
+  const remaining = opts.duration ?? def.defaultDuration
+  const existing = unit.statusEffects.filter(e => e.statusId === statusId)
+  if (existing.length > 0) {
+    if (def.stack === 'ignore') return
+    if (def.stack === 'refresh') { existing[0]!.remaining = remaining; return }
+    if (def.stack === 'extend') { existing[0]!.remaining += remaining; return }
+    if (def.stack === 'stack' && def.maxStacks != null && existing.length >= def.maxStacks) return
+  }
+  unit.statusEffects.push({
+    kind: def.kind, statusId, remaining, stacks: 1, sourceId: opts.sourceId,
+    stat: def.statMod?.stat, amount: def.statMod?.amount, absorbLeft: def.absorb,
+  })
+}
+
+export function applyInlineEffect(
+  unit: BattleUnit,
+  eff: { kind: ActiveEffect['kind']; stat?: Stat; amount?: number; duration?: number },
+  opts: { sourceId?: string } = {},
+): void {
+  unit.statusEffects.push({
+    kind: eff.kind, stat: eff.stat, amount: eff.amount,
+    remaining: eff.duration ?? 1, sourceId: opts.sourceId,
+  })
+}
+
+export function tickStatuses(turn: number, unit: BattleUnit): LogEntry[] {
+  const logs: LogEntry[] = []
+  for (const e of unit.statusEffects) {
+    const def = e.statusId ? STATUS_BY_ID[e.statusId] : undefined
+    const tickDamage = def?.tickDamage ?? (e.kind === 'dot' ? e.amount : undefined)
+    const tickHeal = def?.tickHeal
+    if (tickDamage) {
+      unit.hp -= tickDamage
+      logs.push({ turn, actorId: unit.wizard.id, actorSide: unit.side, action: def?.name ?? 'Veleno',
+        targetId: unit.wizard.id, targetSide: unit.side, type: 'Controllo', value: tickDamage, flags: ['dot'] })
+    }
+    if (tickHeal) {
+      unit.hp = Math.min(unit.maxHp, unit.hp + tickHeal)
+      logs.push({ turn, actorId: unit.wizard.id, actorSide: unit.side, action: def?.name ?? 'Rigenerazione',
+        targetId: unit.wizard.id, targetSide: unit.side, type: 'Cura', value: tickHeal, flags: ['heal'] })
+    }
+    e.remaining -= 1
+  }
+  unit.statusEffects = unit.statusEffects.filter(e => e.remaining > 0)
+  for (const id of Object.keys(unit.cooldowns)) {
+    unit.cooldowns[id] = Math.max(0, (unit.cooldowns[id] ?? 0) - 1)
+  }
+  return logs
+}
+
+function preventsOf(e: ActiveEffect): ActionGate[] {
+  if (e.statusId) return STATUS_BY_ID[e.statusId]?.prevents ?? []
+  return e.kind === 'stun' ? ['action'] : []
+}
+
+function gated(unit: BattleUnit, gate: ActionGate): boolean {
+  return unit.statusEffects.some(e => preventsOf(e).includes(gate))
+}
+
+export function canAct(unit: BattleUnit): boolean { return !gated(unit, 'action') }
+export function canCastSpell(unit: BattleUnit): boolean { return canAct(unit) && !gated(unit, 'spell') }
+export function canAttack(unit: BattleUnit): boolean { return canAct(unit) && !gated(unit, 'attack') }
+
+export function absorbDamage(unit: BattleUnit, dmg: number): number {
+  let remaining = dmg
+  // Drain soonest-expiring shield first; tiebreak on sourceId for deterministic ordering.
+  const shields = unit.statusEffects
+    .filter(e => e.statusId === 'shield' && (e.absorbLeft ?? 0) > 0)
+    .sort((a, b) => a.remaining - b.remaining || (a.sourceId ?? '').localeCompare(b.sourceId ?? ''))
+  for (const s of shields) {
+    if (remaining <= 0) break
+    const left = s.absorbLeft ?? 0
+    const used = Math.min(left, remaining)
+    s.absorbLeft = left - used
+    remaining -= used
+  }
+  return remaining
+}
