@@ -18,7 +18,6 @@ export interface ActiveEffect {
 export type Side = 'left' | 'right'
 
 export interface BattleUnit extends DraftedWizard {
-  id: string
   side: Side
   hp: number
   cooldowns: Record<string, number>
