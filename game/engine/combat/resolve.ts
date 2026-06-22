@@ -21,7 +21,7 @@ export function resolveAction(
     if (r.value !== undefined && value === undefined) value = r.value
   }
 
-  if (spell.type === 'Difesa') flags.push('block') // log tagging only
+  if (spell.type === 'Difesa' && !flags.includes('block')) flags.push('block') // log tagging only (idempotent: shield handler may have already added it)
 
   return {
     turn, actorId: actor.wizard.id, actorSide: actor.side, action: spell.name,
