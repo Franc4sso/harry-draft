@@ -1,5 +1,8 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
+
 import { MenuScreen } from '@/components/screens/MenuScreen'
 import { RulesScreen } from '@/components/screens/RulesScreen'
 import { CreditsScreen } from '@/components/screens/CreditsScreen'
