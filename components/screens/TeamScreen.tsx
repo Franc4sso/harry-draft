@@ -1,13 +1,17 @@
 'use client'
-import { useState } from 'react'
 import type { DraftedWizard } from '@/types'
 import { detectSynergies } from '@/game/engine/synergy'
 import { WizardCard } from '@/components/cards/WizardCard'
 import { GlowPanel } from '@/components/ui/GlowPanel'
 import { Button } from '@/components/ui/Button'
 
-export function TeamScreen({ team, onRestart }: { team: DraftedWizard[]; onRestart?: () => void }) {
-  const [soon, setSoon] = useState(false)
+export function TeamScreen({
+  team, onConfirm, onRestart,
+}: {
+  team: DraftedWizard[]
+  onConfirm?: () => void
+  onRestart?: () => void
+}) {
   const synergies = detectSynergies(team)
   return (
     <main className="flex-1 flex flex-col items-center gap-8 p-8">
@@ -37,12 +41,9 @@ export function TeamScreen({ team, onRestart }: { team: DraftedWizard[]; onResta
         )}
       </GlowPanel>
 
-      <div className="flex flex-col items-center gap-2">
-        <div className="flex gap-3">
-          <Button onClick={() => setSoon(true)}>Combatti</Button>
-          {onRestart && <Button variant="ghost" onClick={onRestart}>Nuova run</Button>}
-        </div>
-        {soon && <p className="text-xs text-white/50">La campagna arriva nella prossima milestone.</p>}
+      <div className="flex gap-3">
+        <Button onClick={onConfirm}>Combatti</Button>
+        {onRestart && <Button variant="ghost" onClick={onRestart}>Nuova run</Button>}
       </div>
     </main>
   )

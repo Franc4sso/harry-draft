@@ -68,7 +68,10 @@ export function resolveAction(
     flags.push('block')
   }
 
-  return { turn, actorId: actor.wizard.id, action: spell.name, targetId: target.wizard.id, type, value, flags }
+  return {
+    turn, actorId: actor.wizard.id, actorSide: actor.side, action: spell.name,
+    targetId: target.wizard.id, targetSide: target.side, type, value, flags,
+  }
 }
 
 export function tickStatuses(turn: number, unit: BattleUnit): LogEntry[] {
@@ -76,7 +79,10 @@ export function tickStatuses(turn: number, unit: BattleUnit): LogEntry[] {
   for (const e of unit.statusEffects) {
     if (e.kind === 'dot' && e.amount) {
       unit.hp -= e.amount
-      logs.push({ turn, actorId: unit.wizard.id, action: 'Veleno', targetId: unit.wizard.id, type: 'Controllo', value: e.amount, flags: ['dot'] })
+      logs.push({
+        turn, actorId: unit.wizard.id, actorSide: unit.side, action: 'Veleno',
+        targetId: unit.wizard.id, targetSide: unit.side, type: 'Controllo', value: e.amount, flags: ['dot'],
+      })
     }
     e.remaining -= 1
   }

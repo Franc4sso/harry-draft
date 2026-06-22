@@ -60,7 +60,7 @@ export function simulateBattle(
       if (!actor.alive) continue
       if (isStunned(actor)) {
         // Do NOT manually decrement here — tickStatuses at end-of-turn handles all status decrements uniformly.
-        log.push({ turn, actorId: actor.wizard.id, action: 'Stordito', type: 'system', flags: ['stun'] })
+        log.push({ turn, actorId: actor.wizard.id, actorSide: actor.side, action: 'Stordito', type: 'system', flags: ['stun'] })
         continue
       }
       const allies = actor.side === 'left' ? L : R
@@ -80,7 +80,10 @@ export function simulateBattle(
       }
       sync(realTarget)
       if (!realTarget.alive && entry.flags.includes('heal') === false) {
-        log.push({ turn, actorId: actor.wizard.id, action: 'KO', targetId: realTarget.wizard.id, type: 'system', flags: ['kill'] })
+        log.push({
+          turn, actorId: actor.wizard.id, actorSide: actor.side, action: 'KO',
+          targetId: realTarget.wizard.id, targetSide: realTarget.side, type: 'system', flags: ['kill'],
+        })
       }
     }
     // end-of-turn: dot/cooldown tick + regen

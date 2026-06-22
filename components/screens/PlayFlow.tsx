@@ -2,7 +2,7 @@
 import { useState, useCallback } from 'react'
 import type { DraftedWizard } from '@/types'
 import { DraftScreen } from './DraftScreen'
-import { TeamScreen } from './TeamScreen'
+import { CampaignRunner } from './CampaignRunner'
 import { randomSeed } from '@/lib/seed'
 
 export function PlayFlow({ seed }: { seed: string }) {
@@ -16,7 +16,7 @@ export function PlayFlow({ seed }: { seed: string }) {
   }, [])
 
   if (team) {
-    return <TeamScreen team={team} onRestart={handleRestart} />
+    return <CampaignRunner key={activeSeed} seed={activeSeed} team={team} onRestart={handleRestart} />
   }
   return <DraftScreen key={activeSeed} seed={activeSeed} onComplete={handleComplete} />
 }

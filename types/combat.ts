@@ -31,8 +31,12 @@ export type LogFlag = 'crit' | 'dodge' | 'kill' | 'heal' | 'block' | 'stun' | 'd
 export interface LogEntry {
   turn: number
   actorId: string
+  /** Side of the acting unit. Optional for backwards-compat; populated by the engine. */
+  actorSide?: Side
   action: string
   targetId?: string
+  /** Side of the targeted unit. Optional for backwards-compat; populated by the engine. */
+  targetSide?: Side
   type: SpellType | 'system'
   value?: number
   flags: LogFlag[]
