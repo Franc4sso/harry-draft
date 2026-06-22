@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { selectSpell } from '@/game/engine/combat/selectSpell'
 import { selectTarget } from '@/game/engine/combat/targeting'
-import type { BattleUnit, DraftedWizard, House, Role } from '@/types'
+import type { BattleUnit, DraftedWizard } from '@/types'
 import { SPELL_BY_ID } from '@/data/spells'
 import { canCastSpell } from '@/game/engine/status'
 
@@ -49,14 +49,12 @@ describe('combat selection', () => {
 
 describe('silence fallback', () => {
   it('silenced unit selects base attack instead of its spell', () => {
-    // build a unit whose spell is a heal, then silence it
-    const stats = { hp: 100, atk: 50, def: 20, spd: 30 }
-    const u = {
-      wizard: { id: 's', name: 's', house: 'Grifondoro' as House, role: 'Supporto' as Role, tier: 3 as const,
-        ranges: { hp: [100,100] as const, atk: [50,50] as const, def: [20,20] as const, spd: [30,30] as const }, spellPool: ['vulnera'] },
-      stats, maxHp: 100, spell: SPELL_BY_ID['vulnera']!,
-      side: 'left' as const, hp: 100, cooldowns: {}, statusEffects: [{ kind: 'silence' as const, statusId: 'silence', remaining: 2 }], buffedStats: stats, alive: true,
-    }
+    // build a unit whose spell is a non-attack spell, then silence it — role is irrelevant here
+    const u = unit({
+      id: 's', role: 'Attaccante',
+      spell: SPELL_BY_ID['vulnera']!,
+      statusEffects: [{ kind: 'silence' as const, statusId: 'silence', remaining: 2 }],
+    })
     expect(canCastSpell(u)).toBe(false)
     expect(selectSpell(u).id).toBe('base_attack')
   })
