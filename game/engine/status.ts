@@ -39,7 +39,7 @@ export function applyStatus(
     if (def.stack === 'ignore') return
     if (def.stack === 'refresh') { existing[0]!.remaining = remaining; return }
     if (def.stack === 'extend') { existing[0]!.remaining += remaining; return }
-    if (def.stack === 'stack' && def.maxStacks && existing.length >= def.maxStacks) return
+    if (def.stack === 'stack' && def.maxStacks != null && existing.length >= def.maxStacks) return
   }
   unit.statusEffects.push({
     kind: def.kind, statusId, remaining, stacks: 1, sourceId: opts.sourceId,
@@ -98,6 +98,7 @@ export function canAttack(unit: BattleUnit): boolean { return canAct(unit) && !g
 
 export function absorbDamage(unit: BattleUnit, dmg: number): number {
   let remaining = dmg
+  // Drain soonest-expiring shield first; tiebreak on sourceId for deterministic ordering.
   const shields = unit.statusEffects
     .filter(e => e.statusId === 'shield' && (e.absorbLeft ?? 0) > 0)
     .sort((a, b) => a.remaining - b.remaining || (a.sourceId ?? '').localeCompare(b.sourceId ?? ''))

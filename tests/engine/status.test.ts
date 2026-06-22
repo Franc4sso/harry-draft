@@ -43,7 +43,7 @@ describe('status core', () => {
     applyStatus(u, 'regen', { duration: 2 })
     const logs = tickStatuses(1, u)
     expect(u.hp).toBe(50 - 8 + 12)
-    expect(logs.length).toBeGreaterThanOrEqual(1)
+    expect(logs.length).toBe(2) // one burn (dot) log + one regen (heal) log
   })
   it('legacy inline dot still ticks (back-compat)', () => {
     const u = unit({ statusEffects: [{ kind: 'dot', amount: 10, remaining: 2 }] })
