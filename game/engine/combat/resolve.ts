@@ -1,17 +1,8 @@
-import type { BattleUnit, LogEntry, LogFlag, Spell, Stats } from '@/types'
+import type { BattleUnit, LogEntry, LogFlag, Spell } from '@/types'
 import type { Rng } from '../rng'
 import { BALANCE } from '@/data/constants'
-
-export function effectiveStats(unit: BattleUnit): Stats {
-  const s = { ...unit.buffedStats }
-  for (const e of unit.statusEffects) {
-    if ((e.kind === 'buff' || e.kind === 'debuff') && e.stat && e.amount) {
-      const delta = e.kind === 'buff' ? e.amount : -e.amount
-      s[e.stat] = Math.max(1, s[e.stat] + delta)
-    }
-  }
-  return s
-}
+import { effectiveStats, tickStatuses } from '../status'
+export { effectiveStats, tickStatuses }
 
 function computeDamage(rng: Rng, actor: BattleUnit, target: BattleUnit, spell: Spell, flags: LogFlag[]): number {
   const c = BALANCE.combat
@@ -74,21 +65,3 @@ export function resolveAction(
   }
 }
 
-export function tickStatuses(turn: number, unit: BattleUnit): LogEntry[] {
-  const logs: LogEntry[] = []
-  for (const e of unit.statusEffects) {
-    if (e.kind === 'dot' && e.amount) {
-      unit.hp -= e.amount
-      logs.push({
-        turn, actorId: unit.wizard.id, actorSide: unit.side, action: 'Veleno',
-        targetId: unit.wizard.id, targetSide: unit.side, type: 'Controllo', value: e.amount, flags: ['dot'],
-      })
-    }
-    e.remaining -= 1
-  }
-  unit.statusEffects = unit.statusEffects.filter(e => e.remaining > 0)
-  for (const id of Object.keys(unit.cooldowns)) {
-    unit.cooldowns[id] = Math.max(0, (unit.cooldowns[id] ?? 0) - 1)
-  }
-  return logs
-}
