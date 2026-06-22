@@ -25,6 +25,11 @@ describe('GlowPanel', () => {
     render(<GlowPanel>contenuto</GlowPanel>)
     expect(screen.getByText('contenuto')).toBeInTheDocument()
   })
+  it('applies glow color as boxShadow', () => {
+    render(<GlowPanel glow="#ff0000">x</GlowPanel>)
+    const el = screen.getByText('x')
+    expect(el.style.boxShadow).toContain('#ff0000')
+  })
 })
 
 describe('StatBar', () => {
@@ -37,5 +42,15 @@ describe('StatBar', () => {
     const { container } = render(<StatBar label="ATK" value={300} max={100} />)
     const fill = container.querySelector('[data-fill]') as HTMLElement
     expect(fill.style.width).toBe('100%')
+  })
+  it('returns 0% width when max <= 0', () => {
+    const { container } = render(<StatBar label="X" value={10} max={0} />)
+    const fill = container.querySelector('[data-fill]') as HTMLElement
+    expect(fill.style.width).toBe('0%')
+  })
+  it('clamps negative value to 0%', () => {
+    const { container } = render(<StatBar label="Y" value={-5} max={100} />)
+    const fill = container.querySelector('[data-fill]') as HTMLElement
+    expect(fill.style.width).toBe('0%')
   })
 })
