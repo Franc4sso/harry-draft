@@ -4,6 +4,7 @@ import type {
 import type { Rng } from '../rng'
 import { BALANCE } from '@/data/constants'
 import { applyBonuses, totalRegen } from '../synergy'
+import { canAct } from '../status'
 import { effectiveStats, resolveAction, tickStatuses } from './resolve'
 import { selectSpell } from './selectSpell'
 import { mostWounded, selectTarget } from './targeting'
@@ -18,10 +19,6 @@ export function toBattleUnits(
       cooldowns: {}, statusEffects: [], alive: true,
     }
   })
-}
-
-function isStunned(unit: BattleUnit): boolean {
-  return unit.statusEffects.some(e => e.kind === 'stun')
 }
 
 function totalHpPct(units: BattleUnit[]): number {
@@ -58,7 +55,7 @@ export function simulateBattle(
     )
     for (const actor of order) {
       if (!actor.alive) continue
-      if (isStunned(actor)) {
+      if (!canAct(actor)) {
         // Do NOT manually decrement here — tickStatuses at end-of-turn handles all status decrements uniformly.
         log.push({ turn, actorId: actor.wizard.id, actorSide: actor.side, action: 'Stordito', type: 'system', flags: ['stun'] })
         continue
