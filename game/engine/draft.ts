@@ -21,19 +21,12 @@ function weightedPick(rng: Rng, candidates: Wizard[]): Wizard {
 export function generateScreen(
   rng: Rng,
   pool: Wizard[],
-  pickedTiers: Tier[],
-  screenIndex: number,
+  _pickedTiers: Tier[],
+  _screenIndex: number,
 ): Wizard[] {
-  const { screenSize, maxTier1PerScreen, pityAfterPicks, pityMaxTier } = BALANCE.draft
+  const { screenSize, maxTier1PerScreen } = BALANCE.draft
   const available = [...pool] // never mutate input pool
   const chosen: Wizard[] = []
-
-  // Computed for documentation/future tuning only — the guarantee is unconditional.
-  const _pityActive =
-    screenIndex >= pityAfterPicks &&
-    pickedTiers.length >= pityAfterPicks &&
-    !pickedTiers.some(t => t <= pityMaxTier)
-  void _pityActive
 
   const take = (predicate?: (w: Wizard) => boolean): Wizard | undefined => {
     const pickable = available.filter(
@@ -48,11 +41,14 @@ export function generateScreen(
     return w
   }
 
-  // Every screen guarantees at least one Tier <=2 seat (this also satisfies pity).
+  // Unconditional Tier<=2 guarantee — also satisfies pity protection.
   take(w => w.tier <= 2)
 
   while (chosen.length < screenSize) {
     if (!take()) break
+  }
+  if (chosen.length !== screenSize) {
+    throw new Error(`draft pool exhausted: got ${chosen.length}/${screenSize}`)
   }
   return chosen
 }

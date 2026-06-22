@@ -30,6 +30,14 @@ describe('draft', () => {
     const b = generateScreen(createRng(8), createDraftPool(), [], 0).map(w => w.id)
     expect(a).toEqual(b)
   })
+  it('does not mutate the input pool', () => {
+    const pool = createDraftPool()
+    const originalLength = pool.length
+    const originalIds = pool.map(w => w.id)
+    generateScreen(createRng(3), pool, [], 0)
+    expect(pool).toHaveLength(originalLength)
+    expect(pool.map(w => w.id)).toEqual(originalIds)
+  })
   it('commitPick removes all shown options from the pool', () => {
     const pool = createDraftPool()
     const screen = generateScreen(createRng(2), pool, [], 0)
