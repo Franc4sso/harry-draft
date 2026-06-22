@@ -43,6 +43,14 @@ export const SPELLS: Spell[] = [
   { id: 'oppugno', name: 'Oppugno', desc: 'Scaglia oggetti contro il nemico.', type: 'Attacco', power: 1.5, hitChance: 0.87, cooldown: 1 },
   { id: 'fiendfyre', name: 'Ardemonio', desc: 'Fuoco maledetto devastante.', type: 'Attacco', power: 2.8, hitChance: 0.7, cooldown: 3, effects: [{ kind: 'dot', amount: 12, duration: 2 }] },
   { id: 'serpensortia', name: 'Serpensortia', desc: 'Evoca un serpente che morde.', type: 'Attacco', power: 1.4, hitChance: 0.85, cooldown: 1, effects: [{ kind: 'dot', amount: 6, duration: 2 }] },
+
+  // demo: data-driven statuses (Status & Effect engine)
+  { id: 'glacius', name: 'Glacius', desc: 'Congela il bersaglio.', type: 'Controllo', hitChance: 0.85, cooldown: 2,
+    spec: [{ kind: 'applyStatus', target: 'enemy', statusId: 'freeze', duration: 1 }] },
+  { id: 'silencio', name: 'Silencio', desc: 'Silenzia il bersaglio.', type: 'Controllo', hitChance: 0.9, cooldown: 2,
+    spec: [{ kind: 'applyStatus', target: 'enemy', statusId: 'silence', duration: 2 }] },
+  { id: 'aegis', name: 'Aegis', desc: 'Evoca uno scudo che assorbe danno.', type: 'Difesa', hitChance: 1, cooldown: 3,
+    spec: [{ kind: 'shield', amount: 60, duration: 3 }] },
 ]
 
 export const SPELL_BY_ID: Record<string, Spell> = Object.fromEntries(
