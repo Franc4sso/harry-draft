@@ -20,7 +20,10 @@ describe('draft', () => {
       expect(screen.some(w => w.tier <= 2)).toBe(true)
     }
   })
-  it('applies pity: screen 3 has a Tier <=2 when none picked yet', () => {
+  // The Tier<=2 guarantee is unconditional (per-screen invariant), not pick-count-gated pity.
+  // This test exercises a screen generated after picking only low tiers to confirm the
+  // guarantee holds regardless of prior picks.
+  it('guarantees a Tier<=2 even after picking only low tiers', () => {
     const pickedTiers: Tier[] = [4, 4]
     const screen = generateScreen(createRng(11), createDraftPool(), pickedTiers, 2)
     expect(screen.some(w => w.tier <= 2)).toBe(true)

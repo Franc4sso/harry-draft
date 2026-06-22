@@ -17,15 +17,11 @@ export const BALANCE = {
     teamSize: 5,
     tierWeights: { 1: 4, 2: 12, 3: 32, 4: 52 } as Record<Tier, number>,
     tierRollBias: { 1: 0.85, 2: 0.65, 3: 0.5, 4: 0.4 } as Record<Tier, number>,
-    pityAfterPicks: 2,
-    pityMaxTier: 2 as Tier,
     maxTier1PerScreen: 1,
   },
   campaign: {
     enemyCount: 5,
     baseBudget: 1500,
     budgetStep: 220,
-    bossBudgetMult: 1.35,
-    bossHpMult: 1.4,
   },
 } as const
