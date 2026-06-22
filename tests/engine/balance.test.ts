@@ -31,6 +31,8 @@ describe('balance sanity', () => {
       const res = simulateBattle(a, b, createRng(`s${i}`))
       if (res.turns >= 100) capped++
     }
-    expect(capped).toBeLessThan(40)
+    // Observed: 0/40 capped in baseline run. Threshold set to <10 (25% of 40)
+    // to catch stalemate regressions while staying well above the real count.
+    expect(capped).toBeLessThan(10)
   })
 })
