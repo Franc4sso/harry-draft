@@ -152,6 +152,8 @@ Pre-calcola l'intero scontro → `BattleResult { winner, turns, log, mvpId, fina
 
 **Ruolo Controllo:** indebolisce i nemici (stun = salta turno, debuff = −stat per N turni, dot = danno nel tempo). Abilita gli altri ruoli; mantiene utili anche maghi di Tier basso.
 
+**Attacco base (fallback):** ogni mago ha sempre un colpo base (danno = `atk` con moltiplicatore basso, nessun cooldown, no effetti) usato quando la magia pescata è in cooldown. Garantisce che nessun turno sia vuoto.
+
 **resolve (moltiplicatori in `constants.ts`):**
 - danno = `atk * spell.power * tipoMod − def*k`, minimo 1.
 - crit: `chance = base + spd*scale` → ×critMult.
