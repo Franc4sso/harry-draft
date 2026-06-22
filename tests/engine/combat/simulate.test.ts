@@ -42,4 +42,32 @@ describe('simulate', () => {
     const buffed = toBattleUnits(raw, 'left', syn)
     expect(buffed).toHaveLength(raw.length)
   })
+  it('is deterministic when the same wizard id appears on both teams', () => {
+    // Build two teams that both include 'harry' — same id on left and right.
+    const harryWizard = WIZARDS.find(w => w.id === 'harry')!
+    const rngL = createRng(42)
+    const rngR = createRng(43)
+    // Build 3-unit teams: harry + two others, left and right share the harry id
+    const leftTeam = [
+      draftWizard(rngL, harryWizard),
+      draftWizard(rngL, WIZARDS.find(w => w.id === 'snape')!),
+      draftWizard(rngL, WIZARDS.find(w => w.id === 'hermione')!),
+    ]
+    const rightTeam = [
+      draftWizard(rngR, harryWizard), // same wizard.id 'harry' on opposite side
+      draftWizard(rngR, WIZARDS.find(w => w.id === 'dumbledore')!),
+      draftWizard(rngR, WIZARDS.find(w => w.id === 'voldemort')!),
+    ]
+    const run = () => simulateBattle(
+      leftTeam.map(u => ({ ...u })),
+      rightTeam.map(u => ({ ...u })),
+      createRng(99),
+    )
+    const a = run()
+    const b = run()
+    expect(a.winner).toBe(b.winner)
+    expect(a.turns).toBe(b.turns)
+    expect(a.log.length).toBe(b.log.length)
+    expect(a.mvpId).toBe(b.mvpId)
+  })
 })

@@ -6,7 +6,7 @@ import { BALANCE } from '@/data/constants'
 import { applyBonuses, totalRegen } from '../synergy'
 import { effectiveStats, resolveAction, tickStatuses } from './resolve'
 import { selectSpell } from './selectSpell'
-import { selectTarget } from './targeting'
+import { mostWounded, selectTarget } from './targeting'
 
 export function toBattleUnits(
   team: DraftedWizard[], side: Side, synergies: ActiveSynergy[],
@@ -42,6 +42,7 @@ export function simulateBattle(
   const R = toBattleUnits(right, 'right', rightSyn)
   const regen: Record<Side, number> = { left: totalRegen(leftSyn), right: totalRegen(rightSyn) }
   const log: LogEntry[] = []
+  // Score keyed by "side:wizard.id" to avoid merging same-id wizards on opposite teams
   const score: Record<string, number> = {}
 
   const sync = (u: BattleUnit) => { if (u.hp <= 0) { u.hp = 0; u.alive = false } }
@@ -51,14 +52,14 @@ export function simulateBattle(
   while (turn < BALANCE.combat.turnCap && sideUnits('left').length && sideUnits('right').length) {
     turn++
     const order = [...L, ...R].filter(u => u.alive).sort((a, b) =>
-      effectiveStats(b).spd - effectiveStats(a).spd || a.wizard.id.localeCompare(b.wizard.id),
+      effectiveStats(b).spd - effectiveStats(a).spd ||
+      a.wizard.id.localeCompare(b.wizard.id) ||
+      a.side.localeCompare(b.side),
     )
     for (const actor of order) {
       if (!actor.alive) continue
       if (isStunned(actor)) {
-        const stun = actor.statusEffects.find(e => e.kind === 'stun')
-        if (stun) stun.remaining -= 1
-        actor.statusEffects = actor.statusEffects.filter(e => e.remaining > 0)
+        // Do NOT manually decrement here — tickStatuses at end-of-turn handles all status decrements uniformly.
         log.push({ turn, actorId: actor.wizard.id, action: 'Stordito', type: 'system', flags: ['stun'] })
         continue
       }
@@ -69,11 +70,14 @@ export function simulateBattle(
       const target = selectTarget(actor, allies, enemies)
       if (!target) continue
       const realTarget = healIntent
-        ? (allies.filter(a => a.alive).filter(a => a.hp < a.maxHp).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0] ?? actor)
+        ? (mostWounded(allies.filter(a => a.alive)) ?? actor)
         : (spell.type === 'Difesa' ? actor : target)
       const entry = resolveAction(rng, turn, actor, realTarget, spell)
       log.push(entry)
-      if (entry.value) score[actor.wizard.id] = (score[actor.wizard.id] ?? 0) + entry.value
+      if (entry.value) {
+        const scoreKey = `${actor.side}:${actor.wizard.id}`
+        score[scoreKey] = (score[scoreKey] ?? 0) + entry.value
+      }
       sync(realTarget)
       if (!realTarget.alive && entry.flags.includes('heal') === false) {
         log.push({ turn, actorId: actor.wizard.id, action: 'KO', targetId: realTarget.wizard.id, type: 'system', flags: ['kill'] })
@@ -99,8 +103,11 @@ export function simulateBattle(
   const snapshot: UnitSnapshot[] = [...L, ...R].map(u => ({
     id: u.wizard.id, hp: Math.max(0, u.hp), maxHp: u.maxHp, alive: u.alive,
   }))
-  const mvpId = Object.entries(score).sort((a, b) => b[1] - a[1])[0]?.[0]
-    ?? (winner === 'left' ? L[0]!.wizard.id : R[0]!.wizard.id)
+  const mvpScoreKey = Object.entries(score).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0]
+  // Strip "side:" prefix to get plain wizard.id
+  const mvpId = mvpScoreKey
+    ? mvpScoreKey.split(':').slice(1).join(':')
+    : (winner === 'left' ? L[0]!.wizard.id : R[0]!.wizard.id)
 
   return { winner, turns: turn, log, mvpId, finalSnapshot: snapshot }
 }
