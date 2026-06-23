@@ -40,7 +40,11 @@ export function registerRelicTriggers(
         && (trig.hook === 'modifyOutgoingDamage' || trig.hook === 'modifyIncomingDamage'
           || trig.hook === 'modifyHealing')) {
         const { mult = 1, flat = 0 } = trig.modifier
-        bus.onModifier(trig.hook, v => v * mult + flat)
+        // Relics are LEFT-only: a left relic must never modify damage/healing for
+        // RIGHT (enemy) units. Gate on the side carried in the HookCtx (set by the
+        // emitModifier call sites: attacker side for outgoing, target side for
+        // incoming, healed-unit side for healing).
+        bus.onModifier(trig.hook, (v, ctx) => (ctx.side === 'left' ? v * mult + flat : v))
       }
     }
   }

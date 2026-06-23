@@ -49,7 +49,8 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
     if (eff.kind !== 'heal') return {}
     let amount = eff.amount
     if (ctx.bus) {
-      const hc: HookCtx = { turn: ctx.turn, actor: ctx.actor, target: ctx.target, side: ctx.actor.side, flags: ctx.flags }
+      // modifyHealing is gated on the HEALED unit's side (ctx.target), not the caster's.
+      const hc: HookCtx = { turn: ctx.turn, actor: ctx.actor, target: ctx.target, side: ctx.target.side, flags: ctx.flags }
       amount = Math.round(ctx.bus.emitModifier('modifyHealing', amount, hc))
     }
     ctx.target.hp = Math.min(ctx.target.maxHp, ctx.target.hp + amount)

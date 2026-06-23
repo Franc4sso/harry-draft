@@ -61,11 +61,21 @@ export function simulateBattle(
   // Apply a collected reactive hook for `unit`. Guarded by collectReactive().length
   // so a zero-listener hook draws NO rng and emits NO log line — preserving every
   // existing battle's rng stream byte-for-byte.
-  const fireReactive = (hook: 'onHeal' | 'onDeath' | 'onAllyDeath' | 'onHpThreshold', unit: BattleUnit, t: number, hpPct?: number) => {
+  const fireReactive = (hook: 'onHeal' | 'onDeath' | 'onAllyDeath' | 'onHpThreshold' | 'onTurnStart' | 'onTurnEnd', unit: BattleUnit, t: number, hpPct?: number) => {
     const ctx: HookCtx = { turn: t, actor: unit, side: unit.side, flags: [], hpPct }
     const specs = bus.collectReactive(hook, ctx)
     if (specs.length === 0) return
-    for (const eff of specs) EFFECT_HANDLERS[eff.kind]({ rng, turn: t, actor: unit, target: unit, flags: ctx.flags }, eff)
+    for (const eff of specs) {
+      const flags: LogFlag[] = []
+      const r = EFFECT_HANDLERS[eff.kind]({ rng, turn: t, actor: unit, target: unit, flags }, eff)
+      // Mirror the onBattleStart block: log every reactive effect as a 'Reliquia'
+      // system entry so buildReplay (which reconstructs HP from logged values) stays
+      // in parity with live combat for any HP-changing effect.
+      log.push({
+        turn: t, actorId: unit.wizard.id, actorSide: unit.side, action: 'Reliquia',
+        targetId: unit.wizard.id, targetSide: unit.side, type: 'system', value: r.value, flags,
+      })
+    }
   }
   // onHpThreshold fires once per downward crossing per unit; key `${side}:${id}:${threshold}`.
   // The threshold fractions come straight from the left relics' onHpThreshold triggers
@@ -117,9 +127,13 @@ export function simulateBattle(
     )
     for (const actor of order) {
       if (!actor.alive) continue
+      // onTurnStart: top of each LEFT unit's turn, before it acts (fires even if
+      // stunned). Gated by collectReactive().length so zero-listener = no rng/no log.
+      if (actor.side === 'left') fireReactive('onTurnStart', actor, turn)
       if (!canAct(actor)) {
         // Do NOT manually decrement here — tickStatuses at end-of-turn handles all status decrements uniformly.
         log.push({ turn, actorId: actor.wizard.id, actorSide: actor.side, action: 'Stordito', type: 'system', flags: ['stun'] })
+        if (actor.side === 'left') fireReactive('onTurnEnd', actor, turn)
         continue
       }
       const allies = actor.side === 'left' ? L : R
@@ -127,7 +141,7 @@ export function simulateBattle(
       const spell = selectSpell(actor)
       const healIntent = spell.type === 'Cura'
       const target = selectTarget(actor, allies, enemies)
-      if (!target) continue
+      if (!target) { if (actor.side === 'left') fireReactive('onTurnEnd', actor, turn); continue }
       const realTarget = healIntent
         ? (mostWounded(allies.filter(a => a.alive)) ?? actor)
         : (spell.type === 'Difesa' ? actor : target)
@@ -164,6 +178,8 @@ export function simulateBattle(
       }
       // onHpThreshold: HP of the target changed this action.
       if (realTarget.side === 'left') checkThreshold(realTarget, turn)
+      // onTurnEnd: after a LEFT actor finishes acting.
+      if (actor.side === 'left') fireReactive('onTurnEnd', actor, turn)
     }
     // end-of-turn: dot/cooldown tick + regen
     for (const u of [...L, ...R]) {
