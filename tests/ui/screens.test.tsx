@@ -1,5 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 
@@ -33,8 +34,9 @@ describe('Compendio (RulesScreen)', () => {
     expect(screen.getAllByText('Controllo').length).toBeGreaterThan(0)
     expect(screen.getAllByText(EFFECT_META.stun!.label).length).toBeGreaterThan(0)
   })
-  it('lists every spell by name', () => {
+  it('lists every spell by name under the Magie tab', async () => {
     render(<RulesScreen />)
+    await userEvent.click(screen.getByRole('button', { name: 'Magie' }))
     for (const s of SPELLS) {
       expect(screen.getAllByText(s.name).length).toBeGreaterThan(0)
     }
@@ -58,6 +60,14 @@ describe('Compendio (RulesScreen)', () => {
     expect(screen.getAllByText('Casa').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Ruolo').length).toBeGreaterThan(0)
     expect(screen.getAllByText('Gruppo').length).toBeGreaterThan(0)
+  })
+  it('defaults to the Come si gioca tab and switches to Sinergie', async () => {
+    render(<RulesScreen />)
+    // default tab shows the gameplay sections
+    expect(screen.getByText(/draft/i)).toBeInTheDocument()
+    // switching to Sinergie reveals the graph
+    await userEvent.click(screen.getByRole('button', { name: 'Sinergie' }))
+    expect(screen.getByRole('group', { name: /grafo delle sinergie/i })).toBeInTheDocument()
   })
 })
 

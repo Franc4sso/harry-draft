@@ -39,8 +39,13 @@ export function SynergyGraph() {
   const active = SYNERGIES.find((s) => s.id === selected) ?? null
 
   return (
-    <div className="grid gap-6 md:grid-cols-[400px_1fr] items-start">
-      <svg viewBox="0 0 400 400" className="w-full max-w-md mx-auto" role="group" aria-label="Grafo delle sinergie">
+    <div className="grid gap-5 md:gap-6 md:grid-cols-[minmax(0,400px)_1fr] items-start">
+      <svg
+        viewBox="0 0 400 400"
+        className="w-full max-w-[420px] mx-auto touch-manipulation"
+        role="group"
+        aria-label="Grafo delle sinergie"
+      >
         <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(255,255,255,0.06)" />
         {SYNERGIES.map((s, i) => {
           const angle = (i / SYNERGIES.length) * Math.PI * 2 - Math.PI / 2
@@ -53,21 +58,24 @@ export function SynergyGraph() {
               tabIndex={0}
               role="button"
               aria-pressed={isActive}
+              aria-label={s.name}
               className="cursor-pointer outline-none focus-visible:opacity-100 motion-safe:transition-opacity"
               onClick={() => setSelected(s.id)}
               onFocus={() => setSelected(s.id)}
               onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setSelected(s.id) } }}
-              opacity={selected && !isActive ? 0.35 : 1}
+              opacity={selected && !isActive ? 0.4 : 1}
             >
-              <circle cx={x} cy={y} r={isActive ? 10 : 7} fill={color}
-                style={{ filter: `drop-shadow(0 0 ${isActive ? 10 : 4}px ${color})` }} />
-              <text x={x} y={y - 14} textAnchor="middle" fontSize="9" fill="#e8ecf3">{s.name}</text>
+              {/* Generous transparent hit area for touch (>=44px target) */}
+              <circle cx={x} cy={y} r={22} fill="transparent" />
+              <circle cx={x} cy={y} r={isActive ? 12 : 8} fill={color}
+                style={{ filter: `drop-shadow(0 0 ${isActive ? 12 : 5}px ${color})` }} />
+              <text x={x} y={y - 16} textAnchor="middle" fontSize="12" fontWeight={isActive ? 700 : 400} fill="#e8ecf3">{s.name}</text>
             </g>
           )
         })}
       </svg>
 
-      <div className="glass rounded-2xl p-5 min-h-[200px]">
+      <div className="glass rounded-2xl p-4 sm:p-5 min-h-[160px] md:min-h-[200px]">
         {active ? (
           <>
             <h3 className="font-display text-xl" style={{ color: KIND_COLOR[active.kind] }}>{active.name}</h3>
