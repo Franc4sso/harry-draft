@@ -49,7 +49,7 @@ export interface LogEntry {
   flags: LogFlag[]
 }
 
-export interface UnitSnapshot { id: string; hp: number; maxHp: number; alive: boolean }
+export interface UnitSnapshot { id: string; side: Side; hp: number; maxHp: number; alive: boolean }
 
 export interface BattleResult {
   winner: Side

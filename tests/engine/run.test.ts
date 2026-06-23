@@ -143,35 +143,77 @@ describe('applyBattleToRoster', () => {
 
   it('drops dead wizards from the roster', () => {
     const snap: UnitSnapshot[] = [
-      { id: 'a', hp: 50, maxHp: 100, alive: true },
-      { id: 'b', hp: 0, maxHp: 100, alive: false },
-      { id: 'c', hp: 80, maxHp: 100, alive: true },
+      { id: 'a', side: 'left', hp: 50, maxHp: 100, alive: true },
+      { id: 'b', side: 'left', hp: 0, maxHp: 100, alive: false },
+      { id: 'c', side: 'left', hp: 80, maxHp: 100, alive: true },
     ]
     const out = applyBattleToRoster(team, snap)
     expect(out.map(d => d.wizard.id)).toEqual(['a', 'c'])
   })
 
   it('persists survivor HP as base-relative fraction', () => {
-    const snap: UnitSnapshot[] = [{ id: 'a', hp: 50, maxHp: 100, alive: true }]
+    const snap: UnitSnapshot[] = [{ id: 'a', side: 'left', hp: 50, maxHp: 100, alive: true }]
     const out = applyBattleToRoster([dwFix('a', 100)], snap)
     expect(out[0]!.currentHp).toBe(50)
   })
 
   it('scales snapshot HP (out of buffed max) down to BASE maxHp', () => {
     // buffed maxHp 120, hp 60 = 50% → base maxHp 100 → currentHp 50
-    const snap: UnitSnapshot[] = [{ id: 'a', hp: 60, maxHp: 120, alive: true }]
+    const snap: UnitSnapshot[] = [{ id: 'a', side: 'left', hp: 60, maxHp: 120, alive: true }]
     const out = applyBattleToRoster([dwFix('a', 100)], snap)
     expect(out[0]!.currentHp).toBe(50)
   })
 
   it('full-HP survivor → currentHp equals base maxHp', () => {
-    const snap: UnitSnapshot[] = [{ id: 'a', hp: 120, maxHp: 120, alive: true }]
+    const snap: UnitSnapshot[] = [{ id: 'a', side: 'left', hp: 120, maxHp: 120, alive: true }]
     const out = applyBattleToRoster([dwFix('a', 100)], snap)
     expect(out[0]!.currentHp).toBe(100)
   })
 
   it('empty team → empty', () => {
     expect(applyBattleToRoster([], [])).toEqual([])
+  })
+
+  // C1 regression: a player wizard and an enemy wizard can share a base id
+  // (enemies draft from the same top-power roster). finalSnapshot is [...L, ...R],
+  // so keying by id alone let the right (enemy) entry overwrite the left (player)
+  // one — surviving players got dropped, dead ones wrongly kept, HP from the wrong
+  // unit. Match LEFT-side entries only; a player must never read an enemy snapshot.
+  it('does not let a same-id enemy (right) entry clobber the player (left) entry [C1]', () => {
+    const snap: UnitSnapshot[] = [
+      { id: 'harry', side: 'left', hp: 50, maxHp: 100, alive: true },  // player: alive, wounded
+      { id: 'harry', side: 'right', hp: 0, maxHp: 100, alive: false }, // enemy: dead
+    ]
+    const out = applyBattleToRoster([dwFix('harry', 100)], snap)
+    // Player harry must survive (NOT dropped by the dead enemy entry)…
+    expect(out.map(d => d.wizard.id)).toEqual(['harry'])
+    // …and currentHp must come from the LEFT unit (50), not the dead enemy (0).
+    expect(out[0]!.currentHp).toBe(50)
+  })
+
+  it('walks a full run to the boss with a colliding team, never dropping survivors [C1]', () => {
+    // WIZARDS.slice(0,5) is the natural colliding fixture: enemies draft from the
+    // same top-power roster, so player and enemy ids collide (~all fights late).
+    let s = confirmTeam(startRun('c1-collision'), playerTeam())
+    let guard = 0
+    while (guard++ < 50) {
+      const before = new Map(s.team.map(dw => [dw.wizard.id, dw]))
+      const out = nextBattle(s)
+      // Every survivor in the post-battle roster must trace to a LEFT snapshot
+      // entry that is alive — never sourced from a dead same-id enemy.
+      for (const dw of out.state.team) {
+        const left = out.result.finalSnapshot.find(x => x.id === dw.wizard.id && x.side === 'left')
+        expect(left).toBeDefined()
+        expect(left!.alive).toBe(true)
+        // currentHp is the base-relative fraction of the LEFT unit's hp.
+        const frac = left!.maxHp > 0 ? left!.hp / left!.maxHp : 0
+        expect(dw.currentHp).toBe(Math.round(before.get(dw.wizard.id)!.maxHp * frac))
+      }
+      s = out.state
+      if (s.phase === 'win' || s.phase === 'defeat') break
+      const cur = nodeById(s, s.currentNodeId!)!
+      s = advanceToNode(s, cur.next[0]!)
+    }
   })
 })
 

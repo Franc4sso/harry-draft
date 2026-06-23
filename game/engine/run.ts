@@ -51,7 +51,12 @@ export interface BattleOutcome {
 export function applyBattleToRoster(
   team: DraftedWizard[], snapshot: UnitSnapshot[],
 ): DraftedWizard[] {
-  const byId = new Map(snapshot.map(s => [s.id, s]))
+  // Only the LEFT side is the player team. A player wizard must NEVER read an
+  // enemy's snapshot entry: enemies draft from the same top-power roster, so a
+  // player and enemy can share a base id. Keying by id alone let the right-side
+  // (spread after left) entry overwrite the player's — surviving players got
+  // dropped, dead players wrongly kept, HP sourced from the wrong unit (C1).
+  const byId = new Map(snapshot.filter(s => s.side === 'left').map(s => [s.id, s]))
   return team
     .filter(dw => byId.get(dw.wizard.id)?.alive !== false) // drop the dead; keep if no snapshot entry
     .map(dw => {

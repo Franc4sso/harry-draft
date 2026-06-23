@@ -210,7 +210,7 @@ export function simulateBattle(
   else winner = totalHpPct(L) >= totalHpPct(R) ? 'left' : 'right'
 
   const snapshot: UnitSnapshot[] = [...L, ...R].map(u => ({
-    id: u.wizard.id, hp: Math.max(0, u.hp), maxHp: u.maxHp, alive: u.alive,
+    id: u.wizard.id, side: u.side, hp: Math.max(0, u.hp), maxHp: u.maxHp, alive: u.alive,
   }))
   const mvpScoreKey = Object.entries(score).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0]
   // Strip "side:" prefix to get plain wizard.id
