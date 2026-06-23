@@ -58,7 +58,7 @@ export function CampaignRunner({
       view = (
         <BattleScreen
           result={c.battle.result}
-          playerTeam={team}
+          playerTeam={c.run.team}
           playerSyn={c.run.activeSynergies}
           playerRelics={c.run.relics}
           enemy={c.battle.enemy}
@@ -81,6 +81,7 @@ export function CampaignRunner({
           enemyCount={c.enemyCount}
           bossNext={c.bossNext}
           onNext={c.advance}
+          fallenNames={c.lastFallen}
         />
       )
       break

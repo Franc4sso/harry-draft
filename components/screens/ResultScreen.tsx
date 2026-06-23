@@ -45,7 +45,7 @@ export function ResultScreen({
             ? 'Hai battuto tutte le squadre e il Boss Finale. La tua leggenda è completa.'
             : stageReached > enemyCount
               ? 'Sei caduto contro il Boss Finale. La prossima volta andrà meglio.'
-              : `La tua run si è fermata alla sfida ${stageReached} di ${enemyCount}.`}
+              : `La tua squadra è stata annientata alla sfida ${stageReached} di ${enemyCount}.`}
         </p>
       </motion.div>
 

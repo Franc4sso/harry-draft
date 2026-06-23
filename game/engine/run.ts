@@ -1,4 +1,4 @@
-import type { ActiveSynergy, BattleResult, DraftedWizard, Relic, RunNode, RunState } from '@/types'
+import type { ActiveSynergy, BattleResult, DraftedWizard, Relic, RunNode, RunState, Side, UnitSnapshot } from '@/types'
 import { createRng } from './rng'
 import { detectSynergies } from './synergy'
 import { simulateBattle } from './combat/simulate'
@@ -48,6 +48,41 @@ export interface BattleOutcome {
   isBoss: boolean
 }
 
+export function applyBattleToRoster(
+  team: DraftedWizard[], snapshot: UnitSnapshot[],
+): DraftedWizard[] {
+  // Only the LEFT side is the player team. A player wizard must NEVER read an
+  // enemy's snapshot entry: enemies draft from the same top-power roster, so a
+  // player and enemy can share a base id. Keying by id alone let the right-side
+  // (spread after left) entry overwrite the player's — surviving players got
+  // dropped, dead players wrongly kept, HP sourced from the wrong unit (C1).
+  const byId = new Map(snapshot.filter(s => s.side === 'left').map(s => [s.id, s]))
+  return team
+    .filter(dw => byId.get(dw.wizard.id)?.alive !== false) // drop the dead; keep if no snapshot entry
+    .map(dw => {
+      const snap = byId.get(dw.wizard.id)
+      if (!snap) return dw
+      // Snapshot HP is out of the BUFFED battle maxHp; persist as a fraction of the
+      // wizard's BASE maxHp so buff swings between battles don't distort wounds.
+      const frac = snap.maxHp > 0 ? snap.hp / snap.maxHp : 0
+      return { ...dw, currentHp: Math.round(dw.maxHp * frac) }
+    })
+}
+
+/**
+ * Pure derivation of the run phase after a fight resolves.
+ * - Roster wiped → defeat (regardless of node type).
+ * - Boss node → win-or-bust: win iff the player (left) won, else defeat.
+ * - Non-boss node → any survivor means the player advances → victory.
+ */
+export function runPhaseAfterBattle(
+  wiped: boolean, isBoss: boolean, winner: Side,
+): RunState['phase'] {
+  if (wiped) return 'defeat'
+  if (isBoss) return winner === 'left' ? 'win' : 'defeat'
+  return 'victory'
+}
+
 export function nextBattle(state: RunState): BattleOutcome {
   const cur = state.currentNodeId ? nodeById(state, state.currentNodeId) : undefined
   const isBoss = cur?.type === 'boss'
@@ -66,14 +101,13 @@ export function nextBattle(state: RunState): BattleOutcome {
     leftSyn: state.activeSynergies, rightSyn: enemySyn, leftRelics: state.relics,
   })
 
-  const won = result.winner === 'left'
-  const nextStage = state.stage + 1
-  const phase: RunState['phase'] = !won
-    ? 'defeat'
-    : isBoss ? 'win' : 'victory'
+  const newTeam = applyBattleToRoster(state.team, result.finalSnapshot)
+  const newSyn = detectSynergies(newTeam)
+  const wiped = newTeam.length === 0
+  const phase = runPhaseAfterBattle(wiped, isBoss, result.winner)
 
   return {
-    state: { ...state, stage: nextStage, lastBattle: result, phase },
+    state: { ...state, team: newTeam, activeSynergies: newSyn, stage: state.stage + 1, lastBattle: result, phase },
     result, enemy, enemySyn, isBoss,
   }
 }

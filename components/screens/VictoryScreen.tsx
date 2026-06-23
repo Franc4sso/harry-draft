@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 
 /** Between-battle interstitial after the player wins a regular stage. */
 export function VictoryScreen({
-  result, mvpName, battleNumber, enemyCount, bossNext, onNext,
+  result, mvpName, battleNumber, enemyCount, bossNext, onNext, fallenNames = [],
 }: {
   result: BattleResult
   mvpName: string
@@ -15,6 +15,8 @@ export function VictoryScreen({
   enemyCount: number
   bossNext: boolean
   onNext: () => void
+  /** Names of player wizards permanently lost this battle. */
+  fallenNames?: string[]
 }) {
   const survivors = result.finalSnapshot.filter(s => s.alive).length
   return (
@@ -45,6 +47,12 @@ export function VictoryScreen({
         <div className="flex justify-between text-sm text-white/70">
           <span>Maghi superstiti</span><span className="tabular-nums">{survivors}</span>
         </div>
+        {fallenNames.length > 0 && (
+          <div className="flex flex-col gap-1 text-sm text-rose-300/90 border-t border-white/10 pt-2">
+            <span className="text-rose-300">Caduti per sempre</span>
+            <span className="text-white/70">{fallenNames.join(', ')}</span>
+          </div>
+        )}
       </GlowPanel>
 
       <Button onClick={onNext}>
