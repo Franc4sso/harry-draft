@@ -39,6 +39,26 @@ describe('Compendio (RulesScreen)', () => {
       expect(screen.getAllByText(s.name).length).toBeGreaterThan(0)
     }
   })
+  it('renders all 4 glossary categories', () => {
+    render(<RulesScreen />)
+    // existing categories
+    expect(screen.getByText('Tipi di magia')).toBeInTheDocument()
+    expect(screen.getByText('Effetti')).toBeInTheDocument()
+    // new categories
+    expect(screen.getByText('Rarità reliquie')).toBeInTheDocument()
+    expect(screen.getByText('Tipi sinergia')).toBeInTheDocument()
+  })
+  it('renders rarity blurbs in glossary', () => {
+    render(<RulesScreen />)
+    expect(screen.getByText('Bonus base, sempre utile.')).toBeInTheDocument()
+    expect(screen.getByText('Effetti potenti con trigger speciali.')).toBeInTheDocument()
+  })
+  it('renders synergy kind labels in glossary', () => {
+    render(<RulesScreen />)
+    expect(screen.getAllByText('Casa').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Ruolo').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Gruppo').length).toBeGreaterThan(0)
+  })
 })
 
 describe('CreditsScreen', () => {

@@ -5,7 +5,7 @@ import { WIZARDS } from '@/data/wizards'
 import { synergyBonusText } from '@/lib/glossary'
 import type { Synergy } from '@/types/synergy'
 
-const KIND_COLOR: Record<Synergy['kind'], string> = {
+export const KIND_COLOR: Record<Synergy['kind'], string> = {
   house: '#7DB7FF', role: '#FFD37D', group: '#C98BFF', origin: '#7CFC9B',
 }
 
@@ -32,10 +32,10 @@ function requirementText(syn: Synergy): string {
 const R = 150
 const CX = 200
 const CY = 200
+const nameById = new Map(WIZARDS.map((w) => [w.id, w.name]))
 
 export function SynergyGraph() {
   const [selected, setSelected] = useState<string | null>(null)
-  const nameById = new Map(WIZARDS.map((w) => [w.id, w.name]))
   const active = SYNERGIES.find((s) => s.id === selected) ?? null
 
   return (
