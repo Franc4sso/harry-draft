@@ -36,4 +36,15 @@ describe('WizardCard', () => {
     expect(screen.getByText(incendio.desc)).toBeInTheDocument()
     expect(screen.getByText('Danno nel tempo')).toBeInTheDocument()
   })
+  it('shows the portrait and the house crest', () => {
+    render(<WizardCard drafted={harry} />)
+    // portrait alt = wizard name
+    expect(screen.getByAltText(harry.wizard.name)).toBeInTheDocument()
+    // house crest present
+    expect(screen.getByRole('img', { name: harry.wizard.house })).toBeInTheDocument()
+  })
+  it('wraps content in a rarity frame keyed to the wizard tier', () => {
+    const { container } = render(<WizardCard drafted={harry} />)
+    expect(container.querySelector(`[data-rarity]`)).toBeTruthy()
+  })
 })
