@@ -14,7 +14,7 @@ describe('MenuScreen', () => {
     render(<MenuScreen />)
     expect(screen.getByText('Harry Draft')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /gioca/i })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: /regole/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /compendio/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /credits/i })).toBeInTheDocument()
   })
 })
