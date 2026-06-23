@@ -85,9 +85,11 @@ Pillola: icona lucide opzionale + label, bordo/testo nel colore-categoria, glow 
   - eyebrow `spell.type` colorato (via SPELL_TYPE_META)
   - nome magia
   - `spell.desc` (testo piccolo, 1-2 righe)
-  - riga stats compatta da `formatSpellStats`
   - riga chip effetti da `spellEffectChips` (se presenti)
-  - La card cresce ~40-60px in altezza; il layout flex regge.
+  - **NIENTE numeri grezzi** (pot/prec/CD) sulla card di draft: il draft è una
+    decisione veloce, la card resta leggibile. I numeri pieni vivono nel Compendio.
+  - La card cresce ~30-50px in altezza; il layout flex regge.
+  - Nota: `formatSpellStats` resta usato dal Compendio, non da `WizardCard`.
 
 - **`TeamScreen.tsx`**: ogni sinergia attiva diventa una riga in `GlowPanel`:
   - nome sinergia (Cinzel)
@@ -106,11 +108,21 @@ Pillola: icona lucide opzionale + label, bordo/testo nel colore-categoria, glow 
 - **Glossario**: griglia di `Chip` per categoria con blurb — la legenda dei termini:
   tipi magia (4), status/effetti (9), rarità reliquie (4), tipi sinergia (4 kind).
 - **Sezioni navigabili** (tab o ancore a scelta in fase di plan):
-  - **Magie**: 48 magie raggruppate per `type`, ognuna con desc, stats, chip effetti.
+  - **Magie**: 48 magie raggruppate per `type`, ognuna con desc, stats (da
+    `formatSpellStats`), chip effetti.
   - **Reliquie**: 24 raggruppate per rarità, con desc.
-  - **Sinergie**: 21 raggruppate per `kind`, con requisito (es. "3+ Grifondoro")
-    e bonus auto-generati da `synergyBonusText`.
-- Carte `glass`, micro-hover discreti, `prefers-reduced-motion` rispettato.
+  - **Sinergie — elemento firma, grafo interattivo**: NON una lista. Le sinergie
+    sono rese come un **grafo**: i maghi coinvolti sono nodi, le sinergie sono
+    connessioni/cluster che si "accendono" col colore-categoria al hover/focus.
+    Selezionando una sinergia si evidenziano i suoi membri e si rivela il bonus
+    (`synergyBonusText`) + requisito (es. "3+ Grifondoro"). È il momento memorabile
+    della pagina; magie e reliquie restano liste eleganti per contrasto.
+    - Implementazione: SVG/CSS, layout deterministico (no fisica runtime → testabile,
+      no `Math.random`). Hover/selezione via stato React.
+    - Dettagli di layout del grafo (posizionamento nodi, raggruppamento per kind)
+      definiti in fase di plan.
+- Carte `glass`, micro-hover discreti, `prefers-reduced-motion` rispettato (il grafo
+  degrada a evidenziazione statica senza animazione).
 - Mantiene le 5 sezioni-regole esistenti (Draft/Tier/Stats/Sinergie/Combattimento) in
   cima come "Come si gioca".
 
@@ -128,7 +140,8 @@ lib/glossary.ts  (formatter puri: stats, chip effetti, testo bonus, metadati)
    ┌────┴───────────────┬──────────────────┐
    ▼                    ▼                   ▼
 WizardCard          TeamScreen          RulesScreen (Compendio)
-(+ Chip)            (+ Chip)            (+ Chip, liste complete)
+(Chip + desc,       (Chip + bonus       (Chip, liste complete +
+ no numeri)          + membri)           grafo sinergie firma)
 ```
 
 Nessun cambiamento a engine, tipi di dominio, o file `data/`. Solo presentazione +
@@ -150,7 +163,8 @@ un modulo di formattazione puro.
   `synergyBonusText` (stat singole, allPct, regen, combinazioni, bonus vuoto).
 - **`Chip`** (smoke): render con/senza icona.
 - **`RulesScreen`/Compendio** (smoke): render senza crash; tutte le categorie del
-  glossario presenti; conta voci magie/reliquie/sinergie = lunghezza dati.
+  glossario presenti; conta voci magie/reliquie/sinergie = lunghezza dati; il grafo
+  sinergie rende un nodo per ogni mago coinvolto e una connessione per sinergia.
 - **`WizardCard`/`TeamScreen`** (smoke): render con magia con effetti e sinergie attive.
 
 ## Non-goals (YAGNI)
