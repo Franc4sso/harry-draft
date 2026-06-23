@@ -30,7 +30,7 @@ export function generateMap(rng: Rng): RunNode[] {
     else widths.push(rng.int(minWidth, maxWidth))
   }
   const typeForFloor = (f: number): RunNodeType =>
-    f === last ? 'boss' : (eliteFloors as readonly number[]).includes(f) ? 'elite' : 'battle'
+    f === last ? 'boss' : eliteFloors.includes(f) ? 'elite' : 'battle'
 
   const floorNodes: RunNode[][] = widths.map((w, f) =>
     Array.from({ length: w }, (_, i) => ({ id: nodeId(f, i), type: typeForFloor(f), next: [] as string[] })),
