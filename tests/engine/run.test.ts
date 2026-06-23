@@ -34,4 +34,12 @@ describe('run orchestrator', () => {
     expect(a.winner).toBe(b.winner)
     expect(a.turns).toBe(b.turns)
   })
+  it('a RunState can carry an optional map of nodes', () => {
+    const s = { ...startRun('seed'), map: [{ id: 'n0', type: 'battle' as const, next: ['n1'] }], currentNodeId: 'n0' }
+    expect(s.map?.[0]?.type).toBe('battle')
+    expect(s.currentNodeId).toBe('n0')
+  })
+  it('startRun does not populate map (inert by default)', () => {
+    expect(startRun('seed').map).toBeUndefined()
+  })
 })
