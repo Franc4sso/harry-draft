@@ -1,4 +1,4 @@
-import type { Tier } from '@/types'
+import type { Tier, RelicRarity } from '@/types'
 
 export const BALANCE = {
   combat: {
@@ -27,5 +27,14 @@ export const BALANCE = {
     // power-percentile. Smaller = steeper difficulty (late enemies/boss draft
     // from the very top of the roster). Tuned for ~50% clear at optimal play.
     difficultySpan: 7,
+  },
+  relics: {
+    offerCount: 3,
+    rarityWeights: {
+      'comune': 50,
+      'non-comune': 28,
+      'rara': 16,
+      'epica': 6,
+    } as Record<RelicRarity, number>,
   },
 } as const
