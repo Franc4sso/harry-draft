@@ -52,6 +52,7 @@ export function CampaignRunner({
           result={c.battle.result}
           playerTeam={team}
           playerSyn={c.run.activeSynergies}
+          playerRelics={c.run.relics}
           enemy={c.battle.enemy}
           enemySyn={c.battle.enemySyn}
           title={isBoss ? `Boss: ${BOSS_NAME}` : `Sfida ${c.run.stage} di ${c.enemyCount}`}

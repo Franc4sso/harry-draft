@@ -1,5 +1,5 @@
 import type {
-  ActiveSynergy, BattleResult, DraftedWizard, House, LogEntry, Role, Side,
+  ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard, House, LogEntry, Role, Side,
 } from '@/types'
 import { toBattleUnits } from './simulate'
 
@@ -42,16 +42,16 @@ export interface Replay {
  * sequence of full HP snapshots the UI can step through. Units are keyed by
  * `side:id` so the same wizard appearing on both teams never collides.
  *
- * maxHp is recomputed from the teams + synergies (mirroring simulateBattle) so
- * post-synergy HP pools line up exactly with what the engine simulated.
+ * maxHp is recomputed from the teams + synergies + relics (mirroring simulateBattle) so
+ * post-synergy/relic HP pools line up exactly with what the engine simulated.
  */
 export function buildReplay(
   result: BattleResult,
   left: DraftedWizard[],
   right: DraftedWizard[],
-  opts: { leftSyn?: ActiveSynergy[]; rightSyn?: ActiveSynergy[] } = {},
+  opts: { leftSyn?: ActiveSynergy[]; rightSyn?: ActiveSynergy[]; leftRelics?: ActiveRelic[] } = {},
 ): Replay {
-  const L = toBattleUnits(left, 'left', opts.leftSyn ?? [])
+  const L = toBattleUnits(left, 'left', opts.leftSyn ?? [], opts.leftRelics ?? [])
   const R = toBattleUnits(right, 'right', opts.rightSyn ?? [])
 
   const units: ReplayUnit[] = [...L, ...R].map(u => ({
