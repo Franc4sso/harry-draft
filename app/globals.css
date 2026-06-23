@@ -1,9 +1,9 @@
 @import "tailwindcss";
 
 :root {
-  --background: #070a10;
+  --background: #0a0813;
   --foreground: #e8ecf3;
-  --panel: #0e1320;
+  --panel: #11101d;
   --house-grifondoro: #ae0001;
   --house-grifondoro-glow: #ffc500;
   --house-serpeverde: #1a472a;
@@ -12,12 +12,20 @@
   --house-corvonero-glow: #946b2d;
   --house-tassorosso: #ecb939;
   --house-tassorosso-glow: #372e29;
+  --ink: #0a0813;
+  --ink-soft: #0c0a16;
+  --gold: #b08d57;
+  --gold-bright: #caa24a;
+  --gold-pale: #f3e6a0;
+  --violet: #7c3aed;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-panel: var(--panel);
+  --color-gold: var(--gold);
+  --color-violet: var(--violet);
   --color-house-grifondoro: var(--house-grifondoro);
   --color-house-serpeverde: var(--house-serpeverde);
   --color-house-corvonero: var(--house-corvonero);
@@ -28,7 +36,7 @@
 
 html, body {
   background:
-    radial-gradient(1200px 600px at 50% -10%, #131b2e 0%, transparent 60%),
+    radial-gradient(140% 90% at 50% -10%, #161d33 0%, transparent 65%),
     var(--background);
   color: var(--foreground);
   min-height: 100%;
@@ -38,4 +46,10 @@ html, body {
   background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
   backdrop-filter: blur(10px);
   border: 1px solid rgba(255,255,255,0.08);
+}
+
+@keyframes resaShimmer { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
+@keyframes resaPulse { 0%,100% { opacity: .85 } 50% { opacity: 1 } }
+@media (prefers-reduced-motion: reduce) {
+  .resa-animated { animation: none !important; }
 }
