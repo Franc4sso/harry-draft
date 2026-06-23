@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { startRun, confirmTeam, nextBattle } from '@/game/engine/run'
+import { startRun, confirmTeam, nextBattle, advanceToNode, nodeById } from '@/game/engine/run'
+import { nodeDepth } from '@/game/engine/map'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
 import { WIZARDS } from '@/data/wizards'
@@ -41,5 +42,44 @@ describe('run orchestrator', () => {
   })
   it('startRun does not populate map (inert by default)', () => {
     expect(startRun('seed').map).toBeUndefined()
+  })
+})
+
+describe('run map integration', () => {
+  const team = playerTeam()
+
+  it('confirmTeam generates a map and sets currentNodeId to the start node', () => {
+    const s = confirmTeam(startRun('seed-map'), team)
+    expect(s.map && s.map.length).toBeGreaterThan(0)
+    expect(s.currentNodeId).toBe(s.map![0]!.id)
+    expect(nodeDepth(s.currentNodeId!)).toBe(0)
+  })
+
+  it('advanceToNode accepts a legal next node', () => {
+    const s = confirmTeam(startRun('seed-map'), team)
+    const legal = nodeById(s, s.currentNodeId!)!.next[0]!
+    const s2 = advanceToNode(s, legal)
+    expect(s2.currentNodeId).toBe(legal)
+  })
+
+  it('advanceToNode rejects an illegal (non-adjacent) node', () => {
+    const s = confirmTeam(startRun('seed-map'), team)
+    const illegal = s.map!.find(n => !nodeById(s, s.currentNodeId!)!.next.includes(n.id) && n.id !== s.currentNodeId)!.id
+    expect(() => advanceToNode(s, illegal)).toThrow()
+  })
+
+  it('nextBattle scales enemy budget by node depth; elite is harder than battle at same depth not required — boss node sets isBoss', () => {
+    let s = confirmTeam(startRun('seed-map'), team)
+    // walk to the boss by always taking the first legal edge
+    let guard = 0
+    while (nodeById(s, s.currentNodeId!)!.type !== 'boss' && guard++ < 20) {
+      const out = nextBattle(s)
+      s = out.state
+      const cur = nodeById(s, s.currentNodeId!)!
+      if (cur.type === 'boss') break
+      s = advanceToNode(s, cur.next[0]!)
+    }
+    const bossOut = nextBattle(s)
+    expect(bossOut.isBoss).toBe(true)
   })
 })

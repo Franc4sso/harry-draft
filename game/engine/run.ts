@@ -1,8 +1,9 @@
-import type { ActiveSynergy, BattleResult, DraftedWizard, Relic, RunState } from '@/types'
+import type { ActiveSynergy, BattleResult, DraftedWizard, Relic, RunNode, RunState } from '@/types'
 import { createRng } from './rng'
 import { detectSynergies } from './synergy'
 import { simulateBattle } from './combat/simulate'
 import { generateEnemyTeam, generateBossTeam, budgetForStage } from './combat/teamGen'
+import { generateMap, mapRngChannel, nodeDepth } from './map'
 import { BALANCE } from '@/data/constants'
 import { BOSSES } from '@/data/bosses'
 
@@ -19,7 +20,23 @@ export function addRelic(state: RunState, relic: Relic): RunState {
 }
 
 export function confirmTeam(state: RunState, team: DraftedWizard[]): RunState {
-  return { ...state, team, activeSynergies: detectSynergies(team), phase: 'team' }
+  const map = generateMap(createRng(state.seed).fork(mapRngChannel))
+  return {
+    ...state, team, activeSynergies: detectSynergies(team),
+    phase: 'team', map, currentNodeId: map[0]!.id,
+  }
+}
+
+export function nodeById(state: RunState, id: string): RunNode | undefined {
+  return state.map?.find(n => n.id === id)
+}
+
+export function advanceToNode(state: RunState, nodeId: string): RunState {
+  const cur = state.currentNodeId ? nodeById(state, state.currentNodeId) : undefined
+  if (!cur || !cur.next.includes(nodeId)) {
+    throw new Error(`illegal move: ${state.currentNodeId} -> ${nodeId}`)
+  }
+  return { ...state, currentNodeId: nodeId }
 }
 
 export interface BattleOutcome {
@@ -32,14 +49,17 @@ export interface BattleOutcome {
 }
 
 export function nextBattle(state: RunState): BattleOutcome {
-  const isBoss = state.stage >= BALANCE.campaign.enemyCount
+  const cur = state.currentNodeId ? nodeById(state, state.currentNodeId) : undefined
+  const isBoss = cur?.type === 'boss'
+  const depth = cur ? nodeDepth(cur.id) : state.stage // fallback keeps legacy callers working
   const base = createRng(state.seed).fork(combatRngChannel)
-  const enemyRng = base.fork(state.stage + 1)
-  const battleRng = base.fork(state.stage + 100)
+  const enemyRng = base.fork(depth + 1)
+  const battleRng = base.fork(depth + 100)
 
+  const eliteMult = cur?.type === 'elite' ? BALANCE.map.eliteBudgetMult : 1
   const enemy = isBoss
     ? generateBossTeam(enemyRng, BOSSES[0]!)
-    : generateEnemyTeam(enemyRng, budgetForStage(state.stage))
+    : generateEnemyTeam(enemyRng, Math.round(budgetForStage(depth) * eliteMult))
   const enemySyn = detectSynergies(enemy)
 
   const result = simulateBattle(state.team, enemy, battleRng, {
