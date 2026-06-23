@@ -5,6 +5,7 @@ import { nodeDepth } from '@/game/engine/map'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
 import { powerOf } from '@/game/engine/combat/teamGen'
+import { detectSynergies } from '@/game/engine/synergy'
 import { WIZARDS } from '@/data/wizards'
 import { BALANCE } from '@/data/constants'
 import type { DraftedWizard, RunNode, RunState } from '@/types'
@@ -171,5 +172,38 @@ describe('applyBattleToRoster', () => {
 
   it('empty team → empty', () => {
     expect(applyBattleToRoster([], [])).toEqual([])
+  })
+})
+
+describe('nextBattle roster persistence + phase', () => {
+  it('survivors carry into state.team; dead are dropped', () => {
+    let s = confirmTeam(startRun('persist-seed'), playerTeam())
+    const startLen = s.team.length
+    const out = nextBattle(s)
+    expect(out.state.team.length).toBeLessThanOrEqual(startLen)
+    for (const dw of out.state.team) expect(typeof dw.currentHp).toBe('number')
+  })
+
+  it('phase is victory when at least one wizard survives a non-boss node', () => {
+    const s = confirmTeam(startRun('persist-seed'), playerTeam())
+    const out = nextBattle(s)
+    // first node is non-boss; with a normal team at least one should survive stage 0
+    if (out.state.team.length > 0) expect(out.state.phase).toBe('victory')
+    else expect(out.state.phase).toBe('defeat')
+  })
+
+  it('phase is defeat only when the whole roster is wiped', () => {
+    const s = confirmTeam(startRun('persist-seed'), playerTeam())
+    const out = nextBattle(s)
+    // Direct rule check: a state whose post-battle team is empty must be 'defeat'.
+    if (out.state.team.length === 0) expect(out.state.phase).toBe('defeat')
+    else expect(out.state.phase).not.toBe('defeat')
+  })
+
+  it('recomputes synergies from the post-battle roster', () => {
+    const s = confirmTeam(startRun('persist-seed'), playerTeam())
+    const out = nextBattle(s)
+    // activeSynergies must match detectSynergies(newTeam), not the pre-battle team
+    expect(out.state.activeSynergies).toEqual(detectSynergies(out.state.team))
   })
 })

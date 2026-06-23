@@ -82,14 +82,16 @@ export function nextBattle(state: RunState): BattleOutcome {
     leftSyn: state.activeSynergies, rightSyn: enemySyn, leftRelics: state.relics,
   })
 
-  const won = result.winner === 'left'
-  const nextStage = state.stage + 1
-  const phase: RunState['phase'] = !won
-    ? 'defeat'
-    : isBoss ? 'win' : 'victory'
+  const newTeam = applyBattleToRoster(state.team, result.finalSnapshot)
+  const newSyn = detectSynergies(newTeam)
+  const wiped = newTeam.length === 0
+  const phase: RunState['phase'] =
+    wiped ? 'defeat'
+    : isBoss ? (result.winner === 'left' ? 'win' : 'defeat') // boss: win-or-bust
+    : 'victory'                                               // non-boss: survive → advance
 
   return {
-    state: { ...state, stage: nextStage, lastBattle: result, phase },
+    state: { ...state, team: newTeam, activeSynergies: newSyn, stage: state.stage + 1, lastBattle: result, phase },
     result, enemy, enemySyn, isBoss,
   }
 }
