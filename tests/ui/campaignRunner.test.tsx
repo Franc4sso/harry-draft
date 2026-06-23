@@ -39,8 +39,14 @@ describe('CampaignRunner', () => {
     expect(screen.getByText(/La tua squadra/i)).toBeInTheDocument()
     await userEvent.click(screen.getByRole('button', { name: /combatti/i }))
 
-    // Battle view: first stage.
-    expect(await screen.findByText(/Sfida 1 di 5/i)).toBeInTheDocument()
+    // Graph progression: confirming the team now lands on the run map.
+    expect(await screen.findByText(/Scegli il tuo cammino/i)).toBeInTheDocument()
+    // Click the first *reachable* (enabled) node to start the first fight.
+    const choosable = screen.getAllByRole('button').find(b => !(b as HTMLButtonElement).disabled)!
+    await userEvent.click(choosable)
+
+    // Battle view: first fight is floor 1 → "Sfida 1 di 4".
+    expect(await screen.findByText(/Sfida 1 di 4/i)).toBeInTheDocument()
 
     // Skip the replay, then settle the result.
     await userEvent.click(screen.getByRole('button', { name: /salta/i }))

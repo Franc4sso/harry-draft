@@ -66,7 +66,7 @@ describe('useRun relics — stage-0 victory path', () => {
     expect(result.current.view).toBe('relic-choice')
   })
 
-  it('chooseRelic adds the relic to run.relics and transitions to battle', () => {
+  it('chooseRelic adds the relic to run.relics and returns to the map', () => {
     const { result } = renderHook(() => useRun(WIN_SEED, strongTeam()))
     act(() => result.current.startBattle())
     act(() => result.current.revealResult())
@@ -76,7 +76,11 @@ describe('useRun relics — stage-0 victory path', () => {
     act(() => result.current.chooseRelic(chosen))
     // relic is now in run.relics
     expect(result.current.run.relics.some(a => a.relic.id === chosen.id)).toBe(true)
-    // view transitions to battle (chooseRelic internally calls startBattle)
+    // graph progression: chooseRelic returns to the map so the player picks the
+    // next node; choosing a reachable node then starts that battle.
+    expect(result.current.view).toBe('map')
+    const next = result.current.reachable[0]!
+    act(() => result.current.chooseNode(next.id))
     expect(result.current.view).toBe('battle')
   })
 })
@@ -86,75 +90,76 @@ describe('useRun relics — stage-0 victory path', () => {
 // ---------------------------------------------------------------------------
 
 describe('useRun relics — full campaign flow', () => {
-  it('visits relic-choice after EVERY normal victory (5 total); accumulates 5 relics; boss intro after 5th relic chosen', () => {
+  // Reconciled to graph progression: the campaign is no longer a fixed linear
+  // chain of 5 stages. The player walks the map graph (we always take the first
+  // reachable edge). This test preserves the ORIGINAL intent without relying on
+  // hard-coded per-fight win/loss outcomes (the enemy RNG salts moved from
+  // linear-stage to node-depth, so exact outcomes legitimately shifted):
+  //   - a relic-choice is offered after EVERY normal (non-boss) victory
+  //   - relics accumulate exactly one per victory and are always distinct
+  //   - relic offers never include an already-owned relic
+  //   - chooseRelic returns to the MAP (not straight to battle)
+  //   - the run reaches a terminal state; if won, the final fight was the boss
+  //   - accumulated relics survive to the end of the run (win or defeat)
+  it('offers relic-choice after every normal victory, accumulates distinct relics, walks the graph to a terminal state', () => {
     const { result } = renderHook(() => useRun(WIN_SEED, strongTeam()))
-    const enemyCount = BALANCE.campaign.enemyCount // 5
 
     const relicIdsObtained: string[] = []
+    let lastFightWasBoss = false
+    let guard = 0
 
-    // -----------------------------------------------------------------------
-    // Drive all 5 normal stages.
-    // After stage 0 we call startBattle manually; subsequent stages are
-    // started internally by chooseRelic (which calls startBattle for stages
-    // 0-3, or goes to boss intro for stage 4). So the pattern per stage i is:
-    //   [stage 0 only: startBattle()]
-    //   revealResult()
-    //   advance()       → always relic-choice
-    //   chooseRelic()   → 'battle' for stages 0-3, 'boss' for stage 4
-    // -----------------------------------------------------------------------
-    act(() => result.current.startBattle()) // kick off stage 0
+    // Kick off the first fight (floor 0).
+    act(() => result.current.startBattle())
 
-    for (let i = 0; i < enemyCount; i++) {
+    while (guard++ < 20) {
+      lastFightWasBoss = result.current.battle?.isBoss ?? false
       act(() => result.current.revealResult())
 
-      // UNCONDITIONAL: all 5 normal stages are victories with this seed
-      expect(result.current.view).toBe('victory')
+      const v = result.current.view
+      if (v === 'win' || v === 'defeat') break
+
+      // Any non-terminal fight that survived is a normal victory.
+      expect(v).toBe('victory')
 
       act(() => result.current.advance())
-
-      // ALL stages 0-4: advance always goes to relic-choice
       expect(result.current.view).toBe('relic-choice')
 
-      // Offered choices are distinct from each other
+      // Offered choices are distinct and exclude already-owned relics.
       const offeredIds = result.current.relicChoices.map(r => r.id)
       expect(new Set(offeredIds).size).toBe(offeredIds.length)
-
-      // Offered choices don't include already-owned relics
       for (const offered of result.current.relicChoices) {
         expect(relicIdsObtained).not.toContain(offered.id)
       }
 
-      // Pick the first offered relic
       const chosen = result.current.relicChoices[0]!
+      const ownedBefore = result.current.run.relics.length
       act(() => result.current.chooseRelic(chosen))
       relicIdsObtained.push(chosen.id)
 
-      // Relics accumulate: after stage i we own i+1 relics
-      expect(result.current.run.relics).toHaveLength(i + 1)
+      // Exactly one relic added per victory.
+      expect(result.current.run.relics).toHaveLength(ownedBefore + 1)
+      expect(result.current.run.relics.some(a => a.relic.id === chosen.id)).toBe(true)
 
-      if (i < enemyCount - 1) {
-        // Stages 0-3: chooseRelic starts the next normal battle
-        expect(result.current.view).toBe('battle')
-      } else {
-        // Stage 4: chooseRelic goes to boss intro (not battle yet)
-        expect(result.current.view).toBe('boss')
-        // 5 relics accumulated — one per normal stage
-        expect(result.current.run.relics).toHaveLength(enemyCount)
-      }
+      // chooseRelic returns to the map; walk the graph by the first legal edge.
+      expect(result.current.view).toBe('map')
+      const next = result.current.reachable[0]!
+      act(() => result.current.chooseNode(next.id))
+      expect(result.current.view).toBe('battle')
     }
 
-    // -----------------------------------------------------------------------
-    // Boss fight: player loses (this seed deterministically ends in defeat)
-    // -----------------------------------------------------------------------
-    expect(result.current.view).toBe('boss')
-    act(() => result.current.startBattle())
-    act(() => result.current.revealResult())
-    expect(result.current.view).toBe('defeat')
+    // The run terminated (boss reached or defeated along the way).
+    expect(['win', 'defeat']).toContain(result.current.view)
 
-    // All 5 accumulated relics are still in run.relics after defeat
-    expect(result.current.run.relics).toHaveLength(enemyCount)
+    // At least one normal victory happened, so at least one relic was earned.
+    expect(result.current.run.relics.length).toBeGreaterThan(0)
 
-    // All acquired relic IDs are distinct (no duplicates ever offered/chosen)
+    // Relics never duplicate.
     expect(new Set(relicIdsObtained).size).toBe(relicIdsObtained.length)
+    // Accumulated relics survive to the end of the run.
+    expect(result.current.run.relics).toHaveLength(relicIdsObtained.length)
+
+    // If the player won, the final fight was the boss node (graph equivalent of
+    // the old "boss arrives after the last normal stage" assertion).
+    if (result.current.view === 'win') expect(lastFightWasBoss).toBe(true)
   })
 })
