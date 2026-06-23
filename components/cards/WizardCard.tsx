@@ -36,7 +36,7 @@ export function WizardCard({
       onKeyDown={clickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') onClick?.() } : undefined}
       className={cn('w-60 select-none text-white', clickable && 'cursor-pointer', className)}
     >
-      <RarityFrame tier={wizard.tier} className={cn(selected && 'ring-2 ring-white/80')}>
+      <RarityFrame tier={wizard.tier} selected={selected}>
         <div className="relative h-40 overflow-hidden">
           <PortraitImage id={wizard.id} house={wizard.house} alt={wizard.name} variant="card" />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 55%, rgba(12,10,22,0.92))' }} />

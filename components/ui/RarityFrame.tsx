@@ -4,9 +4,13 @@ import { rarityStyle } from '@/lib/rarity'
 import { cn } from '@/lib/cn'
 
 export function RarityFrame({
-  tier, className, children,
-}: { tier: Tier; className?: string; children: ReactNode }) {
+  tier, selected, className, children,
+}: { tier: Tier; selected?: boolean; className?: string; children: ReactNode }) {
   const r = rarityStyle(tier)
+  const baseGlow = r.glow > 0
+    ? `0 0 ${10 + r.glow * 26}px ${r.color}${Math.round(r.glow * 90).toString(16).padStart(2, '0')}`
+    : '0 8px 30px rgba(0,0,0,0.5)'
+  const boxShadow = selected ? `${baseGlow}, 0 0 0 2px rgba(255,255,255,0.85)` : baseGlow
   return (
     <div
       data-rarity={r.label}
@@ -14,7 +18,7 @@ export function RarityFrame({
       style={{
         background: r.bgGradient,
         border: `${tier === 1 ? 2 : 1}px solid ${r.borderColor}`,
-        boxShadow: r.glow > 0 ? `0 0 ${10 + r.glow * 26}px ${r.color}${Math.round(r.glow * 90).toString(16).padStart(2, '0')}` : '0 8px 30px rgba(0,0,0,0.5)',
+        boxShadow,
       }}
     >
       {r.hasCrown && (

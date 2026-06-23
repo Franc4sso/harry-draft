@@ -16,4 +16,15 @@ describe('RarityFrame', () => {
     expect(container.querySelector('[data-gem]')).toBeFalsy()
     expect(container.querySelector('[data-crown]')).toBeFalsy()
   })
+  it('selected=true adds the white ring to boxShadow', () => {
+    const { container } = render(<RarityFrame tier={4} selected>x</RarityFrame>)
+    const el = container.querySelector('[data-rarity]') as HTMLElement
+    expect(el.style.boxShadow).toMatch(/255,\s*255,\s*255/)
+    expect(el.style.boxShadow).toContain('2px')
+  })
+  it('selected=false (or omitted) does not add the white ring', () => {
+    const { container } = render(<RarityFrame tier={4}>x</RarityFrame>)
+    const el = container.querySelector('[data-rarity]') as HTMLElement
+    expect(el.style.boxShadow).not.toMatch(/255,\s*255,\s*255/)
+  })
 })

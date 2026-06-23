@@ -7,13 +7,14 @@ export function PortraitImage({
   id, house, alt, variant = 'card',
 }: { id: string; house: House; alt: string; variant?: 'card' | 'bust' }) {
   const [failed, setFailed] = useState(false)
-  const theme = houseTheme(house)
   const fit = variant === 'bust' ? 'object-[50%_14%]' : 'object-[50%_18%]'
 
   if (failed) {
+    const theme = houseTheme(house)
     return (
       <div
         data-fallback={house}
+        data-variant={variant}
         aria-label={alt}
         className="h-full w-full"
         style={{ background: `radial-gradient(ellipse at 50% 25%, ${theme.color} 0%, #0c0a16 70%)` }}

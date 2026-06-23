@@ -13,4 +13,10 @@ describe('PortraitImage', () => {
     fireEvent.error(screen.getByAltText('Ignoto'))
     expect(container.querySelector('[data-fallback="Serpeverde"]')).toBeTruthy()
   })
+  it('fallback div carries data-variant', () => {
+    const { container } = render(<PortraitImage id="missing" house="Grifondoro" alt="X" variant="bust" />)
+    fireEvent.error(screen.getByAltText('X'))
+    const fallback = container.querySelector('[data-fallback]') as HTMLElement
+    expect(fallback.getAttribute('data-variant')).toBe('bust')
+  })
 })
