@@ -1,15 +1,16 @@
+import type { ReactNode } from 'react'
 import type { Tier } from '@/types'
 import { rarityStyle } from '@/lib/rarity'
 import { cn } from '@/lib/cn'
 
 export function RarityFrame({
   tier, className, children,
-}: { tier: Tier; className?: string; children: React.ReactNode }) {
+}: { tier: Tier; className?: string; children: ReactNode }) {
   const r = rarityStyle(tier)
   return (
     <div
       data-rarity={r.label}
-      className={cn('relative rounded-2xl overflow-hidden', className)}
+      className={cn('relative rounded-2xl overflow-hidden', r.animated && 'resa-animated', className)}
       style={{
         background: r.bgGradient,
         border: `${tier === 1 ? 2 : 1}px solid ${r.borderColor}`,
