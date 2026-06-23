@@ -23,5 +23,9 @@ export const BALANCE = {
     enemyCount: 5,
     baseBudget: 1500,
     budgetStep: 220,
+    // Stages of budget headroom used to map an enemy budget onto a roster
+    // power-percentile. Smaller = steeper difficulty (late enemies/boss draft
+    // from the very top of the roster). Tuned for ~50% clear at optimal play.
+    difficultySpan: 7,
   },
 } as const

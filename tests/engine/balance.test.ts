@@ -6,12 +6,15 @@ import { detectSynergies } from '@/game/engine/synergy'
 import { createRng } from '@/game/engine/rng'
 
 describe('balance sanity', () => {
-  it('stage 0 player teams are competitive (win rate in a sane band)', () => {
+  it('budget is a meaningful difficulty dial (a clearly richer team usually wins)', () => {
+    // Budget must translate into strength: a late-stage team should beat a
+    // baseline one most of the time, but the curve is steep enough that a
+    // small (1-2 stage) gap barely matters — so we test a clear, multi-stage gap.
     let wins = 0
     const N = 60
     for (let i = 0; i < N; i++) {
       const playerRng = createRng(`p${i}`)
-      const player = generateEnemyTeam(playerRng, budgetForStage(2))
+      const player = generateEnemyTeam(playerRng, budgetForStage(4))
       const enemy = generateEnemyTeam(createRng(`e${i}`), budgetForStage(0))
       const res = simulateBattle(player, enemy, createRng(`b${i}`), {
         leftSyn: detectSynergies(player), rightSyn: detectSynergies(enemy),
@@ -20,7 +23,7 @@ describe('balance sanity', () => {
     }
     const rate = wins / N
     // stronger-budget side should usually win, but not always.
-    expect(rate).toBeGreaterThan(0.5)
+    expect(rate).toBeGreaterThan(0.6)
     expect(rate).toBeLessThan(1)
   })
   it('no battle runs to the turn cap on every seed (avoids stalemates)', () => {

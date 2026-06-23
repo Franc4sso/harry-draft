@@ -31,8 +31,13 @@ function pickTowardBudget(rng: Rng, targetPer: number, count: number): DraftedWi
   // Map targetPer to a rank: how many wizards should be "weaker" than what we want.
   // We use a logistic mapping so larger budgets always select from higher-ranked wizards.
   // Reference budget range from constants:
-  const minBudget = BALANCE.campaign.baseBudget / BALANCE.draft.teamSize   // ~300
-  const maxBudget = (BALANCE.campaign.baseBudget + 10 * BALANCE.campaign.budgetStep) / BALANCE.draft.teamSize // ~740
+  const minBudget = BALANCE.campaign.baseBudget / BALANCE.draft.teamSize
+  // Headroom maps an enemy budget onto a roster power-percentile. Tied to a tunable
+  // difficultySpan (not a magic number) so the late stages / boss draft from near
+  // the top of the roster and the difficulty curve peaks by the final fights.
+  const maxBudget =
+    (BALANCE.campaign.baseBudget + BALANCE.campaign.difficultySpan * BALANCE.campaign.budgetStep) /
+    BALANCE.draft.teamSize
   // Clamp and normalize targetPer to [0,1].
   const t = Math.min(1, Math.max(0, (targetPer - minBudget) / Math.max(1, maxBudget - minBudget)))
   // Map to wizard rank index: t=0 → pick from bottom, t=1 → pick from top.
