@@ -64,16 +64,16 @@ export function useRun(seed: string, team: DraftedWizard[]): RunController {
   }, [])
 
   const advance = useCallback(() => {
-    if (runRef.current.stage >= enemyCount) setView('boss')
-    else setView('relic-choice')
-  }, [enemyCount])
+    setView('relic-choice')
+  }, [])
 
   const chooseRelic = useCallback((relic: Relic) => {
     const next = addRelic(runRef.current, relic)
     runRef.current = next
     setRun(next)
-    startBattle()
-  }, [startBattle])
+    if (next.stage >= enemyCount) setView('boss')
+    else startBattle()
+  }, [startBattle, enemyCount])
 
   const relicChoices = offerRelics(
     createRng(seed).fork(relicOfferRngChannel).fork(run.stage),

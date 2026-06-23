@@ -11,7 +11,7 @@
  *   stage 1 → victory → relic-choice → (chooseRelic) → battle …
  *   stage 2 → victory → relic-choice → (chooseRelic) → battle …
  *   stage 3 → victory → relic-choice → (chooseRelic) → battle …
- *   stage 4 → victory → boss (advance goes directly to boss, NO relic-choice)
+ *   stage 4 → victory → relic-choice → (chooseRelic) → boss intro
  *   boss   → defeat
  */
 import { describe, it, expect } from 'vitest'
@@ -86,7 +86,7 @@ describe('useRun relics — stage-0 victory path', () => {
 // ---------------------------------------------------------------------------
 
 describe('useRun relics — full campaign flow', () => {
-  it('visits relic-choice after each normal victory; accumulates relics; no relic-choice before boss', () => {
+  it('visits relic-choice after EVERY normal victory (5 total); accumulates 5 relics; boss intro after 5th relic chosen', () => {
     const { result } = renderHook(() => useRun(WIN_SEED, strongTeam()))
     const enemyCount = BALANCE.campaign.enemyCount // 5
 
@@ -95,12 +95,12 @@ describe('useRun relics — full campaign flow', () => {
     // -----------------------------------------------------------------------
     // Drive all 5 normal stages.
     // After stage 0 we call startBattle manually; subsequent stages are
-    // started internally by chooseRelic (which calls startBattle). So the
-    // pattern per stage i is:
+    // started internally by chooseRelic (which calls startBattle for stages
+    // 0-3, or goes to boss intro for stage 4). So the pattern per stage i is:
     //   [stage 0 only: startBattle()]
     //   revealResult()
-    //   advance()
-    //   if relic-choice: chooseRelic(relicChoices[0])
+    //   advance()       → always relic-choice
+    //   chooseRelic()   → 'battle' for stages 0-3, 'boss' for stage 4
     // -----------------------------------------------------------------------
     act(() => result.current.startBattle()) // kick off stage 0
 
@@ -112,34 +112,34 @@ describe('useRun relics — full campaign flow', () => {
 
       act(() => result.current.advance())
 
+      // ALL stages 0-4: advance always goes to relic-choice
+      expect(result.current.view).toBe('relic-choice')
+
+      // Offered choices are distinct from each other
+      const offeredIds = result.current.relicChoices.map(r => r.id)
+      expect(new Set(offeredIds).size).toBe(offeredIds.length)
+
+      // Offered choices don't include already-owned relics
+      for (const offered of result.current.relicChoices) {
+        expect(relicIdsObtained).not.toContain(offered.id)
+      }
+
+      // Pick the first offered relic
+      const chosen = result.current.relicChoices[0]!
+      act(() => result.current.chooseRelic(chosen))
+      relicIdsObtained.push(chosen.id)
+
+      // Relics accumulate: after stage i we own i+1 relics
+      expect(result.current.run.relics).toHaveLength(i + 1)
+
       if (i < enemyCount - 1) {
-        // Stages 0-3: should go to relic-choice (not boss, not battle)
-        expect(result.current.view).toBe('relic-choice')
-
-        // Offered choices are distinct from each other
-        const offeredIds = result.current.relicChoices.map(r => r.id)
-        expect(new Set(offeredIds).size).toBe(offeredIds.length)
-
-        // Offered choices don't include already-owned relics
-        for (const offered of result.current.relicChoices) {
-          expect(relicIdsObtained).not.toContain(offered.id)
-        }
-
-        // Pick the first offered relic
-        const chosen = result.current.relicChoices[0]!
-        act(() => result.current.chooseRelic(chosen))
-        relicIdsObtained.push(chosen.id)
-
-        // After chooseRelic, view is immediately 'battle' (startBattle was called internally)
+        // Stages 0-3: chooseRelic starts the next normal battle
         expect(result.current.view).toBe('battle')
-
-        // Relics accumulate: stage i+1 means i+1 relics owned
-        expect(result.current.run.relics).toHaveLength(i + 1)
       } else {
-        // Stage 4: advance should go DIRECTLY to boss — NO relic-choice
+        // Stage 4: chooseRelic goes to boss intro (not battle yet)
         expect(result.current.view).toBe('boss')
-        // 4 relics accumulated (one per stage 0-3, none before the boss)
-        expect(result.current.run.relics).toHaveLength(enemyCount - 1)
+        // 5 relics accumulated — one per normal stage
+        expect(result.current.run.relics).toHaveLength(enemyCount)
       }
     }
 
@@ -151,8 +151,8 @@ describe('useRun relics — full campaign flow', () => {
     act(() => result.current.revealResult())
     expect(result.current.view).toBe('defeat')
 
-    // All 4 accumulated relics are still in run.relics after defeat
-    expect(result.current.run.relics).toHaveLength(enemyCount - 1)
+    // All 5 accumulated relics are still in run.relics after defeat
+    expect(result.current.run.relics).toHaveLength(enemyCount)
 
     // All acquired relic IDs are distinct (no duplicates ever offered/chosen)
     expect(new Set(relicIdsObtained).size).toBe(relicIdsObtained.length)
