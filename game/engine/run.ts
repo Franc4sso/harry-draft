@@ -1,4 +1,4 @@
-import type { ActiveSynergy, BattleResult, DraftedWizard, RunState } from '@/types'
+import type { ActiveSynergy, BattleResult, DraftedWizard, Relic, RunState } from '@/types'
 import { createRng } from './rng'
 import { detectSynergies } from './synergy'
 import { simulateBattle } from './combat/simulate'
@@ -8,9 +8,14 @@ import { BOSSES } from '@/data/bosses'
 
 export const draftRngChannel = 1
 export const combatRngChannel = 2
+export const relicOfferRngChannel = 3
 
 export function startRun(seed: string): RunState {
-  return { seed, phase: 'draft', team: [], activeSynergies: [], stage: 0 }
+  return { seed, phase: 'draft', team: [], activeSynergies: [], stage: 0, relics: [] }
+}
+
+export function addRelic(state: RunState, relic: Relic): RunState {
+  return { ...state, relics: [...state.relics, { relic, stageObtained: state.stage }] }
 }
 
 export function confirmTeam(state: RunState, team: DraftedWizard[]): RunState {
