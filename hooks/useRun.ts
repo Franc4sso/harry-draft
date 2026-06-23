@@ -1,10 +1,12 @@
 'use client'
 import { useState, useRef, useCallback } from 'react'
-import type { ActiveSynergy, BattleResult, DraftedWizard, RunState } from '@/types'
-import { startRun, confirmTeam, nextBattle } from '@/game/engine/run'
+import type { ActiveSynergy, BattleResult, DraftedWizard, Relic, RunState } from '@/types'
+import { startRun, confirmTeam, nextBattle, addRelic, relicOfferRngChannel } from '@/game/engine/run'
+import { offerRelics } from '@/game/engine/relics'
+import { createRng } from '@/game/engine/rng'
 import { BALANCE } from '@/data/constants'
 
-export type RunView = 'team' | 'boss' | 'battle' | 'victory' | 'defeat' | 'win'
+export type RunView = 'team' | 'boss' | 'battle' | 'victory' | 'defeat' | 'win' | 'relic-choice'
 
 export interface ActiveBattle {
   result: BattleResult
@@ -23,17 +25,21 @@ export interface RunController {
   battleNumber: number
   /** True when the next fight is the boss. */
   bossNext: boolean
+  /** Relics offered to the player at the current stage. */
+  relicChoices: Relic[]
   startBattle: () => void
   /** Reveal victory/defeat/win once the replay finishes. */
   revealResult: () => void
-  /** From a victory screen: go to the next fight (or the boss intro). */
+  /** From a victory screen: go to relic-choice (or boss intro if last stage). */
   advance: () => void
+  /** Pick a relic from relicChoices, add it to the run, then start next battle. */
+  chooseRelic: (relic: Relic) => void
 }
 
 /**
  * Drives a full campaign run from a confirmed team: 5 enemy teams then the
  * boss. The pure engine (run.ts) owns all combat + RNG; this only sequences
- * the views the player walks through (battle → victory → next → … → win/defeat).
+ * the views the player walks through (battle → victory → relic-choice → next → … → win/defeat).
  */
 export function useRun(seed: string, team: DraftedWizard[]): RunController {
   const [run, setRun] = useState<RunState>(() => confirmTeam(startRun(seed), team))
@@ -58,9 +64,22 @@ export function useRun(seed: string, team: DraftedWizard[]): RunController {
   }, [])
 
   const advance = useCallback(() => {
-    if (runRef.current.stage >= enemyCount) setView('boss')
+    setView('relic-choice')
+  }, [])
+
+  const chooseRelic = useCallback((relic: Relic) => {
+    const next = addRelic(runRef.current, relic)
+    runRef.current = next
+    setRun(next)
+    if (next.stage >= enemyCount) setView('boss')
     else startBattle()
-  }, [enemyCount, startBattle])
+  }, [startBattle, enemyCount])
+
+  const relicChoices = offerRelics(
+    createRng(seed).fork(relicOfferRngChannel).fork(run.stage),
+    run.relics,
+    run.stage,
+  )
 
   const bossNext = run.stage >= enemyCount
   const battleNumber = Math.min(run.stage + 1, enemyCount + 1)
@@ -72,8 +91,10 @@ export function useRun(seed: string, team: DraftedWizard[]): RunController {
     enemyCount,
     battleNumber,
     bossNext,
+    relicChoices,
     startBattle,
     revealResult,
     advance,
+    chooseRelic,
   }
 }

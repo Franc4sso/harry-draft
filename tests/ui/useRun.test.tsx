@@ -47,8 +47,8 @@ describe('useRun', () => {
       act(() => { result.current.revealResult() })
       if (result.current.view === 'victory') act(() => { result.current.advance() })
     }
-    // Reached either a decisive defeat or the boss gate — both are valid terminal-ish states.
-    expect(['defeat', 'boss', 'win', 'victory']).toContain(result.current.view)
+    // Reached either a decisive defeat, the relic-choice gate, the boss intro, or a win.
+    expect(['defeat', 'boss', 'win', 'victory', 'relic-choice']).toContain(result.current.view)
   })
 
   it('is deterministic: same seed + team reproduces the first battle', () => {

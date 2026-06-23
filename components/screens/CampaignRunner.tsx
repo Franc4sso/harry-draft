@@ -9,6 +9,7 @@ import { BattleScreen } from './BattleScreen'
 import { VictoryScreen } from './VictoryScreen'
 import { BossScreen } from './BossScreen'
 import { ResultScreen } from './ResultScreen'
+import { RelicChoiceScreen } from './RelicChoiceScreen'
 
 const BOSS_NAME = BOSSES[0]?.name ?? 'Boss Finale'
 
@@ -51,6 +52,7 @@ export function CampaignRunner({
           result={c.battle.result}
           playerTeam={team}
           playerSyn={c.run.activeSynergies}
+          playerRelics={c.run.relics}
           enemy={c.battle.enemy}
           enemySyn={c.battle.enemySyn}
           title={isBoss ? `Boss: ${BOSS_NAME}` : `Sfida ${c.run.stage} di ${c.enemyCount}`}
@@ -90,6 +92,16 @@ export function CampaignRunner({
         <ResultScreen
           outcome="defeat" seed={seed} stageReached={c.run.stage}
           enemyCount={c.enemyCount} onRestart={onRestart}
+        />
+      )
+      break
+
+    case 'relic-choice':
+      view = (
+        <RelicChoiceScreen
+          choices={c.relicChoices}
+          owned={c.run.relics}
+          onChoose={c.chooseRelic}
         />
       )
       break

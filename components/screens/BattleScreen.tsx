@@ -1,7 +1,7 @@
 'use client'
 import { useMemo } from 'react'
 import { Play, Pause, SkipForward, FastForward } from 'lucide-react'
-import type { ActiveSynergy, BattleResult, DraftedWizard } from '@/types'
+import type { ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard } from '@/types'
 import { buildReplay } from '@/game/engine/combat/replay'
 import { useBattleReplay, REPLAY_SPEEDS } from '@/hooks/useBattleReplay'
 import { BattleStage } from '@/components/battle/BattleStage'
@@ -9,11 +9,12 @@ import { BattleLog } from '@/components/battle/BattleLog'
 import { Button } from '@/components/ui/Button'
 
 export function BattleScreen({
-  result, playerTeam, playerSyn, enemy, enemySyn, title, rightTitle, onFinish,
+  result, playerTeam, playerSyn, playerRelics, enemy, enemySyn, title, rightTitle, onFinish,
 }: {
   result: BattleResult
   playerTeam: DraftedWizard[]
   playerSyn: ActiveSynergy[]
+  playerRelics?: ActiveRelic[]
   enemy: DraftedWizard[]
   enemySyn: ActiveSynergy[]
   title: string
@@ -21,8 +22,8 @@ export function BattleScreen({
   onFinish: () => void
 }) {
   const replay = useMemo(
-    () => buildReplay(result, playerTeam, enemy, { leftSyn: playerSyn, rightSyn: enemySyn }),
-    [result, playerTeam, enemy, playerSyn, enemySyn],
+    () => buildReplay(result, playerTeam, enemy, { leftSyn: playerSyn, rightSyn: enemySyn, leftRelics: playerRelics ?? [] }),
+    [result, playerTeam, enemy, playerSyn, enemySyn, playerRelics],
   )
   const r = useBattleReplay(replay)
 
