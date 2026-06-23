@@ -5,6 +5,8 @@ import { houseTheme, cn } from '@/lib/theme'
 import { TierBadge } from './TierBadge'
 import { RoleIcon } from './RoleIcon'
 import { StatBar } from '@/components/ui/StatBar'
+import { Chip } from '@/components/ui/Chip'
+import { spellTypeChip, spellEffectChips } from '@/lib/glossary'
 
 export const CARD_STAT_MAX = { hp: 150, atk: 120, def: 120, spd: 120 } as const
 
@@ -62,9 +64,20 @@ export function WizardCard({
         <StatBar label="VEL" value={stats.spd} max={CARD_STAT_MAX.spd} color="#FFD37D" />
       </div>
 
-      <div className="relative mt-4 rounded-xl bg-black/30 px-3 py-2">
-        <p className="text-[10px] uppercase tracking-wider text-white/50">{spell.type}</p>
-        <p className="text-sm font-medium">{spell.name}</p>
+      <div className="relative mt-4 rounded-xl bg-black/30 px-3 py-2 space-y-1.5">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm font-medium">{spell.name}</p>
+          {(() => { const c = spellTypeChip(spell.type); return <Chip label={c.label} color={c.color} icon={c.icon} /> })()}
+        </div>
+        <p className="text-xs text-white/70 leading-snug">{spell.desc}</p>
+        {(() => {
+          const chips = spellEffectChips(spell)
+          return chips.length ? (
+            <div className="flex flex-wrap gap-1 pt-0.5">
+              {chips.map((c) => <Chip key={c.label} label={c.label} color={c.color} icon={c.icon} />)}
+            </div>
+          ) : null
+        })()}
       </div>
     </motion.div>
   )

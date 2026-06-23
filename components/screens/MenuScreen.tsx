@@ -41,7 +41,7 @@ export function MenuScreen() {
         />
         <Button onClick={play}>Gioca</Button>
         <div className="flex gap-4">
-          <Link href="/rules" className="text-white/70 hover:text-white text-sm uppercase tracking-wider font-display">Regole</Link>
+          <Link href="/rules" className="text-white/70 hover:text-white text-sm uppercase tracking-wider font-display">Compendio</Link>
           <Link href="/credits" className="text-white/70 hover:text-white text-sm uppercase tracking-wider font-display">Credits</Link>
         </div>
       </div>

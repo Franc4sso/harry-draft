@@ -1,15 +1,11 @@
 'use client'
 import { motion } from 'framer-motion'
 import { Gem, Sparkles } from 'lucide-react'
-import type { Relic, RelicRarity } from '@/types'
+import type { Relic } from '@/types'
 import { cn } from '@/lib/cn'
+import { RELIC_RARITY_COLOR } from '@/lib/relicRarity'
 
-export const RELIC_RARITY_COLOR: Record<RelicRarity, string> = {
-  'comune': '#9aa3ad',
-  'non-comune': '#5fcf80',
-  'rara': '#4da6ff',
-  'epica': '#c98bff',
-}
+export { RELIC_RARITY_COLOR }
 
 export function RelicCard({
   relic, onClick, className,
