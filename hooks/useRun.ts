@@ -1,12 +1,20 @@
 'use client'
 import { useState, useRef, useCallback } from 'react'
-import type { ActiveSynergy, BattleResult, DraftedWizard, Relic, RunState } from '@/types'
-import { startRun, confirmTeam, nextBattle, addRelic, relicOfferRngChannel } from '@/game/engine/run'
+import type { ActiveSynergy, BattleResult, DraftedWizard, Relic, RunNode, RunState } from '@/types'
+import { startRun, confirmTeam, nextBattle, addRelic, advanceToNode, nodeById, relicOfferRngChannel } from '@/game/engine/run'
+import { nodeDepth } from '@/game/engine/map'
 import { offerRelics } from '@/game/engine/relics'
 import { createRng } from '@/game/engine/rng'
 import { BALANCE } from '@/data/constants'
 
-export type RunView = 'team' | 'boss' | 'battle' | 'victory' | 'defeat' | 'win' | 'relic-choice'
+export type RunView = 'team' | 'map' | 'boss' | 'battle' | 'victory' | 'defeat' | 'win' | 'relic-choice'
+
+/** The selectable next nodes from the run's current node (pure; also used by tests/MapScreen). */
+export function reachableFrom(state: RunState): RunNode[] {
+  const cur = state.currentNodeId ? nodeById(state, state.currentNodeId) : undefined
+  if (!cur) return []
+  return cur.next.map(id => nodeById(state, id)).filter((n): n is RunNode => !!n)
+}
 
 export interface ActiveBattle {
   result: BattleResult
@@ -27,13 +35,21 @@ export interface RunController {
   bossNext: boolean
   /** Relics offered to the player at the current stage. */
   relicChoices: Relic[]
+  /** The node the player currently sits on in the run map. */
+  currentNode: RunNode | undefined
+  /** The legal next nodes the player may move to from currentNode. */
+  reachable: RunNode[]
   startBattle: () => void
   /** Reveal victory/defeat/win once the replay finishes. */
   revealResult: () => void
   /** From a victory screen: go to relic-choice (or boss intro if last stage). */
   advance: () => void
-  /** Pick a relic from relicChoices, add it to the run, then start next battle. */
+  /** Pick a relic from relicChoices, add it to the run, then return to the map. */
   chooseRelic: (relic: Relic) => void
+  /** Move to a legal next node, then start that node's battle. */
+  chooseNode: (nodeId: string) => void
+  /** Show the run map (called by TeamScreen once the team is confirmed). */
+  enterMap: () => void
 }
 
 /**
@@ -49,6 +65,8 @@ export function useRun(seed: string, team: DraftedWizard[]): RunController {
   runRef.current = run
 
   const enemyCount = BALANCE.campaign.enemyCount
+
+  const enterMap = useCallback(() => setView('map'), [])
 
   const startBattle = useCallback(() => {
     const { state, result, enemy, enemySyn, isBoss } = nextBattle(runRef.current)
@@ -71,9 +89,15 @@ export function useRun(seed: string, team: DraftedWizard[]): RunController {
     const next = addRelic(runRef.current, relic)
     runRef.current = next
     setRun(next)
-    if (next.stage >= enemyCount) setView('boss')
-    else startBattle()
-  }, [startBattle, enemyCount])
+    setView('map') // back to the map; the player picks the next node
+  }, [])
+
+  const chooseNode = useCallback((nodeId: string) => {
+    const advanced = advanceToNode(runRef.current, nodeId)
+    runRef.current = advanced
+    setRun(advanced)
+    startBattle() // uses node-depth difficulty via nextBattle reading currentNodeId
+  }, [startBattle])
 
   const relicChoices = offerRelics(
     createRng(seed).fork(relicOfferRngChannel).fork(run.stage),
@@ -81,8 +105,11 @@ export function useRun(seed: string, team: DraftedWizard[]): RunController {
     run.stage,
   )
 
-  const bossNext = run.stage >= enemyCount
-  const battleNumber = Math.min(run.stage + 1, enemyCount + 1)
+  const currentNode = run.currentNodeId ? nodeById(run, run.currentNodeId) : undefined
+  const reachable = reachableFrom(run)
+
+  const bossNext = currentNode?.type === 'boss'
+  const battleNumber = currentNode ? nodeDepth(currentNode.id) + 1 : 1
 
   return {
     run,
@@ -92,9 +119,13 @@ export function useRun(seed: string, team: DraftedWizard[]): RunController {
     battleNumber,
     bossNext,
     relicChoices,
+    currentNode,
+    reachable,
     startBattle,
     revealResult,
     advance,
     chooseRelic,
+    chooseNode,
+    enterMap,
   }
 }
