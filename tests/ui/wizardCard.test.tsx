@@ -5,6 +5,7 @@ import { WizardCard } from '@/components/cards/WizardCard'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
 import { WIZARD_BY_ID } from '@/data/wizards'
+import { SPELLS } from '@/data/spells'
 
 const harry = draftWizard(createRng(1), WIZARD_BY_ID['harry']!)
 
@@ -27,5 +28,12 @@ describe('WizardCard', () => {
     render(<WizardCard drafted={harry} onClick={onClick} />)
     await userEvent.click(screen.getByRole('button'))
     expect(onClick).toHaveBeenCalledOnce()
+  })
+  it('shows the spell description and an effect chip', () => {
+    const incendio = SPELLS.find(s => s.id === 'incendio')!  // has a dot effect
+    const drafted = { ...harry, spell: incendio }
+    render(<WizardCard drafted={drafted} />)
+    expect(screen.getByText(incendio.desc)).toBeInTheDocument()
+    expect(screen.getByText('Danno nel tempo')).toBeInTheDocument()
   })
 })
