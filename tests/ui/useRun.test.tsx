@@ -55,7 +55,7 @@ describe('useRun', () => {
       if (result.current.view === 'victory') act(() => { result.current.advance() })
     }
     // Reached either a decisive defeat, the relic-choice gate, the boss intro, or a win.
-    expect(['defeat', 'boss', 'win', 'victory', 'relic-choice']).toContain(result.current.view)
+    expect(['defeat', 'win', 'victory', 'relic-choice']).toContain(result.current.view)
   })
 
   it('is deterministic: same seed + team reproduces the first battle', () => {

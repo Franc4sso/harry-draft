@@ -89,8 +89,8 @@ export function useRun(seed: string, team: DraftedWizard[]): RunController {
   }, [])
 
   const revealResult = useCallback(() => {
-    // After nextBattle, run.phase is exactly one of victory | win | defeat.
-    setView(runRef.current.phase as RunView)
+    // After nextBattle, phase is exactly one of victory | win | defeat — all valid RunView members.
+    setView(runRef.current.phase as 'victory' | 'win' | 'defeat')
   }, [])
 
   const advance = useCallback(() => {

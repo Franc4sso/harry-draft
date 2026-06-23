@@ -3,7 +3,7 @@ import type { ActiveRelic } from './relic'
 
 export type RunPhase =
   | 'menu' | 'draft' | 'team' | 'battle'
-  | 'victory' | 'defeat' | 'boss' | 'win'
+  | 'victory' | 'defeat' | 'win'
 
 export type RunNodeType = 'battle' | 'elite' | 'boss' | 'event' | 'shop' | 'relic'
 
