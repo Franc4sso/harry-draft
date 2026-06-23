@@ -1,19 +1,22 @@
 import type {
-  ActiveSynergy, BattleResult, BattleUnit, DraftedWizard, LogEntry, Side, UnitSnapshot,
+  ActiveRelic, ActiveSynergy, BattleResult, BattleUnit, DraftedWizard, LogEntry, LogFlag, Side, UnitSnapshot,
 } from '@/types'
 import type { Rng } from '../rng'
 import { BALANCE } from '@/data/constants'
 import { applyBonuses, totalRegen } from '../synergy'
+import { applyRelicBonuses, totalRelicRegen } from '../relics'
 import { canAct } from '../status'
+import { EFFECT_HANDLERS } from './effects'
 import { effectiveStats, resolveAction, tickStatuses } from './resolve'
 import { selectSpell } from './selectSpell'
 import { mostWounded, selectTarget } from './targeting'
 
 export function toBattleUnits(
-  team: DraftedWizard[], side: Side, synergies: ActiveSynergy[],
+  team: DraftedWizard[], side: Side, synergies: ActiveSynergy[], relics: ActiveRelic[] = [],
 ): BattleUnit[] {
   return team.map(dw => {
-    const buffed = applyBonuses(dw.stats, synergies)
+    const synBuffed = applyBonuses(dw.stats, synergies)
+    const buffed = applyRelicBonuses(synBuffed, team, relics)
     return {
       ...dw, side, buffedStats: buffed, maxHp: buffed.hp, hp: buffed.hp,
       cooldowns: {}, statusEffects: [], alive: true,
@@ -31,19 +34,41 @@ export function simulateBattle(
   left: DraftedWizard[],
   right: DraftedWizard[],
   rng: Rng,
-  opts: { leftSyn?: ActiveSynergy[]; rightSyn?: ActiveSynergy[] } = {},
+  opts: { leftSyn?: ActiveSynergy[]; rightSyn?: ActiveSynergy[]; leftRelics?: ActiveRelic[] } = {},
 ): BattleResult {
   const leftSyn = opts.leftSyn ?? []
   const rightSyn = opts.rightSyn ?? []
-  const L = toBattleUnits(left, 'left', leftSyn)
+  // Relics only ever apply to the LEFT (player) team. The enemy never gets relics.
+  const leftRelics = opts.leftRelics ?? []
+  const L = toBattleUnits(left, 'left', leftSyn, leftRelics)
   const R = toBattleUnits(right, 'right', rightSyn)
-  const regen: Record<Side, number> = { left: totalRegen(leftSyn), right: totalRegen(rightSyn) }
+  const regen: Record<Side, number> = {
+    left: totalRegen(leftSyn) + totalRelicRegen(left, leftRelics),
+    right: totalRegen(rightSyn),
+  }
   const log: LogEntry[] = []
   // Score keyed by "side:wizard.id" to avoid merging same-id wizards on opposite teams
   const score: Record<string, number> = {}
 
   const sync = (u: BattleUnit) => { if (u.hp <= 0) { u.hp = 0; u.alive = false } }
   const sideUnits = (s: Side) => (s === 'left' ? L : R).filter(u => u.alive)
+
+  // startOfBattle relic triggers: run each EffectSpec on every left unit, consuming the
+  // shared rng in a fixed order (relics -> effects -> units) to preserve determinism.
+  for (const { relic } of leftRelics) {
+    if (!relic.startOfBattle) continue
+    for (const eff of relic.startOfBattle) {
+      for (const unit of L) {
+        const flags: LogFlag[] = []
+        const ctx = { rng, turn: 0, actor: unit, target: unit, flags }
+        const r = EFFECT_HANDLERS[eff.kind](ctx, eff)
+        log.push({
+          turn: 0, actorId: unit.wizard.id, actorSide: unit.side, action: relic.name,
+          targetId: unit.wizard.id, targetSide: unit.side, type: 'system', value: r.value, flags,
+        })
+      }
+    }
+  }
 
   let turn = 0
   while (turn < BALANCE.combat.turnCap && sideUnits('left').length && sideUnits('right').length) {
@@ -71,6 +96,18 @@ export function simulateBattle(
         : (spell.type === 'Difesa' ? actor : target)
       const entry = resolveAction(rng, turn, actor, realTarget, spell)
       log.push(entry)
+      // onHit relic triggers: after a LEFT actor resolves a spell against an ENEMY target.
+      // Run each EffectSpec via EFFECT_HANDLERS, consuming the same rng (chance handled in handler).
+      if (actor.side === 'left' && realTarget.side !== actor.side) {
+        for (const { relic } of leftRelics) {
+          if (!relic.onHit) continue
+          for (const eff of relic.onHit) {
+            const flags: LogFlag[] = []
+            const ctx = { rng, turn, actor, target: realTarget, flags }
+            EFFECT_HANDLERS[eff.kind](ctx, eff)
+          }
+        }
+      }
       if (entry.value) {
         const scoreKey = `${actor.side}:${actor.wizard.id}`
         score[scoreKey] = (score[scoreKey] ?? 0) + entry.value

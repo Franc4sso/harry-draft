@@ -43,7 +43,7 @@ export function nextBattle(state: RunState): BattleOutcome {
   const enemySyn = detectSynergies(enemy)
 
   const result = simulateBattle(state.team, enemy, battleRng, {
-    leftSyn: state.activeSynergies, rightSyn: enemySyn,
+    leftSyn: state.activeSynergies, rightSyn: enemySyn, leftRelics: state.relics,
   })
 
   const won = result.winner === 'left'
