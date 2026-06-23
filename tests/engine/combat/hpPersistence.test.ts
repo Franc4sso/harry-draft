@@ -27,10 +27,12 @@ describe('toBattleUnits HP seeding', () => {
   })
 })
 
-it('a 2-wizard player team fights a 5-enemy team to a decided result', () => {
-  const left = [dw('p1'), dw('p2')]
-  const right = ['e1', 'e2', 'e3', 'e4', 'e5'].map(id => dw(id))
-  const res = simulateBattle(left, right, createRng('small-team').fork(2))
-  expect(['left', 'right']).toContain(res.winner)
-  expect(res.finalSnapshot.length).toBe(7)
+describe('simulateBattle size-flexibility', () => {
+  it('a 2-wizard player team fights a 5-enemy team to a decided result', () => {
+    const left = [dw('p1'), dw('p2')]
+    const right = ['e1', 'e2', 'e3', 'e4', 'e5'].map(id => dw(id))
+    const res = simulateBattle(left, right, createRng('small-team').fork(2))
+    expect(['left', 'right']).toContain(res.winner)
+    expect(res.finalSnapshot.length).toBe(7)
+  })
 })

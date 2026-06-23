@@ -74,13 +74,14 @@ describe('campaign difficulty curve', () => {
     // BAND, not an exact target. Persistent HP + permanent death (HP-persistence
     // feature) means wounds carry and deaths compound across the graph walk, so a
     // full clear now requires surviving every floor AND the boss with a roster
-    // intact enough to win — the equilibrium clear rate collapsed from ~0.36 (full
-    // heal each fight) to ~0.01 measured (n=500). The intent we protect is
-    // unchanged: the campaign is still WINNABLE for optimal play (clears happen,
-    // rate > 0) yet far from a guaranteed clear (no pushover). Floor set ~half the
-    // measured rate (0.005, meaningfully > 0 — guards "still winnable"); the
-    // upper bound (no-pushover) is left wide and unchanged.
-    expect(stats.clearRate).toBeGreaterThan(0.005)
+    // intact enough to win. After the C1 fix (the snapshot/roster path no longer
+    // clobbers a surviving player with a same-id enemy entry — survivors are kept,
+    // not dropped) the clear rate rose to ~0.04 measured (n=200). The intent we
+    // protect is unchanged: the campaign is still WINNABLE for optimal play (clears
+    // happen, rate > 0) yet far from a guaranteed clear (no pushover). Floor set
+    // ~half the measured rate (0.02, meaningfully > 0 — guards "still winnable");
+    // the upper bound (no-pushover) is left wide and unchanged.
+    expect(stats.clearRate).toBeGreaterThan(0.02)
     expect(stats.clearRate).toBeLessThan(0.72)
   })
 
@@ -89,12 +90,14 @@ describe('campaign difficulty curve', () => {
   })
 
   it('peaks at the boss — a real climax, neither a pushover nor impossible', () => {
-    // BAND. Under HP-persistence the rare rosters that reach the boss arrive
-    // wounded (and often depleted), so the boss win-rate among boss plays fell
-    // from ~0.5 to ~0.10 measured (n=500). Intent preserved: the boss is a real
-    // climax — not impossible (rate > 0, wins do happen) and not a pushover
-    // (well under the old ceiling). Floor set ~0.05 below the measured 0.10.
-    expect(stats.bossWinRate).toBeGreaterThan(0.05)
+    // BAND. Under HP-persistence the rosters that reach the boss arrive wounded
+    // (and often depleted), so the boss win-rate among boss plays sits well below
+    // the old full-heal ~0.5. After the C1 fix (wounded survivors are correctly
+    // carried to the boss instead of being dropped/clobbered) the boss win-rate
+    // among boss plays is ~0.25 measured (n=200). Intent preserved: the boss is a
+    // real climax — not impossible (rate > 0, wins do happen) and not a pushover
+    // (well under the old ceiling). Floor set ~0.05 below the measured 0.25.
+    expect(stats.bossWinRate).toBeGreaterThan(0.20)
     expect(stats.bossWinRate).toBeLessThan(0.85)
   })
 
