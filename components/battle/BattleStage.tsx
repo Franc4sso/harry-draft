@@ -3,6 +3,7 @@ import type { LogEntry } from '@/types'
 import type { Replay } from '@/game/engine/combat/replay'
 import { unitKey } from '@/game/engine/combat/replay'
 import { BattleUnit } from './BattleUnit'
+import { floatFor } from './damageFloat'
 
 /**
  * Presentational battlefield: the player's team on the left, enemies on the
@@ -10,16 +11,19 @@ import { BattleUnit } from './BattleUnit'
  * highlighted from the current log entry.
  */
 export function BattleStage({
-  replay, hp, entry, leftTitle = 'La tua squadra', rightTitle = 'Avversari',
+  replay, hp, entry, frameKey = 0, leftTitle = 'La tua squadra', rightTitle = 'Avversari',
 }: {
   replay: Replay
   hp: Record<string, number>
   entry: LogEntry | null
+  /** Current replay index — re-keys the damage float so each hit re-animates. */
+  frameKey?: number
   leftTitle?: string
   rightTitle?: string
 }) {
   const actingKey = entry?.actorSide ? unitKey(entry.actorSide, entry.actorId) : null
   const targetKey = entry?.targetSide && entry.targetId ? unitKey(entry.targetSide, entry.targetId) : null
+  const float = floatFor(entry)
 
   const left = replay.units.filter(u => u.side === 'left')
   const right = replay.units.filter(u => u.side === 'right')
@@ -35,6 +39,8 @@ export function BattleStage({
             hp={hp[u.key] ?? 0}
             acting={u.key === actingKey}
             targeted={u.key === targetKey}
+            float={u.key === targetKey ? float : null}
+            floatKey={frameKey}
           />
         ))}
       </section>
@@ -50,6 +56,8 @@ export function BattleStage({
             hp={hp[u.key] ?? 0}
             acting={u.key === actingKey}
             targeted={u.key === targetKey}
+            float={u.key === targetKey ? float : null}
+            floatKey={frameKey}
             mirrored
           />
         ))}

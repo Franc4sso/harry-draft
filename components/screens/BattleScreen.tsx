@@ -35,7 +35,7 @@ export function BattleScreen({
         </p>
       </div>
 
-      <BattleStage replay={replay} hp={r.hp} entry={r.entry} rightTitle={rightTitle} />
+      <BattleStage replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle} />
 
       <BattleLog entries={replay.frames.slice(1, r.index + 1).map(f => f.entry!)} units={replay.units} />
 

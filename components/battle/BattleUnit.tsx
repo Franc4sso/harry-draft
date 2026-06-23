@@ -1,22 +1,32 @@
 'use client'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { ReplayUnit } from '@/game/engine/combat/replay'
 import { houseTheme, cn } from '@/lib/theme'
 import { RoleIcon } from '@/components/cards/RoleIcon'
 import { HpBar } from './HpBar'
+import type { FloatDescriptor, FloatTone } from './damageFloat'
+
+const FLOAT_CLASS: Record<FloatTone, string> = {
+  damage: 'text-rose-300',
+  crit: 'text-amber-300 text-xl font-bold drop-shadow-[0_0_8px_rgba(252,211,77,0.6)]',
+  heal: 'text-emerald-300',
+  dodge: 'text-white/60 text-[11px] uppercase tracking-wider',
+}
 
 /**
  * Compact combatant tile shown in the battle stage. Pulses when acting, dims
- * to a tombstone state on KO.
+ * to a tombstone state on KO, and floats damage/heal numbers on hits.
  */
 export function BattleUnit({
-  unit, hp, acting, targeted, mirrored,
+  unit, hp, acting, targeted, mirrored, float, floatKey,
 }: {
   unit: ReplayUnit
   hp: number
   acting?: boolean
   targeted?: boolean
   mirrored?: boolean
+  float?: FloatDescriptor | null
+  floatKey?: number | string
 }) {
   const theme = houseTheme(unit.house)
   const dead = hp <= 0
@@ -52,6 +62,25 @@ export function BattleUnit({
           K.O.
         </div>
       )}
+
+      <AnimatePresence>
+        {float && (
+          <motion.span
+            key={floatKey}
+            data-testid="damage-float"
+            initial={{ opacity: 0, y: 4, scale: 0.8 }}
+            animate={{ opacity: 1, y: -26, scale: 1 }}
+            exit={{ opacity: 0, y: -40 }}
+            transition={{ duration: 0.5, ease: 'easeOut' }}
+            className={cn(
+              'absolute left-1/2 -translate-x-1/2 top-0 pointer-events-none select-none font-display text-sm tabular-nums',
+              FLOAT_CLASS[float.tone],
+            )}
+          >
+            {float.text}
+          </motion.span>
+        )}
+      </AnimatePresence>
     </motion.div>
   )
 }

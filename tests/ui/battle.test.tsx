@@ -74,6 +74,19 @@ describe('BattleStage', () => {
     const dead = screen.getAllByTestId('battle-unit').filter(el => el.getAttribute('data-dead'))
     expect(dead.length).toBeGreaterThanOrEqual(1)
   })
+
+  it('floats the damage number on the targeted unit during a hit', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    const hit: LogEntry = {
+      turn: 1, actorId: 'harry', actorSide: 'left', action: 'Stupeficium',
+      targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 42, flags: [],
+    }
+    render(<BattleStage replay={replay} hp={replay.frames[0]!.hp} entry={hit} frameKey={1} />)
+    const floats = screen.getAllByTestId('damage-float')
+    expect(floats).toHaveLength(1)
+    expect(floats[0]).toHaveTextContent('-42')
+  })
 })
 
 describe('BattleScreen', () => {
