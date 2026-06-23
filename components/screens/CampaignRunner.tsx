@@ -1,5 +1,6 @@
 'use client'
 import { useMemo } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { DraftedWizard } from '@/types'
 import { useRun } from '@/hooks/useRun'
 import { BOSSES } from '@/data/bosses'
@@ -32,17 +33,20 @@ export function CampaignRunner({
     return map
   }, [team, c.battle])
 
+  let view: React.ReactNode = null
   switch (c.view) {
     case 'team':
-      return <TeamScreen team={team} onConfirm={c.startBattle} onRestart={onRestart} />
+      view = <TeamScreen team={team} onConfirm={c.startBattle} onRestart={onRestart} />
+      break
 
     case 'boss':
-      return <BossScreen bossName={BOSS_NAME} onBegin={c.startBattle} />
+      view = <BossScreen bossName={BOSS_NAME} onBegin={c.startBattle} />
+      break
 
     case 'battle': {
-      if (!c.battle) return null
+      if (!c.battle) break
       const isBoss = c.battle.isBoss
-      return (
+      view = (
         <BattleScreen
           result={c.battle.result}
           playerTeam={team}
@@ -54,11 +58,12 @@ export function CampaignRunner({
           onFinish={c.revealResult}
         />
       )
+      break
     }
 
     case 'victory': {
-      if (!c.battle) return null
-      return (
+      if (!c.battle) break
+      view = (
         <VictoryScreen
           result={c.battle.result}
           mvpName={nameById[c.battle.result.mvpId] ?? c.battle.result.mvpId}
@@ -68,28 +73,42 @@ export function CampaignRunner({
           onNext={c.advance}
         />
       )
+      break
     }
 
     case 'win':
-      return (
+      view = (
         <ResultScreen
-          outcome="win"
-          seed={seed}
-          stageReached={c.run.stage}
-          enemyCount={c.enemyCount}
-          onRestart={onRestart}
+          outcome="win" seed={seed} stageReached={c.run.stage}
+          enemyCount={c.enemyCount} onRestart={onRestart}
         />
       )
+      break
 
     case 'defeat':
-      return (
+      view = (
         <ResultScreen
-          outcome="defeat"
-          seed={seed}
-          stageReached={c.run.stage}
-          enemyCount={c.enemyCount}
-          onRestart={onRestart}
+          outcome="defeat" seed={seed} stageReached={c.run.stage}
+          enemyCount={c.enemyCount} onRestart={onRestart}
         />
       )
+      break
   }
+
+  // Crossfade between campaign phases. Key by view + stage so consecutive
+  // battles (same view, different stage) still re-animate.
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={`${c.view}-${c.run.stage}`}
+        className="flex-1 flex flex-col"
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -8 }}
+        transition={{ duration: 0.25, ease: 'easeOut' }}
+      >
+        {view}
+      </motion.div>
+    </AnimatePresence>
+  )
 }
