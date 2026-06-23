@@ -1,4 +1,4 @@
-import type { ActiveSynergy, BattleResult, DraftedWizard, Relic, RunNode, RunState } from '@/types'
+import type { ActiveSynergy, BattleResult, DraftedWizard, Relic, RunNode, RunState, UnitSnapshot } from '@/types'
 import { createRng } from './rng'
 import { detectSynergies } from './synergy'
 import { simulateBattle } from './combat/simulate'
@@ -46,6 +46,22 @@ export interface BattleOutcome {
   enemy: DraftedWizard[]
   enemySyn: ActiveSynergy[]
   isBoss: boolean
+}
+
+export function applyBattleToRoster(
+  team: DraftedWizard[], snapshot: UnitSnapshot[],
+): DraftedWizard[] {
+  const byId = new Map(snapshot.map(s => [s.id, s]))
+  return team
+    .filter(dw => byId.get(dw.wizard.id)?.alive !== false) // drop the dead; keep if no snapshot entry
+    .map(dw => {
+      const snap = byId.get(dw.wizard.id)
+      if (!snap) return dw
+      // Snapshot HP is out of the BUFFED battle maxHp; persist as a fraction of the
+      // wizard's BASE maxHp so buff swings between battles don't distort wounds.
+      const frac = snap.maxHp > 0 ? snap.hp / snap.maxHp : 0
+      return { ...dw, currentHp: Math.round(dw.maxHp * frac) }
+    })
 }
 
 export function nextBattle(state: RunState): BattleOutcome {

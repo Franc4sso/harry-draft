@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { startRun, confirmTeam, nextBattle, advanceToNode, nodeById } from '@/game/engine/run'
+import { startRun, confirmTeam, nextBattle, advanceToNode, nodeById, applyBattleToRoster } from '@/game/engine/run'
+import type { UnitSnapshot } from '@/types'
 import { nodeDepth } from '@/game/engine/map'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
@@ -7,6 +8,14 @@ import { powerOf } from '@/game/engine/combat/teamGen'
 import { WIZARDS } from '@/data/wizards'
 import { BALANCE } from '@/data/constants'
 import type { DraftedWizard, RunNode, RunState } from '@/types'
+
+function dwFix(id: string, maxHp = 100): DraftedWizard {
+  return {
+    wizard: { id, name: id, house: 'Grifondoro', role: 'Attaccante' } as any,
+    stats: { hp: maxHp, atk: 20, def: 10, spd: 10 }, maxHp,
+    spell: { id: 's', name: 's', desc: '', type: 'Attacco', power: 1, hitChance: 1 },
+  }
+}
 
 const teamPower = (team: DraftedWizard[]) => team.reduce((sum, dw) => sum + powerOf(dw), 0)
 
@@ -125,5 +134,42 @@ describe('run map integration', () => {
     const bossFloor = s.map!.filter(n => nodeDepth(n.id) === maxDepth)
     expect(bossFloor).toHaveLength(1)
     expect(bossFloor[0]!.type).toBe('boss')
+  })
+})
+
+describe('applyBattleToRoster', () => {
+  const team = [dwFix('a', 100), dwFix('b', 100), dwFix('c', 100)]
+
+  it('drops dead wizards from the roster', () => {
+    const snap: UnitSnapshot[] = [
+      { id: 'a', hp: 50, maxHp: 100, alive: true },
+      { id: 'b', hp: 0, maxHp: 100, alive: false },
+      { id: 'c', hp: 80, maxHp: 100, alive: true },
+    ]
+    const out = applyBattleToRoster(team, snap)
+    expect(out.map(d => d.wizard.id)).toEqual(['a', 'c'])
+  })
+
+  it('persists survivor HP as base-relative fraction', () => {
+    const snap: UnitSnapshot[] = [{ id: 'a', hp: 50, maxHp: 100, alive: true }]
+    const out = applyBattleToRoster([dwFix('a', 100)], snap)
+    expect(out[0]!.currentHp).toBe(50)
+  })
+
+  it('scales snapshot HP (out of buffed max) down to BASE maxHp', () => {
+    // buffed maxHp 120, hp 60 = 50% → base maxHp 100 → currentHp 50
+    const snap: UnitSnapshot[] = [{ id: 'a', hp: 60, maxHp: 120, alive: true }]
+    const out = applyBattleToRoster([dwFix('a', 100)], snap)
+    expect(out[0]!.currentHp).toBe(50)
+  })
+
+  it('full-HP survivor → currentHp equals base maxHp', () => {
+    const snap: UnitSnapshot[] = [{ id: 'a', hp: 120, maxHp: 120, alive: true }]
+    const out = applyBattleToRoster([dwFix('a', 100)], snap)
+    expect(out[0]!.currentHp).toBe(100)
+  })
+
+  it('empty team → empty', () => {
+    expect(applyBattleToRoster([], [])).toEqual([])
   })
 })
