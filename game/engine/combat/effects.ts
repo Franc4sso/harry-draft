@@ -1,10 +1,11 @@
-import type { BattleUnit, EffectSpec, LogFlag } from '@/types'
+import type { BattleUnit, EffectSpec, HookCtx, LogFlag } from '@/types'
 import type { Rng } from '../rng'
+import type { EventBus } from './eventBus'
 import { BALANCE } from '@/data/constants'
 import { STATUS_BY_ID } from '@/data/statuses'
 import { absorbDamage, applyInlineEffect, applyStatus, canAttack, effectiveStats } from '../status'
 
-export interface EffectCtx { rng: Rng; turn: number; actor: BattleUnit; target: BattleUnit; flags: LogFlag[] }
+export interface EffectCtx { rng: Rng; turn: number; actor: BattleUnit; target: BattleUnit; flags: LogFlag[]; bus?: EventBus }
 export interface EffectResult { value?: number; dodged?: boolean }
 
 export function computeDamage(rng: Rng, actor: BattleUnit, target: BattleUnit, power: number, flags: LogFlag[]): number {
@@ -34,16 +35,26 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
       ctx.flags.push('dodge'); return { value: 0, dodged: true }
     }
     if (!canAttack(ctx.actor)) return { value: 0 } // disarmed: no damage
-    const dmg = computeDamage(ctx.rng, ctx.actor, ctx.target, eff.power, ctx.flags)
+    let dmg = computeDamage(ctx.rng, ctx.actor, ctx.target, eff.power, ctx.flags)
+    if (ctx.bus) {
+      const hc: HookCtx = { turn: ctx.turn, actor: ctx.actor, target: ctx.target, side: ctx.actor.side, flags: ctx.flags }
+      dmg = ctx.bus.emitModifier('modifyOutgoingDamage', dmg, hc)
+      dmg = Math.round(ctx.bus.emitModifier('modifyIncomingDamage', dmg, { ...hc, side: ctx.target.side }))
+    }
     const residual = absorbDamage(ctx.target, dmg)
     ctx.target.hp -= residual
     return { value: dmg }
   },
   heal: (ctx, eff) => {
     if (eff.kind !== 'heal') return {}
-    ctx.target.hp = Math.min(ctx.target.maxHp, ctx.target.hp + eff.amount)
+    let amount = eff.amount
+    if (ctx.bus) {
+      const hc: HookCtx = { turn: ctx.turn, actor: ctx.actor, target: ctx.target, side: ctx.actor.side, flags: ctx.flags }
+      amount = Math.round(ctx.bus.emitModifier('modifyHealing', amount, hc))
+    }
+    ctx.target.hp = Math.min(ctx.target.maxHp, ctx.target.hp + amount)
     ctx.flags.push('heal')
-    return { value: eff.amount }
+    return { value: amount }
   },
   shield: (ctx, eff) => {
     if (eff.kind !== 'shield') return {}

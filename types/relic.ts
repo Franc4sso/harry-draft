@@ -30,8 +30,6 @@ export interface Relic {
   rarity: RelicRarity
   bonus?: SynergyBonus
   condition?: RelicCondition
-  startOfBattle?: EffectSpec[]  // DEPRECATED — removed in Task 5
-  onHit?: EffectSpec[]          // DEPRECATED — removed in Task 5
   triggers?: RelicTrigger[]
 }
 

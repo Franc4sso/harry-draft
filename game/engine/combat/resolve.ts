@@ -1,5 +1,6 @@
 import type { BattleUnit, LogEntry, LogFlag, Spell } from '@/types'
 import type { Rng } from '../rng'
+import type { EventBus } from './eventBus'
 import { effectiveStats, tickStatuses } from '../status'
 import { EFFECT_HANDLERS } from './effects'
 import { normalizeSpell } from './normalizeSpell'
@@ -7,14 +8,14 @@ import { normalizeSpell } from './normalizeSpell'
 export { effectiveStats, tickStatuses }
 
 export function resolveAction(
-  rng: Rng, turn: number, actor: BattleUnit, target: BattleUnit, spell: Spell,
+  rng: Rng, turn: number, actor: BattleUnit, target: BattleUnit, spell: Spell, bus?: EventBus,
 ): LogEntry {
   const flags: LogFlag[] = []
   let value: number | undefined
 
   if (spell.cooldown && spell.cooldown > 0) actor.cooldowns[spell.id] = spell.cooldown
 
-  const ctx = { rng, turn, actor, target, flags }
+  const ctx = { rng, turn, actor, target, flags, bus }
   for (const eff of normalizeSpell(spell)) {
     const r = EFFECT_HANDLERS[eff.kind](ctx, eff)
     if (r.dodged) { value = 0; break }

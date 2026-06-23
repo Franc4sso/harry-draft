@@ -46,7 +46,7 @@ describe('applyRelicBonuses', () => {
   })
   it('ignores relics without a bonus', () => {
     const relics = [
-      ar({ id: 'd', name: 'd', desc: '', rarity: 'epica', startOfBattle: [{ kind: 'shield', amount: 10 }] }),
+      ar({ id: 'd', name: 'd', desc: '', rarity: 'epica', triggers: [{ hook: 'onBattleStart', effects: [{ kind: 'shield', amount: 10 }] }] }),
     ]
     expect(applyRelicBonuses(base, team(['harry']), relics)).toEqual(base)
   })

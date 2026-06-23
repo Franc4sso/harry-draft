@@ -20,12 +20,12 @@ describe('relics data', () => {
   it('every relic has either a bonus or a trigger', () => {
     for (const r of RELICS) {
       const hasBonus = !!r.bonus
-      const hasTrigger = !!(r.startOfBattle || r.onHit || r.triggers?.length)
+      const hasTrigger = !!(r.triggers?.length)
       expect(hasBonus || hasTrigger, `relic ${r.id} has nothing`).toBe(true)
     }
   })
   it('limits trigger relics to at most 3 (v1)', () => {
-    const triggers = RELICS.filter(r => r.startOfBattle || r.onHit || r.triggers?.length)
+    const triggers = RELICS.filter(r => r.triggers?.length)
     expect(triggers.length).toBeLessThanOrEqual(3)
   })
   it('conditional relics reference real houses/roles', () => {
@@ -51,11 +51,5 @@ describe('relic trigger migration', () => {
     expect(t).toEqual([{ hook: 'onHit', effects: [
       { kind: 'applyStatus', target: 'enemy', chance: 0.15, effect: { kind: 'dot', amount: 6, duration: 2 } },
     ] }])
-  })
-  it('no relic still uses legacy startOfBattle/onHit fields', () => {
-    for (const r of Object.values(RELIC_BY_ID)) {
-      expect(r.startOfBattle).toBeUndefined()
-      expect(r.onHit).toBeUndefined()
-    }
   })
 })
