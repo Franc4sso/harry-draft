@@ -45,8 +45,24 @@ const TABS: Array<{ id: Tab; label: string }> = [
 ]
 
 /** Chip + blurb row: stacks on mobile, inline from sm up. */
-function GlossaryRow({ children }: { children: React.ReactNode }) {
-  return <li className="flex flex-col items-start gap-1.5 sm:flex-row sm:items-center sm:gap-3">{children}</li>
+/** One glossary entry: chip, then its blurb on the same line (wraps under on overflow). */
+function GlossaryRow({ chip, blurb }: { chip: React.ReactNode; blurb: string }) {
+  return (
+    <li className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+      <span className="shrink-0">{chip}</span>
+      <span className="text-sm text-white/60 leading-snug">{blurb}</span>
+    </li>
+  )
+}
+
+/** A titled glossary card; sits inside the masonry column flow. */
+function GlossaryCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <GlowPanel className="p-4 sm:p-5 mb-4 sm:mb-5 break-inside-avoid">
+      <p className="text-xs uppercase tracking-wider text-white/40 mb-3">{title}</p>
+      <ul className="space-y-2.5">{children}</ul>
+    </GlowPanel>
+  )
 }
 
 export function RulesScreen() {
@@ -87,54 +103,47 @@ export function RulesScreen() {
         })}
       </nav>
 
-      {/* Glossario — always visible: the legend for chips everywhere */}
+      {/* Glossario — always visible: the legend for chips everywhere.
+          Masonry columns pack the asymmetric cards (Effetti is tall) with no gaps. */}
       <section className="w-full">
         <h2 className="sr-only">Glossario</h2>
-        <div className="grid gap-4 sm:gap-5 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
-          <GlowPanel className="p-4 sm:p-5">
-            <p className="text-xs uppercase tracking-wider text-white/40 mb-3">Tipi di magia</p>
-            <ul className="space-y-2.5">
-              {SPELL_TYPE_ORDER.map((t) => (
-                <GlossaryRow key={t}>
-                  <Chip label={t} color={SPELL_TYPE_META[t].color} icon={SPELL_TYPE_META[t].icon} />
-                  <span className="text-sm text-white/65">{SPELL_TYPE_META[t].blurb}</span>
-                </GlossaryRow>
-              ))}
-            </ul>
-          </GlowPanel>
-          <GlowPanel className="p-4 sm:p-5">
-            <p className="text-xs uppercase tracking-wider text-white/40 mb-3">Effetti</p>
-            <ul className="space-y-2.5">
-              {Object.entries(EFFECT_META).map(([k, m]) => (
-                <GlossaryRow key={k}>
-                  <Chip label={m.label} color={m.color} icon={m.icon} />
-                  <span className="text-sm text-white/65">{m.blurb}</span>
-                </GlossaryRow>
-              ))}
-            </ul>
-          </GlowPanel>
-          <GlowPanel className="p-4 sm:p-5">
-            <p className="text-xs uppercase tracking-wider text-white/40 mb-3">Rarità reliquie</p>
-            <ul className="space-y-2.5">
-              {RARITY_ORDER.map((r) => (
-                <GlossaryRow key={r}>
-                  <Chip label={r} color={RELIC_RARITY_COLOR[r]} />
-                  <span className="text-sm text-white/65">{RARITY_BLURB[r]}</span>
-                </GlossaryRow>
-              ))}
-            </ul>
-          </GlowPanel>
-          <GlowPanel className="p-4 sm:p-5">
-            <p className="text-xs uppercase tracking-wider text-white/40 mb-3">Tipi sinergia</p>
-            <ul className="space-y-2.5">
-              {SYNERGY_KIND_META.map(({ kind, label, blurb }) => (
-                <GlossaryRow key={kind}>
-                  <Chip label={label} color={KIND_COLOR[kind]} />
-                  <span className="text-sm text-white/65">{blurb}</span>
-                </GlossaryRow>
-              ))}
-            </ul>
-          </GlowPanel>
+        <div className="columns-1 sm:columns-2 xl:columns-3 gap-4 sm:gap-5">
+          <GlossaryCard title="Tipi di magia">
+            {SPELL_TYPE_ORDER.map((t) => (
+              <GlossaryRow
+                key={t}
+                chip={<Chip label={t} color={SPELL_TYPE_META[t].color} icon={SPELL_TYPE_META[t].icon} />}
+                blurb={SPELL_TYPE_META[t].blurb}
+              />
+            ))}
+          </GlossaryCard>
+          <GlossaryCard title="Effetti">
+            {Object.entries(EFFECT_META).map(([k, m]) => (
+              <GlossaryRow
+                key={k}
+                chip={<Chip label={m.label} color={m.color} icon={m.icon} />}
+                blurb={m.blurb}
+              />
+            ))}
+          </GlossaryCard>
+          <GlossaryCard title="Rarità reliquie">
+            {RARITY_ORDER.map((r) => (
+              <GlossaryRow
+                key={r}
+                chip={<Chip label={r} color={RELIC_RARITY_COLOR[r]} className="capitalize" />}
+                blurb={RARITY_BLURB[r]}
+              />
+            ))}
+          </GlossaryCard>
+          <GlossaryCard title="Tipi sinergia">
+            {SYNERGY_KIND_META.map(({ kind, label, blurb }) => (
+              <GlossaryRow
+                key={kind}
+                chip={<Chip label={label} color={KIND_COLOR[kind]} />}
+                blurb={blurb}
+              />
+            ))}
+          </GlossaryCard>
         </div>
       </section>
 
