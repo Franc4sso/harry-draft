@@ -9,6 +9,7 @@ import { BattleScreen } from './BattleScreen'
 import { VictoryScreen } from './VictoryScreen'
 import { BossScreen } from './BossScreen'
 import { ResultScreen } from './ResultScreen'
+import { RelicChoiceScreen } from './RelicChoiceScreen'
 
 const BOSS_NAME = BOSSES[0]?.name ?? 'Boss Finale'
 
@@ -95,21 +96,12 @@ export function CampaignRunner({
       break
 
     case 'relic-choice':
-      // Placeholder: full RelicChoiceScreen will be wired in a future task.
-      // For now, skip relic selection and proceed straight to the next fight.
       view = (
-        <div className="flex flex-col items-center gap-4 p-8">
-          <h2 className="text-xl font-bold">Scegli una reliquia</h2>
-          {c.relicChoices.map(r => (
-            <button
-              key={r.id}
-              className="rounded border px-4 py-2"
-              onClick={() => c.chooseRelic(r)}
-            >
-              {r.name}
-            </button>
-          ))}
-        </div>
+        <RelicChoiceScreen
+          choices={c.relicChoices}
+          owned={c.run.relics}
+          onChoose={c.chooseRelic}
+        />
       )
       break
   }
