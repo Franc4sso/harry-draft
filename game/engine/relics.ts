@@ -1,6 +1,7 @@
 import type { ActiveRelic, DraftedWizard, RelicCondition, Stats } from '@/types'
 import type { Relic } from '@/types'
 import type { Rng } from './rng'
+import type { EventBus } from './combat/eventBus'
 import { RELICS } from '@/data/relics'
 import { BALANCE } from '@/data/constants'
 
@@ -12,6 +13,37 @@ export function relicMatchesCondition(team: DraftedWizard[], condition?: RelicCo
     (condition.role ? d.wizard.role === condition.role : true),
   )
   return matched.length >= count
+}
+
+/**
+ * Register every left-relic trigger as a bus listener, in relic order then
+ * trigger-array order. Condition gates are checked once at registration
+ * (team composition is fixed for the battle). RNG is NOT consumed here.
+ */
+export function registerRelicTriggers(
+  bus: EventBus, team: DraftedWizard[], relics: ActiveRelic[],
+): void {
+  for (const { relic } of relics) {
+    for (const trig of relic.triggers ?? []) {
+      const gate = trig.condition ?? relic.condition
+      if (!relicMatchesCondition(team, gate)) continue
+      if (trig.effects) {
+        const specs = trig.effects
+        if (trig.hook === 'onBattleStart' || trig.hook === 'onHit'
+          || trig.hook === 'onHeal' || trig.hook === 'onDeath'
+          || trig.hook === 'onAllyDeath' || trig.hook === 'onTurnStart'
+          || trig.hook === 'onTurnEnd' || trig.hook === 'onHpThreshold') {
+          bus.onReactive(trig.hook, () => specs)
+        }
+      }
+      if (trig.modifier
+        && (trig.hook === 'modifyOutgoingDamage' || trig.hook === 'modifyIncomingDamage'
+          || trig.hook === 'modifyHealing')) {
+        const { mult = 1, flat = 0 } = trig.modifier
+        bus.onModifier(trig.hook, v => v * mult + flat)
+      }
+    }
+  }
 }
 
 export function applyRelicBonuses(stats: Stats, team: DraftedWizard[], relics: ActiveRelic[]): Stats {

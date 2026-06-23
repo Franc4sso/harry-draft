@@ -1,10 +1,11 @@
 import type {
-  ActiveRelic, ActiveSynergy, BattleResult, BattleUnit, DraftedWizard, LogEntry, LogFlag, Side, UnitSnapshot,
+  ActiveRelic, ActiveSynergy, BattleResult, BattleUnit, DraftedWizard, HookCtx, LogEntry, LogFlag, Side, UnitSnapshot,
 } from '@/types'
 import type { Rng } from '../rng'
 import { BALANCE } from '@/data/constants'
 import { applyBonuses, totalRegen } from '../synergy'
-import { applyRelicBonuses, totalRelicRegen } from '../relics'
+import { applyRelicBonuses, registerRelicTriggers, totalRelicRegen } from '../relics'
+import { createEventBus } from './eventBus'
 import { canAct } from '../status'
 import { EFFECT_HANDLERS } from './effects'
 import { effectiveStats, resolveAction, tickStatuses } from './resolve'
@@ -53,17 +54,23 @@ export function simulateBattle(
   const sync = (u: BattleUnit) => { if (u.hp <= 0) { u.hp = 0; u.alive = false } }
   const sideUnits = (s: Side) => (s === 'left' ? L : R).filter(u => u.alive)
 
-  // startOfBattle relic triggers: run each EffectSpec on every left unit, consuming the
-  // shared rng in a fixed order (relics -> effects -> units) to preserve determinism.
-  for (const { relic } of leftRelics) {
-    if (!relic.startOfBattle) continue
-    for (const eff of relic.startOfBattle) {
+  // Relic triggers dispatch through the EventBus. Only the LEFT team carries relics.
+  const bus = createEventBus()
+  registerRelicTriggers(bus, left, leftRelics)
+
+  // onBattleStart: apply collected specs to every left unit.
+  // Old order was relic→effect→unit (effect-outer, unit-inner). collectReactive gives us
+  // the flat spec list in relic→trigger→effect order; apply each spec across all units
+  // to preserve the exact rng draw sequence.
+  {
+    const ctx0 = (u: BattleUnit): HookCtx => ({ turn: 0, actor: u, side: 'left', flags: [] })
+    const specs = bus.collectReactive('onBattleStart', ctx0(L[0] ?? ({} as BattleUnit)))
+    for (const eff of specs) {
       for (const unit of L) {
         const flags: LogFlag[] = []
-        const ctx = { rng, turn: 0, actor: unit, target: unit, flags }
-        const r = EFFECT_HANDLERS[eff.kind](ctx, eff)
+        const r = EFFECT_HANDLERS[eff.kind]({ rng, turn: 0, actor: unit, target: unit, flags }, eff)
         log.push({
-          turn: 0, actorId: unit.wizard.id, actorSide: unit.side, action: relic.name,
+          turn: 0, actorId: unit.wizard.id, actorSide: unit.side, action: 'Reliquia',
           targetId: unit.wizard.id, targetSide: unit.side, type: 'system', value: r.value, flags,
         })
       }
@@ -96,16 +103,11 @@ export function simulateBattle(
         : (spell.type === 'Difesa' ? actor : target)
       const entry = resolveAction(rng, turn, actor, realTarget, spell)
       log.push(entry)
-      // onHit relic triggers: after a LEFT actor resolves a spell against an ENEMY target.
-      // Run each EffectSpec via EFFECT_HANDLERS, consuming the same rng (chance handled in handler).
+      // onHit: after a LEFT actor resolves a spell against an ENEMY target.
       if (actor.side === 'left' && realTarget.side !== actor.side) {
-        for (const { relic } of leftRelics) {
-          if (!relic.onHit) continue
-          for (const eff of relic.onHit) {
-            const flags: LogFlag[] = []
-            const ctx = { rng, turn, actor, target: realTarget, flags }
-            EFFECT_HANDLERS[eff.kind](ctx, eff)
-          }
+        const hitCtx: HookCtx = { turn, actor, target: realTarget, side: 'left', flags: [] }
+        for (const eff of bus.collectReactive('onHit', hitCtx)) {
+          EFFECT_HANDLERS[eff.kind]({ rng, turn, actor, target: realTarget, flags: hitCtx.flags }, eff)
         }
       }
       if (entry.value) {
