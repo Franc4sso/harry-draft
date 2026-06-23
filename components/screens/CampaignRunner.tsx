@@ -58,8 +58,8 @@ export function CampaignRunner({
       view = (
         <BattleScreen
           result={c.battle.result}
-          playerTeam={c.run.team}
-          playerSyn={c.run.activeSynergies}
+          playerTeam={c.battle.playerTeam}
+          playerSyn={c.battle.playerSyn}
           playerRelics={c.run.relics}
           enemy={c.battle.enemy}
           enemySyn={c.battle.enemySyn}

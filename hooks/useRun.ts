@@ -21,6 +21,14 @@ export interface ActiveBattle {
   enemy: DraftedWizard[]
   enemySyn: ActiveSynergy[]
   isBoss: boolean
+  /**
+   * The player roster AS IT ENTERED this fight (before casualties are removed)
+   * plus the synergies active during it. The replay must render from this — not
+   * from run.team, which nextBattle already reduced to survivors — so a wizard
+   * who dies this battle still appears and animates to death instead of vanishing.
+   */
+  playerTeam: DraftedWizard[]
+  playerSyn: ActiveSynergy[]
 }
 
 export interface RunController {
@@ -84,14 +92,18 @@ export function useRun(seed: string, team: DraftedWizard[]): RunController {
   const enterMap = useCallback(() => setView('map'), [])
 
   const startBattle = useCallback(() => {
+    // Snapshot the roster + synergies BEFORE nextBattle reduces them to
+    // survivors — these are exactly what the engine simulated with, so the
+    // replay's HP pools line up and the fallen still render (then die on-screen).
     const before = runRef.current.team
+    const beforeSyn = runRef.current.activeSynergies
     const { state, result, enemy, enemySyn, isBoss } = nextBattle(runRef.current)
     const survivingIds = new Set(state.team.map(d => d.wizard.id))
     const fallen = before.filter(d => !survivingIds.has(d.wizard.id)).map(d => d.wizard.name)
     setLastFallen(fallen)
     runRef.current = state
     setRun(state)
-    setBattle({ result, enemy, enemySyn, isBoss })
+    setBattle({ result, enemy, enemySyn, isBoss, playerTeam: before, playerSyn: beforeSyn })
     setView('battle')
   }, [])
 

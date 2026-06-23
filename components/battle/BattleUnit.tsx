@@ -36,8 +36,10 @@ export function BattleUnit({
       data-dead={dead || undefined}
       data-acting={acting || undefined}
       animate={{
+        // Stay clearly on the field when downed — only lightly dimmed — so the
+        // unit reads as "dead, still here" rather than having vanished.
         scale: acting ? 1.04 : 1,
-        opacity: dead ? 0.35 : 1,
+        opacity: dead ? 0.78 : 1,
         x: targeted ? (mirrored ? -4 : 4) : 0,
       }}
       transition={{ type: 'spring', stiffness: 360, damping: 22 }}
@@ -48,6 +50,7 @@ export function BattleUnit({
       style={{
         background: theme.gradient,
         boxShadow: acting ? theme.ring : '0 6px 18px rgba(0,0,0,0.45)',
+        filter: dead ? 'grayscale(0.85)' : undefined,
       }}
     >
       <div className={cn('flex items-center gap-2', mirrored && 'flex-row-reverse text-right')}>
@@ -58,8 +61,10 @@ export function BattleUnit({
         <HpBar hp={hp} maxHp={unit.maxHp} />
       </div>
       {dead && (
-        <div className="absolute inset-0 grid place-items-center bg-black/45 text-[10px] uppercase tracking-widest text-white/70">
-          K.O.
+        <div className="absolute inset-0 grid place-items-center bg-black/25">
+          <span className="rounded border border-rose-400/50 bg-black/65 px-2 py-0.5 text-xs font-bold uppercase tracking-[0.18em] text-rose-300">
+            Morto
+          </span>
         </div>
       )}
 

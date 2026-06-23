@@ -7,8 +7,10 @@ describe('DraftScreen (resa layout)', () => {
     render(<DraftScreen seed="resa-test" onComplete={() => {}} />)
     // squad panel shows empty slots up to team size (5) before any pick
     expect(document.querySelectorAll('[data-empty]').length).toBeGreaterThan(0)
-    // synergy tracker header present
-    expect(screen.getByText(/Sinergie/i)).toBeInTheDocument()
+    // synergy tracker present (its default header is unique to the tracker;
+    // the sticky header also shows an active-synergy counter, so match the
+    // tracker's own copy specifically to avoid the ambiguous /Sinergie/ match)
+    expect(screen.getByText(/cosa sbloccano/i)).toBeInTheDocument()
     // at least one candidate card (a wizard name appears as a portrait alt)
     expect(document.querySelector('img[data-variant="card"]')).toBeTruthy()
   })

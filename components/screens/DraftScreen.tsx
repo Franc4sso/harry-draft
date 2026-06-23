@@ -17,7 +17,9 @@ export function DraftScreen({ seed, onComplete }: { seed: string; onComplete: (t
   }, [done, picks, onComplete])
 
   // tracker rows: preview when a candidate is considered, else current state
-  const rows = considered ? previewSynergies(picks, considered) : synergyProgress(picks)
+  const current_rows = synergyProgress(picks)
+  const activeSynergies = current_rows.filter((s) => s.active).length
+  const rows = considered ? previewSynergies(picks, considered) : current_rows
   const hotByCandidate = (c: DraftedWizard): ReadonlySet<string> =>
     new Set(previewSynergies(picks, c).filter((p) => p.advances).map((p) => p.synergy.id))
 
@@ -27,9 +29,21 @@ export function DraftScreen({ seed, onComplete }: { seed: string; onComplete: (t
     <main className="flex-1 w-full">
       {/* Sticky header: squad + progress */}
       <header className="sticky top-0 z-10 border-b border-white/10 bg-[rgba(10,8,19,0.9)] px-4 py-3 backdrop-blur">
-        <div className="mb-2 flex items-center justify-between">
+        <div className="mb-2 flex items-center justify-between gap-3">
           <h1 className="font-display text-xl">Scegli il {picks.length + 1}º mago</h1>
-          <span className="text-[11px] uppercase tracking-widest text-[#b08d57]">Pesca {picks.length}/{teamSize}</span>
+          <div className="flex items-center gap-2 text-[11px] uppercase tracking-widest">
+            <span
+              className="rounded-full border px-2 py-0.5 font-semibold"
+              style={{
+                color: activeSynergies > 0 ? '#7cdc7c' : 'rgba(255,255,255,0.45)',
+                borderColor: activeSynergies > 0 ? 'rgba(124,220,124,0.5)' : 'rgba(255,255,255,0.15)',
+                background: activeSynergies > 0 ? 'rgba(124,220,124,0.12)' : 'transparent',
+              }}
+            >
+              ⚡ {activeSynergies} sinergie attive
+            </span>
+            <span className="text-[#b08d57]">Pesca {picks.length}/{teamSize}</span>
+          </div>
         </div>
         <SquadPanel picks={picks} teamSize={teamSize} layout="row" />
       </header>
