@@ -1,6 +1,6 @@
 import type { ActiveRelic } from '@/types'
 import { cn } from '@/lib/cn'
-import { RELIC_RARITY_COLOR } from './RelicCard'
+import { RELIC_RARITY_COLOR } from '@/lib/relicRarity'
 
 export function RelicBar({ relics, className }: { relics: ActiveRelic[]; className?: string }) {
   if (relics.length === 0) {
