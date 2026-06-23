@@ -14,12 +14,19 @@ function team(ids: string[], seed = 1): DraftedWizard[] {
 const strong = () => team(['harry', 'hermione', 'snape', 'dumbledore', 'mcgonagall'], 3)
 
 describe('useRun', () => {
-  it('begins on the team view at battle 1 with no battle yet', () => {
+  it('begins on the team view sitting on the start node with no battle yet', () => {
     const { result } = renderHook(() => useRun('s', strong()))
     expect(result.current.view).toBe('team')
     expect(result.current.battle).toBeNull()
-    expect(result.current.battleNumber).toBe(1)
-    expect(result.current.enemyCount).toBe(BALANCE.campaign.enemyCount)
+    // Graph progression: the player starts on floor 0 (the un-fought start
+    // position), so battleNumber is 0 until they pick a reachable node. The
+    // "Sfida X di Y" denominator is the count of fought non-boss floors =
+    // maxDepth - 1 (floors 1..maxDepth-1); floor maxDepth is the boss.
+    expect(result.current.battleNumber).toBe(0)
+    const maxDepth = Math.max(
+      ...result.current.run.map!.map(n => Number(/^f(\d+)n/.exec(n.id)![1])),
+    )
+    expect(result.current.enemyCount).toBe(maxDepth - 1)
   })
 
   it('startBattle moves to the battle view and produces an enemy + result', () => {

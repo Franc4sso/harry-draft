@@ -10,6 +10,7 @@ import { VictoryScreen } from './VictoryScreen'
 import { BossScreen } from './BossScreen'
 import { ResultScreen } from './ResultScreen'
 import { RelicChoiceScreen } from './RelicChoiceScreen'
+import { MapScreen } from './MapScreen'
 
 const BOSS_NAME = BOSSES[0]?.name ?? 'Boss Finale'
 
@@ -37,7 +38,19 @@ export function CampaignRunner({
   let view: React.ReactNode = null
   switch (c.view) {
     case 'team':
-      view = <TeamScreen team={team} onConfirm={c.startBattle} onRestart={onRestart} />
+      view = <TeamScreen team={team} onConfirm={c.enterMap} onRestart={onRestart} />
+      break
+
+    case 'map':
+      if (!c.run.map || !c.run.currentNodeId) break
+      view = (
+        <MapScreen
+          map={c.run.map}
+          currentNodeId={c.run.currentNodeId}
+          reachableIds={c.reachable.map(n => n.id)}
+          onChoose={c.chooseNode}
+        />
+      )
       break
 
     case 'boss':
@@ -55,7 +68,7 @@ export function CampaignRunner({
           playerRelics={c.run.relics}
           enemy={c.battle.enemy}
           enemySyn={c.battle.enemySyn}
-          title={isBoss ? `Boss: ${BOSS_NAME}` : `Sfida ${c.run.stage} di ${c.enemyCount}`}
+          title={isBoss ? `Boss: ${BOSS_NAME}` : `Sfida ${c.battleNumber} di ${c.enemyCount}`}
           rightTitle={isBoss ? 'Boss Finale' : 'Avversari'}
           onFinish={c.revealResult}
         />
@@ -69,7 +82,7 @@ export function CampaignRunner({
         <VictoryScreen
           result={c.battle.result}
           mvpName={nameById[c.battle.result.mvpId] ?? c.battle.result.mvpId}
-          battleNumber={c.run.stage}
+          battleNumber={c.battleNumber}
           enemyCount={c.enemyCount}
           bossNext={c.bossNext}
           onNext={c.advance}
@@ -90,7 +103,7 @@ export function CampaignRunner({
     case 'defeat':
       view = (
         <ResultScreen
-          outcome="defeat" seed={seed} stageReached={c.run.stage}
+          outcome="defeat" seed={seed} stageReached={c.battleNumber}
           enemyCount={c.enemyCount} onRestart={onRestart}
         />
       )
@@ -107,12 +120,12 @@ export function CampaignRunner({
       break
   }
 
-  // Crossfade between campaign phases. Key by view + stage so consecutive
-  // battles (same view, different stage) still re-animate.
+  // Crossfade between campaign phases. Key by view + current node (falling
+  // back to stage) so consecutive map/battle transitions still re-animate.
   return (
     <AnimatePresence mode="wait">
       <motion.div
-        key={`${c.view}-${c.run.stage}`}
+        key={`${c.view}-${c.run.currentNodeId ?? c.run.stage}`}
         className="flex-1 flex flex-col"
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}

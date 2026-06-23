@@ -45,11 +45,17 @@ describe('useRun map flow', () => {
     expect(result.current.run.relics.map(r => r.relic)).toContain(relic)
   })
 
-  it('battleNumber reflects node depth + 1 and bossNext tracks the boss node', () => {
+  it('battleNumber reflects node depth (start = 0) and bossNext tracks the boss node', () => {
     const { result } = renderHook(() => useRun('seed-map', playerTeam()))
-    // start node is depth 0 => battleNumber 1
-    expect(result.current.battleNumber).toBe(1)
+    // The start node is floor 0 (the un-fought start position), so battleNumber
+    // is 0; the first fought node (floor 1) reads "Sfida 1". bossNext is false
+    // until the player sits on the boss node.
+    expect(result.current.battleNumber).toBe(0)
     expect(result.current.bossNext).toBe(false)
+    // Walking the first edge moves to floor 1 => "Sfida 1".
+    const target = result.current.reachable[0]!.id
+    act(() => result.current.chooseNode(target))
+    expect(result.current.battleNumber).toBe(1)
   })
 })
 

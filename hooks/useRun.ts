@@ -64,7 +64,19 @@ export function useRun(seed: string, team: DraftedWizard[]): RunController {
   const runRef = useRef(run)
   runRef.current = run
 
-  const enemyCount = BALANCE.campaign.enemyCount
+  // enemyCount / battleNumber definition (graph-derived, honest + monotonic):
+  //   The map has floors 0..maxDepth; floor maxDepth is the boss. Floor 0 is the
+  //   player's START position — in the UI flow the player enters the map and
+  //   picks a *reachable* next node (floor 1) to fight, so floor 0 is never
+  //   itself a fought "Sfida". The fought non-boss floors are therefore 1..(maxDepth-1),
+  //   which is exactly (maxDepth - 1) battles. We define:
+  //     enemyCount   = maxDepth - 1          (total non-boss fights, Y in "Sfida X di Y")
+  //     battleNumber = nodeDepth(current)    (depth-1 → "Sfida 1", depth-4 → "Sfida 4")
+  //   So the first fight reads "Sfida 1 di N", the last non-boss fight "Sfida N di N",
+  //   then the boss — monotonic and exhaustive. Falls back to the BALANCE constant
+  //   when no map is present (legacy/linear callers).
+  const maxDepth = run.map ? Math.max(...run.map.map(n => nodeDepth(n.id))) : undefined
+  const enemyCount = maxDepth !== undefined ? maxDepth - 1 : BALANCE.campaign.enemyCount
 
   const enterMap = useCallback(() => setView('map'), [])
 
@@ -109,7 +121,9 @@ export function useRun(seed: string, team: DraftedWizard[]): RunController {
   const reachable = reachableFrom(run)
 
   const bossNext = currentNode?.type === 'boss'
-  const battleNumber = currentNode ? nodeDepth(currentNode.id) + 1 : 1
+  // 1-based "Sfida X" index = the current node's floor depth (floor 0 is the
+  // un-fought start position; floor 1 is the first fight = "Sfida 1").
+  const battleNumber = currentNode ? nodeDepth(currentNode.id) : 1
 
   return {
     run,

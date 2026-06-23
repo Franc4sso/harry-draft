@@ -3,7 +3,12 @@ import { startRun, confirmTeam, nextBattle, advanceToNode, nodeById } from '@/ga
 import { nodeDepth } from '@/game/engine/map'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
+import { powerOf } from '@/game/engine/combat/teamGen'
 import { WIZARDS } from '@/data/wizards'
+import { BALANCE } from '@/data/constants'
+import type { DraftedWizard, RunNode, RunState } from '@/types'
+
+const teamPower = (team: DraftedWizard[]) => team.reduce((sum, dw) => sum + powerOf(dw), 0)
 
 function playerTeam() {
   const r = createRng(99)
@@ -81,5 +86,44 @@ describe('run map integration', () => {
     }
     const bossOut = nextBattle(s)
     expect(bossOut.isBoss).toBe(true)
+  })
+
+  it('an elite node scales the enemy budget above a battle node at the same depth', () => {
+    // Hand-build two single-node maps at the SAME depth (3) so the depth-derived
+    // RNG salt and budget base are identical; only the node TYPE differs. The
+    // elite node multiplies the budget by BALANCE.map.eliteBudgetMult, so its
+    // enemy roster should be strictly more powerful than the battle node's.
+    const base = confirmTeam(startRun('elite-vs-battle'), team)
+    const mk = (type: RunNode['type']): RunState => ({
+      ...base,
+      map: [{ id: 'f3n0', type, next: [] }],
+      currentNodeId: 'f3n0',
+    })
+    expect(BALANCE.map.eliteBudgetMult).toBeGreaterThan(1)
+    const battleEnemy = nextBattle(mk('battle')).enemy
+    const eliteEnemy = nextBattle(mk('elite')).enemy
+    expect(teamPower(eliteEnemy)).toBeGreaterThan(teamPower(battleEnemy))
+  })
+
+  it('graph map shape backs the controller "Sfida X di Y" denominator', () => {
+    // The controller's enemyCount (the Y in "Sfida X di Y") is maxDepth - 1:
+    // floor 0 is the un-fought start position, floors 1..maxDepth-1 are the
+    // fought non-boss "Sfide", and floor maxDepth is the boss. Verify the
+    // generated map has exactly that shape so the label is honest + monotonic.
+    const s = confirmTeam(startRun('seed-map'), team)
+    const maxDepth = Math.max(...s.map!.map(n => nodeDepth(n.id)))
+    // Floor 0 exists and is the single start battle node.
+    const floor0 = s.map!.filter(n => nodeDepth(n.id) === 0)
+    expect(floor0).toHaveLength(1)
+    expect(floor0[0]!.type).toBe('battle')
+    // Floors 1..maxDepth-1 are the fought non-boss floors → that is the Y.
+    const foughtFloors = new Set(
+      s.map!.filter(n => n.type !== 'boss' && nodeDepth(n.id) > 0).map(n => nodeDepth(n.id)),
+    )
+    expect(foughtFloors.size).toBe(maxDepth - 1)
+    // The boss is the single node on the final floor.
+    const bossFloor = s.map!.filter(n => nodeDepth(n.id) === maxDepth)
+    expect(bossFloor).toHaveLength(1)
+    expect(bossFloor[0]!.type).toBe('boss')
   })
 })
