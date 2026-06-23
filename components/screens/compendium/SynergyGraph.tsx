@@ -40,7 +40,7 @@ export function SynergyGraph() {
 
   return (
     <div className="grid gap-6 md:grid-cols-[400px_1fr] items-start">
-      <svg viewBox="0 0 400 400" className="w-full max-w-md mx-auto" role="img" aria-label="Grafo delle sinergie">
+      <svg viewBox="0 0 400 400" className="w-full max-w-md mx-auto" role="group" aria-label="Grafo delle sinergie">
         <circle cx={CX} cy={CY} r={R} fill="none" stroke="rgba(255,255,255,0.06)" />
         {SYNERGIES.map((s, i) => {
           const angle = (i / SYNERGIES.length) * Math.PI * 2 - Math.PI / 2
