@@ -1,6 +1,7 @@
 'use client'
+import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { Sparkles, Skull } from 'lucide-react'
+import { Sparkles, Skull, Copy, Check } from 'lucide-react'
 import { GlowPanel } from '@/components/ui/GlowPanel'
 import { Button } from '@/components/ui/Button'
 
@@ -16,6 +17,13 @@ export function ResultScreen({
   onRestart: () => void
 }) {
   const won = outcome === 'win'
+  const [copied, setCopied] = useState(false)
+
+  const copySeed = () => {
+    void navigator.clipboard?.writeText(seed)
+    setCopied(true)
+  }
+
   return (
     <main className="flex-1 flex flex-col items-center justify-center gap-8 p-8 text-center">
       <motion.div
@@ -41,10 +49,19 @@ export function ResultScreen({
         </p>
       </motion.div>
 
-      <GlowPanel className="px-5 py-3">
+      <GlowPanel className="px-5 py-3 flex items-center gap-3">
         <p className="text-[11px] uppercase tracking-widest text-white/40">
           seed: <span className="text-white/70">{seed}</span>
         </p>
+        <button
+          type="button"
+          onClick={copySeed}
+          aria-label="Copia seed"
+          className="flex items-center gap-1 text-[11px] uppercase tracking-widest text-white/50 hover:text-white transition-colors"
+        >
+          {copied ? <Check size={13} /> : <Copy size={13} />}
+          {copied ? 'Copiato!' : 'Copia seed'}
+        </button>
       </GlowPanel>
 
       <Button onClick={onRestart}>Nuova run</Button>
