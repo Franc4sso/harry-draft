@@ -20,12 +20,12 @@ describe('relics data', () => {
   it('every relic has either a bonus or a trigger', () => {
     for (const r of RELICS) {
       const hasBonus = !!r.bonus
-      const hasTrigger = !!(r.startOfBattle || r.onHit)
+      const hasTrigger = !!(r.triggers?.length)
       expect(hasBonus || hasTrigger, `relic ${r.id} has nothing`).toBe(true)
     }
   })
   it('limits trigger relics to at most 3 (v1)', () => {
-    const triggers = RELICS.filter(r => r.startOfBattle || r.onHit)
+    const triggers = RELICS.filter(r => r.triggers?.length)
     expect(triggers.length).toBeLessThanOrEqual(3)
   })
   it('conditional relics reference real houses/roles', () => {
@@ -38,5 +38,18 @@ describe('relics data', () => {
   })
   it('exposes a lookup map', () => {
     expect(RELIC_BY_ID[RELICS[0]!.id]).toBe(RELICS[0])
+  })
+})
+
+describe('relic trigger migration', () => {
+  it('pietra-resurrezione uses onBattleStart shield trigger', () => {
+    const t = RELIC_BY_ID['pietra-resurrezione']!.triggers
+    expect(t).toEqual([{ hook: 'onBattleStart', effects: [{ kind: 'shield', amount: 30 }] }])
+  })
+  it('boccino-doro uses onHit poison trigger', () => {
+    const t = RELIC_BY_ID['boccino-doro']!.triggers
+    expect(t).toEqual([{ hook: 'onHit', effects: [
+      { kind: 'applyStatus', target: 'enemy', chance: 0.15, effect: { kind: 'dot', amount: 6, duration: 2 } },
+    ] }])
   })
 })

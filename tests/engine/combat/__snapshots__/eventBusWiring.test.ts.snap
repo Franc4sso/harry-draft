@@ -1,0 +1,9 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`event bus wiring parity > same seed produces identical log with and after refactor (snapshot) 1`] = `
+{
+  "logLen": 8,
+  "turns": 4,
+  "winner": "left",
+}
+`;

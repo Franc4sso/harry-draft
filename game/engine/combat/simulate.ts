@@ -1,10 +1,11 @@
 import type {
-  ActiveRelic, ActiveSynergy, BattleResult, BattleUnit, DraftedWizard, LogEntry, LogFlag, Side, UnitSnapshot,
+  ActiveRelic, ActiveSynergy, BattleResult, BattleUnit, DraftedWizard, HookCtx, LogEntry, LogFlag, Side, UnitSnapshot,
 } from '@/types'
 import type { Rng } from '../rng'
 import { BALANCE } from '@/data/constants'
 import { applyBonuses, totalRegen } from '../synergy'
-import { applyRelicBonuses, totalRelicRegen } from '../relics'
+import { applyRelicBonuses, registerRelicTriggers, totalRelicRegen } from '../relics'
+import { createEventBus } from './eventBus'
 import { canAct } from '../status'
 import { EFFECT_HANDLERS } from './effects'
 import { effectiveStats, resolveAction, tickStatuses } from './resolve'
@@ -53,17 +54,63 @@ export function simulateBattle(
   const sync = (u: BattleUnit) => { if (u.hp <= 0) { u.hp = 0; u.alive = false } }
   const sideUnits = (s: Side) => (s === 'left' ? L : R).filter(u => u.alive)
 
-  // startOfBattle relic triggers: run each EffectSpec on every left unit, consuming the
-  // shared rng in a fixed order (relics -> effects -> units) to preserve determinism.
-  for (const { relic } of leftRelics) {
-    if (!relic.startOfBattle) continue
-    for (const eff of relic.startOfBattle) {
+  // Relic triggers dispatch through the EventBus. Only the LEFT team carries relics.
+  const bus = createEventBus()
+  registerRelicTriggers(bus, left, leftRelics)
+
+  // Apply a collected reactive hook for `unit`. Guarded by collectReactive().length
+  // so a zero-listener hook draws NO rng and emits NO log line — preserving every
+  // existing battle's rng stream byte-for-byte.
+  const fireReactive = (hook: 'onHeal' | 'onDeath' | 'onAllyDeath' | 'onHpThreshold' | 'onTurnStart' | 'onTurnEnd', unit: BattleUnit, t: number, hpPct?: number) => {
+    const ctx: HookCtx = { turn: t, actor: unit, side: unit.side, flags: [], hpPct }
+    const specs = bus.collectReactive(hook, ctx)
+    if (specs.length === 0) return
+    for (const eff of specs) {
+      const flags: LogFlag[] = []
+      const r = EFFECT_HANDLERS[eff.kind]({ rng, turn: t, actor: unit, target: unit, flags }, eff)
+      // Mirror the onBattleStart block: log every reactive effect as a 'Reliquia'
+      // system entry so buildReplay (which reconstructs HP from logged values) stays
+      // in parity with live combat for any HP-changing effect.
+      log.push({
+        turn: t, actorId: unit.wizard.id, actorSide: unit.side, action: 'Reliquia',
+        targetId: unit.wizard.id, targetSide: unit.side, type: 'system', value: r.value, flags,
+      })
+    }
+  }
+  // onHpThreshold fires once per downward crossing per unit; key `${side}:${id}:${threshold}`.
+  // The threshold fractions come straight from the left relics' onHpThreshold triggers
+  // (only the LEFT team carries relics). When none exist this stays empty → no rng, no log.
+  const registeredThresholds = leftRelics.flatMap(({ relic }) =>
+    (relic.triggers ?? [])
+      .filter(t => t.hook === 'onHpThreshold' && typeof t.threshold === 'number')
+      .map(t => t.threshold!),
+  )
+  const firedThresholds = new Set<string>()
+  const checkThreshold = (unit: BattleUnit, t: number) => {
+    if (registeredThresholds.length === 0 || unit.maxHp <= 0) return
+    const pct = Math.max(0, unit.hp) / unit.maxHp
+    for (const trig of registeredThresholds) {
+      const key = `${unit.side}:${unit.wizard.id}:${trig}`
+      if (pct < trig && !firedThresholds.has(key)) {
+        firedThresholds.add(key)
+        fireReactive('onHpThreshold', unit, t, pct)
+      }
+    }
+  }
+
+  // onBattleStart: apply collected specs to every left unit.
+  // Old order was relic→effect→unit (effect-outer, unit-inner). collectReactive gives us
+  // the flat spec list in relic→trigger→effect order; apply each spec across all units
+  // to preserve the exact rng draw sequence.
+  {
+    const ctx0 = (u: BattleUnit): HookCtx => ({ turn: 0, actor: u, side: 'left', flags: [] })
+    const specs = bus.collectReactive('onBattleStart', ctx0(L[0] ?? ({} as BattleUnit)))
+    for (const eff of specs) {
       for (const unit of L) {
         const flags: LogFlag[] = []
-        const ctx = { rng, turn: 0, actor: unit, target: unit, flags }
-        const r = EFFECT_HANDLERS[eff.kind](ctx, eff)
+        const r = EFFECT_HANDLERS[eff.kind]({ rng, turn: 0, actor: unit, target: unit, flags }, eff)
         log.push({
-          turn: 0, actorId: unit.wizard.id, actorSide: unit.side, action: relic.name,
+          turn: 0, actorId: unit.wizard.id, actorSide: unit.side, action: 'Reliquia',
           targetId: unit.wizard.id, targetSide: unit.side, type: 'system', value: r.value, flags,
         })
       }
@@ -80,9 +127,13 @@ export function simulateBattle(
     )
     for (const actor of order) {
       if (!actor.alive) continue
+      // onTurnStart: top of each LEFT unit's turn, before it acts (fires even if
+      // stunned). Gated by collectReactive().length so zero-listener = no rng/no log.
+      if (actor.side === 'left') fireReactive('onTurnStart', actor, turn)
       if (!canAct(actor)) {
         // Do NOT manually decrement here — tickStatuses at end-of-turn handles all status decrements uniformly.
         log.push({ turn, actorId: actor.wizard.id, actorSide: actor.side, action: 'Stordito', type: 'system', flags: ['stun'] })
+        if (actor.side === 'left') fireReactive('onTurnEnd', actor, turn)
         continue
       }
       const allies = actor.side === 'left' ? L : R
@@ -90,23 +141,22 @@ export function simulateBattle(
       const spell = selectSpell(actor)
       const healIntent = spell.type === 'Cura'
       const target = selectTarget(actor, allies, enemies)
-      if (!target) continue
+      if (!target) { if (actor.side === 'left') fireReactive('onTurnEnd', actor, turn); continue }
       const realTarget = healIntent
         ? (mostWounded(allies.filter(a => a.alive)) ?? actor)
         : (spell.type === 'Difesa' ? actor : target)
-      const entry = resolveAction(rng, turn, actor, realTarget, spell)
+      const entry = resolveAction(rng, turn, actor, realTarget, spell, bus)
       log.push(entry)
-      // onHit relic triggers: after a LEFT actor resolves a spell against an ENEMY target.
-      // Run each EffectSpec via EFFECT_HANDLERS, consuming the same rng (chance handled in handler).
+      // onHit: after a LEFT actor resolves a spell against an ENEMY target.
       if (actor.side === 'left' && realTarget.side !== actor.side) {
-        for (const { relic } of leftRelics) {
-          if (!relic.onHit) continue
-          for (const eff of relic.onHit) {
-            const flags: LogFlag[] = []
-            const ctx = { rng, turn, actor, target: realTarget, flags }
-            EFFECT_HANDLERS[eff.kind](ctx, eff)
-          }
+        const hitCtx: HookCtx = { turn, actor, target: realTarget, side: 'left', flags: [] }
+        for (const eff of bus.collectReactive('onHit', hitCtx)) {
+          EFFECT_HANDLERS[eff.kind]({ rng, turn, actor, target: realTarget, flags: hitCtx.flags }, eff)
         }
+      }
+      // onHeal: after a heal resolves on a LEFT target (relic effects own the LEFT team).
+      if (entry.flags.includes('heal') && realTarget.side === 'left') {
+        fireReactive('onHeal', realTarget, turn)
       }
       if (entry.value) {
         const scoreKey = `${actor.side}:${actor.wizard.id}`
@@ -119,6 +169,17 @@ export function simulateBattle(
           targetId: realTarget.wizard.id, targetSide: realTarget.side, type: 'system', flags: ['kill'],
         })
       }
+      // onDeath / onAllyDeath: after sync, when a LEFT unit just died.
+      if (!realTarget.alive && realTarget.side === 'left') {
+        fireReactive('onDeath', realTarget, turn)
+        for (const ally of L) {
+          if (ally.alive && ally !== realTarget) fireReactive('onAllyDeath', ally, turn)
+        }
+      }
+      // onHpThreshold: HP of the target changed this action.
+      if (realTarget.side === 'left') checkThreshold(realTarget, turn)
+      // onTurnEnd: after a LEFT actor finishes acting.
+      if (actor.side === 'left') fireReactive('onTurnEnd', actor, turn)
     }
     // end-of-turn: dot/cooldown tick + regen
     for (const u of [...L, ...R]) {
@@ -126,7 +187,16 @@ export function simulateBattle(
       const dots = tickStatuses(turn, u)
       for (const d of dots) log.push(d)
       sync(u)
+      // onDeath / onAllyDeath when a dot tick kills a LEFT unit.
+      if (!u.alive && u.side === 'left') {
+        fireReactive('onDeath', u, turn)
+        for (const ally of L) {
+          if (ally.alive && ally !== u) fireReactive('onAllyDeath', ally, turn)
+        }
+      }
       if (u.alive && regen[u.side] > 0) u.hp = Math.min(u.maxHp, u.hp + regen[u.side])
+      // onHpThreshold after dot + regen settle this unit's HP for the turn.
+      if (u.alive && u.side === 'left') checkThreshold(u, turn)
     }
   }
 

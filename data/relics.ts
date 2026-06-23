@@ -22,8 +22,8 @@ export const RELICS: Relic[] = [
   { id: 'pensatoio', name: 'Pensatoio', desc: '+15 Attacco e +15 Difesa.', rarity: 'rara', bonus: { atk: 15, def: 15 } },
   // Epiche — 1 passiva forte + 2 con trigger (≤3 trigger totali)
   { id: 'bacchetta-sambuco', name: 'Bacchetta di Sambuco', desc: '+12% a tutte le statistiche.', rarity: 'epica', bonus: { allPct: 0.12 } },
-  { id: 'pietra-resurrezione', name: 'Pietra della Resurrezione', desc: 'A inizio battaglia, scudo a tutta la squadra.', rarity: 'epica', startOfBattle: [{ kind: 'shield', amount: 30 }] },
-  { id: 'boccino-doro', name: "Boccino d'Oro", desc: 'Ogni colpo ha il 15% di avvelenare il nemico.', rarity: 'epica', onHit: [{ kind: 'applyStatus', target: 'enemy', chance: 0.15, effect: { kind: 'dot', amount: 6, duration: 2 } }] },
+  { id: 'pietra-resurrezione', name: 'Pietra della Resurrezione', desc: 'A inizio battaglia, scudo a tutta la squadra.', rarity: 'epica', triggers: [{ hook: 'onBattleStart', effects: [{ kind: 'shield', amount: 30 }] }] },
+  { id: 'boccino-doro', name: "Boccino d'Oro", desc: 'Ogni colpo ha il 15% di avvelenare il nemico.', rarity: 'epica', triggers: [{ hook: 'onHit', effects: [{ kind: 'applyStatus', target: 'enemy', chance: 0.15, effect: { kind: 'dot', amount: 6, duration: 2 } }] }] },
 ]
 
 export const RELIC_BY_ID: Record<string, Relic> = Object.fromEntries(

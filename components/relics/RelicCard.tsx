@@ -20,7 +20,7 @@ export function RelicCard({
 }) {
   const color = RELIC_RARITY_COLOR[relic.rarity]
   const clickable = Boolean(onClick)
-  const hasTrigger = Boolean(relic.startOfBattle || relic.onHit)
+  const hasTrigger = Boolean(relic.triggers?.length)
   const Icon = hasTrigger ? Sparkles : Gem
 
   return (

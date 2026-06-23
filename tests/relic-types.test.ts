@@ -14,9 +14,11 @@ describe('relic types', () => {
   it('supports trigger effect specs', () => {
     const epic: Relic = {
       id: 'e', name: 'E', desc: '', rarity: 'epica',
-      startOfBattle: [{ kind: 'shield', amount: 20 }],
-      onHit: [{ kind: 'applyStatus', target: 'enemy', chance: 0.15, effect: { kind: 'dot', amount: 6, duration: 2 } }],
+      triggers: [
+        { hook: 'onBattleStart', effects: [{ kind: 'shield', amount: 20 }] },
+        { hook: 'onHit', effects: [{ kind: 'applyStatus', target: 'enemy', chance: 0.15, effect: { kind: 'dot', amount: 6, duration: 2 } }] },
+      ],
     }
-    expect(epic.startOfBattle?.[0]?.kind).toBe('shield')
+    expect(epic.triggers?.[0]?.effects?.[0]?.kind).toBe('shield')
   })
 })
