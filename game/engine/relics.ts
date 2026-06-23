@@ -1,4 +1,8 @@
 import type { ActiveRelic, DraftedWizard, RelicCondition, Stats } from '@/types'
+import type { Relic } from '@/types'
+import type { Rng } from './rng'
+import { RELICS } from '@/data/relics'
+import { BALANCE } from '@/data/constants'
 
 export function relicMatchesCondition(team: DraftedWizard[], condition?: RelicCondition): boolean {
   if (!condition) return true
@@ -37,4 +41,30 @@ export function totalRelicRegen(team: DraftedWizard[], relics: ActiveRelic[]): n
     relic.bonus && relicMatchesCondition(team, relic.condition)
       ? sum + (relic.bonus.regen ?? 0)
       : sum, 0)
+}
+
+function weightedPick(rng: Rng, pool: Relic[]): Relic {
+  const weights = pool.map(r => BALANCE.relics.rarityWeights[r.rarity])
+  const total = weights.reduce((a, b) => a + b, 0)
+  let roll = rng.next() * total
+  for (let i = 0; i < pool.length; i++) {
+    roll -= weights[i]!
+    if (roll <= 0) return pool[i]!
+  }
+  return pool[pool.length - 1]!
+}
+
+export function offerRelics(rng: Rng, owned: ActiveRelic[], _stage: number): Relic[] {
+  const ownedIds = new Set(owned.map(o => o.relic.id))
+  const available = RELICS.filter(r => !ownedIds.has(r.id))
+  const count = Math.min(BALANCE.relics.offerCount, available.length)
+  const chosen: Relic[] = []
+  const remaining = [...available]
+  for (let i = 0; i < count; i++) {
+    const pick = weightedPick(rng, remaining)
+    chosen.push(pick)
+    const idx = remaining.indexOf(pick)
+    remaining.splice(idx, 1)
+  }
+  return chosen
 }
