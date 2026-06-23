@@ -7,6 +7,8 @@ export interface DraftedWizard {
   stats: Stats
   maxHp: number
   spell: Spell
+  /** Current HP carried across battles in a run. Absent = full (treated as maxHp). */
+  currentHp?: number
 }
 
 export interface ActiveEffect {

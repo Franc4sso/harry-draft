@@ -18,8 +18,10 @@ export function toBattleUnits(
   return team.map(dw => {
     const synBuffed = applyBonuses(dw.stats, synergies)
     const buffed = applyRelicBonuses(synBuffed, team, relics)
+    const startHp = dw.currentHp ?? buffed.hp
     return {
-      ...dw, side, buffedStats: buffed, maxHp: buffed.hp, hp: buffed.hp,
+      ...dw, side, buffedStats: buffed, maxHp: buffed.hp,
+      hp: Math.min(buffed.hp, Math.max(0, startHp)),
       cooldowns: {}, statusEffects: [], alive: true,
     }
   })
