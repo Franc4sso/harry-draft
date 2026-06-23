@@ -1,4 +1,4 @@
-import type { ActiveSynergy, BattleResult, DraftedWizard, Relic, RunNode, RunState, UnitSnapshot } from '@/types'
+import type { ActiveSynergy, BattleResult, DraftedWizard, Relic, RunNode, RunState, Side, UnitSnapshot } from '@/types'
 import { createRng } from './rng'
 import { detectSynergies } from './synergy'
 import { simulateBattle } from './combat/simulate'
@@ -64,6 +64,20 @@ export function applyBattleToRoster(
     })
 }
 
+/**
+ * Pure derivation of the run phase after a fight resolves.
+ * - Roster wiped → defeat (regardless of node type).
+ * - Boss node → win-or-bust: win iff the player (left) won, else defeat.
+ * - Non-boss node → any survivor means the player advances → victory.
+ */
+export function runPhaseAfterBattle(
+  wiped: boolean, isBoss: boolean, winner: Side,
+): RunState['phase'] {
+  if (wiped) return 'defeat'
+  if (isBoss) return winner === 'left' ? 'win' : 'defeat'
+  return 'victory'
+}
+
 export function nextBattle(state: RunState): BattleOutcome {
   const cur = state.currentNodeId ? nodeById(state, state.currentNodeId) : undefined
   const isBoss = cur?.type === 'boss'
@@ -85,10 +99,7 @@ export function nextBattle(state: RunState): BattleOutcome {
   const newTeam = applyBattleToRoster(state.team, result.finalSnapshot)
   const newSyn = detectSynergies(newTeam)
   const wiped = newTeam.length === 0
-  const phase: RunState['phase'] =
-    wiped ? 'defeat'
-    : isBoss ? (result.winner === 'left' ? 'win' : 'defeat') // boss: win-or-bust
-    : 'victory'                                               // non-boss: survive → advance
+  const phase = runPhaseAfterBattle(wiped, isBoss, result.winner)
 
   return {
     state: { ...state, team: newTeam, activeSynergies: newSyn, stage: state.stage + 1, lastBattle: result, phase },

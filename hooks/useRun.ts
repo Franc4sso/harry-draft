@@ -39,6 +39,8 @@ export interface RunController {
   currentNode: RunNode | undefined
   /** The legal next nodes the player may move to from currentNode. */
   reachable: RunNode[]
+  /** Names of player wizards permanently lost in the most recent battle. */
+  lastFallen: string[]
   startBattle: () => void
   /** Reveal victory/defeat/win once the replay finishes. */
   revealResult: () => void
@@ -61,6 +63,7 @@ export function useRun(seed: string, team: DraftedWizard[]): RunController {
   const [run, setRun] = useState<RunState>(() => confirmTeam(startRun(seed), team))
   const [view, setView] = useState<RunView>('team')
   const [battle, setBattle] = useState<ActiveBattle | null>(null)
+  const [lastFallen, setLastFallen] = useState<string[]>([])
   const runRef = useRef(run)
   runRef.current = run
 
@@ -81,7 +84,11 @@ export function useRun(seed: string, team: DraftedWizard[]): RunController {
   const enterMap = useCallback(() => setView('map'), [])
 
   const startBattle = useCallback(() => {
+    const before = runRef.current.team
     const { state, result, enemy, enemySyn, isBoss } = nextBattle(runRef.current)
+    const survivingIds = new Set(state.team.map(d => d.wizard.id))
+    const fallen = before.filter(d => !survivingIds.has(d.wizard.id)).map(d => d.wizard.name)
+    setLastFallen(fallen)
     runRef.current = state
     setRun(state)
     setBattle({ result, enemy, enemySyn, isBoss })
@@ -135,6 +142,7 @@ export function useRun(seed: string, team: DraftedWizard[]): RunController {
     relicChoices,
     currentNode,
     reachable,
+    lastFallen,
     startBattle,
     revealResult,
     advance,

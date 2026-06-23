@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { startRun, confirmTeam, nextBattle, advanceToNode, nodeById, applyBattleToRoster } from '@/game/engine/run'
+import { startRun, confirmTeam, nextBattle, advanceToNode, nodeById, applyBattleToRoster, runPhaseAfterBattle } from '@/game/engine/run'
 import type { UnitSnapshot } from '@/types'
 import { nodeDepth } from '@/game/engine/map'
 import { draftWizard } from '@/game/engine/statRoll'
@@ -172,6 +172,27 @@ describe('applyBattleToRoster', () => {
 
   it('empty team → empty', () => {
     expect(applyBattleToRoster([], [])).toEqual([])
+  })
+})
+
+describe('runPhaseAfterBattle (pure phase derivation)', () => {
+  it('wiped roster → defeat regardless of node type or winner', () => {
+    expect(runPhaseAfterBattle(true, false, 'left')).toBe('defeat')
+    expect(runPhaseAfterBattle(true, false, 'right')).toBe('defeat')
+    expect(runPhaseAfterBattle(true, true, 'left')).toBe('defeat')
+    expect(runPhaseAfterBattle(true, true, 'right')).toBe('defeat')
+  })
+
+  it('boss node: win iff left wins, else defeat (win-or-bust)', () => {
+    expect(runPhaseAfterBattle(false, true, 'left')).toBe('win')
+    expect(runPhaseAfterBattle(false, true, 'right')).toBe('defeat')
+  })
+
+  it('non-boss node with survivors → victory even when the player did NOT win', () => {
+    // survive=advance rule: a timed-out/HP%-loss (winner==='right') with survivors
+    // still advances the run. This is the case hard to hit with a natural seed.
+    expect(runPhaseAfterBattle(false, false, 'right')).toBe('victory')
+    expect(runPhaseAfterBattle(false, false, 'left')).toBe('victory')
   })
 })
 
