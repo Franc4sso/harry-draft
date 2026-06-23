@@ -17,6 +17,7 @@ export function DraftCandidateCard({
       className="flex w-60 flex-col gap-2"
       onPointerEnter={onConsider}
       onFocus={onConsider}
+      tabIndex={0}
     >
       <WizardCard drafted={drafted} onClick={onPick} />
       {affs.length > 0 && (

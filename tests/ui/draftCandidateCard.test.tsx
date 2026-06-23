@@ -25,4 +25,10 @@ describe('DraftCandidateCard', () => {
     fireEvent.click(screen.getByText('Harry'))
     expect(onPick).toHaveBeenCalled()
   })
+  it('fires onConsider on focus', () => {
+    const onConsider = vi.fn()
+    const { container } = render(<DraftCandidateCard drafted={harry} onConsider={onConsider} />)
+    fireEvent.focus(container.firstChild as Element)
+    expect(onConsider).toHaveBeenCalled()
+  })
 })
