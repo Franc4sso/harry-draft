@@ -32,7 +32,7 @@ export const BALANCE = {
     floors: 6,            // total floors incl. start(0) + boss(last); 4 middle floors
     minWidth: 2,          // min nodes per middle floor
     maxWidth: 3,          // max nodes per middle floor
-    eliteFloors: [3],     // 0-based middle-floor indices forced to 'elite'
+    eliteFloors: [3] as number[],  // 0-based middle-floor indices forced to 'elite'
     eliteBudgetMult: 1.35,// enemy-budget multiplier on elite nodes
   },
   relics: {
