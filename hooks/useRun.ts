@@ -7,7 +7,7 @@ import { offerRelics } from '@/game/engine/relics'
 import { createRng } from '@/game/engine/rng'
 import { BALANCE } from '@/data/constants'
 
-export type RunView = 'team' | 'map' | 'boss' | 'battle' | 'victory' | 'defeat' | 'win' | 'relic-choice'
+export type RunView = 'team' | 'map' | 'battle' | 'victory' | 'defeat' | 'win' | 'relic-choice'
 
 /** The selectable next nodes from the run's current node (pure; also used by tests/MapScreen). */
 export function reachableFrom(state: RunState): RunNode[] {

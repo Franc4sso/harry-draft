@@ -7,7 +7,6 @@ import { BOSSES } from '@/data/bosses'
 import { TeamScreen } from './TeamScreen'
 import { BattleScreen } from './BattleScreen'
 import { VictoryScreen } from './VictoryScreen'
-import { BossScreen } from './BossScreen'
 import { ResultScreen } from './ResultScreen'
 import { RelicChoiceScreen } from './RelicChoiceScreen'
 import { MapScreen } from './MapScreen'
@@ -51,10 +50,6 @@ export function CampaignRunner({
           onChoose={c.chooseNode}
         />
       )
-      break
-
-    case 'boss':
-      view = <BossScreen bossName={BOSS_NAME} onBegin={c.startBattle} />
       break
 
     case 'battle': {

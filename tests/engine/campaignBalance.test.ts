@@ -76,7 +76,8 @@ describe('campaign difficulty curve', () => {
     // for this build, was tuned to ~0.5 under the old linear progression). The
     // intent we protect is unchanged — the campaign is genuinely winnable for
     // optimal play yet far from a guaranteed clear (neither pushover nor wall).
-    expect(stats.clearRate).toBeGreaterThan(0.2)
+    // Floor tightened from 0.2 → 0.30 (measured ~0.36; guards against regression).
+    expect(stats.clearRate).toBeGreaterThan(0.30)
     expect(stats.clearRate).toBeLessThan(0.72)
   })
 
