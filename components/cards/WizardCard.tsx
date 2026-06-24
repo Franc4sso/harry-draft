@@ -8,6 +8,7 @@ import { Chip } from '@/components/ui/Chip'
 import { RarityFrame } from '@/components/ui/RarityFrame'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { HouseCrest } from '@/components/ui/HouseCrest'
+import { HouseFrame } from './HouseFrame'
 import { affiliationChips } from '@/lib/affiliationChips'
 import { spellTypeChip, spellEffectChips } from '@/lib/glossary'
 
@@ -46,7 +47,9 @@ export function WizardCard({
   const clickable = Boolean(onClick)
   const typeChip = spellTypeChip(spell.type)
   const effectChips = spellEffectChips(spell)
-  const chips = affiliationChips(wizard)
+  // House and role are shown by the frame + role badge; the strip carries only
+  // the special (group/origin) synergies, so it's usually short or empty.
+  const specialChips = affiliationChips(wizard).filter((c) => c.kind === 'special')
 
   return (
     <motion.div
@@ -61,43 +64,50 @@ export function WizardCard({
       className={cn('w-44 select-none text-white', clickable && 'cursor-pointer', className)}
     >
       <RarityFrame tier={wizard.tier} selected={selected}>
-        <div className="relative h-28 overflow-hidden">
+        <HouseFrame house={wizard.house}>
+        <div className="relative h-28 overflow-hidden rounded-t-xl">
           <PortraitImage id={wizard.id} house={wizard.house} alt={wizard.name} variant="card" />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 50%, rgba(12,10,22,0.94))' }} />
           <div className="absolute right-2 top-2"><TierBadge tier={wizard.tier} /></div>
+          {/* House crest accent, top-left. */}
+          <div className="absolute left-2 top-2"><HouseCrest house={wizard.house} size={18} /></div>
+          {/* Role icon badge, bottom-left — replaces the old role text pill. */}
+          <div
+            className="absolute bottom-2 left-2 grid h-6 w-6 place-items-center rounded-full border border-white/25 bg-black/55 backdrop-blur-sm"
+            title={wizard.role}
+          >
+            <RoleIcon role={wizard.role} size={13} className="text-white/90" />
+          </div>
         </div>
 
         <div className="p-2.5 pt-1.5">
           <h3 className="font-display text-sm leading-tight truncate">{wizard.name}</h3>
-          <div data-testid="affiliation-strip" className="mt-1 flex flex-wrap items-center gap-1">
-            {chips.map((c) => {
-              const hot = c.synergyId ? hotSynergyIds?.has(c.synergyId) ?? false : false
-              const isSpecial = c.kind === 'special'
-              return (
-                <span
-                  key={c.id}
-                  data-synergy={c.kind === 'special' ? c.synergyId : undefined}
-                  data-hot={hot ? '' : undefined}
-                  className={cn(
-                    'inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold',
-                    hot && 'resa-animated',
-                  )}
-                  style={
-                    hot
-                      ? { color: '#f3e6c4', borderColor: '#caa24a', background: 'rgba(120,90,40,0.6)', boxShadow: '0 0 8px rgba(202,162,74,0.6)' }
-                      : isSpecial
-                        ? { color: '#ead9b0', borderColor: 'rgba(176,141,87,0.55)', background: 'rgba(176,141,87,0.12)' }
-                        : { color: 'rgba(255,255,255,0.82)', borderColor: 'rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.05)' }
-                  }
-                >
-                  {c.kind === 'house' && <HouseCrest house={wizard.house} size={11} />}
-                  {c.kind === 'role' && <RoleIcon role={wizard.role} size={11} />}
-                  {isSpecial && <span aria-hidden style={{ color: '#caa24a' }}>◆</span>}
-                  {c.label}
-                </span>
-              )
-            })}
-          </div>
+          {specialChips.length > 0 && (
+            <div data-testid="affiliation-strip" className="mt-1 flex flex-wrap items-center gap-1">
+              {specialChips.map((c) => {
+                const hot = c.synergyId ? hotSynergyIds?.has(c.synergyId) ?? false : false
+                return (
+                  <span
+                    key={c.id}
+                    data-synergy={c.synergyId}
+                    data-hot={hot ? '' : undefined}
+                    className={cn(
+                      'inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold',
+                      hot && 'resa-animated',
+                    )}
+                    style={
+                      hot
+                        ? { color: '#f3e6c4', borderColor: '#caa24a', background: 'rgba(120,90,40,0.6)', boxShadow: '0 0 8px rgba(202,162,74,0.6)' }
+                        : { color: '#ead9b0', borderColor: 'rgba(176,141,87,0.55)', background: 'rgba(176,141,87,0.12)' }
+                    }
+                  >
+                    <span aria-hidden style={{ color: '#caa24a' }}>◆</span>
+                    {c.label}
+                  </span>
+                )
+              })}
+            </div>
+          )}
 
           <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1">
             {STAT_CELLS.map((c) => (
@@ -117,6 +127,7 @@ export function WizardCard({
             )}
           </div>
         </div>
+        </HouseFrame>
       </RarityFrame>
     </motion.div>
   )
