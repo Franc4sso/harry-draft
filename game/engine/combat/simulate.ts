@@ -228,6 +228,25 @@ export function simulateBattle(
           })
         }
       }
+      // Anti-stall fatigue: escalating TRUE damage past fatigueStart, ignoring
+      // def/shields/regen so defensive stalemates always converge before turnCap.
+      if (u.alive && turn > BALANCE.combat.fatigueStart) {
+        const dmg = Math.round(u.maxHp * BALANCE.combat.fatiguePctStep * (turn - BALANCE.combat.fatigueStart))
+        if (dmg > 0) {
+          u.hp = Math.max(0, u.hp - dmg)
+          pushLog({
+            turn, actorId: u.wizard.id, actorSide: u.side, action: 'Fatica',
+            targetId: u.wizard.id, targetSide: u.side, type: 'system', value: dmg, flags: ['dot'],
+          })
+          sync(u)
+          if (!u.alive && u.side === 'left') {
+            fireReactive('onDeath', u, turn)
+            for (const ally of L) {
+              if (ally.alive && ally !== u) fireReactive('onAllyDeath', ally, turn)
+            }
+          }
+        }
+      }
       // onHpThreshold after dot + regen settle this unit's HP for the turn.
       if (u.alive && u.side === 'left') checkThreshold(u, turn)
     }

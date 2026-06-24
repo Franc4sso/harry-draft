@@ -11,6 +11,12 @@ export const BALANCE = {
     critMult: 1.6,
     dodgeBase: 0.02,
     dodgeScale: 0.0012,
+    // Anti-stall "fatigue": past `fatigueStart`, every unit takes escalating TRUE
+    // damage at end of turn (`maxHp * fatiguePctStep * (turn - fatigueStart)`),
+    // ignoring def/shields/heals so defensive stalemates always converge ~turn 40
+    // instead of grinding to turnCap. Normal fights end long before fatigueStart.
+    fatigueStart: 30,
+    fatiguePctStep: 0.05,
   },
   draft: {
     screenSize: 5,

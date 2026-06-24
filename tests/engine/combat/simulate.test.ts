@@ -59,6 +59,30 @@ describe('simulate', () => {
     expect(firstLeftAttack!.targetId).toBe('mcgonagall')
   })
 
+  it('fatigue forces defensive stalemates to converge well before the turn cap', () => {
+    // A wall of tanks (low atk, high def -> min-damage grind) used to run all 100 turns.
+    // Escalating end-of-turn fatigue (true damage past fatigueStart) must end it much sooner.
+    const tanks = WIZARDS.filter(w => w.role === 'Tank')
+    const left = tanks.slice(0, 5).map(w => draftWizard(createRng(1), w))
+    const right = tanks.slice(0, 5).map(w => draftWizard(createRng(2), w))
+    // Pass synergies like the real game: the "3 Tank" +def synergy is what builds the
+    // wall that grinds to turnCap without fatigue.
+    const res = simulateBattle(left, right, createRng(3),
+      { leftSyn: detectSynergies(left), rightSyn: detectSynergies(right) })
+    expect(res.turns).toBeLessThan(60)
+    // The fatigue ticks must be logged (visible in the replay), mirroring DoT/regen.
+    const fatigue = res.log.filter(e => e.action === 'Fatica')
+    expect(fatigue.length).toBeGreaterThan(0)
+    expect(fatigue.every(e => (e.value ?? 0) > 0)).toBe(true)
+  })
+
+  it('does not disturb battles that end before fatigue begins', () => {
+    // Normal matchups resolve in a handful of turns, well under fatigueStart -> no Fatica.
+    const res = simulateBattle(team(createRng(1)), team(createRng(2)), createRng(3))
+    expect(res.turns).toBeLessThan(30)
+    expect(res.log.some(e => e.action === 'Fatica')).toBe(false)
+  })
+
   it('regeneration synergy emits a heal log entry so the replay reflects it', () => {
     // In a real fight, left units take HP damage and survive several turns; a regen
     // synergy on the left must heal them end-of-turn AND be logged, otherwise
