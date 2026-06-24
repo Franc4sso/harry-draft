@@ -51,10 +51,23 @@ export interface LogEntry {
 
 export interface UnitSnapshot { id: string; side: Side; hp: number; maxHp: number; alive: boolean }
 
+/** Per-unit engine state captured at the instant a log entry is pushed. Deep-copied. */
+export interface UnitStepState {
+  hp: number
+  alive: boolean
+  cooldowns: Record<string, number>
+  statusEffects: ActiveEffect[]
+}
+
+/** Full battlefield state at one log step, keyed by `${side}:${id}` (unitKey). */
+export type StepSnapshot = Record<string, UnitStepState>
+
 export interface BattleResult {
   winner: Side
   turns: number
   log: LogEntry[]
   mvpId: string
   finalSnapshot: UnitSnapshot[]
+  /** 1:1 with `log`: snapshots[i] is the deep-copied state captured when log[i] was pushed. */
+  snapshots: StepSnapshot[]
 }

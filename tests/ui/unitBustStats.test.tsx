@@ -9,6 +9,7 @@ const base: ReplayUnit = {
   house: 'Grifondoro', role: 'Attaccante', tier: 1, maxHp: 100,
   atk: 50, def: 40, spd: 30,
   baseAtk: 50, baseDef: 40, baseSpd: 30,
+  spell: { id: 'stupeficium', name: 'Stupeficium', cooldown: 1 },
 }
 
 describe('UnitBust stat row', () => {

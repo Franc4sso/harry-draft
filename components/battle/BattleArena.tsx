@@ -6,7 +6,6 @@ import { unitKey } from '@/game/engine/combat/replay'
 import { UnitBust } from './UnitBust'
 import { SpellFx, ShieldFx, type FxPoint } from './SpellFx'
 import { floatFor } from './damageFloat'
-import { statusesAt } from '@/lib/battleStatus'
 import { archetypeFor } from '@/lib/spellArchetype'
 
 /**
@@ -27,7 +26,9 @@ export function BattleArena({
   const actingKey = entry?.actorSide ? unitKey(entry.actorSide, entry.actorId) : null
   const targetKey = entry?.targetSide && entry.targetId ? unitKey(entry.targetSide, entry.targetId) : null
   const float = floatFor(entry)
-  const statuses = statusesAt(replay, frameKey)
+  const frame = replay.frames[frameKey]
+  const statusEffects = frame?.statusEffects ?? {}
+  const cooldowns = frame?.cooldowns ?? {}
   const blocked = !!entry && (entry.flags.includes('block') || archetypeFor(entry) === 'shield')
 
   const left = replay.units.filter(u => u.side === 'left')
@@ -72,7 +73,8 @@ export function BattleArena({
           mirrored={mirrored}
           float={u.key === targetKey ? float : null}
           floatKey={frameKey}
-          statuses={statuses[u.key] ?? []}
+          effects={statusEffects[u.key] ?? []}
+          cooldown={cooldowns[u.key]?.[u.spell.id] ?? 0}
         />
         {u.key === targetKey && <ShieldFx active={blocked} fxKey={frameKey} />}
       </div>

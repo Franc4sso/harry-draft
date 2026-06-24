@@ -16,6 +16,7 @@ function fakeResult(winner: 'left' | 'right' = 'left'): BattleResult {
       { id: 'harry', side: 'left', hp: 50, maxHp: 100, alive: true },
       { id: 'ron', side: 'left', hp: 0, maxHp: 100, alive: false },
     ],
+    snapshots: [],
   }
 }
 

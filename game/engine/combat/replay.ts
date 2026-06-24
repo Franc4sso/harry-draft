@@ -1,5 +1,5 @@
 import type {
-  ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard, House, LogEntry, Role, Side, Tier,
+  ActiveEffect, ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard, House, LogEntry, Role, Side, Tier,
 } from '@/types'
 import { toBattleUnits } from './simulate'
 
@@ -23,6 +23,8 @@ export interface ReplayUnit {
   baseAtk: number
   baseDef: number
   baseSpd: number
+  /** The wizard's primary (equipped) spell — what the cooldown row displays. */
+  spell: { id: string; name: string; cooldown: number }
 }
 
 export interface ReplayFrame {
@@ -32,6 +34,10 @@ export interface ReplayFrame {
   entry: LogEntry | null
   /** HP of every unit after this frame, keyed by unitKey. Clamped to [0, maxHp]. */
   hp: Record<string, number>
+  /** Cooldowns per unit after this frame: unitKey -> (spellId -> turns remaining). */
+  cooldowns: Record<string, Record<string, number>>
+  /** Active status effects per unit after this frame: unitKey -> effects. */
+  statusEffects: Record<string, ActiveEffect[]>
 }
 
 export interface Replay {
@@ -76,6 +82,7 @@ export function buildReplay(
     baseAtk: u.stats.atk,
     baseDef: u.stats.def,
     baseSpd: u.stats.spd,
+    spell: { id: u.spell.id, name: u.spell.name, cooldown: u.spell.cooldown ?? 0 },
   }))
   const maxHp: Record<string, number> = {}
   for (const u of units) maxHp[u.key] = u.maxHp
@@ -83,7 +90,25 @@ export function buildReplay(
   const hp: Record<string, number> = {}
   for (const u of [...L, ...R]) hp[unitKey(u.side, u.wizard.id)] = u.hp
 
-  const frames: ReplayFrame[] = [{ index: 0, entry: null, hp: { ...hp } }]
+  // Index alignment: frames[k] corresponds to log[k-1]; the snapshot captured at that same
+  // push is snapshots[k-1]. So frame k reads cooldowns/statusEffects from snapshots[k-1].
+  // Frame 0 is the pre-combat state: empty cooldowns/statusEffects.
+  // Guard: older/hand-built results may lack `snapshots` — default to empty maps so nothing crashes.
+  const snapshots = result.snapshots ?? []
+  const stateFrom = (i: number): Pick<ReplayFrame, 'cooldowns' | 'statusEffects'> => {
+    const snap = snapshots[i]
+    const cooldowns: Record<string, Record<string, number>> = {}
+    const statusEffects: Record<string, ActiveEffect[]> = {}
+    if (snap) {
+      for (const [key, st] of Object.entries(snap)) {
+        cooldowns[key] = { ...st.cooldowns }
+        statusEffects[key] = st.statusEffects.map(e => ({ ...e }))
+      }
+    }
+    return { cooldowns, statusEffects }
+  }
+
+  const frames: ReplayFrame[] = [{ index: 0, entry: null, hp: { ...hp }, cooldowns: {}, statusEffects: {} }]
 
   result.log.forEach((entry, i) => {
     const value = entry.value
@@ -96,7 +121,7 @@ export function buildReplay(
         hp[key] = Math.max(0, Math.min(cap, next))
       }
     }
-    frames.push({ index: i + 1, entry, hp: { ...hp } })
+    frames.push({ index: i + 1, entry, hp: { ...hp }, ...stateFrom(i) })
   })
 
   return { units, frames, winner: result.winner, mvpId: result.mvpId, turns: result.turns }

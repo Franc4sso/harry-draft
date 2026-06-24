@@ -1,5 +1,5 @@
 import type {
-  ActiveRelic, ActiveSynergy, BattleResult, BattleUnit, DraftedWizard, HookCtx, LogEntry, LogFlag, Side, UnitSnapshot,
+  ActiveRelic, ActiveSynergy, BattleResult, BattleUnit, DraftedWizard, HookCtx, LogEntry, LogFlag, Side, StepSnapshot, UnitSnapshot,
 } from '@/types'
 import type { Rng } from '../rng'
 import { BALANCE } from '@/data/constants'
@@ -50,6 +50,25 @@ export function simulateBattle(
     right: totalRegen(rightSyn),
   }
   const log: LogEntry[] = []
+  // Per-step engine snapshots, kept 1:1 with `log` via pushLog. Each captures a DEEP COPY
+  // of every unit's hp/alive/cooldowns/statusEffects at the instant the entry was pushed,
+  // because cooldowns and statusEffects are mutated in place during the sim.
+  const snapshots: StepSnapshot[] = []
+  // unitKey inlined as `${side}:${id}` to avoid a circular import (replay.ts imports
+  // toBattleUnits from this module, so importing unitKey back would cycle).
+  const captureSnapshot = (): StepSnapshot => {
+    const snap: StepSnapshot = {}
+    for (const u of [...L, ...R]) {
+      snap[`${u.side}:${u.wizard.id}`] = {
+        hp: Math.max(0, u.hp),
+        alive: u.alive,
+        cooldowns: { ...u.cooldowns },
+        statusEffects: u.statusEffects.map(e => ({ ...e })),
+      }
+    }
+    return snap
+  }
+  const pushLog = (entry: LogEntry) => { log.push(entry); snapshots.push(captureSnapshot()) }
   // Score keyed by "side:wizard.id" to avoid merging same-id wizards on opposite teams
   const score: Record<string, number> = {}
 
@@ -73,7 +92,7 @@ export function simulateBattle(
       // Mirror the onBattleStart block: log every reactive effect as a 'Reliquia'
       // system entry so buildReplay (which reconstructs HP from logged values) stays
       // in parity with live combat for any HP-changing effect.
-      log.push({
+      pushLog({
         turn: t, actorId: unit.wizard.id, actorSide: unit.side, action: 'Reliquia',
         targetId: unit.wizard.id, targetSide: unit.side, type: 'system', value: r.value, flags,
       })
@@ -111,7 +130,7 @@ export function simulateBattle(
       for (const unit of L) {
         const flags: LogFlag[] = []
         const r = EFFECT_HANDLERS[eff.kind]({ rng, turn: 0, actor: unit, target: unit, flags }, eff)
-        log.push({
+        pushLog({
           turn: 0, actorId: unit.wizard.id, actorSide: unit.side, action: 'Reliquia',
           targetId: unit.wizard.id, targetSide: unit.side, type: 'system', value: r.value, flags,
         })
@@ -134,7 +153,7 @@ export function simulateBattle(
       if (actor.side === 'left') fireReactive('onTurnStart', actor, turn)
       if (!canAct(actor)) {
         // Do NOT manually decrement here — tickStatuses at end-of-turn handles all status decrements uniformly.
-        log.push({ turn, actorId: actor.wizard.id, actorSide: actor.side, action: 'Stordito', type: 'system', flags: ['stun'] })
+        pushLog({ turn, actorId: actor.wizard.id, actorSide: actor.side, action: 'Stordito', type: 'system', flags: ['stun'] })
         if (actor.side === 'left') fireReactive('onTurnEnd', actor, turn)
         continue
       }
@@ -148,7 +167,7 @@ export function simulateBattle(
         ? (mostWounded(allies.filter(a => a.alive)) ?? actor)
         : (spell.type === 'Difesa' ? actor : target)
       const entry = resolveAction(rng, turn, actor, realTarget, spell, bus)
-      log.push(entry)
+      pushLog(entry)
       // onHit: after a LEFT actor resolves a spell against an ENEMY target.
       if (actor.side === 'left' && realTarget.side !== actor.side) {
         const hitCtx: HookCtx = { turn, actor, target: realTarget, side: 'left', flags: [] }
@@ -166,7 +185,7 @@ export function simulateBattle(
       }
       sync(realTarget)
       if (!realTarget.alive && entry.flags.includes('heal') === false) {
-        log.push({
+        pushLog({
           turn, actorId: actor.wizard.id, actorSide: actor.side, action: 'KO',
           targetId: realTarget.wizard.id, targetSide: realTarget.side, type: 'system', flags: ['kill'],
         })
@@ -187,7 +206,7 @@ export function simulateBattle(
     for (const u of [...L, ...R]) {
       if (!u.alive) continue
       const dots = tickStatuses(turn, u)
-      for (const d of dots) log.push(d)
+      for (const d of dots) pushLog(d)
       sync(u)
       // onDeath / onAllyDeath when a dot tick kills a LEFT unit.
       if (!u.alive && u.side === 'left') {
@@ -218,5 +237,5 @@ export function simulateBattle(
     ? mvpScoreKey.split(':').slice(1).join(':')
     : (winner === 'left' ? L[0]!.wizard.id : R[0]!.wizard.id)
 
-  return { winner, turns: turn, log, mvpId, finalSnapshot: snapshot }
+  return { winner, turns: turn, log, mvpId, finalSnapshot: snapshot, snapshots }
 }

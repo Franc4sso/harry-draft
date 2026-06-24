@@ -156,6 +156,7 @@ describe('UnitBust', () => {
     key: 'left:harry', side: 'left' as const, id: 'harry', name: 'Harry Potter',
     house: 'Grifondoro' as const, role: 'Attaccante' as const, tier: 1 as const, maxHp: 100,
     atk: 50, def: 40, spd: 30, baseAtk: 50, baseDef: 40, baseSpd: 30,
+    spell: { id: 'stupeficium', name: 'Stupeficium', cooldown: 1 },
   }
   it('renders the name, an HP value, and a rarity treatment', () => {
     render(<UnitBust unit={u} hp={72} />)
@@ -166,9 +167,66 @@ describe('UnitBust', () => {
     render(<UnitBust unit={u} hp={0} />)
     expect(screen.getByTestId('battle-unit').getAttribute('data-dead')).toBe('true')
   })
-  it('shows status icons when provided', () => {
-    render(<UnitBust unit={u} hp={50} statuses={['dot', 'stun']} />)
-    expect(screen.getByTestId('battle-unit').querySelectorAll('[data-status]').length).toBe(2)
+
+  describe('cooldown row', () => {
+    it('shows the spell name and "pronto" (green) when off cooldown', () => {
+      render(<UnitBust unit={u} hp={50} cooldown={0} />)
+      const row = screen.getByTestId('battle-unit').querySelector('[data-role="cooldown"]') as HTMLElement
+      expect(row).not.toBeNull()
+      expect(row.textContent).toContain('Stupeficium')
+      expect(row.textContent).toMatch(/pronto/i)
+      expect(row.querySelector('[data-ready="true"]')!.className).toContain('emerald')
+    })
+    it('shows "pronto" when no cooldown is provided', () => {
+      render(<UnitBust unit={u} hp={50} />)
+      const row = screen.getByTestId('battle-unit').querySelector('[data-role="cooldown"]') as HTMLElement
+      expect(row.textContent).toMatch(/pronto/i)
+    })
+    it('uses the singular "1 turno" when one turn remains', () => {
+      render(<UnitBust unit={u} hp={50} cooldown={1} />)
+      const row = screen.getByTestId('battle-unit').querySelector('[data-role="cooldown"]') as HTMLElement
+      expect(row.textContent).toContain('Stupeficium')
+      expect(row.textContent).toMatch(/1 turno\b/)
+      expect(row.textContent).not.toMatch(/pronto/i)
+    })
+    it('uses the plural "2 turni" when several turns remain', () => {
+      render(<UnitBust unit={u} hp={50} cooldown={2} />)
+      const row = screen.getByTestId('battle-unit').querySelector('[data-role="cooldown"]') as HTMLElement
+      expect(row.textContent).toMatch(/2 turni/)
+    })
+  })
+
+  describe('status row', () => {
+    it('renders a status icon with its remaining count and a descriptive title for a dot', () => {
+      render(<UnitBust unit={u} hp={50} effects={[{ kind: 'dot', amount: 6, remaining: 2 }]} />)
+      const root = screen.getByTestId('battle-unit')
+      const dot = root.querySelector('[data-status-kind="dot"]') as HTMLElement
+      expect(dot).not.toBeNull()
+      expect(dot.textContent).toContain('2')
+      expect(dot.getAttribute('title')).toMatch(/veleno/i)
+      expect(dot.getAttribute('title')).toContain('6')
+    })
+    it('renders one icon per active effect', () => {
+      render(
+        <UnitBust
+          unit={u}
+          hp={50}
+          effects={[
+            { kind: 'dot', amount: 6, remaining: 2 },
+            { kind: 'stun', remaining: 1 },
+            { kind: 'buff', stat: 'atk', amount: 10, remaining: 3 },
+          ]}
+        />,
+      )
+      const root = screen.getByTestId('battle-unit')
+      expect(root.querySelectorAll('[data-status-kind]').length).toBe(3)
+    })
+    it('describes a buff with its stat and amount in the title', () => {
+      render(<UnitBust unit={u} hp={50} effects={[{ kind: 'buff', stat: 'atk', amount: 10, remaining: 2 }]} />)
+      const buff = screen.getByTestId('battle-unit').querySelector('[data-status-kind="buff"]') as HTMLElement
+      expect(buff.getAttribute('title')).toMatch(/atk/i)
+      expect(buff.getAttribute('title')).toContain('10')
+    })
   })
 })
 
@@ -286,6 +344,31 @@ describe('BattleArena', () => {
     }
     render(<BattleArena replay={replay} hp={replay.frames[0]!.hp} entry={blocked} frameKey={1} />)
     expect(screen.getByTestId('shield-fx')).toBeInTheDocument()
+  })
+
+  it('surfaces real status effects from the current frame onto the unit bust', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    // Inject a real dot effect on harry into a frame's statusEffects (the engine path).
+    const dotted = unitKey('left', 'harry')
+    replay.frames[1]!.statusEffects = { [dotted]: [{ kind: 'dot', amount: 6, remaining: 2 }] }
+    render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={replay.frames[1]!.entry} frameKey={1} />)
+    const bust = document.querySelector(`[data-unit-key="${CSS.escape(dotted)}"]`) as HTMLElement
+    const dot = bust.querySelector('[data-status-kind="dot"]') as HTMLElement
+    expect(dot).not.toBeNull()
+    expect(dot.textContent).toContain('2')
+  })
+
+  it('surfaces the real per-unit cooldown for the unit primary spell from the frame', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    const key = unitKey('left', 'harry')
+    const harry = replay.units.find(u => u.key === key)!
+    replay.frames[1]!.cooldowns = { [key]: { [harry.spell.id]: 2 } }
+    render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={replay.frames[1]!.entry} frameKey={1} />)
+    const bust = document.querySelector(`[data-unit-key="${CSS.escape(key)}"]`) as HTMLElement
+    const row = bust.querySelector('[data-role="cooldown"]') as HTMLElement
+    expect(row.textContent).toMatch(/2 turni/)
   })
 })
 

@@ -8,11 +8,13 @@ const harry: ReplayUnit = {
   key: 'left:harry', side: 'left', id: 'harry', name: 'Harry Potter',
   house: 'Grifondoro', role: 'Attaccante', tier: 1, maxHp: 100,
   atk: 50, def: 40, spd: 30, baseAtk: 50, baseDef: 40, baseSpd: 30,
+  spell: { id: 'stupeficium', name: 'Stupeficium', cooldown: 1 },
 }
 const draco: ReplayUnit = {
   key: 'right:draco', side: 'right', id: 'draco', name: 'Draco Malfoy',
   house: 'Serpeverde', role: 'Attaccante', tier: 1, maxHp: 100,
   atk: 50, def: 40, spd: 30, baseAtk: 50, baseDef: 40, baseSpd: 30,
+  spell: { id: 'sectumsempra', name: 'Sectumsempra', cooldown: 2 },
 }
 const units = [harry, draco]
 
