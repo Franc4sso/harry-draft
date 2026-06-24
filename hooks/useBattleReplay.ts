@@ -33,7 +33,7 @@ export function useBattleReplay(
   replay: Replay,
   opts: { autoPlay?: boolean; stepMs?: number } = {},
 ): BattleReplayController {
-  const stepMs = opts.stepMs ?? 1100
+  const stepMs = opts.stepMs ?? 1200
   const autoPlay = opts.autoPlay ?? true
   const total = replay.frames.length
 

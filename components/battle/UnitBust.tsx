@@ -1,6 +1,6 @@
 'use client'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
-import { Flame, Zap, Shield } from 'lucide-react'
+import { Flame, Zap, Shield, Sword } from 'lucide-react'
 import type { ReplayUnit } from '@/game/engine/combat/replay'
 import { RarityFrame } from '@/components/ui/RarityFrame'
 import { PortraitImage } from '@/components/ui/PortraitImage'
@@ -14,6 +14,16 @@ const FLOAT_CLASS: Record<FloatTone, string> = {
   heal: 'text-emerald-300',
   dodge: 'text-white/60 text-[11px] uppercase tracking-wider',
 }
+
+/** Buff direction of a stat: buffed > base (up), < base (down), or equal (none). */
+function buffState(buffed: number, base: number): 'up' | 'down' | 'none' {
+  return buffed > base ? 'up' : buffed < base ? 'down' : 'none'
+}
+const BUFF_CLASS = {
+  up: 'text-emerald-400',
+  down: 'text-rose-400',
+  none: 'text-white/70',
+} as const
 
 const STATUS_ICON = { dot: Flame, stun: Zap, shield: Shield } as const
 const STATUS_CLASS = {
@@ -72,6 +82,14 @@ export function UnitBust({
       <div className="mt-1 truncate text-center text-[11px] font-medium leading-tight">{unit.name}</div>
       <div className="mt-0.5"><HpBar hp={hp} maxHp={unit.maxHp} /></div>
 
+      <div className="mt-0.5 flex items-center justify-center gap-1 text-[10px] tabular-nums">
+        <Stat icon={Sword} stat="atk" value={unit.atk} base={unit.baseAtk} />
+        <span className="text-white/25">·</span>
+        <Stat icon={Shield} stat="def" value={unit.def} base={unit.baseDef} />
+        <span className="text-white/25">·</span>
+        <Stat icon={Zap} stat="spd" value={unit.spd} base={unit.baseSpd} />
+      </div>
+
       {statuses.length > 0 && (
         <div className={cn('absolute top-1 flex gap-1', mirrored ? 'left-1' : 'right-1')}>
           {statuses.map((s, i) => {
@@ -100,5 +118,27 @@ export function UnitBust({
         )}
       </AnimatePresence>
     </motion.div>
+  )
+}
+
+/** One stat in the bust stat row, colored by its buff direction (green/red/white). */
+function Stat({
+  icon: Icon, stat, value, base,
+}: {
+  icon: typeof Sword
+  stat: 'atk' | 'def' | 'spd'
+  value: number
+  base: number
+}) {
+  const buff = buffState(value, base)
+  return (
+    <span
+      data-stat={stat}
+      data-buff={buff}
+      className={cn('inline-flex items-center gap-0.5', BUFF_CLASS[buff])}
+    >
+      <Icon size={10} aria-hidden />
+      {value}
+    </span>
   )
 }

@@ -5,7 +5,8 @@ import type { ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard } from '@/
 import { buildReplay } from '@/game/engine/combat/replay'
 import { useBattleReplay, REPLAY_SPEEDS } from '@/hooks/useBattleReplay'
 import { InitiativeBar } from '@/components/battle/InitiativeBar'
-import { BattleArena, ActionBanner } from '@/components/battle/BattleArena'
+import { BattleArena } from '@/components/battle/BattleArena'
+import { ActionPanel } from '@/components/battle/ActionPanel'
 import { BattleLog } from '@/components/battle/BattleLog'
 import { Button } from '@/components/ui/Button'
 import { SynergyRibbon } from '@/components/battle/SynergyRibbon'
@@ -48,7 +49,7 @@ export function BattleScreen({
 
       <BattleArena replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle} />
 
-      <ActionBanner entry={r.entry} units={replay.units} />
+      <ActionPanel entry={r.entry} units={replay.units} />
 
       <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
         {!r.done ? (

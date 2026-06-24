@@ -5,7 +5,6 @@ import { unitKey } from '@/game/engine/combat/replay'
 import { UnitBust } from './UnitBust'
 import { SpellFx, ShieldFx } from './SpellFx'
 import { floatFor } from './damageFloat'
-import { describeEntry } from './BattleLog'
 import { statusesAt } from '@/lib/battleStatus'
 import { archetypeFor } from '@/lib/spellArchetype'
 
@@ -66,20 +65,6 @@ export function BattleArena({
       </section>
 
       {!blocked && <SpellFx entry={entry} fromMirrored={actorMirrored} fxKey={frameKey} />}
-    </div>
-  )
-}
-
-/** One-line synced narration anchoring the animation in text. */
-export function ActionBanner({ entry, units }: { entry: LogEntry | null; units: ReplayUnit[] }) {
-  const names: Record<string, string> = {}
-  for (const u of units) names[u.key] = u.name
-  return (
-    <div
-      data-testid="action-banner"
-      className="glass rounded-full px-4 py-1.5 text-sm text-white/80 min-h-[2rem] grid place-items-center"
-    >
-      {entry ? describeEntry(entry, names) : <span className="text-white/30">…</span>}
     </div>
   )
 }

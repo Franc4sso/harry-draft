@@ -3,12 +3,15 @@ import { buildReplay, unitKey } from '@/game/engine/combat/replay'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
 import { WIZARD_BY_ID } from '@/data/wizards'
-import type { BattleResult, DraftedWizard } from '@/types'
+import { RELIC_BY_ID } from '@/data/relics'
+import type { ActiveRelic, BattleResult, DraftedWizard } from '@/types'
 
 function team(ids: string[], seed = 1): DraftedWizard[] {
   const r = createRng(seed)
   return ids.map(id => draftWizard(r, WIZARD_BY_ID[id]!))
 }
+
+const ar = (id: string): ActiveRelic => ({ relic: RELIC_BY_ID[id]!, stageObtained: 0 })
 
 const LEFT_IDS = ['harry', 'ron', 'hermione', 'luna', 'neville']
 const RIGHT_IDS = ['draco', 'crabbe', 'goyle', 'snape', 'bellatrix']
@@ -54,5 +57,49 @@ describe('buildReplay frame 0 seeds from wound-aware HP', () => {
 
     expect(fresh.currentHp).toBeUndefined()
     expect(replay.frames[0]!.hp[key]).toBe(freshUnit.maxHp)
+  })
+})
+
+describe('buildReplay populates base + buffed atk/def/spd', () => {
+  it('an unbuffed unit has atk===baseAtk===stats.atk (and same for def/spd)', () => {
+    const l = team(LEFT_IDS, 7)
+    const r = team(RIGHT_IDS, 13)
+    const replay = buildReplay(emptyResult, l, r)
+
+    const dw = l[0]!
+    const key = unitKey('left', dw.wizard.id)
+    const ru = replay.units.find(u => u.key === key)!
+
+    expect(ru.atk).toBe(dw.stats.atk)
+    expect(ru.baseAtk).toBe(dw.stats.atk)
+    expect(ru.atk).toBe(ru.baseAtk)
+
+    expect(ru.def).toBe(dw.stats.def)
+    expect(ru.baseDef).toBe(dw.stats.def)
+    expect(ru.def).toBe(ru.baseDef)
+
+    expect(ru.spd).toBe(dw.stats.spd)
+    expect(ru.baseSpd).toBe(dw.stats.spd)
+    expect(ru.spd).toBe(ru.baseSpd)
+  })
+
+  it('a relic-buffed unit has atk strictly greater than baseAtk (+10 mappa-malandrino)', () => {
+    const l = team(LEFT_IDS, 7)
+    const r = team(RIGHT_IDS, 13)
+    const relics = [ar('mappa-malandrino')]
+    const replay = buildReplay(emptyResult, l, r, { leftRelics: relics })
+
+    const dw = l[0]!
+    const key = unitKey('left', dw.wizard.id)
+    const ru = replay.units.find(u => u.key === key)!
+
+    // mappa-malandrino: +10 atk, no def/spd change.
+    expect(ru.baseAtk).toBe(dw.stats.atk)
+    expect(ru.atk).toBe(dw.stats.atk + 10)
+    expect(ru.atk).toBeGreaterThan(ru.baseAtk)
+
+    // def/spd untouched by this relic.
+    expect(ru.def).toBe(ru.baseDef)
+    expect(ru.spd).toBe(ru.baseSpd)
   })
 })

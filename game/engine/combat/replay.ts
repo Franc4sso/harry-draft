@@ -17,6 +17,12 @@ export interface ReplayUnit {
   role: Role
   tier: Tier
   maxHp: number
+  atk: number
+  def: number
+  spd: number
+  baseAtk: number
+  baseDef: number
+  baseSpd: number
 }
 
 export interface ReplayFrame {
@@ -64,6 +70,12 @@ export function buildReplay(
     role: u.wizard.role,
     tier: u.wizard.tier,
     maxHp: u.maxHp,
+    atk: u.buffedStats.atk,
+    def: u.buffedStats.def,
+    spd: u.buffedStats.spd,
+    baseAtk: u.stats.atk,
+    baseDef: u.stats.def,
+    baseSpd: u.stats.spd,
   }))
   const maxHp: Record<string, number> = {}
   for (const u of units) maxHp[u.key] = u.maxHp

@@ -6,7 +6,8 @@ import { describeEntry } from '@/components/battle/BattleLog'
 import { BattleScreen } from '@/components/screens/BattleScreen'
 import { InitiativeBar } from '@/components/battle/InitiativeBar'
 import { UnitBust } from '@/components/battle/UnitBust'
-import { BattleArena, ActionBanner } from '@/components/battle/BattleArena'
+import { BattleArena } from '@/components/battle/BattleArena'
+import { ActionPanel } from '@/components/battle/ActionPanel'
 import { buildReplay, unitKey } from '@/game/engine/combat/replay'
 import { simulateBattle } from '@/game/engine/combat/simulate'
 import { detectSynergies } from '@/game/engine/synergy'
@@ -72,12 +73,43 @@ describe('InitiativeBar', () => {
     const bar = screen.getByTestId('initiative-bar')
     expect(bar.querySelector('[data-current]')).not.toBeNull()
   })
+
+  it('labels the current slot "Ora"', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    const firstReal = replay.frames.findIndex(
+      f => f.entry && f.entry.type !== 'system' && f.entry.actorSide,
+    )
+    render(<InitiativeBar replay={replay} index={firstReal} />)
+    const bar = screen.getByTestId('initiative-bar')
+    const current = bar.querySelector('[data-current]') as HTMLElement
+    expect(current).not.toBeNull()
+    expect(current.querySelector('[data-role="ora-label"]')?.textContent).toMatch(/ora/i)
+  })
+
+  it('shows the name and spd of the acting unit beneath its crest', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    const firstReal = replay.frames.findIndex(
+      f => f.entry && f.entry.type !== 'system' && f.entry.actorSide,
+    )
+    const e = replay.frames[firstReal]!.entry!
+    const actor = replay.units.find(u => u.key === unitKey(e.actorSide!, e.actorId))!
+    render(<InitiativeBar replay={replay} index={firstReal} />)
+    const bar = screen.getByTestId('initiative-bar')
+    const current = bar.querySelector('[data-current]') as HTMLElement
+    // name visible as text (truncated render still keeps full textContent)
+    expect(current.textContent).toContain(actor.name)
+    // buffed spd shown
+    expect(current.textContent).toContain(String(actor.spd))
+  })
 })
 
 describe('UnitBust', () => {
   const u = {
     key: 'left:harry', side: 'left' as const, id: 'harry', name: 'Harry Potter',
     house: 'Grifondoro' as const, role: 'Attaccante' as const, tier: 1 as const, maxHp: 100,
+    atk: 50, def: 40, spd: 30, baseAtk: 50, baseDef: 40, baseSpd: 30,
   }
   it('renders the name, an HP value, and a rarity treatment', () => {
     render(<UnitBust unit={u} hp={72} />)
@@ -203,21 +235,23 @@ describe('BattleArena', () => {
   })
 })
 
-describe('ActionBanner', () => {
-  it('narrates the current entry', () => {
+describe('ActionPanel', () => {
+  it('shows the spell and a damage result for the current entry', () => {
     const l = left(), r = right()
     const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
     const e: LogEntry = {
       turn: 1, actorId: 'harry', actorSide: 'left', action: 'Stupeficium',
       targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 42, flags: [],
     }
-    render(<ActionBanner entry={e} units={replay.units} />)
-    expect(screen.getByTestId('action-banner')).toHaveTextContent('42')
+    render(<ActionPanel entry={e} units={replay.units} />)
+    const p = screen.getByTestId('action-panel')
+    expect(p.querySelector('[data-role="spell"]')!.textContent).toContain('Stupeficium')
+    expect(p.querySelector('[data-role="result"]')!.textContent).toContain('42')
   })
   it('renders an empty placeholder for no entry', () => {
     const l = left(), r = right()
     const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
-    render(<ActionBanner entry={null} units={replay.units} />)
-    expect(screen.getByTestId('action-banner')).toBeInTheDocument()
+    render(<ActionPanel entry={null} units={replay.units} />)
+    expect(screen.getByTestId('action-panel')).toBeInTheDocument()
   })
 })
