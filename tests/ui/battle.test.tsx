@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { describeEntry } from '@/components/battle/BattleLog'
 import { BattleStage } from '@/components/battle/BattleStage'
 import { BattleScreen } from '@/components/screens/BattleScreen'
+import { InitiativeBar } from '@/components/battle/InitiativeBar'
 import { buildReplay, unitKey } from '@/game/engine/combat/replay'
 import { simulateBattle } from '@/game/engine/combat/simulate'
 import { detectSynergies } from '@/game/engine/synergy'
@@ -86,6 +87,19 @@ describe('BattleStage', () => {
     const floats = screen.getAllByTestId('damage-float')
     expect(floats).toHaveLength(1)
     expect(floats[0]).toHaveTextContent('-42')
+  })
+})
+
+describe('InitiativeBar', () => {
+  it('marks the unit acting at the current frame', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    const firstReal = replay.frames.findIndex(
+      f => f.entry && f.entry.type !== 'system' && f.entry.actorSide,
+    )
+    render(<InitiativeBar replay={replay} index={firstReal} />)
+    const bar = screen.getByTestId('initiative-bar')
+    expect(bar.querySelector('[data-current]')).not.toBeNull()
   })
 })
 
