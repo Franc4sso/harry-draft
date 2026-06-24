@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { SpellFx, ShieldFx } from '@/components/battle/SpellFx'
 import { describeEntry } from '@/components/battle/BattleLog'
 import { BattleStage } from '@/components/battle/BattleStage'
 import { BattleScreen } from '@/components/screens/BattleScreen'
@@ -147,5 +148,36 @@ describe('BattleScreen', () => {
     const cont = await screen.findByRole('button', { name: /continua|esito/i })
     await userEvent.click(cont)
     expect(onFinish).toHaveBeenCalledOnce()
+  })
+})
+
+describe('SpellFx', () => {
+  it('renders a projectile with the archetype for a plain attack', () => {
+    const e: LogEntry = {
+      turn: 1, actorId: 'harry', actorSide: 'left', action: 'Stupeficium',
+      targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 10, flags: [],
+    }
+    render(<SpellFx entry={e} fxKey={1} />)
+    const fx = screen.getByTestId('spell-fx')
+    expect(fx.getAttribute('data-archetype')).toBe('beam')
+  })
+  it('renders nothing for a system KO entry', () => {
+    const e: LogEntry = {
+      turn: 1, actorId: 'harry', actorSide: 'left', action: 'KO',
+      targetId: 'draco', targetSide: 'right', type: 'system', flags: ['kill'],
+    }
+    const { container } = render(<SpellFx entry={e} fxKey={1} />)
+    expect(container.querySelector('[data-testid="spell-fx"]')).toBeNull()
+  })
+})
+
+describe('ShieldFx', () => {
+  it('shows PARATO when active', () => {
+    render(<ShieldFx active fxKey={1} />)
+    expect(screen.getByTestId('shield-fx')).toHaveTextContent(/parato/i)
+  })
+  it('renders nothing when inactive', () => {
+    const { container } = render(<ShieldFx active={false} fxKey={1} />)
+    expect(container.querySelector('[data-testid="shield-fx"]')).toBeNull()
   })
 })
