@@ -101,3 +101,22 @@ describe('WizardCard compact', () => {
     expect(screen.getByText('Precisione:')).toBeInTheDocument()
   })
 })
+
+import { TRAIT_BY_ID } from '@/data/traits'
+
+it('renders trait chips with a tooltip for a wizard that has traits', () => {
+  const voldemort = draftWizard(createRng(1), WIZARD_BY_ID['voldemort']!)
+  render(<WizardCard drafted={voldemort} />)
+  const trait = TRAIT_BY_ID[voldemort.wizard.traits![0]!]!
+  expect(screen.getByText(trait.name)).toBeInTheDocument()
+})
+
+it('shows no trait chips for a trait-less wizard', () => {
+  // ron has no traits field in data/wizards.ts
+  const draftless = draftWizard(createRng(1), WIZARD_BY_ID['ron']!)
+  render(<WizardCard drafted={draftless} />)
+  // No chip matching any catalog trait name.
+  for (const id of Object.keys(TRAIT_BY_ID)) {
+    expect(screen.queryByText(TRAIT_BY_ID[id]!.name)).toBeNull()
+  }
+})
