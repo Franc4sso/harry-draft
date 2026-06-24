@@ -23,6 +23,13 @@ export function Tooltip({
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLSpanElement>(null)
 
+  // The popover anchors to this wrapper, so it must be a positioned ancestor.
+  // Default to `relative`, but if the caller positions the wrapper itself
+  // (e.g. `absolute bottom-2 left-2`), don't also emit `relative` — our `cn`
+  // is a plain join with no Tailwind conflict resolution, and two `position`
+  // utilities would let the cascade pick the wrong one (hiding the trigger).
+  const positioned = /\b(absolute|fixed|relative|sticky)\b/.test(className ?? '')
+
   useEffect(() => {
     if (!open) return
     const onDocPointer = (e: PointerEvent) => {
@@ -33,7 +40,7 @@ export function Tooltip({
   }, [open])
 
   return (
-    <span ref={ref} className={cn('relative inline-flex', className)}>
+    <span ref={ref} className={cn('inline-flex', !positioned && 'relative', className)}>
       <button
         type="button"
         aria-label={label}
