@@ -61,9 +61,9 @@ export function WizardCard({
       role={clickable ? 'button' : undefined}
       tabIndex={clickable ? 0 : undefined}
       onKeyDown={clickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') onClick?.() } : undefined}
-      className={cn('w-56 h-full min-h-[27rem] select-none text-white', clickable && 'cursor-pointer', className)}
+      className={cn('flex w-56 flex-col select-none text-white', clickable && 'cursor-pointer', className)}
     >
-      <RarityFrame tier={wizard.tier} selected={selected} className="flex h-full flex-col">
+      <RarityFrame tier={wizard.tier} selected={selected} className="flex min-h-[27rem] flex-1 flex-col">
         <HouseFrame house={wizard.house} className="flex flex-1 flex-col">
         <div className="relative h-36 shrink-0 overflow-hidden rounded-t-xl">
           <PortraitImage id={wizard.id} house={wizard.house} alt={wizard.name} variant="card" />
