@@ -66,11 +66,14 @@ describe('WizardCard compact', () => {
     expect(within(strip!).getByText(/Golden Trio/i)).toBeInTheDocument()
   })
 
-  it('shows an effect chip for a spell with a dot effect', () => {
+  it('explains effects as "name: description" lines (no pills)', () => {
     const incendio = SPELLS.find((s) => s.id === 'incendio')!
     const drafted = { ...harry(), spell: incendio }
     render(<WizardCard drafted={drafted} />)
-    expect(screen.getByText('Danno nel tempo')).toBeInTheDocument()
+    // Effect name present...
+    expect(screen.getByText('Danno nel tempo:')).toBeInTheDocument()
+    // ...followed by its plain-language description.
+    expect(screen.getByText(/Infligge danno a ogni turno/i)).toBeInTheDocument()
   })
 
   it('shows what the move does — its numbers (power/precision)', () => {

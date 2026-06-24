@@ -63,6 +63,24 @@ export function spellEffectChips(spell: Spell): ChipData[] {
   return out
 }
 
+export interface EffectLine { label: string; blurb: string; color: string }
+
+/**
+ * Effects of a spell as readable "name: what it does" lines (no pills). Each
+ * effect kind appears once. Used by the card to explain effects in plain text.
+ */
+export function spellEffectLines(spell: Spell): EffectLine[] {
+  const seen = new Set<string>()
+  const out: EffectLine[] = []
+  for (const kind of effectKinds(spell)) {
+    if (seen.has(kind)) continue
+    seen.add(kind)
+    const m = EFFECT_META[kind]
+    out.push(m ? { label: m.label, blurb: m.blurb, color: m.color } : { label: kind, blurb: '', color: '#9aa3ad' })
+  }
+  return out
+}
+
 const STAT_LABEL: Record<Stat, string> = { hp: 'HP', atk: 'ATK', def: 'DIF', spd: 'VEL' }
 
 export function synergyBonusText(bonus: SynergyBonus): string[] {
