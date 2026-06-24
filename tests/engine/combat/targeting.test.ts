@@ -23,13 +23,13 @@ describe('threat targeting', () => {
   it('after the Tank dies the Attacker hits the highest-threat backliner', () => {
     const me = u('att', 'Attaccante', 'left')
     const dead = u('wall', 'Tank', 'right'); dead.alive = false
-    const enemies = [u('weak', 'Supporto', 'right', { atk: 10, spd: 10 }), u('scary', 'Attaccante', 'right', { atk: 40, spd: 40 }), dead]
+    const enemies = [u('weak', 'Supporto', 'right', { hp: 10, atk: 10, spd: 10 }), u('scary', 'Attaccante', 'right', { atk: 40, spd: 40 }), dead]
     expect(selectTarget(me, [me], enemies)?.wizard.id).toBe('scary')
   })
 
   it('Controllo bypasses the taunt and hits the enemy Supporto', () => {
     const me = u('ctrl', 'Controllo', 'left')
-    const enemies = [u('wall', 'Tank', 'right'), u('healer', 'Supporto', 'right')]
+    const enemies = [u('wall', 'Tank', 'right', { atk: 60, spd: 50 }), u('healer', 'Supporto', 'right')]
     expect(selectTarget(me, [me], enemies)?.wizard.id).toBe('healer')
   })
 
