@@ -5,6 +5,7 @@ import { describeEntry } from '@/components/battle/BattleLog'
 import { BattleStage } from '@/components/battle/BattleStage'
 import { BattleScreen } from '@/components/screens/BattleScreen'
 import { InitiativeBar } from '@/components/battle/InitiativeBar'
+import { UnitBust } from '@/components/battle/UnitBust'
 import { buildReplay, unitKey } from '@/game/engine/combat/replay'
 import { simulateBattle } from '@/game/engine/combat/simulate'
 import { detectSynergies } from '@/game/engine/synergy'
@@ -100,6 +101,26 @@ describe('InitiativeBar', () => {
     render(<InitiativeBar replay={replay} index={firstReal} />)
     const bar = screen.getByTestId('initiative-bar')
     expect(bar.querySelector('[data-current]')).not.toBeNull()
+  })
+})
+
+describe('UnitBust', () => {
+  const u = {
+    key: 'left:harry', side: 'left' as const, id: 'harry', name: 'Harry Potter',
+    house: 'Grifondoro' as const, role: 'Attaccante' as const, tier: 1 as const, maxHp: 100,
+  }
+  it('renders the name, an HP value, and a rarity treatment', () => {
+    render(<UnitBust unit={u} hp={72} />)
+    expect(screen.getByText('Harry Potter')).toBeInTheDocument()
+    expect(screen.getByTestId('battle-unit')).toBeInTheDocument()
+  })
+  it('flags a downed unit as dead', () => {
+    render(<UnitBust unit={u} hp={0} />)
+    expect(screen.getByTestId('battle-unit').getAttribute('data-dead')).toBe('true')
+  })
+  it('shows status icons when provided', () => {
+    render(<UnitBust unit={u} hp={50} statuses={['dot', 'stun']} />)
+    expect(screen.getByTestId('battle-unit').querySelectorAll('[data-status]').length).toBe(2)
   })
 })
 
