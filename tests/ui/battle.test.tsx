@@ -150,6 +150,24 @@ describe('BattleScreen', () => {
     await userEvent.click(cont)
     expect(onFinish).toHaveBeenCalledOnce()
   })
+
+  it('advances one action with the step control', async () => {
+    const l = left(), r = right()
+    const result = simulateBattle(l, r, createRng(42), {
+      leftSyn: detectSynergies(l), rightSyn: detectSynergies(r),
+    })
+    render(
+      <BattleScreen
+        result={result} playerTeam={l} playerSyn={detectSynergies(l)}
+        enemy={r} enemySyn={detectSynergies(r)} title="Sfida 1 di 5" onFinish={vi.fn()}
+      />,
+    )
+    // Pause first so autoplay doesn't race the assertion, then step.
+    await userEvent.click(screen.getByRole('button', { name: /pausa|play/i }))
+    const stepBtn = screen.getByRole('button', { name: /passo/i })
+    await userEvent.click(stepBtn)
+    expect(screen.getByTestId('battle-arena')).toBeInTheDocument()
+  })
 })
 
 describe('SpellFx', () => {

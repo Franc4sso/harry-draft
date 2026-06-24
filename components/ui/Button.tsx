@@ -1,7 +1,7 @@
 'use client'
 import { cn } from '@/lib/cn'
 
-interface ButtonProps {
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   children: React.ReactNode
   onClick?: () => void
   variant?: 'primary' | 'ghost'
@@ -9,12 +9,13 @@ interface ButtonProps {
   disabled?: boolean
 }
 
-export function Button({ children, onClick, variant = 'primary', className, disabled }: ButtonProps) {
+export function Button({ children, onClick, variant = 'primary', className, disabled, ...rest }: ButtonProps) {
   return (
     <button
       type="button"
       onClick={onClick}
       disabled={disabled}
+      {...rest}
       className={cn(
         'px-6 py-3 rounded-xl font-display tracking-wide text-sm uppercase transition-all duration-200',
         'disabled:opacity-40 disabled:cursor-not-allowed',
