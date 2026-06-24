@@ -12,10 +12,10 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 export function Button({ children, onClick, variant = 'primary', className, disabled, ...rest }: ButtonProps) {
   return (
     <button
+      {...rest}
       type="button"
       onClick={onClick}
       disabled={disabled}
-      {...rest}
       className={cn(
         'px-6 py-3 rounded-xl font-display tracking-wide text-sm uppercase transition-all duration-200',
         'disabled:opacity-40 disabled:cursor-not-allowed',
