@@ -25,10 +25,6 @@ export function RarityFrame({
         <span data-crown className={cn('absolute top-2 left-3 z-10 text-sm', r.animated && 'resa-animated')}
           style={{ filter: 'drop-shadow(0 0 6px #f3e6a0cc)' }}>👑</span>
       )}
-      {r.hasGem && (
-        <span data-gem className="absolute top-3 right-3 z-10 block h-3 w-3 rotate-45 rounded-[3px]"
-          style={{ background: r.color, boxShadow: `0 0 10px ${r.color}` }} />
-      )}
       {children}
     </div>
   )

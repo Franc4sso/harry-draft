@@ -66,4 +66,24 @@ describe('useBattleReplay', () => {
     act(() => { vi.advanceTimersByTime(10000) })
     expect(result.current.done).toBe(true)
   })
+
+  it('step advances exactly one action and pauses', () => {
+    const replay = makeReplay()
+    const { result } = renderHook(() => useBattleReplay(replay, { autoPlay: false }))
+    expect(result.current.index).toBe(0)
+    act(() => result.current.step())
+    expect(result.current.index).toBe(1)
+    expect(result.current.playing).toBe(false)
+  })
+
+  it('stepBack rewinds one action without going below zero', () => {
+    const replay = makeReplay()
+    const { result } = renderHook(() => useBattleReplay(replay, { autoPlay: false }))
+    act(() => { result.current.step(); result.current.step() })
+    expect(result.current.index).toBe(2)
+    act(() => result.current.stepBack())
+    expect(result.current.index).toBe(1)
+    act(() => { result.current.stepBack(); result.current.stepBack() })
+    expect(result.current.index).toBe(0)
+  })
 })

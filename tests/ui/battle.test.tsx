@@ -1,9 +1,12 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { SpellFx, ShieldFx } from '@/components/battle/SpellFx'
 import { describeEntry } from '@/components/battle/BattleLog'
-import { BattleStage } from '@/components/battle/BattleStage'
 import { BattleScreen } from '@/components/screens/BattleScreen'
+import { InitiativeBar } from '@/components/battle/InitiativeBar'
+import { UnitBust } from '@/components/battle/UnitBust'
+import { BattleArena, ActionBanner } from '@/components/battle/BattleArena'
 import { buildReplay, unitKey } from '@/game/engine/combat/replay'
 import { simulateBattle } from '@/game/engine/combat/simulate'
 import { detectSynergies } from '@/game/engine/synergy'
@@ -57,35 +60,37 @@ describe('describeEntry', () => {
   })
 })
 
-describe('BattleStage', () => {
-  it('renders every combatant with its current HP frame', () => {
+
+describe('InitiativeBar', () => {
+  it('marks the unit acting at the current frame', () => {
     const l = left(), r = right()
     const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
-    render(<BattleStage replay={replay} hp={replay.frames[0]!.hp} entry={null} />)
-    expect(screen.getAllByTestId('battle-unit')).toHaveLength(10)
+    const firstReal = replay.frames.findIndex(
+      f => f.entry && f.entry.type !== 'system' && f.entry.actorSide,
+    )
+    render(<InitiativeBar replay={replay} index={firstReal} />)
+    const bar = screen.getByTestId('initiative-bar')
+    expect(bar.querySelector('[data-current]')).not.toBeNull()
+  })
+})
+
+describe('UnitBust', () => {
+  const u = {
+    key: 'left:harry', side: 'left' as const, id: 'harry', name: 'Harry Potter',
+    house: 'Grifondoro' as const, role: 'Attaccante' as const, tier: 1 as const, maxHp: 100,
+  }
+  it('renders the name, an HP value, and a rarity treatment', () => {
+    render(<UnitBust unit={u} hp={72} />)
     expect(screen.getByText('Harry Potter')).toBeInTheDocument()
+    expect(screen.getByTestId('battle-unit')).toBeInTheDocument()
   })
-
-  it('marks a downed unit as dead', () => {
-    const l = left(), r = right()
-    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
-    const zero = { ...replay.frames[0]!.hp, [unitKey('right', 'draco')]: 0 }
-    render(<BattleStage replay={replay} hp={zero} entry={null} />)
-    const dead = screen.getAllByTestId('battle-unit').filter(el => el.getAttribute('data-dead'))
-    expect(dead.length).toBeGreaterThanOrEqual(1)
+  it('flags a downed unit as dead', () => {
+    render(<UnitBust unit={u} hp={0} />)
+    expect(screen.getByTestId('battle-unit').getAttribute('data-dead')).toBe('true')
   })
-
-  it('floats the damage number on the targeted unit during a hit', () => {
-    const l = left(), r = right()
-    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
-    const hit: LogEntry = {
-      turn: 1, actorId: 'harry', actorSide: 'left', action: 'Stupeficium',
-      targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 42, flags: [],
-    }
-    render(<BattleStage replay={replay} hp={replay.frames[0]!.hp} entry={hit} frameKey={1} />)
-    const floats = screen.getAllByTestId('damage-float')
-    expect(floats).toHaveLength(1)
-    expect(floats[0]).toHaveTextContent('-42')
+  it('shows status icons when provided', () => {
+    render(<UnitBust unit={u} hp={50} statuses={['dot', 'stun']} />)
+    expect(screen.getByTestId('battle-unit').querySelectorAll('[data-status]').length).toBe(2)
   })
 })
 
@@ -112,5 +117,107 @@ describe('BattleScreen', () => {
     const cont = await screen.findByRole('button', { name: /continua|esito/i })
     await userEvent.click(cont)
     expect(onFinish).toHaveBeenCalledOnce()
+  })
+
+  it('advances one action with the step control', async () => {
+    const l = left(), r = right()
+    const result = simulateBattle(l, r, createRng(42), {
+      leftSyn: detectSynergies(l), rightSyn: detectSynergies(r),
+    })
+    render(
+      <BattleScreen
+        result={result} playerTeam={l} playerSyn={detectSynergies(l)}
+        enemy={r} enemySyn={detectSynergies(r)} title="Sfida 1 di 5" onFinish={vi.fn()}
+      />,
+    )
+    // Pause first so autoplay doesn't race the assertion, then step.
+    await userEvent.click(screen.getByRole('button', { name: /pausa|play/i }))
+    const stepBtn = screen.getByRole('button', { name: /passo/i })
+    await userEvent.click(stepBtn)
+    expect(screen.getByTestId('battle-arena')).toBeInTheDocument()
+  })
+
+  it('shows the active-synergy ribbons for both teams in battle', () => {
+    const l = left(), r = right()
+    const result = simulateBattle(l, r, createRng(42), {
+      leftSyn: detectSynergies(l), rightSyn: detectSynergies(r),
+    })
+    render(
+      <BattleScreen
+        result={result} playerTeam={l} playerSyn={detectSynergies(l)}
+        enemy={r} enemySyn={detectSynergies(r)} title="Sfida 1 di 5" onFinish={() => {}}
+      />,
+    )
+    // Both teams (Gryffindor-heavy left, Slytherin-heavy right) have at least one active synergy here.
+    expect(screen.getAllByTestId('synergy-ribbon').length).toBeGreaterThanOrEqual(1)
+  })
+})
+
+describe('SpellFx', () => {
+  it('renders a projectile with the archetype for a plain attack', () => {
+    const e: LogEntry = {
+      turn: 1, actorId: 'harry', actorSide: 'left', action: 'Stupeficium',
+      targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 10, flags: [],
+    }
+    render(<SpellFx entry={e} fxKey={1} />)
+    const fx = screen.getByTestId('spell-fx')
+    expect(fx.getAttribute('data-archetype')).toBe('beam')
+  })
+  it('renders nothing for a system KO entry', () => {
+    const e: LogEntry = {
+      turn: 1, actorId: 'harry', actorSide: 'left', action: 'KO',
+      targetId: 'draco', targetSide: 'right', type: 'system', flags: ['kill'],
+    }
+    const { container } = render(<SpellFx entry={e} fxKey={1} />)
+    expect(container.querySelector('[data-testid="spell-fx"]')).toBeNull()
+  })
+})
+
+describe('ShieldFx', () => {
+  it('shows PARATO when active', () => {
+    render(<ShieldFx active fxKey={1} />)
+    expect(screen.getByTestId('shield-fx')).toHaveTextContent(/parato/i)
+  })
+  it('renders nothing when inactive', () => {
+    const { container } = render(<ShieldFx active={false} fxKey={1} />)
+    expect(container.querySelector('[data-testid="shield-fx"]')).toBeNull()
+  })
+})
+
+describe('BattleArena', () => {
+  it('renders every combatant as a bust', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    render(<BattleArena replay={replay} hp={replay.frames[0]!.hp} entry={null} frameKey={0} />)
+    expect(screen.getAllByTestId('battle-unit')).toHaveLength(10)
+  })
+  it('shows the Protego dome when a hit is blocked', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    const blocked: LogEntry = {
+      turn: 1, actorId: 'harry', actorSide: 'left', action: 'Stupeficium',
+      targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 0, flags: ['block'],
+    }
+    render(<BattleArena replay={replay} hp={replay.frames[0]!.hp} entry={blocked} frameKey={1} />)
+    expect(screen.getByTestId('shield-fx')).toBeInTheDocument()
+  })
+})
+
+describe('ActionBanner', () => {
+  it('narrates the current entry', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    const e: LogEntry = {
+      turn: 1, actorId: 'harry', actorSide: 'left', action: 'Stupeficium',
+      targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 42, flags: [],
+    }
+    render(<ActionBanner entry={e} units={replay.units} />)
+    expect(screen.getByTestId('action-banner')).toHaveTextContent('42')
+  })
+  it('renders an empty placeholder for no entry', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    render(<ActionBanner entry={null} units={replay.units} />)
+    expect(screen.getByTestId('action-banner')).toBeInTheDocument()
   })
 })

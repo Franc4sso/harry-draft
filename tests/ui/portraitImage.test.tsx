@@ -20,3 +20,14 @@ describe('PortraitImage', () => {
     expect(fallback.getAttribute('data-variant')).toBe('bust')
   })
 })
+
+describe('PortraitImage fallback', () => {
+  it('renders a house-coloured silhouette with a crest when the image fails', () => {
+    render(<PortraitImage id="nonexistent-xyz" house="Grifondoro" alt="Test Mago" variant="card" />)
+    const img = screen.getByAltText('Test Mago') as HTMLImageElement
+    fireEvent.error(img)
+    const fallback = document.querySelector('[data-fallback="Grifondoro"]')
+    expect(fallback).not.toBeNull()
+    expect(fallback!.querySelector('[data-testid="fallback-crest"]')).not.toBeNull()
+  })
+})

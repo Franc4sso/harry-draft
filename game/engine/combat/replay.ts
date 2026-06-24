@@ -1,5 +1,5 @@
 import type {
-  ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard, House, LogEntry, Role, Side,
+  ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard, House, LogEntry, Role, Side, Tier,
 } from '@/types'
 import { toBattleUnits } from './simulate'
 
@@ -15,6 +15,7 @@ export interface ReplayUnit {
   name: string
   house: House
   role: Role
+  tier: Tier
   maxHp: number
 }
 
@@ -61,6 +62,7 @@ export function buildReplay(
     name: u.wizard.name,
     house: u.wizard.house,
     role: u.wizard.role,
+    tier: u.wizard.tier,
     maxHp: u.maxHp,
   }))
   const maxHp: Record<string, number> = {}

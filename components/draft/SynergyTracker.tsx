@@ -44,7 +44,7 @@ export function SynergyTracker({
               }}
             >
               <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-white/90">{r.synergy.name}</span>
+                <span className="text-xs font-semibold text-white/90">{r.synergy.name.replace(/^\d+\s+/, '')}</span>
                 <span className="text-[11px] font-bold text-[#b08d57]">
                   {preview ? <>{r.count} → {r.nextCount}</> : <>{r.count} / {r.threshold}</>}
                   {activates && <span className="ml-1 text-[#7cdc7c]">SI ATTIVA</span>}

@@ -20,6 +20,8 @@ export interface BattleReplayController {
   toggle: () => void
   skip: () => void
   setSpeed: (s: ReplaySpeed) => void
+  step: () => void
+  stepBack: () => void
 }
 
 /**
@@ -31,7 +33,7 @@ export function useBattleReplay(
   replay: Replay,
   opts: { autoPlay?: boolean; stepMs?: number } = {},
 ): BattleReplayController {
-  const stepMs = opts.stepMs ?? 600
+  const stepMs = opts.stepMs ?? 1100
   const autoPlay = opts.autoPlay ?? true
   const total = replay.frames.length
 
@@ -64,6 +66,14 @@ export function useBattleReplay(
   const pause = useCallback(() => setPlaying(false), [])
   const toggle = useCallback(() => setPlaying(p => !p), [])
   const skip = useCallback(() => { setIndex(total - 1); setPlaying(false) }, [total])
+  const step = useCallback(() => {
+    setPlaying(false)
+    setIndex(i => Math.min(total - 1, i + 1))
+  }, [total])
+  const stepBack = useCallback(() => {
+    setPlaying(false)
+    setIndex(i => Math.max(0, i - 1))
+  }, [])
 
   const frame = replay.frames[Math.min(index, total - 1)]!
   return {
@@ -80,5 +90,7 @@ export function useBattleReplay(
     toggle,
     skip,
     setSpeed,
+    step,
+    stepBack,
   }
 }

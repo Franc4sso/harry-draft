@@ -1,12 +1,14 @@
 'use client'
 import { useMemo } from 'react'
-import { Play, Pause, SkipForward, FastForward } from 'lucide-react'
+import { Play, Pause, SkipForward, FastForward, ChevronRight } from 'lucide-react'
 import type { ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard } from '@/types'
 import { buildReplay } from '@/game/engine/combat/replay'
 import { useBattleReplay, REPLAY_SPEEDS } from '@/hooks/useBattleReplay'
-import { BattleStage } from '@/components/battle/BattleStage'
+import { InitiativeBar } from '@/components/battle/InitiativeBar'
+import { BattleArena, ActionBanner } from '@/components/battle/BattleArena'
 import { BattleLog } from '@/components/battle/BattleLog'
 import { Button } from '@/components/ui/Button'
+import { SynergyRibbon } from '@/components/battle/SynergyRibbon'
 
 export function BattleScreen({
   result, playerTeam, playerSyn, playerRelics, enemy, enemySyn, title, rightTitle, onFinish,
@@ -28,23 +30,34 @@ export function BattleScreen({
   const r = useBattleReplay(replay)
 
   return (
-    <main className="flex-1 flex flex-col items-center gap-6 p-6">
+    <main className="flex-1 flex flex-col items-center gap-5 p-4 sm:p-6">
       <div className="flex flex-col items-center gap-1">
         <h1 className="font-display text-2xl">{title}</h1>
         <p className="text-[11px] uppercase tracking-widest text-white/35">
           Turno {r.entry?.turn ?? 0} · azione {r.index}/{r.total - 1}
+          {r.entry?.actorId ? <> · agisce <span className="text-white/60">{replay.units.find(u => u.id === r.entry!.actorId && u.side === r.entry!.actorSide)?.name ?? r.entry!.actorId}</span></> : null}
         </p>
       </div>
 
-      <BattleStage replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle} />
+      <InitiativeBar replay={replay} index={r.index} />
 
-      <BattleLog entries={replay.frames.slice(1, r.index + 1).map(f => f.entry!)} units={replay.units} />
+      <div className="flex w-full max-w-3xl items-start justify-between gap-4 px-1">
+        <SynergyRibbon synergies={playerSyn} relics={playerRelics ?? []} align="left" />
+        <SynergyRibbon synergies={enemySyn} align="right" />
+      </div>
 
-      <div className="flex items-center gap-3">
+      <BattleArena replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle} />
+
+      <ActionBanner entry={r.entry} units={replay.units} />
+
+      <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
         {!r.done ? (
           <>
-            <Button variant="ghost" onClick={r.toggle} className="px-4">
+            <Button variant="ghost" onClick={r.toggle} className="px-4" aria-label={r.playing ? 'Pausa' : 'Play'}>
               {r.playing ? <Pause size={18} /> : <Play size={18} />}
+            </Button>
+            <Button variant="ghost" onClick={r.step} className="px-4 gap-1 inline-flex items-center" aria-label="Passo">
+              <ChevronRight size={16} /> Passo
             </Button>
             <Button
               variant="ghost"
@@ -63,6 +76,8 @@ export function BattleScreen({
           </Button>
         )}
       </div>
+
+      <BattleLog entries={replay.frames.slice(1, r.index + 1).map(f => f.entry!)} units={replay.units} />
     </main>
   )
 }

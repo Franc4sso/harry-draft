@@ -9,10 +9,11 @@ describe('RarityFrame', () => {
     expect(container.querySelector('[data-crown]')).toBeTruthy()
     rerender(<RarityFrame tier={3}>x</RarityFrame>)
     expect(container.querySelector('[data-crown]')).toBeFalsy()
-    expect(container.querySelector('[data-gem]')).toBeTruthy()
   })
-  it('comune has neither gem nor crown', () => {
-    const { container } = render(<RarityFrame tier={4}>x</RarityFrame>)
+  it('no longer renders the rarity gem (removed for a cleaner frame)', () => {
+    const { container, rerender } = render(<RarityFrame tier={3}>x</RarityFrame>)
+    expect(container.querySelector('[data-gem]')).toBeFalsy()
+    rerender(<RarityFrame tier={4}>x</RarityFrame>)
     expect(container.querySelector('[data-gem]')).toBeFalsy()
     expect(container.querySelector('[data-crown]')).toBeFalsy()
   })

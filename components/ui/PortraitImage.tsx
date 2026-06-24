@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import type { House } from '@/types'
 import { houseTheme } from '@/lib/theme'
+import { HouseCrest } from './HouseCrest'
 
 export function PortraitImage({
   id, house, alt, variant = 'card',
@@ -16,13 +17,24 @@ export function PortraitImage({
         data-fallback={house}
         data-variant={variant}
         aria-label={alt}
-        className="h-full w-full"
-        style={{ background: `radial-gradient(ellipse at 50% 25%, ${theme.color} 0%, #0c0a16 70%)` }}
+        className="relative h-full w-full overflow-hidden"
+        style={{ background: `linear-gradient(180deg, ${theme.color}40 0%, #0c0a16 78%)` }}
       >
-        <svg viewBox="0 0 24 24" className="h-full w-full opacity-40">
-          <circle cx="12" cy="8" r="4" fill={theme.glow} />
-          <path d="M4 22c0-5 4-8 8-8s8 3 8 8z" fill={theme.glow} />
+        {/* Stylised shoulders-up bust silhouette in the house colour. */}
+        <svg viewBox="0 0 24 24" preserveAspectRatio="xMidYMax meet" className="absolute inset-x-0 bottom-0 h-[88%] w-full">
+          <defs>
+            <linearGradient id={`sil-${house}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={theme.glow} stopOpacity="0.55" />
+              <stop offset="100%" stopColor={theme.color} stopOpacity="0.18" />
+            </linearGradient>
+          </defs>
+          <circle cx="12" cy="7.5" r="3.6" fill={`url(#sil-${house})`} />
+          <path d="M4.5 24c0-5.2 3.4-8.2 7.5-8.2s7.5 3 7.5 8.2z" fill={`url(#sil-${house})`} />
         </svg>
+        {/* House crest watermark, top-centre. */}
+        <div data-testid="fallback-crest" className="absolute left-1/2 top-2 -translate-x-1/2 opacity-80">
+          <HouseCrest house={house} size={variant === 'bust' ? 20 : 26} />
+        </div>
       </div>
     )
   }
