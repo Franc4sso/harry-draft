@@ -80,8 +80,9 @@ describe('WizardCard compact', () => {
     const incendio = SPELLS.find((s) => s.id === 'incendio')!
     const drafted = { ...harry(), spell: incendio }
     render(<WizardCard drafted={drafted} />)
-    // formatSpellStats surfaces Potenza (power) and Precisione (hit chance).
-    expect(screen.getByText('Potenza')).toBeInTheDocument()
-    expect(screen.getByText('Precisione')).toBeInTheDocument()
+    // formatSpellStats surfaces Potenza (power) and Precisione (hit chance) as
+    // "label:" lines, consistent with the effect lines below them.
+    expect(screen.getByText('Potenza:')).toBeInTheDocument()
+    expect(screen.getByText('Precisione:')).toBeInTheDocument()
   })
 })

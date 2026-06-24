@@ -118,23 +118,20 @@ export function WizardCard({
               <p className="truncate text-xs font-medium">{spell.name}</p>
               <Chip label={typeChip.label} color={typeChip.color} icon={typeChip.icon} />
             </div>
-            {/* What the move does — its numbers (power/heal/precision/cooldown). */}
-            <div className="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5">
+            {/* Move numbers and effects, all as consistent "label: value" lines. */}
+            <div className="mt-1.5 space-y-0.5">
               {spellStats.map((s) => (
-                <span key={s.label} className="text-[10px] text-white/55">
-                  {s.label} <span className="font-semibold text-white/85 tabular-nums">{s.value}</span>
-                </span>
+                <p key={s.label} className="text-[10px] leading-snug text-white/55">
+                  <span className="font-semibold text-white/75">{s.label}:</span>{' '}
+                  <span className="tabular-nums text-white/85">{s.value}</span>
+                </p>
+              ))}
+              {effectLines.map((e) => (
+                <p key={e.label} className="text-[10px] leading-snug text-white/60">
+                  <span className="font-semibold" style={{ color: e.color }}>{e.label}:</span> {e.blurb}
+                </p>
               ))}
             </div>
-            {effectLines.length > 0 && (
-              <div className="mt-1.5 space-y-0.5">
-                {effectLines.map((e) => (
-                  <p key={e.label} className="text-[10px] leading-snug text-white/60">
-                    <span className="font-semibold" style={{ color: e.color }}>{e.label}:</span> {e.blurb}
-                  </p>
-                ))}
-              </div>
-            )}
           </div>
         </div>
         </HouseFrame>
