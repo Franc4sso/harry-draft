@@ -69,7 +69,7 @@ export function buildReplay(
   for (const u of units) maxHp[u.key] = u.maxHp
 
   const hp: Record<string, number> = {}
-  for (const u of units) hp[u.key] = u.maxHp
+  for (const u of [...L, ...R]) hp[unitKey(u.side, u.wizard.id)] = u.hp
 
   const frames: ReplayFrame[] = [{ index: 0, entry: null, hp: { ...hp } }]
 
