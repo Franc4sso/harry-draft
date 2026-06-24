@@ -22,7 +22,9 @@ describe('TeamScreen', () => {
   it('shows the golden trio synergy when present', () => {
     const t = team(['harry', 'ron', 'hermione', 'luna', 'neville'])
     render(<TeamScreen team={t} />)
-    expect(screen.getByText(/Golden Trio/i)).toBeInTheDocument()
+    // "Golden Trio" now appears both in the synergy panel and as an affiliation
+    // chip on each trio member's card, so assert at least one occurrence.
+    expect(screen.getAllByText(/Golden Trio/i).length).toBeGreaterThan(0)
   })
   it('shows synergy bonus text and member names', () => {
     const t = team(['harry', 'ron', 'hermione', 'luna', 'neville'])

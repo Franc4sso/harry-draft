@@ -8,6 +8,7 @@ import { Chip } from '@/components/ui/Chip'
 import { RarityFrame } from '@/components/ui/RarityFrame'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { HouseCrest } from '@/components/ui/HouseCrest'
+import { affiliationChips } from '@/lib/affiliationChips'
 import { spellTypeChip, spellEffectChips } from '@/lib/glossary'
 
 export const CARD_STAT_MAX = { hp: 150, atk: 120, def: 120, spd: 120 } as const
@@ -33,17 +34,19 @@ function StatCell({ label, value, max, color }: { label: string; value: number; 
 }
 
 export function WizardCard({
-  drafted, selected, onClick, className,
+  drafted, selected, onClick, className, hotSynergyIds,
 }: {
   drafted: DraftedWizard
   selected?: boolean
   onClick?: () => void
   className?: string
+  hotSynergyIds?: ReadonlySet<string>
 }) {
   const { wizard, stats, spell } = drafted
   const clickable = Boolean(onClick)
   const typeChip = spellTypeChip(spell.type)
   const effectChips = spellEffectChips(spell)
+  const chips = affiliationChips(wizard)
 
   return (
     <motion.div
@@ -66,9 +69,34 @@ export function WizardCard({
 
         <div className="p-2.5 pt-1.5">
           <h3 className="font-display text-sm leading-tight truncate">{wizard.name}</h3>
-          <div className="mt-0.5 flex items-center justify-between text-[10px] text-white/65">
-            <span className="flex items-center gap-1"><HouseCrest house={wizard.house} size={12} />{wizard.house}</span>
-            <span className="flex items-center gap-1"><RoleIcon role={wizard.role} size={12} />{wizard.role}</span>
+          <div data-testid="affiliation-strip" className="mt-1 flex flex-wrap items-center gap-1">
+            {chips.map((c) => {
+              const hot = c.synergyId ? hotSynergyIds?.has(c.synergyId) ?? false : false
+              const isSpecial = c.kind === 'special'
+              return (
+                <span
+                  key={c.id}
+                  data-synergy={c.synergyId}
+                  data-hot={hot ? '' : undefined}
+                  className={cn(
+                    'inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold',
+                    hot && 'resa-animated',
+                  )}
+                  style={
+                    hot
+                      ? { color: '#f3e6c4', borderColor: '#caa24a', background: 'rgba(120,90,40,0.6)', boxShadow: '0 0 8px rgba(202,162,74,0.6)' }
+                      : isSpecial
+                        ? { color: '#ead9b0', borderColor: 'rgba(176,141,87,0.55)', background: 'rgba(176,141,87,0.12)' }
+                        : { color: 'rgba(255,255,255,0.82)', borderColor: 'rgba(255,255,255,0.16)', background: 'rgba(255,255,255,0.05)' }
+                  }
+                >
+                  {c.kind === 'house' && <HouseCrest house={wizard.house} size={11} />}
+                  {c.kind === 'role' && <RoleIcon role={wizard.role} size={11} />}
+                  {isSpecial && <span aria-hidden style={{ color: '#caa24a' }}>◆</span>}
+                  {c.label}
+                </span>
+              )
+            })}
           </div>
 
           <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1">
