@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import type { House } from '@/types'
 import { houseTheme } from '@/lib/theme'
-import { HouseCrest } from './HouseCrest'
 
 export function PortraitImage({
   id, house, alt, variant = 'card',
@@ -31,10 +30,6 @@ export function PortraitImage({
           <circle cx="12" cy="7.5" r="3.6" fill={`url(#sil-${house})`} />
           <path d="M4.5 24c0-5.2 3.4-8.2 7.5-8.2s7.5 3 7.5 8.2z" fill={`url(#sil-${house})`} />
         </svg>
-        {/* House crest watermark, top-centre. */}
-        <div data-testid="fallback-crest" className="absolute left-1/2 top-2 -translate-x-1/2 opacity-80">
-          <HouseCrest house={house} size={variant === 'bust' ? 20 : 26} />
-        </div>
       </div>
     )
   }
