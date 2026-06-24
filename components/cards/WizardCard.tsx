@@ -76,7 +76,7 @@ export function WizardCard({
               return (
                 <span
                   key={c.id}
-                  data-synergy={c.synergyId}
+                  data-synergy={c.kind === 'special' ? c.synergyId : undefined}
                   data-hot={hot ? '' : undefined}
                   className={cn(
                     'inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold',

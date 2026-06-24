@@ -37,7 +37,7 @@ export function SynergyRibbon({
       {relics.map((r) => (
         <span
           key={r.relic.id}
-          data-relic=""
+          data-relic={r.relic.id}
           className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold"
           style={{ color: '#d6c8ff', borderColor: 'rgba(124,58,237,0.5)', background: 'rgba(124,58,237,0.16)' }}
         >
