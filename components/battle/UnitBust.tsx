@@ -56,6 +56,7 @@ export function UnitBust({
   return (
     <motion.div
       data-testid="battle-unit"
+      data-unit-key={unit.key}
       data-dead={dead || undefined}
       data-acting={acting || undefined}
       animate={reduce ? {} : {

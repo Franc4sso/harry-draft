@@ -103,6 +103,52 @@ describe('InitiativeBar', () => {
     // buffed spd shown
     expect(current.textContent).toContain(String(actor.spd))
   })
+
+  it('renders a stable non-empty rail on a system frame and highlights the last real actor', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    const firstReal = replay.frames.findIndex(
+      f => f.entry && f.entry.type !== 'system' && f.entry.actorSide,
+    )
+    // A system/actorless frame strictly after the first real action.
+    const sysIdx = replay.frames.findIndex(
+      (f, i) => i > firstReal && f.entry && (f.entry.type === 'system' || !f.entry.actorSide),
+    )
+    expect(sysIdx).toBeGreaterThan(firstReal)
+    // Persisted (last real) actor at that system frame.
+    let actorKey: string | null = null
+    for (let i = sysIdx; i >= 0; i--) {
+      const en = replay.frames[i]!.entry
+      if (en && en.type !== 'system' && en.actorSide) { actorKey = unitKey(en.actorSide, en.actorId); break }
+    }
+    const actor = replay.units.find(u => u.key === actorKey)!
+    render(<InitiativeBar replay={replay} index={sysIdx} />)
+    const bar = screen.getByTestId('initiative-bar')
+    // Bar is NOT empty on a system frame — alive units are shown.
+    const slots = bar.querySelectorAll('[data-current], [data-role="ora-label"]')
+    expect(slots.length).toBeGreaterThan(0)
+    // Highlight follows the last real actor and persists across the system frame.
+    const current = bar.querySelector('[data-current]') as HTMLElement
+    expect(current).not.toBeNull()
+    expect(current.textContent).toContain(actor.name)
+  })
+
+  it('shows the alive units sorted by spd on a system frame', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    const firstReal = replay.frames.findIndex(
+      f => f.entry && f.entry.type !== 'system' && f.entry.actorSide,
+    )
+    const sysIdx = replay.frames.findIndex(
+      (f, i) => i > firstReal && f.entry && (f.entry.type === 'system' || !f.entry.actorSide),
+    )
+    expect(sysIdx).toBeGreaterThan(firstReal)
+    const aliveCount = Object.values(replay.frames[sysIdx]!.hp).filter(h => h > 0).length
+    render(<InitiativeBar replay={replay} index={sysIdx} />)
+    const bar = screen.getByTestId('initiative-bar')
+    // One ora-label per rendered unit slot.
+    expect(bar.querySelectorAll('[data-role="ora-label"]').length).toBe(aliveCount)
+  })
 })
 
 describe('UnitBust', () => {
@@ -186,21 +232,29 @@ describe('BattleScreen', () => {
 })
 
 describe('SpellFx', () => {
-  it('renders a projectile with the archetype for a plain attack', () => {
+  it('renders a projectile with the archetype for a plain attack with coords', () => {
     const e: LogEntry = {
       turn: 1, actorId: 'harry', actorSide: 'left', action: 'Stupeficium',
       targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 10, flags: [],
     }
-    render(<SpellFx entry={e} fxKey={1} />)
+    render(<SpellFx entry={e} from={{ x: 20, y: 50 }} to={{ x: 80, y: 50 }} fxKey={1} />)
     const fx = screen.getByTestId('spell-fx')
     expect(fx.getAttribute('data-archetype')).toBe('beam')
+  })
+  it('renders nothing when from/to coords are missing (no measured positions)', () => {
+    const e: LogEntry = {
+      turn: 1, actorId: 'harry', actorSide: 'left', action: 'Stupeficium',
+      targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 10, flags: [],
+    }
+    const { container } = render(<SpellFx entry={e} from={null} to={null} fxKey={1} />)
+    expect(container.querySelector('[data-testid="spell-fx"]')).toBeNull()
   })
   it('renders nothing for a system KO entry', () => {
     const e: LogEntry = {
       turn: 1, actorId: 'harry', actorSide: 'left', action: 'KO',
       targetId: 'draco', targetSide: 'right', type: 'system', flags: ['kill'],
     }
-    const { container } = render(<SpellFx entry={e} fxKey={1} />)
+    const { container } = render(<SpellFx entry={e} from={{ x: 20, y: 50 }} to={{ x: 80, y: 50 }} fxKey={1} />)
     expect(container.querySelector('[data-testid="spell-fx"]')).toBeNull()
   })
 })

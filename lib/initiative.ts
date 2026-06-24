@@ -1,3 +1,4 @@
+import type { LogEntry } from '@/types'
 import type { Replay } from '@/game/engine/combat/replay'
 import { unitKey } from '@/game/engine/combat/replay'
 
@@ -47,4 +48,29 @@ export function initiativeAt(
     }
   }
   return { current, upcoming }
+}
+
+/**
+ * The replay entry of the most recent REAL action (non-system, with an
+ * actorSide) at or before `index`, scanning backwards. System frames (regen,
+ * DoT, stun, KO narration) are skipped, so the result "sticks" through them.
+ * Returns null before any real action has happened (e.g. the initial frame).
+ */
+export function lastRealEntryAt(replay: Replay, index: number): LogEntry | null {
+  for (let i = Math.min(index, replay.frames.length - 1); i >= 0; i--) {
+    const e = replay.frames[i]?.entry
+    if (e && e.type !== 'system' && e.actorSide) return e
+  }
+  return null
+}
+
+/**
+ * The unitKey of the actor of the most recent real action at or before
+ * `index` (see {@link lastRealEntryAt}). This is the persistent "acting now"
+ * highlight for the initiative bar: it holds across system frames until the
+ * next real action. Returns null before any real action.
+ */
+export function lastRealActorAt(replay: Replay, index: number): string | null {
+  const e = lastRealEntryAt(replay, index)
+  return e && e.actorSide ? unitKey(e.actorSide, e.actorId) : null
 }

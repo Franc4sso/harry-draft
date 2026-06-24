@@ -2,20 +2,33 @@
 import { motion } from 'framer-motion'
 import { Zap } from 'lucide-react'
 import type { Replay } from '@/game/engine/combat/replay'
-import { initiativeAt } from '@/lib/initiative'
+import { lastRealActorAt } from '@/lib/initiative'
 import { HouseCrest } from '@/components/ui/HouseCrest'
 import { houseTheme, cn } from '@/lib/theme'
 
 /**
- * Speed-order rail: the unit acting now plus the upcoming queue, derived from
- * the replay action sequence. Makes "why the fast one strikes first" explicit —
- * each slot shows the crest, the unit name, and its (buffed) spd, with the
- * current actor labelled "Ora".
+ * Speed-order rail: the STABLE ordered list of currently-alive units, sorted by
+ * (buffed) spd descending. Makes "why the fast one strikes first" explicit —
+ * each slot shows the crest, the unit name, and its spd. The unit whose action
+ * is "now" is highlighted IN PLACE (kept in speed order, labelled "Ora").
+ *
+ * The order is derived from the frame's HP (alive = hp > 0), not from the
+ * action sequence, so it never blanks on system frames. The highlight follows
+ * the last REAL action (most recent non-system, actor-bearing entry) and
+ * persists through subsequent system frames — no flicker.
  */
 export function InitiativeBar({ replay, index }: { replay: Replay; index: number }) {
-  const { current, upcoming } = initiativeAt(replay, index)
+  const frame = replay.frames[index] ?? replay.frames[replay.frames.length - 1]
+  const hp = frame?.hp ?? {}
+  const current = lastRealActorAt(replay, index)
+
+  // Stable rail: alive units sorted by spd desc, stable tiebreak by original order.
+  const sequence = replay.units
+    .map((u, i) => ({ u, i }))
+    .filter(({ u }) => (hp[u.key] ?? u.maxHp) > 0)
+    .sort((a, b) => b.u.spd - a.u.spd || a.i - b.i)
+    .map(({ u }) => u.key)
   const byKey = Object.fromEntries(replay.units.map(u => [u.key, u]))
-  const sequence = [current, ...upcoming].filter((k): k is string => !!k)
 
   return (
     <div
@@ -28,7 +41,7 @@ export function InitiativeBar({ replay, index }: { replay: Replay; index: number
       {sequence.map((key, i) => {
         const u = byKey[key]
         if (!u) return null
-        const isCurrent = i === 0
+        const isCurrent = key === current
         const theme = houseTheme(u.house)
         return (
           <motion.div

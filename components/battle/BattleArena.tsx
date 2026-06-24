@@ -1,9 +1,10 @@
 'use client'
+import { useLayoutEffect, useRef, useState } from 'react'
 import type { LogEntry } from '@/types'
 import type { Replay, ReplayUnit } from '@/game/engine/combat/replay'
 import { unitKey } from '@/game/engine/combat/replay'
 import { UnitBust } from './UnitBust'
-import { SpellFx, ShieldFx } from './SpellFx'
+import { SpellFx, ShieldFx, type FxPoint } from './SpellFx'
 import { floatFor } from './damageFloat'
 import { statusesAt } from '@/lib/battleStatus'
 import { archetypeFor } from '@/lib/spellArchetype'
@@ -31,7 +32,34 @@ export function BattleArena({
 
   const left = replay.units.filter(u => u.side === 'left')
   const right = replay.units.filter(u => u.side === 'right')
-  const actorMirrored = entry?.actorSide === 'right'
+
+  // Measure the real on-screen caster/target busts so the projectile flies between
+  // their actual positions (not fixed arena percentages). Read layout AFTER the busts
+  // lay out for this frame: useLayoutEffect keyed on the frame + caster/target.
+  const arenaRef = useRef<HTMLDivElement>(null)
+  const [fx, setFx] = useState<{ from: FxPoint; to: FxPoint } | null>(null)
+  useLayoutEffect(() => {
+    const measure = () => {
+      const arena = arenaRef.current
+      if (!arena || !actingKey || !targetKey) { setFx(null); return }
+      const casterEl = arena.querySelector(`[data-unit-key="${CSS.escape(actingKey)}"]`)
+      const targetEl = arena.querySelector(`[data-unit-key="${CSS.escape(targetKey)}"]`)
+      if (!casterEl || !targetEl) { setFx(null); return }
+      const arenaRect = arena.getBoundingClientRect()
+      if (arenaRect.width === 0 || arenaRect.height === 0) { setFx(null); return }
+      const center = (el: Element): FxPoint => {
+        const r = el.getBoundingClientRect()
+        return {
+          x: ((r.left + r.width / 2 - arenaRect.left) / arenaRect.width) * 100,
+          y: ((r.top + r.height / 2 - arenaRect.top) / arenaRect.height) * 100,
+        }
+      }
+      setFx({ from: center(casterEl), to: center(targetEl) })
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [frameKey, actingKey, targetKey])
 
   const renderSide = (units: ReplayUnit[], mirrored: boolean) =>
     units.map(u => (
@@ -51,7 +79,7 @@ export function BattleArena({
     ))
 
   return (
-    <div data-testid="battle-arena" className="relative flex items-start justify-center gap-4 sm:gap-10 w-full">
+    <div ref={arenaRef} data-testid="battle-arena" className="relative flex items-start justify-center gap-4 sm:gap-10 w-full">
       <section className="flex flex-col items-center gap-3">
         <h3 className="text-xs uppercase tracking-widest text-white/40">{leftTitle}</h3>
         <div className="flex flex-wrap justify-center gap-2 sm:gap-3">{renderSide(left, false)}</div>
@@ -64,7 +92,7 @@ export function BattleArena({
         <div className="flex flex-wrap justify-center gap-2 sm:gap-3">{renderSide(right, true)}</div>
       </section>
 
-      {!blocked && <SpellFx entry={entry} fromMirrored={actorMirrored} fxKey={frameKey} />}
+      {!blocked && <SpellFx entry={entry} from={fx?.from} to={fx?.to} fxKey={frameKey} />}
     </div>
   )
 }

@@ -10,6 +10,7 @@ import { ActionPanel } from '@/components/battle/ActionPanel'
 import { BattleLog } from '@/components/battle/BattleLog'
 import { Button } from '@/components/ui/Button'
 import { SynergyRibbon } from '@/components/battle/SynergyRibbon'
+import { lastRealEntryAt } from '@/lib/initiative'
 
 export function BattleScreen({
   result, playerTeam, playerSyn, playerRelics, enemy, enemySyn, title, rightTitle, onFinish,
@@ -29,6 +30,11 @@ export function BattleScreen({
     [result, playerTeam, enemy, playerSyn, enemySyn, playerRelics],
   )
   const r = useBattleReplay(replay)
+  // Sticky entry for the ActionPanel: hold the last REAL action across system
+  // frames so the panel doesn't flicker to "…" on every regen/DoT/KO tick.
+  // BattleArena keeps the TRUE current entry (r.entry) so floats/auras/laser
+  // track the real frame.
+  const stickyEntry = useMemo(() => lastRealEntryAt(replay, r.index), [replay, r.index])
 
   return (
     <main className="flex-1 flex flex-col items-center gap-5 p-4 sm:p-6">
@@ -49,7 +55,7 @@ export function BattleScreen({
 
       <BattleArena replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle} />
 
-      <ActionPanel entry={r.entry} units={replay.units} />
+      <ActionPanel entry={stickyEntry} units={replay.units} />
 
       <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
         {!r.done ? (

@@ -9,17 +9,21 @@ import { archetypeFor, archetypeStyle } from '@/lib/spellArchetype'
  * stays cheap on mobile (transform/opacity only). Heal (handled by the float),
  * shield (ShieldFx), and system entries render nothing here.
  */
+/** A point on the arena, expressed as a percentage (0–100) of the arena box. */
+export type FxPoint = { x: number; y: number }
+
 export function SpellFx({
-  entry, fromMirrored = false, fxKey,
-}: { entry: LogEntry | null; fromMirrored?: boolean; fxKey: number | string }) {
+  entry, from, to, fxKey,
+}: { entry: LogEntry | null; from?: FxPoint | null; to?: FxPoint | null; fxKey: number | string }) {
   const reduce = useReducedMotion()
   const archetype = archetypeFor(entry)
   if (archetype === 'none' || archetype === 'shield' || archetype === 'heal') return null
+  // No measured caster/target (e.g. a unit unmounted/dead, or a no-target frame): nothing to fly.
+  if (!from || !to) return null
   const style = archetypeStyle(archetype)
 
-  // Left caster fires rightward; right caster (mirrored) fires leftward.
-  const fromX = fromMirrored ? '60%' : '40%'
-  const toX = fromMirrored ? '40%' : '60%'
+  const fromX = `${from.x}%`, fromY = `${from.y}%`
+  const toX = `${to.x}%`, toY = `${to.y}%`
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -28,8 +32,8 @@ export function SpellFx({
           key={fxKey}
           data-testid="spell-fx"
           data-archetype={archetype}
-          initial={reduce ? { opacity: 1, left: toX, top: '50%' } : { opacity: 0.2, left: fromX, top: '50%', scale: 0.6 }}
-          animate={{ opacity: 1, left: toX, top: '50%', scale: 1 }}
+          initial={reduce ? { opacity: 1, left: toX, top: toY } : { opacity: 0.2, left: fromX, top: fromY, scale: 0.6 }}
+          animate={{ opacity: 1, left: toX, top: toY, scale: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: reduce ? 0 : 0.42, ease: 'easeIn' }}
           className="absolute h-3 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full"
