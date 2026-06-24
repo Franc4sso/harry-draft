@@ -13,6 +13,7 @@ export const WIZARDS: Wizard[] = [
     ranges: { hp: [82, 103], atk: [35, 45], def: [12, 19], spd: [24, 32] },
     spellPool: ['avada', 'sectumsempra', 'fiendfyre', 'serpensortia', 'crucio'],
     tags: ['deatheater'],
+    traits: ['esecuzione', 'furia'],
   },
   {
     id: 'harry', name: 'Harry Potter', house: 'Grifondoro', role: 'Attaccante', tier: 1,
@@ -38,6 +39,7 @@ export const WIZARDS: Wizard[] = [
     ranges: { hp: [124, 153], atk: [13, 18], def: [29, 39], spd: [14, 19] },
     spellPool: ['protego_maxima', 'fianto', 'reducto', 'bombarda', 'protego'],
     tags: ['order'],
+    traits: ['roccia'],
   },
   {
     id: 'sirius', name: 'Sirius Black', house: 'Grifondoro', role: 'Attaccante', tier: 2,
