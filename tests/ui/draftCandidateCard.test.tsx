@@ -1,33 +1,37 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
-import type { DraftedWizard } from '@/types'
+import { render, screen, within, fireEvent } from '@testing-library/react'
 import { DraftCandidateCard } from '@/components/draft/DraftCandidateCard'
+import { draftWizard } from '@/game/engine/statRoll'
+import { createRng } from '@/game/engine/rng'
+import { WIZARD_BY_ID } from '@/data/wizards'
 
-const harry = {
-  wizard: { id: 'harry', name: 'Harry', house: 'Grifondoro', role: 'Attaccante', tier: 1,
-    ranges: { hp: [110,135], atk: [22,38], def: [16,28], spd: [22,32] }, spellPool: ['x'], tags: ['order'] },
-  stats: { hp: 120, atk: 30, def: 22, spd: 28 }, maxHp: 120,
-  spell: { id: 'x', name: 'Expelliarmus', type: 'Controllo', hitChance: 1, desc: 'disarma' },
-} as unknown as DraftedWizard
+const harry = () => draftWizard(createRng(1), WIZARD_BY_ID['harry']!)
 
-describe('DraftCandidateCard', () => {
-  it('shows affiliation chips and marks hot ones', () => {
-    const { container } = render(<DraftCandidateCard drafted={harry} hotSynergyIds={new Set(['gryffindor3'])} />)
-    expect(screen.getByText('3 Grifondoro')).toBeInTheDocument()
-    expect(container.querySelector('[data-hot][data-synergy="gryffindor3"]')).toBeTruthy()
-    expect(container.querySelector('[data-hot][data-synergy="attackers3"]')).toBeFalsy()
+describe('DraftCandidateCard affiliation strip', () => {
+  it('shows a single name-only strip: house + role + specials, no counts', () => {
+    render(<DraftCandidateCard drafted={harry()} />)
+    const strip = screen.getByTestId('affiliation-strip')
+    expect(within(strip).getByText('Grifondoro')).toBeInTheDocument()
+    expect(within(strip).getByText('Attaccante')).toBeInTheDocument()
+    // never a count-prefixed label
+    expect(within(strip).queryByText(/^\d/)).toBeNull()
+  })
+  it('marks a hot chip when its synergy id is in hotSynergyIds', () => {
+    render(<DraftCandidateCard drafted={harry()} hotSynergyIds={new Set(['goldenTrio'])} />)
+    const strip = screen.getByTestId('affiliation-strip')
+    expect(strip.querySelector('[data-synergy="goldenTrio"][data-hot]')).not.toBeNull()
   })
   it('fires onConsider on pointer enter and onPick on click', () => {
     const onConsider = vi.fn(); const onPick = vi.fn()
-    const { container } = render(<DraftCandidateCard drafted={harry} onConsider={onConsider} onPick={onPick} />)
+    const { container } = render(<DraftCandidateCard drafted={harry()} onConsider={onConsider} onPick={onPick} />)
     fireEvent.pointerEnter(container.firstChild as Element)
     expect(onConsider).toHaveBeenCalled()
-    fireEvent.click(screen.getByText('Harry'))
+    fireEvent.click(screen.getByText('Harry Potter'))
     expect(onPick).toHaveBeenCalled()
   })
   it('fires onConsider on focus', () => {
     const onConsider = vi.fn()
-    const { container } = render(<DraftCandidateCard drafted={harry} onConsider={onConsider} />)
+    const { container } = render(<DraftCandidateCard drafted={harry()} onConsider={onConsider} />)
     fireEvent.focus(container.firstChild as Element)
     expect(onConsider).toHaveBeenCalled()
   })
