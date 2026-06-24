@@ -56,7 +56,7 @@ export function DraftScreen({ seed, onComplete }: { seed: string; onComplete: (t
         {/* Candidates: single column on mobile (one under the other), 2-up on
             small screens, 3-up on large. */}
         <section
-          className="grid grid-cols-1 justify-items-center gap-5 sm:grid-cols-2 lg:grid-cols-3"
+          className="grid grid-cols-1 items-start justify-items-center gap-5 sm:grid-cols-2 lg:grid-cols-3"
           onPointerLeave={() => setConsidered(null)}
         >
           {current.map((c, i) => (

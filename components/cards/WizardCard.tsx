@@ -9,7 +9,7 @@ import { RarityFrame } from '@/components/ui/RarityFrame'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { HouseFrame } from './HouseFrame'
 import { affiliationChips } from '@/lib/affiliationChips'
-import { spellTypeChip, spellEffectChips, formatSpellStats } from '@/lib/glossary'
+import { spellTypeChip, spellEffectLines, formatSpellStats } from '@/lib/glossary'
 
 export const CARD_STAT_MAX = { hp: 150, atk: 120, def: 120, spd: 120 } as const
 
@@ -45,7 +45,7 @@ export function WizardCard({
   const { wizard, stats, spell } = drafted
   const clickable = Boolean(onClick)
   const typeChip = spellTypeChip(spell.type)
-  const effectChips = spellEffectChips(spell)
+  const effectLines = spellEffectLines(spell)
   const spellStats = formatSpellStats(spell)
   // House and role are shown by the frame + role badge; the strip carries only
   // the special (group/origin) synergies, so it's usually short or empty.
@@ -61,11 +61,11 @@ export function WizardCard({
       role={clickable ? 'button' : undefined}
       tabIndex={clickable ? 0 : undefined}
       onKeyDown={clickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') onClick?.() } : undefined}
-      className={cn('w-56 select-none text-white', clickable && 'cursor-pointer', className)}
+      className={cn('w-56 h-full min-h-[27rem] select-none text-white', clickable && 'cursor-pointer', className)}
     >
-      <RarityFrame tier={wizard.tier} selected={selected}>
-        <HouseFrame house={wizard.house}>
-        <div className="relative h-36 overflow-hidden rounded-t-xl">
+      <RarityFrame tier={wizard.tier} selected={selected} className="flex h-full flex-col">
+        <HouseFrame house={wizard.house} className="flex flex-1 flex-col">
+        <div className="relative h-36 shrink-0 overflow-hidden rounded-t-xl">
           <PortraitImage id={wizard.id} house={wizard.house} alt={wizard.name} variant="card" />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 50%, rgba(12,10,22,0.94))' }} />
           <div className="absolute right-2 top-2"><TierBadge tier={wizard.tier} /></div>
@@ -78,10 +78,10 @@ export function WizardCard({
           </div>
         </div>
 
-        <div className="p-2.5 pt-1.5">
+        <div className="flex flex-1 flex-col p-3.5 pt-2.5">
           <h3 className="font-display text-sm leading-tight truncate">{wizard.name}</h3>
           {specialChips.length > 0 && (
-            <div data-testid="affiliation-strip" className="mt-1 flex flex-wrap items-center gap-1">
+            <div data-testid="affiliation-strip" className="mt-2 flex flex-wrap items-center gap-1">
               {specialChips.map((c) => {
                 const hot = c.synergyId ? hotSynergyIds?.has(c.synergyId) ?? false : false
                 return (
@@ -107,13 +107,13 @@ export function WizardCard({
             </div>
           )}
 
-          <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1">
+          <div className="mt-3.5 grid grid-cols-2 gap-x-3 gap-y-2">
             {STAT_CELLS.map((c) => (
               <StatCell key={c.key} label={c.label} value={stats[c.key as Stat]} max={CARD_STAT_MAX[c.key]} color={c.color} />
             ))}
           </div>
 
-          <div className="mt-2 rounded-lg bg-black/30 px-2 py-1.5">
+          <div className="mt-3.5 rounded-lg bg-black/30 px-2.5 py-2">
             <div className="flex items-center justify-between gap-1">
               <p className="truncate text-xs font-medium">{spell.name}</p>
               <Chip label={typeChip.label} color={typeChip.color} icon={typeChip.icon} />
@@ -126,9 +126,13 @@ export function WizardCard({
                 </span>
               ))}
             </div>
-            {effectChips.length > 0 && (
-              <div className="mt-1 flex flex-wrap gap-1">
-                {effectChips.map((c) => <Chip key={c.label} label={c.label} color={c.color} icon={c.icon} />)}
+            {effectLines.length > 0 && (
+              <div className="mt-1.5 space-y-0.5">
+                {effectLines.map((e) => (
+                  <p key={e.label} className="text-[10px] leading-snug text-white/60">
+                    <span className="font-semibold" style={{ color: e.color }}>{e.label}:</span> {e.blurb}
+                  </p>
+                ))}
               </div>
             )}
           </div>
