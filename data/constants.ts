@@ -44,4 +44,8 @@ export const BALANCE = {
       'epica': 6,
     } as Record<RelicRarity, number>,
   },
+  roles: {
+    tauntBonus: 1000,       // additive threat that makes a live Tank the focus
+    attackerArmorPen: 0.4,  // fraction of target DEF an Attaccante ignores
+  },
 } as const
