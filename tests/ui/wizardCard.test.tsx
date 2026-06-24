@@ -71,4 +71,13 @@ describe('WizardCard compact', () => {
     render(<WizardCard drafted={drafted} />)
     expect(screen.getByText('Danno nel tempo')).toBeInTheDocument()
   })
+
+  it('shows what the move does — its numbers (power/precision)', () => {
+    const incendio = SPELLS.find((s) => s.id === 'incendio')!
+    const drafted = { ...harry(), spell: incendio }
+    render(<WizardCard drafted={drafted} />)
+    // formatSpellStats surfaces Potenza (power) and Precisione (hit chance).
+    expect(screen.getByText('Potenza')).toBeInTheDocument()
+    expect(screen.getByText('Precisione')).toBeInTheDocument()
+  })
 })

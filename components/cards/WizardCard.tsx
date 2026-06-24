@@ -10,7 +10,7 @@ import { PortraitImage } from '@/components/ui/PortraitImage'
 import { HouseCrest } from '@/components/ui/HouseCrest'
 import { HouseFrame } from './HouseFrame'
 import { affiliationChips } from '@/lib/affiliationChips'
-import { spellTypeChip, spellEffectChips } from '@/lib/glossary'
+import { spellTypeChip, spellEffectChips, formatSpellStats } from '@/lib/glossary'
 
 export const CARD_STAT_MAX = { hp: 150, atk: 120, def: 120, spd: 120 } as const
 
@@ -47,6 +47,7 @@ export function WizardCard({
   const clickable = Boolean(onClick)
   const typeChip = spellTypeChip(spell.type)
   const effectChips = spellEffectChips(spell)
+  const spellStats = formatSpellStats(spell)
   // House and role are shown by the frame + role badge; the strip carries only
   // the special (group/origin) synergies, so it's usually short or empty.
   const specialChips = affiliationChips(wizard).filter((c) => c.kind === 'special')
@@ -119,6 +120,14 @@ export function WizardCard({
             <div className="flex items-center justify-between gap-1">
               <p className="truncate text-xs font-medium">{spell.name}</p>
               <Chip label={typeChip.label} color={typeChip.color} icon={typeChip.icon} />
+            </div>
+            {/* What the move does — its numbers (power/heal/precision/cooldown). */}
+            <div className="mt-1 flex flex-wrap gap-x-2.5 gap-y-0.5">
+              {spellStats.map((s) => (
+                <span key={s.label} className="text-[10px] text-white/55">
+                  {s.label} <span className="font-semibold text-white/85 tabular-nums">{s.value}</span>
+                </span>
+              ))}
             </div>
             {effectChips.length > 0 && (
               <div className="mt-1 flex flex-wrap gap-1">
