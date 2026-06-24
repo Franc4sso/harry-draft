@@ -15,7 +15,10 @@ describe('SynergyTracker', () => {
   it('shows current synergies with count/threshold and bonus text', () => {
     const team = [dw('a','Grifondoro','Attaccante'), dw('b','Grifondoro','Tank')]
     render(<SynergyTracker rows={synergyProgress(team)} />)
-    expect(screen.getByText('3 Grifondoro')).toBeInTheDocument()
+    // The tracker strips the leading count from the synergy name ("3 Grifondoro" → "Grifondoro"),
+    // matching the name-only convention used by the draft chips.
+    expect(screen.getByText('Grifondoro')).toBeInTheDocument()
+    expect(screen.queryByText('3 Grifondoro')).toBeNull()
     expect(screen.getByText(/2\s*\/\s*3/)).toBeInTheDocument()
     expect(screen.getByText(/\+20 DIF/)).toBeInTheDocument()
   })
