@@ -7,6 +7,7 @@ import { BattleStage } from '@/components/battle/BattleStage'
 import { BattleScreen } from '@/components/screens/BattleScreen'
 import { InitiativeBar } from '@/components/battle/InitiativeBar'
 import { UnitBust } from '@/components/battle/UnitBust'
+import { BattleArena, ActionBanner } from '@/components/battle/BattleArena'
 import { buildReplay, unitKey } from '@/game/engine/combat/replay'
 import { simulateBattle } from '@/game/engine/combat/simulate'
 import { detectSynergies } from '@/game/engine/synergy'
@@ -179,5 +180,43 @@ describe('ShieldFx', () => {
   it('renders nothing when inactive', () => {
     const { container } = render(<ShieldFx active={false} fxKey={1} />)
     expect(container.querySelector('[data-testid="shield-fx"]')).toBeNull()
+  })
+})
+
+describe('BattleArena', () => {
+  it('renders every combatant as a bust', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    render(<BattleArena replay={replay} hp={replay.frames[0]!.hp} entry={null} frameKey={0} />)
+    expect(screen.getAllByTestId('battle-unit')).toHaveLength(10)
+  })
+  it('shows the Protego dome when a hit is blocked', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    const blocked: LogEntry = {
+      turn: 1, actorId: 'harry', actorSide: 'left', action: 'Stupeficium',
+      targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 0, flags: ['block'],
+    }
+    render(<BattleArena replay={replay} hp={replay.frames[0]!.hp} entry={blocked} frameKey={1} />)
+    expect(screen.getByTestId('shield-fx')).toBeInTheDocument()
+  })
+})
+
+describe('ActionBanner', () => {
+  it('narrates the current entry', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    const e: LogEntry = {
+      turn: 1, actorId: 'harry', actorSide: 'left', action: 'Stupeficium',
+      targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 42, flags: [],
+    }
+    render(<ActionBanner entry={e} units={replay.units} />)
+    expect(screen.getByTestId('action-banner')).toHaveTextContent('42')
+  })
+  it('renders an empty placeholder for no entry', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    render(<ActionBanner entry={null} units={replay.units} />)
+    expect(screen.getByTestId('action-banner')).toBeInTheDocument()
   })
 })
