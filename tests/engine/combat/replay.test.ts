@@ -84,4 +84,13 @@ describe('buildReplay', () => {
     expect(replay.mvpId).toBe(res.mvpId)
     expect(replay.turns).toBe(res.turns)
   })
+
+  it('exposes each unit tier for rarity rendering', () => {
+    const l = team(['harry', 'ron', 'hermione', 'luna', 'neville'], 7)
+    const r = team(['draco', 'crabbe', 'goyle', 'snape', 'bellatrix'], 13)
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    for (const u of replay.units) {
+      expect([1, 2, 3, 4]).toContain(u.tier)
+    }
+  })
 })
