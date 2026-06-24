@@ -53,9 +53,10 @@ export function DraftScreen({ seed, onComplete }: { seed: string; onComplete: (t
         Two-column on desktop (md+): candidates left, tracker right rail.
       */}
       <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 p-4 md:grid-cols-[1fr_280px]">
-        {/* Candidates */}
+        {/* Candidates: single column on mobile (one under the other), 2-up on
+            small screens, 3-up on large. */}
         <section
-          className="flex flex-wrap justify-center gap-5"
+          className="grid grid-cols-1 justify-items-center gap-5 sm:grid-cols-2 lg:grid-cols-3"
           onPointerLeave={() => setConsidered(null)}
         >
           {current.map((c, i) => (

@@ -7,7 +7,6 @@ import { RoleIcon } from './RoleIcon'
 import { Chip } from '@/components/ui/Chip'
 import { RarityFrame } from '@/components/ui/RarityFrame'
 import { PortraitImage } from '@/components/ui/PortraitImage'
-import { HouseCrest } from '@/components/ui/HouseCrest'
 import { HouseFrame } from './HouseFrame'
 import { affiliationChips } from '@/lib/affiliationChips'
 import { spellTypeChip, spellEffectChips, formatSpellStats } from '@/lib/glossary'
@@ -62,16 +61,14 @@ export function WizardCard({
       role={clickable ? 'button' : undefined}
       tabIndex={clickable ? 0 : undefined}
       onKeyDown={clickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') onClick?.() } : undefined}
-      className={cn('w-44 select-none text-white', clickable && 'cursor-pointer', className)}
+      className={cn('w-56 select-none text-white', clickable && 'cursor-pointer', className)}
     >
       <RarityFrame tier={wizard.tier} selected={selected}>
         <HouseFrame house={wizard.house}>
-        <div className="relative h-28 overflow-hidden rounded-t-xl">
+        <div className="relative h-36 overflow-hidden rounded-t-xl">
           <PortraitImage id={wizard.id} house={wizard.house} alt={wizard.name} variant="card" />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 50%, rgba(12,10,22,0.94))' }} />
           <div className="absolute right-2 top-2"><TierBadge tier={wizard.tier} /></div>
-          {/* House crest accent, top-left. */}
-          <div className="absolute left-2 top-2"><HouseCrest house={wizard.house} size={18} /></div>
           {/* Role icon badge, bottom-left — replaces the old role text pill. */}
           <div
             className="absolute bottom-2 left-2 grid h-6 w-6 place-items-center rounded-full border border-white/25 bg-black/55 backdrop-blur-sm"

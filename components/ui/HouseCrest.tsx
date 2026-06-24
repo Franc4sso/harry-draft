@@ -19,7 +19,6 @@ export function HouseCrest({ house, size = 18 }: { house: House; size?: number }
       viewBox="0 0 24 24"
       style={{ filter: `drop-shadow(0 0 4px ${c.ring}88)` }}
     >
-      <circle cx="12" cy="12" r="11" fill={c.ring} opacity="0.22" stroke={c.ring} strokeWidth="1.2" />
       <path d={c.glyph} fill={c.fill} stroke={c.fill} strokeWidth="0.6" strokeLinejoin="round" fillRule="evenodd" />
     </svg>
   )

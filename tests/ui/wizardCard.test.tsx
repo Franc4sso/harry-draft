@@ -10,13 +10,13 @@ import { SPELLS } from '@/data/spells'
 const harry = () => draftWizard(createRng(1), WIZARD_BY_ID['harry']!)
 
 describe('WizardCard compact', () => {
-  it('is the compact width and shows the name and all four stat labels', () => {
+  it('renders at the card width and shows the name and all four stat labels', () => {
     const { container } = render(<WizardCard drafted={harry()} />)
     expect(screen.getByText('Harry Potter')).toBeInTheDocument()
     for (const stat of ['HP', 'ATK', 'DIF', 'VEL']) {
       expect(screen.getByText(stat)).toBeInTheDocument()
     }
-    expect(container.querySelector('.w-44')).not.toBeNull()
+    expect(container.querySelector('.w-56')).not.toBeNull()
   })
 
   it('fires onClick when clickable', async () => {
@@ -45,11 +45,12 @@ describe('WizardCard compact', () => {
     if (strip) expect(within(strip).queryByText(drafted.wizard.role)).toBeNull()
   })
 
-  it('shows the portrait and the house crest', () => {
+  it('shows the portrait (house crest no longer overlaid on the card)', () => {
     const drafted = harry()
     render(<WizardCard drafted={drafted} />)
     expect(screen.getByAltText(drafted.wizard.name)).toBeInTheDocument()
-    expect(screen.getByRole('img', { name: drafted.wizard.house })).toBeInTheDocument()
+    // The crest was removed from the portrait — the house reads from the frame.
+    expect(screen.queryByRole('img', { name: drafted.wizard.house })).toBeNull()
   })
 
   it('wraps content in a rarity frame', () => {

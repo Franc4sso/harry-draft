@@ -11,7 +11,7 @@ export function DraftCandidateCard({
   onConsider?: () => void
 }) {
   return (
-    <div className="relative w-44" onPointerEnter={onConsider} onFocus={onConsider} tabIndex={0}>
+    <div className="relative w-56 max-w-full" onPointerEnter={onConsider} onFocus={onConsider} tabIndex={0}>
       <WizardCard drafted={drafted} onClick={onPick} hotSynergyIds={hotSynergyIds} />
     </div>
   )

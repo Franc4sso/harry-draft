@@ -22,12 +22,14 @@ describe('PortraitImage', () => {
 })
 
 describe('PortraitImage fallback', () => {
-  it('renders a house-coloured silhouette with a crest when the image fails', () => {
+  it('renders a house-coloured silhouette (no crest watermark) when the image fails', () => {
     render(<PortraitImage id="nonexistent-xyz" house="Grifondoro" alt="Test Mago" variant="card" />)
     const img = screen.getByAltText('Test Mago') as HTMLImageElement
     fireEvent.error(img)
     const fallback = document.querySelector('[data-fallback="Grifondoro"]')
     expect(fallback).not.toBeNull()
-    expect(fallback!.querySelector('[data-testid="fallback-crest"]')).not.toBeNull()
+    // The crest watermark was removed — the silhouette stands on its own.
+    expect(fallback!.querySelector('[data-testid="fallback-crest"]')).toBeNull()
+    expect(fallback!.querySelector('svg')).not.toBeNull()
   })
 })
