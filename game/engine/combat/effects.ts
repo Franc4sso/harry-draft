@@ -11,7 +11,9 @@ export interface EffectResult { value?: number; dodged?: boolean }
 export function computeDamage(rng: Rng, actor: BattleUnit, target: BattleUnit, power: number, flags: LogFlag[]): number {
   const c = BALANCE.combat
   const atk = effectiveStats(actor).atk
-  const def = effectiveStats(target).def
+  const pen = actor.wizard.role === 'Attaccante' ? BALANCE.roles.attackerArmorPen : 0
+  if (pen > 0) flags.push('pen')
+  const def = effectiveStats(target).def * (1 - pen)
   let dmg = atk * power - def * c.defenseK
   dmg = Math.max(c.minDamage, dmg)
   const critChance = c.critBase + effectiveStats(actor).spd * c.critSpdScale

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { EFFECT_HANDLERS } from '@/game/engine/combat/effects'
+import { EFFECT_HANDLERS, computeDamage } from '@/game/engine/combat/effects'
 import type { BattleUnit, DraftedWizard, LogFlag } from '@/types'
 import { SPELL_BY_ID } from '@/data/spells'
 import type { Rng } from '@/game/engine/rng'
@@ -55,5 +55,29 @@ describe('EFFECT_HANDLERS', () => {
     EFFECT_HANDLERS.applyStatus({ rng: noChance, turn: 1, actor: a, target: b, flags }, { kind: 'applyStatus', target: 'enemy', effect: { kind: 'stun', duration: 1 } })
     expect(b.statusEffects.some(e => e.kind === 'stun')).toBe(true)
     expect(flags).toContain('stun')
+  })
+})
+
+describe('armor penetration', () => {
+  it('Attaccante deals more than a non-Attacker vs a high-DEF target', () => {
+    const atkWiz = unit({ side: 'left' })            // role Attaccante (fixture default)
+    const tankRole = unit({ side: 'left' })
+    tankRole.wizard = { ...tankRole.wizard, role: 'Tank' }
+    const target = unit({ side: 'right', buffedStats: { hp: 120, atk: 80, def: 60, spd: 40 } })
+
+    const fa: LogFlag[] = []; const ft: LogFlag[] = []
+    const dmgAtk = computeDamage(noChance, atkWiz, target, 1, fa)
+    const dmgTank = computeDamage(noChance, tankRole, target, 1, ft)
+
+    expect(dmgAtk).toBeGreaterThan(dmgTank)
+    expect(fa).toContain('pen')
+    expect(ft).not.toContain('pen')
+  })
+
+  it('penetration never drops damage below minDamage', () => {
+    const atkWiz = unit({ side: 'left' })
+    const target = unit({ side: 'right', buffedStats: { hp: 120, atk: 80, def: 9999, spd: 40 } })
+    const f: LogFlag[] = []
+    expect(computeDamage(noChance, atkWiz, target, 0.1, f)).toBeGreaterThanOrEqual(1)
   })
 })

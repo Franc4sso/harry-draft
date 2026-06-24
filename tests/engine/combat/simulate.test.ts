@@ -42,6 +42,23 @@ describe('simulate', () => {
     const buffed = toBattleUnits(raw, 'left', syn)
     expect(buffed).toHaveLength(raw.length)
   })
+  it('Tank is focus-fired: Attaccante always targets the alive Tank before the squishy backliner', () => {
+    // Left: one Attaccante (voldemort). Right: Tank (mcgonagall) + Supporto backliner (lupin).
+    // While mcgonagall is alive the tauntBonus makes her the highest-threat target,
+    // so the very first Attacco from the left side must target 'mcgonagall', not 'lupin'.
+    const rng = createRng(7)
+    const leftTeam = [draftWizard(createRng(7), WIZARDS.find(w => w.id === 'voldemort')!)]
+    const rightTeam = [
+      draftWizard(createRng(8), WIZARDS.find(w => w.id === 'mcgonagall')!),
+      draftWizard(createRng(9), WIZARDS.find(w => w.id === 'lupin')!),
+    ]
+    const res = simulateBattle(leftTeam, rightTeam, rng)
+    // Find the first attack entry fired by a left-side actor
+    const firstLeftAttack = res.log.find(e => e.type === 'Attacco' && e.actorSide === 'left')
+    expect(firstLeftAttack).toBeDefined()
+    expect(firstLeftAttack!.targetId).toBe('mcgonagall')
+  })
+
   it('is deterministic when the same wizard id appears on both teams', () => {
     // Build two teams that both include 'harry' — same id on left and right.
     const harryWizard = WIZARDS.find(w => w.id === 'harry')!

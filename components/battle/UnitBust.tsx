@@ -171,6 +171,18 @@ export function UnitBust({
         )}
       </div>
 
+      {unit.role === 'Tank' && (
+        <div className={cn('absolute bottom-14 pointer-events-none', mirrored ? 'right-1' : 'left-1')}>
+          <span
+            title="Provocazione: i nemici attaccano questo bersaglio per primi"
+            className="inline-flex items-center gap-0.5 rounded bg-black/55 px-0.5 text-[9px] font-semibold text-sky-300"
+          >
+            <Shield size={9} aria-hidden />
+            Prov.
+          </span>
+        </div>
+      )}
+
       {effects.length > 0 && (
         <div className={cn('absolute top-1 flex flex-wrap gap-0.5', mirrored ? 'left-1' : 'right-1')}>
           {effects.map((e, i) => {

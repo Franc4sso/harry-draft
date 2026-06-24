@@ -84,9 +84,14 @@ and is therefore "a real attacker" (the user's "un atk senza tratti è normale")
 
 ### 3. Stat rebalance per role
 
-Redistribute each wizard's stats toward its role identity **without inflating
-total power**. Invariant: a wizard's stat budget (sum of mid-range hp/atk/def/spd)
-stays within ~±5% of its current value per tier — we redistribute, not buff.
+Redistribute each wizard's stats toward its role identity. **Per-role budget
+drift is intended and desired**: Tanks end up net bulkier (~+12% budget) and
+Attackers net glassier (~−9%), which is exactly the requested identity. The
+invariant is at the **team/roster level, not per wizard**: across a balanced
+mix of roles these shifts roughly cancel, so total power does not creep. A loose
+guard test (per-tier average budget stays in a sane order-of-magnitude band)
+catches gross data corruption; it deliberately does not enforce a tight
+per-wizard band, because a tight per-wizard band would fight the role identity.
 
 Role stat *profiles* (priority emphasis), applied per wizard preserving its tier
 power band:

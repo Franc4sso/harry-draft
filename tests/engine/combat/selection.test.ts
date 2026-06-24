@@ -32,11 +32,12 @@ describe('combat selection', () => {
     const t = selectTarget(actor, [actor], [tank, squishy])
     expect(t?.wizard.id).toBe('tank')
   })
-  it('attacker targets lowest hp when no tank', () => {
+  it('attacker targets highest threat when no tank', () => {
     const actor = unit({ id: 'atk', role: 'Attaccante' })
-    const a = unit({ id: 'a', role: 'Attaccante', side: 'right', hp: 80 })
-    const b = unit({ id: 'b', role: 'Controllo', side: 'right', hp: 30 })
-    expect(selectTarget(actor, [actor], [a, b])?.wizard.id).toBe('b')
+    // scary has higher atk+spd than weak — highestThreat picks scary
+    const scary = unit({ id: 'scary', role: 'Attaccante', side: 'right', buffedStats: { hp: 100, atk: 70, def: 30, spd: 60 } })
+    const weak = unit({ id: 'weak', role: 'Controllo', side: 'right', buffedStats: { hp: 100, atk: 20, def: 30, spd: 20 } })
+    expect(selectTarget(actor, [actor], [scary, weak])?.wizard.id).toBe('scary')
   })
   it('support targets most wounded ally', () => {
     const actor = unit({ id: 'sup', role: 'Supporto' })

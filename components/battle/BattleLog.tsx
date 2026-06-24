@@ -5,7 +5,7 @@ import type { ReplayUnit } from '@/game/engine/combat/replay'
 import { unitKey } from '@/game/engine/combat/replay'
 import { cn } from '@/lib/cn'
 
-export type LogTone = 'crit' | 'heal' | 'dodge' | 'kill' | 'dot' | 'stun' | 'normal'
+export type LogTone = 'crit' | 'heal' | 'dodge' | 'kill' | 'dot' | 'stun' | 'pen' | 'normal'
 
 function toneFor(entry: LogEntry): LogTone {
   if (entry.flags.includes('kill')) return 'kill'
@@ -14,6 +14,7 @@ function toneFor(entry: LogEntry): LogTone {
   if (entry.flags.includes('dodge')) return 'dodge'
   if (entry.flags.includes('dot')) return 'dot'
   if (entry.flags.includes('stun')) return 'stun'
+  if (entry.flags.includes('pen')) return 'pen'
   return 'normal'
 }
 
@@ -24,6 +25,7 @@ const TONE_CLASS: Record<LogTone, string> = {
   kill: 'text-rose-400',
   dot: 'text-fuchsia-300',
   stun: 'text-sky-300',
+  pen: 'text-orange-300',
   normal: 'text-white/75',
 }
 
@@ -43,8 +45,9 @@ export function describeEntry(entry: LogEntry, names: Record<string, string>): s
   if (entry.type === 'Difesa') return `${actor} si protegge con ${entry.action}`
 
   const crit = entry.flags.includes('crit') ? ' (critico!)' : ''
+  const pen = entry.flags.includes('pen') ? ' [armatura ignorata]' : ''
   if (typeof entry.value === 'number' && entry.value > 0) {
-    return `${actor} lancia ${entry.action} su ${target ?? '?'}: ${entry.value} danni${crit}`
+    return `${actor} lancia ${entry.action} su ${target ?? '?'}: ${entry.value} danni${crit}${pen}`
   }
   return `${actor} lancia ${entry.action}${target ? ` su ${target}` : ''}`
 }
