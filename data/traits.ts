@@ -5,6 +5,11 @@ const EXECUTE_MULT = 1.5
 const FURY_MAX_BONUS = 0.6     // up to +60% at 1 HP
 const ROCK_REDUCTION = 0.2     // -20% incoming
 
+const SIPHON_SPD = 8
+const SIPHON_DURATION = 2
+const BLESS_SHIELD = 25
+const BLESS_DURATION = 2
+
 export const TRAITS: Trait[] = [
   {
     id: 'esecuzione', name: 'Esecuzione',
@@ -36,6 +41,22 @@ export const TRAITS: Trait[] = [
     trigger: {
       kind: 'modifier', hook: 'modifyIncomingDamage', owner: 'target',
       apply: (v) => v * (1 - ROCK_REDUCTION),
+    },
+  },
+  {
+    id: 'sifone', name: 'Sifone',
+    desc: 'I suoi colpi rallentano il bersaglio (-VEL).',
+    trigger: {
+      kind: 'reactive', hook: 'onHit', owner: 'actor',
+      effects: () => [{ kind: 'applyStatus', target: 'enemy', effect: { kind: 'debuff', stat: 'spd', amount: SIPHON_SPD, duration: SIPHON_DURATION } }],
+    },
+  },
+  {
+    id: 'benedizione', name: 'Benedizione',
+    desc: 'Quando viene curato, ottiene anche uno scudo.',
+    trigger: {
+      kind: 'reactive', hook: 'onHeal', owner: 'actor',
+      effects: () => [{ kind: 'shield', amount: BLESS_SHIELD, duration: BLESS_DURATION }],
     },
   },
 ]

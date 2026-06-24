@@ -33,6 +33,7 @@ export const WIZARDS: Wizard[] = [
     ranges: { hp: [76, 95], atk: [20, 27], def: [11, 17], spd: [26, 34] },
     spellPool: ['crucio', 'imperio', 'petrificus', 'confringo'],
     tags: ['deatheater'],
+    traits: ['sifone'],
   },
   {
     id: 'mcgonagall', name: 'Minerva McGonagall', house: 'Grifondoro', role: 'Tank', tier: 2,
@@ -52,6 +53,7 @@ export const WIZARDS: Wizard[] = [
     ranges: { hp: [95, 119], atk: [14, 19], def: [17, 23], spd: [20, 27] },
     spellPool: ['expecto', 'episkey', 'vulnera', 'protego', 'riddikulus'],
     tags: ['order', 'marauder'],
+    traits: ['benedizione'],
   },
   {
     id: 'moody', name: 'Alastor Moody', house: 'Grifondoro', role: 'Tank', tier: 2,

@@ -45,8 +45,10 @@ describe('relics in combat', () => {
   })
 
   it('onHit relic (boccino-doro) produces dot flags vs a no-relic run', () => {
-    const withRelic = simulateBattle(team(1), team(2), createRng(9), { leftRelics: [ar('boccino-doro')] })
-    const without = simulateBattle(team(1), team(2), createRng(9))
+    // seed 23: with boccino-doro the left team's onHit poison fires; seed 9 no longer
+    // produces dots now that Bellatrix carries sifone (shifts turn order / battle length).
+    const withRelic = simulateBattle(team(1), team(2), createRng(23), { leftRelics: [ar('boccino-doro')] })
+    const without = simulateBattle(team(1), team(2), createRng(23))
     const dotWith = withRelic.log.filter(e => e.flags.includes('dot')).length
     const dotWithout = without.log.filter(e => e.flags.includes('dot')).length
     expect(dotWith).toBeGreaterThan(dotWithout)
