@@ -11,6 +11,7 @@ import { HouseFrame } from './HouseFrame'
 import { affiliationChips } from '@/lib/affiliationChips'
 import { spellTypeChip, spellEffectLines, formatSpellStats } from '@/lib/glossary'
 import { roleTooltip } from '@/lib/roleInfo'
+import { Tooltip } from '@/components/ui/Tooltip'
 
 export const CARD_STAT_MAX = { hp: 150, atk: 120, def: 120, spd: 120 } as const
 
@@ -70,13 +71,15 @@ export function WizardCard({
           <PortraitImage id={wizard.id} house={wizard.house} alt={wizard.name} variant="card" />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 50%, rgba(12,10,22,0.94))' }} />
           <div className="absolute right-2 top-2"><TierBadge tier={wizard.tier} /></div>
-          {/* Role icon badge, bottom-left — replaces the old role text pill. */}
-          <div
-            className="absolute bottom-2 left-2 grid h-6 w-6 place-items-center rounded-full border border-white/25 bg-black/55 backdrop-blur-sm"
-            title={roleTooltip(wizard.role)}
+          {/* Role icon badge, bottom-left. Tap/hover reveals what the role DOES
+              (taunt/penetration/bypass/heal) — works on mobile too, unlike `title`. */}
+          <Tooltip
+            className="absolute bottom-2 left-2"
+            triggerClassName="grid h-6 w-6 place-items-center rounded-full border border-white/25 bg-black/55 backdrop-blur-sm"
+            content={roleTooltip(wizard.role)}
           >
             <RoleIcon role={wizard.role} size={13} className="text-white/90" />
-          </div>
+          </Tooltip>
         </div>
 
         <div className="flex flex-1 flex-col p-3.5 pt-2.5">

@@ -1,8 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, within, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { WizardCard } from '@/components/cards/WizardCard'
-import { roleTooltip } from '@/lib/roleInfo'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
 import { WIZARD_BY_ID } from '@/data/wizards'
@@ -23,7 +22,8 @@ describe('WizardCard compact', () => {
   it('fires onClick when clickable', async () => {
     const handler = vi.fn()
     render(<WizardCard drafted={harry()} onClick={handler} />)
-    await userEvent.click(screen.getByRole('button'))
+    // Click the card body (the name) — not the role badge, which is its own button now.
+    await userEvent.click(screen.getByText('Harry Potter'))
     expect(handler).toHaveBeenCalledOnce()
   })
 
@@ -46,13 +46,18 @@ describe('WizardCard compact', () => {
     if (strip) expect(within(strip).queryByText(drafted.wizard.role)).toBeNull()
   })
 
-  it('explains the role behaviour via the role-icon tooltip (not just the role name)', () => {
+  it('reveals the role behaviour on tap without picking the card', async () => {
+    const onPick = vi.fn()
     const drafted = harry() // Attaccante
-    render(<WizardCard drafted={drafted} />)
-    // The role badge's title is the rich tooltip, including the behaviour blurb.
-    const badge = screen.getByTitle(roleTooltip(drafted.wizard.role))
-    expect(badge).toBeInTheDocument()
-    expect(badge.getAttribute('title')).toMatch(/difesa/i) // Attaccante = armor penetration
+    render(<WizardCard drafted={drafted} onClick={onPick} />)
+    // No tooltip until the role badge is tapped.
+    expect(screen.queryByRole('tooltip')).toBeNull()
+    const trigger = screen.getByLabelText(drafted.wizard.role).closest('button')!
+    fireEvent.click(trigger)
+    // The behaviour blurb appears (Attaccante = armor penetration -> "difesa")...
+    expect(screen.getByRole('tooltip')).toHaveTextContent(/difesa/i)
+    // ...and tapping the badge did NOT pick the wizard.
+    expect(onPick).not.toHaveBeenCalled()
   })
 
   it('shows the portrait (house crest no longer overlaid on the card)', () => {
