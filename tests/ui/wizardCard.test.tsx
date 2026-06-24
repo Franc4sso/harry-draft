@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { WizardCard } from '@/components/cards/WizardCard'
+import { roleTooltip } from '@/lib/roleInfo'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
 import { WIZARD_BY_ID } from '@/data/wizards'
@@ -43,6 +44,15 @@ describe('WizardCard compact', () => {
     expect(screen.getByLabelText(drafted.wizard.role)).toBeInTheDocument()
     const strip = screen.queryByTestId('affiliation-strip')
     if (strip) expect(within(strip).queryByText(drafted.wizard.role)).toBeNull()
+  })
+
+  it('explains the role behaviour via the role-icon tooltip (not just the role name)', () => {
+    const drafted = harry() // Attaccante
+    render(<WizardCard drafted={drafted} />)
+    // The role badge's title is the rich tooltip, including the behaviour blurb.
+    const badge = screen.getByTitle(roleTooltip(drafted.wizard.role))
+    expect(badge).toBeInTheDocument()
+    expect(badge.getAttribute('title')).toMatch(/difesa/i) // Attaccante = armor penetration
   })
 
   it('shows the portrait (house crest no longer overlaid on the card)', () => {

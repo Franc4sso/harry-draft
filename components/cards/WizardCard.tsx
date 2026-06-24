@@ -10,6 +10,7 @@ import { PortraitImage } from '@/components/ui/PortraitImage'
 import { HouseFrame } from './HouseFrame'
 import { affiliationChips } from '@/lib/affiliationChips'
 import { spellTypeChip, spellEffectLines, formatSpellStats } from '@/lib/glossary'
+import { roleTooltip } from '@/lib/roleInfo'
 
 export const CARD_STAT_MAX = { hp: 150, atk: 120, def: 120, spd: 120 } as const
 
@@ -72,7 +73,7 @@ export function WizardCard({
           {/* Role icon badge, bottom-left — replaces the old role text pill. */}
           <div
             className="absolute bottom-2 left-2 grid h-6 w-6 place-items-center rounded-full border border-white/25 bg-black/55 backdrop-blur-sm"
-            title={wizard.role}
+            title={roleTooltip(wizard.role)}
           >
             <RoleIcon role={wizard.role} size={13} className="text-white/90" />
           </div>
