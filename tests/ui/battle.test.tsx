@@ -136,6 +136,21 @@ describe('BattleScreen', () => {
     await userEvent.click(stepBtn)
     expect(screen.getByTestId('battle-arena')).toBeInTheDocument()
   })
+
+  it('shows the active-synergy ribbons for both teams in battle', () => {
+    const l = left(), r = right()
+    const result = simulateBattle(l, r, createRng(42), {
+      leftSyn: detectSynergies(l), rightSyn: detectSynergies(r),
+    })
+    render(
+      <BattleScreen
+        result={result} playerTeam={l} playerSyn={detectSynergies(l)}
+        enemy={r} enemySyn={detectSynergies(r)} title="Sfida 1 di 5" onFinish={() => {}}
+      />,
+    )
+    // Both teams (Gryffindor-heavy left, Slytherin-heavy right) have at least one active synergy here.
+    expect(screen.getAllByTestId('synergy-ribbon').length).toBeGreaterThanOrEqual(1)
+  })
 })
 
 describe('SpellFx', () => {

@@ -8,6 +8,7 @@ import { InitiativeBar } from '@/components/battle/InitiativeBar'
 import { BattleArena, ActionBanner } from '@/components/battle/BattleArena'
 import { BattleLog } from '@/components/battle/BattleLog'
 import { Button } from '@/components/ui/Button'
+import { SynergyRibbon } from '@/components/battle/SynergyRibbon'
 
 export function BattleScreen({
   result, playerTeam, playerSyn, playerRelics, enemy, enemySyn, title, rightTitle, onFinish,
@@ -34,10 +35,16 @@ export function BattleScreen({
         <h1 className="font-display text-2xl">{title}</h1>
         <p className="text-[11px] uppercase tracking-widest text-white/35">
           Turno {r.entry?.turn ?? 0} · azione {r.index}/{r.total - 1}
+          {r.entry?.actorId ? <> · agisce <span className="text-white/60">{replay.units.find(u => u.id === r.entry!.actorId && u.side === r.entry!.actorSide)?.name ?? r.entry!.actorId}</span></> : null}
         </p>
       </div>
 
       <InitiativeBar replay={replay} index={r.index} />
+
+      <div className="flex w-full max-w-3xl items-start justify-between gap-4 px-1">
+        <SynergyRibbon synergies={playerSyn} relics={playerRelics ?? []} align="left" />
+        <SynergyRibbon synergies={enemySyn} align="right" />
+      </div>
 
       <BattleArena replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle} />
 
