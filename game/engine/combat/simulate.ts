@@ -215,7 +215,19 @@ export function simulateBattle(
           if (ally.alive && ally !== u) fireReactive('onAllyDeath', ally, turn)
         }
       }
-      if (u.alive && regen[u.side] > 0) u.hp = Math.min(u.maxHp, u.hp + regen[u.side])
+      if (u.alive && regen[u.side] > 0) {
+        const before = u.hp
+        u.hp = Math.min(u.maxHp, u.hp + regen[u.side])
+        const healed = u.hp - before
+        // Log the actual healed amount (0 when already at full HP) so buildReplay —
+        // which reconstructs HP from log deltas — reflects regen and stays in sync.
+        if (healed > 0) {
+          pushLog({
+            turn, actorId: u.wizard.id, actorSide: u.side, action: 'Rigenera',
+            targetId: u.wizard.id, targetSide: u.side, type: 'Cura', value: healed, flags: ['heal'],
+          })
+        }
+      }
       // onHpThreshold after dot + regen settle this unit's HP for the turn.
       if (u.alive && u.side === 'left') checkThreshold(u, turn)
     }

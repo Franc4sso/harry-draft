@@ -59,6 +59,25 @@ describe('simulate', () => {
     expect(firstLeftAttack!.targetId).toBe('mcgonagall')
   })
 
+  it('regeneration synergy emits a heal log entry so the replay reflects it', () => {
+    // In a real fight, left units take HP damage and survive several turns; a regen
+    // synergy on the left must heal them end-of-turn AND be logged, otherwise
+    // buildReplay (which reconstructs HP from log deltas) can never show the regen.
+    const left = team(createRng(1))
+    const right = team(createRng(2))
+    const regenSyn = [{
+      synergy: {
+        id: 'testRegen', name: 'Test Regen', kind: 'role' as const,
+        requires: { role: 'Supporto' as const, count: 1 }, bonus: { regen: 30 },
+      },
+      memberIds: [] as string[],
+    }]
+    const res = simulateBattle(left, right, createRng(3), { leftSyn: regenSyn })
+    const regenEntries = res.log.filter(e => e.action === 'Rigenera' && e.flags.includes('heal'))
+    expect(regenEntries.length).toBeGreaterThan(0)
+    expect(regenEntries.every(e => (e.value ?? 0) > 0 && e.targetSide === 'left')).toBe(true)
+  })
+
   it('is deterministic when the same wizard id appears on both teams', () => {
     // Build two teams that both include 'harry' — same id on left and right.
     const harryWizard = WIZARDS.find(w => w.id === 'harry')!
