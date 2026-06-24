@@ -8,11 +8,15 @@ import { WIZARD_BY_ID } from '@/data/wizards'
 const harry = () => draftWizard(createRng(1), WIZARD_BY_ID['harry']!)
 
 describe('DraftCandidateCard affiliation strip', () => {
-  it('shows a single name-only strip: house + role + specials, no counts', () => {
-    render(<DraftCandidateCard drafted={harry()} />)
+  it('shows a name-only special-synergy strip (house/role live on the frame, not the strip)', () => {
+    const drafted = harry()
+    render(<DraftCandidateCard drafted={drafted} />)
     const strip = screen.getByTestId('affiliation-strip')
-    expect(within(strip).getByText('Grifondoro')).toBeInTheDocument()
-    expect(within(strip).getByText('Attaccante')).toBeInTheDocument()
+    // Harry's special group synergy.
+    expect(within(strip).getByText(/Golden Trio/i)).toBeInTheDocument()
+    // House/role are no longer text pills in the strip.
+    expect(within(strip).queryByText(drafted.wizard.house)).toBeNull()
+    expect(within(strip).queryByText(drafted.wizard.role)).toBeNull()
     // never a count-prefixed label
     expect(within(strip).queryByText(/^\d/)).toBeNull()
   })
