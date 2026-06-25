@@ -185,7 +185,7 @@ export function UnitBust({
             className={cn('pointer-events-none absolute inset-x-0 top-0 z-10 grid place-items-center rounded-xl aspect-[3/4]', o.cls)}
           >
             <span className="rounded bg-black/65 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
-              {o.label}
+              {o.label} ·{ctrl.remaining}t
             </span>
           </div>
         )

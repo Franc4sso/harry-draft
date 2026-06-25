@@ -228,6 +228,14 @@ describe('UnitBust', () => {
       expect(buff.getAttribute('title')).toContain('10')
     })
   })
+
+  it('control overlay shows label and remaining turns as "<label> ·<n>t"', () => {
+    render(<UnitBust unit={u} hp={50} effects={[{ kind: 'stun', remaining: 2 }]} />)
+    const overlay = screen.getByTestId('battle-unit').querySelector('[data-control="stun"]') as HTMLElement
+    expect(overlay).not.toBeNull()
+    expect(overlay.textContent).toContain('Stordito')
+    expect(overlay.textContent).toMatch(/·2t/)
+  })
 })
 
 describe('BattleScreen', () => {
