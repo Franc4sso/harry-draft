@@ -55,6 +55,8 @@ const STATUS_CLASS: Record<StatusKind, string> = {
 }
 
 const STAT_LABEL: Record<string, string> = { hp: 'HP', atk: 'atk', def: 'def', spd: 'spd' }
+const ROLE_LABEL: Record<string, string> = { Tank: 'Prov.', Attaccante: 'Att.', Controllo: 'Contr.', Supporto: 'Sup.' }
+const ROLE_ICON: Record<string, LucideIcon> = { Tank: Shield, Attaccante: Sword, Controllo: Zap, Supporto: Heart }
 
 /** Italian "N turno/turni" with correct singular/plural. */
 function turnsLabel(n: number): string {
@@ -184,17 +186,21 @@ export function UnitBust({
         )}
       </div>
 
-      {unit.role === 'Tank' && (
-        <div className={cn('absolute bottom-14 pointer-events-none', mirrored ? 'right-1' : 'left-1')}>
-          <span
-            title="Provocazione: i nemici attaccano questo bersaglio per primi"
-            className="inline-flex items-center gap-0.5 rounded bg-black/55 px-0.5 text-[9px] font-semibold text-sky-300"
-          >
-            <Shield size={9} aria-hidden />
-            Prov.
-          </span>
-        </div>
-      )}
+      <div className={cn('absolute bottom-14 pointer-events-none', mirrored ? 'right-1' : 'left-1')}>
+        {(() => {
+          const RoleIcon = ROLE_ICON[unit.role] ?? Shield
+          return (
+            <span
+              title={unit.role === 'Tank' ? 'Provocazione: i nemici attaccano questo bersaglio per primi' : unit.role}
+              className={cn('inline-flex items-center gap-0.5 rounded bg-black/55 px-0.5 text-[9px] font-semibold',
+                unit.role === 'Tank' ? 'text-sky-300' : 'text-white/70')}
+            >
+              <RoleIcon size={9} aria-hidden />
+              {ROLE_LABEL[unit.role] ?? unit.role}
+            </span>
+          )
+        })()}
+      </div>
 
       {effects.length > 0 && (
         <div className={cn('absolute top-1 flex flex-wrap gap-0.5', mirrored ? 'left-1' : 'right-1')}>

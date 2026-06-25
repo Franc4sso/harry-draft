@@ -62,36 +62,40 @@ export function BattleArena({
     return () => window.removeEventListener('resize', measure)
   }, [frameKey, actingKey, targetKey])
 
+  const anyAction = !!actingKey
   const renderSide = (units: ReplayUnit[], mirrored: boolean) =>
-    units.map(u => (
-      <div key={u.key} className="relative">
-        <UnitBust
-          unit={u}
-          hp={hp[u.key] ?? 0}
-          acting={u.key === actingKey}
-          targeted={u.key === targetKey}
-          mirrored={mirrored}
-          float={u.key === targetKey ? float : null}
-          floatKey={frameKey}
-          effects={statusEffects[u.key] ?? []}
-          cooldown={cooldowns[u.key]?.[u.spell.id] ?? 0}
-        />
-        {u.key === targetKey && <ShieldFx active={blocked} fxKey={frameKey} />}
-      </div>
-    ))
+    units.map(u => {
+      const involved = u.key === actingKey || u.key === targetKey
+      return (
+        <div key={u.key} className="relative transition-opacity duration-200" style={{ opacity: anyAction && !involved ? 0.45 : 1 }}>
+          <UnitBust
+            unit={u}
+            hp={hp[u.key] ?? 0}
+            acting={u.key === actingKey}
+            targeted={u.key === targetKey}
+            mirrored={mirrored}
+            float={u.key === targetKey ? float : null}
+            floatKey={frameKey}
+            effects={statusEffects[u.key] ?? []}
+            cooldown={cooldowns[u.key]?.[u.spell.id] ?? 0}
+          />
+          {u.key === targetKey && <ShieldFx active={blocked} fxKey={frameKey} />}
+        </div>
+      )
+    })
 
   return (
-    <div ref={arenaRef} data-testid="battle-arena" className="relative flex items-start justify-center gap-4 sm:gap-10 w-full">
-      <section className="flex flex-col items-center gap-3">
-        <h3 className="text-xs uppercase tracking-widest text-white/40">{leftTitle}</h3>
-        <div className="flex flex-wrap justify-center gap-2 sm:gap-3">{renderSide(left, false)}</div>
+    <div ref={arenaRef} data-testid="battle-arena" className="relative flex flex-col items-center gap-4 w-full">
+      <section className="flex flex-col items-center gap-2 w-full">
+        <h3 className="text-xs uppercase tracking-widest text-white/40">{rightTitle}</h3>
+        <div data-testid="row-enemies" className="flex flex-nowrap justify-center gap-2 sm:gap-3">{renderSide(right, true)}</div>
       </section>
 
-      <div className="self-center font-display text-2xl text-white/30 select-none">VS</div>
+      <div className="font-display text-2xl text-white/30 select-none">VS</div>
 
-      <section className="flex flex-col items-center gap-3">
-        <h3 className="text-xs uppercase tracking-widest text-white/40">{rightTitle}</h3>
-        <div className="flex flex-wrap justify-center gap-2 sm:gap-3">{renderSide(right, true)}</div>
+      <section className="flex flex-col items-center gap-2 w-full">
+        <div data-testid="row-player" className="flex flex-nowrap justify-center gap-2 sm:gap-3">{renderSide(left, false)}</div>
+        <h3 className="text-xs uppercase tracking-widest text-white/40">{leftTitle}</h3>
       </section>
 
       {!blocked && <SpellFx entry={entry} from={fx?.from} to={fx?.to} fxKey={frameKey} />}
