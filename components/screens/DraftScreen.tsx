@@ -36,7 +36,9 @@ export function DraftScreen({ seed, onComplete }: { seed: string; onComplete: (t
   return (
     <main className="flex-1 w-full">
       {/* Sticky header: squad + progress */}
-      <header className="sticky top-0 z-10 border-b border-white/10 bg-[rgba(10,8,19,0.9)] px-4 py-3 backdrop-blur">
+      {/* z-[60] keeps the sticky header above card chip tooltips (z-50) — without it,
+          a tooltip on a top-row wizard paints over the header. */}
+      <header className="sticky top-0 z-[60] border-b border-white/10 bg-[rgba(10,8,19,0.9)] px-4 py-3 backdrop-blur">
         <div className="mb-2 flex items-center justify-between gap-3">
           <h1 className="font-display text-xl">Scegli il {picks.length + 1}º mago</h1>
           <div className="flex items-center gap-2 text-[11px] uppercase tracking-widest">
