@@ -28,6 +28,20 @@ describe('SynergyTracker', () => {
     expect(screen.getByText(/2\s*\/\s*3/)).toBeInTheDocument()
     expect(screen.getByText(/\+22 DIF/)).toBeInTheDocument()
   })
+  it('marks lower active tiers as superseded when a higher tier of the same family is active', () => {
+    // 4 Grifondoro → tier-4 active; tiers 2 and 3 are active-by-count but superseded
+    // (combat applies only the highest tier per family). The tracker must reflect that.
+    const team = [
+      dw('a', 'Grifondoro', 'Attaccante'), dw('b', 'Grifondoro', 'Tank'),
+      dw('c', 'Grifondoro', 'Supporto'), dw('d', 'Grifondoro', 'Controllo'),
+    ]
+    const { container } = render(<SynergyTracker rows={synergyProgress(team)} />)
+    // gryffindor4 is the live tier — NOT superseded
+    expect(container.querySelector('[data-synergy="gryffindor4"]:not([data-superseded])')).toBeTruthy()
+    // gryffindor2 and gryffindor3 are active-by-count but superseded by tier 4
+    expect(container.querySelector('[data-synergy="gryffindor2"][data-superseded]')).toBeTruthy()
+    expect(container.querySelector('[data-synergy="gryffindor3"][data-superseded]')).toBeTruthy()
+  })
   it('in preview mode shows the projection and the activating row', () => {
     const team = [dw('a','Grifondoro','Attaccante'), dw('b','Grifondoro','Tank')]
     const cand = dw('c','Grifondoro','Supporto')
