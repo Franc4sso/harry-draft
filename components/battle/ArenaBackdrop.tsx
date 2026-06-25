@@ -15,7 +15,7 @@ export function ArenaBackdrop() {
     >
       <motion.div
         className="absolute inset-0 opacity-40"
-        style={{ background: 'radial-gradient(60% 50% at 50% 30%, rgba(124,58,237,0.18), transparent 70%), radial-gradient(50% 50% at 50% 80%, rgba(176,141,87,0.14), transparent 70%)' }}
+        style={{ background: 'radial-gradient(60% 50% at 50% 25%, rgba(201,162,75,0.10), transparent 70%), radial-gradient(55% 55% at 50% 85%, rgba(124,58,237,0.14), transparent 72%)' }}
         animate={reduce ? {} : { opacity: [0.3, 0.5, 0.3], scale: [1, 1.04, 1] }}
         transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
       />
