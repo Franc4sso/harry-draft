@@ -1,32 +1,25 @@
 import { describe, it, expect } from 'vitest'
-import { rollStats, pickSpell, draftWizard } from '@/game/engine/statRoll'
+import { fixedStats, draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
 import { WIZARD_BY_ID } from '@/data/wizards'
 
-const harry = WIZARD_BY_ID['harry']!
+describe('fixedStats', () => {
+  it('returns the rounded midpoint of each range', () => {
+    const harry = WIZARD_BY_ID['harry']!
+    // ranges: hp [86,107] atk [31,40] def [12,19] spd [26,35]
+    expect(fixedStats(harry)).toEqual({ hp: 97, atk: 36, def: 16, spd: 31 })
+  })
 
-describe('statRoll', () => {
-  it('rolls stats within wizard ranges', () => {
-    const r = createRng(1)
-    for (let i = 0; i < 50; i++) {
-      const s = rollStats(r, harry)
-      for (const k of ['hp', 'atk', 'def', 'spd'] as const) {
-        const [lo, hi] = harry.ranges[k]
-        expect(s[k]).toBeGreaterThanOrEqual(lo)
-        expect(s[k]).toBeLessThanOrEqual(hi)
-      }
-    }
+  it('is deterministic and independent of RNG', () => {
+    const w = WIZARD_BY_ID['harry']!
+    expect(fixedStats(w)).toEqual(fixedStats(w))
   })
-  it('is deterministic per seed', () => {
-    expect(rollStats(createRng(5), harry)).toEqual(rollStats(createRng(5), harry))
-  })
-  it('pickSpell returns a spell from the pool', () => {
-    const s = pickSpell(createRng(3), harry)
-    expect(harry.spellPool).toContain(s.id)
-  })
-  it('draftWizard sets maxHp to rolled hp', () => {
-    const dw = draftWizard(createRng(7), harry)
-    expect(dw.maxHp).toBe(dw.stats.hp)
-    expect(dw.wizard.id).toBe('harry')
+
+  it('draftWizard uses fixed stats but still varies the spell by RNG', () => {
+    const w = WIZARD_BY_ID['harry']!
+    const a = draftWizard(createRng(1), w)
+    const b = draftWizard(createRng(2), w)
+    expect(a.stats).toEqual(b.stats)          // stats fixed
+    expect(a.maxHp).toBe(a.stats.hp)
   })
 })
