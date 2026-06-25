@@ -57,6 +57,17 @@ export function describeEntry(
   if (entry.flags.includes('block')) return `${actor} lancia ${entry.action} ma ${target ?? 'il bersaglio'} para il colpo`
   if (entry.type === 'Difesa') return `${actor} si protegge con ${entry.action}`
 
+  // A damage spell (Attacco) that dealt no damage and landed no status reads as a
+  // failure — surface it. Scoped to Attacco only: Controllo spells are EXPECTED to
+  // deal 0 and apply a debuff/stun (a success the log can't always flag), so they're
+  // never called failures. A stun/dot flag means it landed → also excluded.
+  if (entry.type === 'Attacco'
+      && !(typeof entry.value === 'number' && entry.value > 0)
+      && !entry.flags.includes('heal') && !entry.flags.includes('block')
+      && !entry.flags.includes('stun') && !entry.flags.includes('dot')) {
+    return `${actor} lancia ${entry.action} ma non ha effetto su ${target ?? 'il bersaglio'}`
+  }
+
   const crit = entry.flags.includes('crit') ? ' (critico!)' : ''
   const pen = entry.flags.includes('pen') ? ' [armatura ignorata]' : ''
   if (typeof entry.value === 'number' && entry.value > 0) {
