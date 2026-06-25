@@ -69,7 +69,8 @@ export function tickStatuses(turn: number, unit: BattleUnit): LogEntry[] {
       logs.push({ turn, actorId: unit.wizard.id, actorSide: unit.side, action: def?.name ?? 'Veleno',
         targetId: unit.wizard.id, targetSide: unit.side, type: 'Controllo', value: tickDamage, flags: ['dot'] })
     }
-    if (tickHeal) {
+    if (tickHeal && unit.alive) {
+      // Never regen-heal a dead unit (defense in depth — callers already gate on alive).
       unit.hp = Math.min(unit.maxHp, unit.hp + tickHeal)
       logs.push({ turn, actorId: unit.wizard.id, actorSide: unit.side, action: def?.name ?? 'Rigenerazione',
         targetId: unit.wizard.id, targetSide: unit.side, type: 'Cura', value: tickHeal, flags: ['heal'] })
