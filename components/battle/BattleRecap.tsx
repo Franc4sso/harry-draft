@@ -1,25 +1,36 @@
 'use client'
 import type { ReplayFrame, ReplayUnit } from '@/game/engine/combat/replay'
 import { recapTotals } from '@/lib/battleRecap'
+import { cn } from '@/lib/theme'
 
 /**
- * Live damage/heal recap for one team. Bars are scaled to the team's current
- * max combined total so the leader's bar is full and the rest are relative.
- * Pass a sliced `frames` for the running (partial) totals during replay.
+ * Live damage/heal recap for one team. Bars scale to the team's current max
+ * combined total. Pass a sliced `frames` for running totals during replay.
+ * `tone` accents the panel for the player (ally) or the enemy team.
  */
 export function BattleRecap({
-  frames, units, side = 'left',
+  frames, units, side = 'left', title = 'Resoconto squadra', tone = 'ally',
 }: {
   frames: ReplayFrame[]
   units: ReplayUnit[]
   side?: 'left' | 'right'
+  title?: string
+  tone?: 'ally' | 'enemy'
 }) {
   const rows = recapTotals(frames, units, side)
   const max = Math.max(1, ...rows.map(r => r.dealt + r.healed))
+  const accent = tone === 'enemy' ? 'border-rose-400/30' : 'border-emerald-400/30'
+  const dot = tone === 'enemy' ? 'text-rose-300/80' : 'text-emerald-300/80'
 
   return (
-    <div data-testid="battle-recap" className="glass rounded-2xl p-3 w-full max-w-md">
-      <p className="mb-2 text-[10px] uppercase tracking-[0.14em] text-white/50">Resoconto squadra</p>
+    <div
+      data-testid="battle-recap"
+      data-tone={tone}
+      className={cn('rounded-2xl border bg-[rgba(20,16,33,0.55)] p-3 w-full max-w-md backdrop-blur-sm', accent)}
+    >
+      <p className={cn('mb-2 flex items-center gap-1 text-[10px] uppercase tracking-[0.16em]', dot)}>
+        <span aria-hidden>◆</span>{title}
+      </p>
       <ul className="space-y-1.5">
         {rows.map((r) => (
           <li key={r.key} data-testid="battle-recap-row" className="flex items-center gap-2 text-[11px]">
