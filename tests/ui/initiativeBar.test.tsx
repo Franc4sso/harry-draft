@@ -11,6 +11,13 @@ const replay = {
   frames: [{ index: 0, entry: null, hp: { 'left:a': 100, 'right:b': 100 }, cooldowns: {}, statusEffects: {} }],
 } as unknown as Replay
 
+it('uses full width and does not clip horizontally', () => {
+  const { container } = render(<InitiativeBar replay={replay} index={0} />)
+  const bar = container.querySelector('[data-testid="initiative-bar"]') as HTMLElement
+  expect(bar.className).toContain('w-full')
+  expect(bar.className).not.toContain('overflow-x')
+})
+
 it('marks each slot with its side (mine vs enemy)', () => {
   const { container } = render(<InitiativeBar replay={replay} index={0} />)
   expect(container.querySelector('[data-side="left"]')).toBeTruthy()

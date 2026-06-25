@@ -33,7 +33,7 @@ export function InitiativeBar({ replay, index }: { replay: Replay; index: number
   return (
     <div
       data-testid="initiative-bar"
-      className="flex flex-col items-stretch gap-1.5 w-20 max-h-[34rem] overflow-y-auto py-2"
+      className="flex flex-col items-stretch gap-1.5 w-full max-h-[34rem] overflow-y-auto py-2"
     >
       <span className="text-[10px] uppercase tracking-widest text-white/35 text-center">Ordine</span>
       {sequence.map((key, i) => {
@@ -52,7 +52,7 @@ export function InitiativeBar({ replay, index }: { replay: Replay; index: number
             transition={{ type: 'spring', stiffness: 320, damping: 24 }}
             className="relative flex items-center gap-1.5 rounded-lg px-1 py-0.5"
           >
-            <div className={cn('relative h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2', ring, isCurrent && 'ring-4')}>
+            <div className={cn('relative h-8 w-8 shrink-0 overflow-hidden rounded-full ring-2', ring, isCurrent && 'ring-4')}>
               <PortraitImage id={u.id} house={u.house} alt={u.name} variant="bust" />
             </div>
             <div className="min-w-0 flex-1 leading-none">
