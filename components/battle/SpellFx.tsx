@@ -17,13 +17,44 @@ export function SpellFx({
 }: { entry: LogEntry | null; from?: FxPoint | null; to?: FxPoint | null; fxKey: number | string }) {
   const reduce = useReducedMotion()
   const archetype = archetypeFor(entry)
-  if (archetype === 'none' || archetype === 'shield' || archetype === 'heal') return null
-  // No measured caster/target (e.g. a unit unmounted/dead, or a no-target frame): nothing to fly.
-  if (!from || !to) return null
+  if (archetype === 'none' || archetype === 'shield') return null
   const style = archetypeStyle(archetype)
 
+  // Heal: a target-anchored rising sparkle, no caster→target flight.
+  if (archetype === 'heal') {
+    if (!to) return null
+    return (
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <motion.span
+          key={fxKey}
+          data-testid="spell-fx"
+          data-archetype="heal"
+          data-shape="heal"
+          initial={reduce ? { opacity: 1 } : { opacity: 0, scale: 0.6 }}
+          animate={reduce ? { opacity: 1 } : { opacity: [0, 1, 0], y: [-0, -18, -30], scale: [0.6, 1, 0.9] }}
+          transition={{ duration: reduce ? 0 : 0.7, ease: 'easeOut' }}
+          className="absolute h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full"
+          style={{
+            left: `${to.x}%`, top: `${to.y}%`,
+            background: `radial-gradient(circle, ${style.color} 0%, ${style.trail} 60%, transparent 100%)`,
+            boxShadow: `0 0 18px ${style.trail}`,
+          }}
+        />
+      </div>
+    )
+  }
+
+  // Projectiles need both endpoints.
+  if (!from || !to) return null
   const fromX = `${from.x}%`, fromY = `${from.y}%`
   const toX = `${to.x}%`, toY = `${to.y}%`
+
+  // Per-shape silhouette. burst scales up on impact; orb is round + pulsing; bolt is a streak.
+  const shapeClass =
+    style.shape === 'orb' ? 'h-5 w-5 rounded-full'
+    : style.shape === 'burst' ? 'h-6 w-6 rounded-full'
+    : 'h-2.5 w-9 rounded-full' // bolt / wave fallback
+  const impactScale = style.shape === 'burst' ? [0.6, 1, 1.8] : style.shape === 'orb' ? [0.6, 1.1, 1] : [0.6, 1, 1]
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -32,11 +63,12 @@ export function SpellFx({
           key={fxKey}
           data-testid="spell-fx"
           data-archetype={archetype}
+          data-shape={style.shape}
           initial={reduce ? { opacity: 1, left: toX, top: toY } : { opacity: 0.2, left: fromX, top: fromY, scale: 0.6 }}
-          animate={{ opacity: 1, left: toX, top: toY, scale: 1 }}
+          animate={{ opacity: reduce ? 1 : [0.4, 1, style.shape === 'burst' ? 0 : 1], left: toX, top: toY, scale: reduce ? 1 : impactScale }}
           exit={{ opacity: 0 }}
-          transition={{ duration: reduce ? 0 : 0.42, ease: 'easeIn' }}
-          className="absolute h-3 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full"
+          transition={{ duration: reduce ? 0 : 0.46, ease: 'easeIn' }}
+          className={`absolute -translate-x-1/2 -translate-y-1/2 ${shapeClass}`}
           style={{
             background: `radial-gradient(circle, ${style.color} 0%, ${style.trail} 70%, transparent 100%)`,
             boxShadow: `0 0 16px ${style.trail}`,
