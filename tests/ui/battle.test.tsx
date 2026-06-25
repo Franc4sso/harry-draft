@@ -146,8 +146,8 @@ describe('InitiativeBar', () => {
     const aliveCount = Object.values(replay.frames[sysIdx]!.hp).filter(h => h > 0).length
     render(<InitiativeBar replay={replay} index={sysIdx} />)
     const bar = screen.getByTestId('initiative-bar')
-    // One ora-label per rendered unit slot.
-    expect(bar.querySelectorAll('[data-role="ora-label"]').length).toBe(aliveCount)
+    // Each alive unit has a data-side slot in the vertical rail.
+    expect(bar.querySelectorAll('[data-side]').length).toBe(aliveCount)
   })
 })
 

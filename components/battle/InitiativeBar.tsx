@@ -3,8 +3,8 @@ import { motion } from 'framer-motion'
 import { Zap } from 'lucide-react'
 import type { Replay } from '@/game/engine/combat/replay'
 import { lastRealActorAt } from '@/lib/initiative'
-import { HouseCrest } from '@/components/ui/HouseCrest'
 import { houseTheme, cn } from '@/lib/theme'
+import { PortraitImage } from '@/components/ui/PortraitImage'
 
 /**
  * Speed-order rail: the STABLE ordered list of currently-alive units, sorted by
@@ -33,55 +33,40 @@ export function InitiativeBar({ replay, index }: { replay: Replay; index: number
   return (
     <div
       data-testid="initiative-bar"
-      className="flex items-end gap-2 overflow-x-auto w-full max-w-lg px-1 py-2"
+      className="flex flex-col items-stretch gap-1.5 w-20 max-h-[34rem] overflow-y-auto py-2"
     >
-      <span className="text-[10px] uppercase tracking-widest text-white/35 shrink-0 self-center pb-3">
-        Ordine
-      </span>
+      <span className="text-[10px] uppercase tracking-widest text-white/35 text-center">Ordine</span>
       {sequence.map((key, i) => {
         const u = byKey[key]
         if (!u) return null
         const isCurrent = key === current
-        const theme = houseTheme(u.house)
+        const mine = u.side === 'left'
+        const ring = mine ? 'ring-emerald-400/70' : 'ring-rose-400/70'
         return (
           <motion.div
             key={`${key}-${i}`}
             data-current={isCurrent || undefined}
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: isCurrent ? 1 : 0.55, scale: isCurrent ? 1 : 0.85 }}
+            data-side={u.side}
+            initial={{ opacity: 0, x: -8 }}
+            animate={{ opacity: isCurrent ? 1 : 0.6, scale: isCurrent ? 1.05 : 1 }}
             transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-            className="relative shrink-0 flex flex-col items-center gap-0.5"
+            className="relative flex items-center gap-1.5 rounded-lg px-1 py-0.5"
           >
-            <span
-              data-role="ora-label"
-              className={cn(
-                'text-[8px] uppercase tracking-widest leading-none h-2',
-                isCurrent ? 'text-white/70' : 'text-transparent',
-              )}
-            >
-              {isCurrent ? 'Ora' : ''}
-            </span>
-            <div
-              className={cn(
-                'grid place-items-center rounded-full border',
-                isCurrent ? 'h-11 w-11 border-white/70' : 'h-8 w-8 border-white/15',
-              )}
-              style={{ background: theme.gradient, boxShadow: isCurrent ? theme.ring : undefined }}
-            >
-              <HouseCrest house={u.house} size={isCurrent ? 18 : 14} />
+            <div className={cn('relative h-9 w-9 shrink-0 overflow-hidden rounded-full ring-2', ring, isCurrent && 'ring-4')}>
+              <PortraitImage id={u.id} house={u.house} alt={u.name} variant="bust" />
             </div>
-            <span
-              className={cn(
-                'truncate text-center leading-none text-white/80',
-                isCurrent ? 'text-[10px] max-w-[3rem]' : 'text-[9px] max-w-[2.75rem]',
-              )}
-            >
-              {u.name}
-            </span>
-            <span className="flex items-center gap-0.5 text-[9px] tabular-nums text-white/55 leading-none">
-              <Zap className="h-2.5 w-2.5 text-amber-300/80" aria-hidden />
-              {u.spd}
-            </span>
+            <div className="min-w-0 flex-1 leading-none">
+              <div className="flex items-center gap-1">
+                <span aria-hidden className={cn('text-[8px]', mine ? 'text-emerald-300' : 'text-rose-300')}>{mine ? '▲' : '▼'}</span>
+                <span className="truncate text-[10px] text-white/85">{u.name}</span>
+              </div>
+              <span className="mt-0.5 flex items-center gap-0.5 text-[9px] tabular-nums text-white/55">
+                <Zap className="h-2.5 w-2.5 text-amber-300/80" aria-hidden />{u.spd}
+              </span>
+            </div>
+            {isCurrent && (
+              <span data-role="ora-label" className="absolute -top-1 right-1 rounded bg-white/15 px-1 text-[7px] uppercase tracking-widest text-white/80">Ora</span>
+            )}
           </motion.div>
         )
       })}
