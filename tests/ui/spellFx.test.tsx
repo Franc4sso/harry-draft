@@ -14,6 +14,16 @@ it('fire renders a burst shape', () => {
   expect(container.querySelector('[data-archetype="fire"][data-shape="burst"]')).toBeTruthy()
 })
 
+it('a dark spell (Avada) renders an orb shape', () => {
+  const { container } = render(<SpellFx entry={entry({ action: 'Avada Kedavra', type: 'Attacco' })} from={from} to={at} fxKey={4} />)
+  expect(container.querySelector('[data-archetype="dark"][data-shape="orb"]')).toBeTruthy()
+})
+
+it('a plain attack renders a bolt shape', () => {
+  const { container } = render(<SpellFx entry={entry({ action: 'Stupeficium', type: 'Attacco' })} from={from} to={at} fxKey={5} />)
+  expect(container.querySelector('[data-archetype="beam"][data-shape="bolt"]')).toBeTruthy()
+})
+
 it('heal renders a target-anchored sparkle and no projectile flight', () => {
   const { container } = render(<SpellFx entry={entry({ action: 'Episkey', type: 'Cura', flags: ['heal'] })} from={from} to={at} fxKey={2} />)
   expect(container.querySelector('[data-shape="heal"]')).toBeTruthy()
