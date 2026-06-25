@@ -64,10 +64,10 @@ Meccanica già funzionante ma invisibile:
 
 2. **Costante** — `BALANCE.combat.freezeShatterMult = 1.5` in `data/constants.ts`.
 
-3. **Log leggibile dell'azione saltata** — in `simulate.ts` (~riga 158): invece
-   di loggare sempre `'Stordito'`, derivare nome/flag dall'effetto bloccante
-   attivo a priorità più alta con `prevents` includente `action` (stun vs
-   freeze). Helper in `game/engine/status.ts` (es. `blockingControl(unit)`).
+3. **Flag + narrazione dello shatter** — aggiungere `'shatter'` a `LogFlag`; in
+   `BattleLog`: una tonalità dedicata e un suffisso nella narrazione del colpo
+   (es. `… infrange il ghiaccio!`) quando il flag è presente. Nessun altro
+   cambio di logging.
 
 4. **Glossario** (`lib/glossary.ts` → `EFFECT_META`) — blurb che spiegano
    l'identità, non il generico "salta il turno":
@@ -76,24 +76,31 @@ Meccanica già funzionante ma invisibile:
    - silence: "Anti-magia: niente incantesimi, il bersaglio ripiega su un attacco base debole."
    - disarm: "Anti-attacco: azzera i danni del bersaglio, che può ancora curare e difendere."
 
-5. **Leggibilità di silenzio e disarmo in battaglia** (counter puri, nessuna
-   meccanica nuova) — far emergere a colpo d'occhio *cosa* stanno facendo:
-   - **Disarmato**: quando un colpo va a 0 per `!canAttack`, loggarlo come azione
-     "Disarmato" con flag `disarm` (non un normale colpo da 0), così la UI lo
-     mostra come "neutralizzato" invece che come un danno nullo qualunque.
-   - **Silenziato**: quando `selectSpell` ripiega su `base_attack` perché
-     silenziato, marcare il log con flag `silence`, così la UI segnala "ridotto
-     all'attacco base".
-   - I chip-effetto su card/compendio usano già `EFFECT_META`: aggiornare label
-     e blurb (punto 4) li copre senza nuova UI.
+### Leggibilità già esistente (NON ri-implementare)
+
+Ricognizione del codice: la distinzione visiva tra i quattro controlli è **già
+implementata** e non va rifatta:
+- `BattleScreen.controlAt` risolve il tipo di controllo (stun/freeze/silence/
+  disarm) dagli `statusEffects` dello snapshot di frame.
+- `BattleLog.describeEntry` usa quel `controlKind` per narrazioni distinte
+  ("è congelato e salta il turno", "è silenziato: niente incantesimi", …).
+  → Il log di azione saltata può restare `action: 'Stordito'` in `simulate.ts`:
+  **nessun cambio al motore** per la narrazione. La distinzione la fa la UI.
+- `UnitBust` ha già icona, colore, overlay e tooltip distinti per tutti e
+  quattro (`Zap/Snowflake/Ban/Swords`, overlay "Stordito/Congelato/Silenziato/
+  Disarmato").
+
+Resta quindi da fare, lato leggibilità, **solo** l'aggiornamento dei blurb del
+glossario (punto 4) — che alimenta i chip-effetto su card e compendio. Niente
+flag nuovi per silenzio/disarmo, niente nuova UI.
 
 ### Nota tecnica — flag di log
 
 `LogFlag` (`types/combat.ts`) oggi è
-`'crit'|'dodge'|'kill'|'heal'|'block'|'stun'|'dot'|'pen'`. Vanno aggiunti
-`'freeze'|'shatter'|'silence'|'disarm'`. Il renderer della battaglia che colora
-le voci di log in base ai flag va esteso per gestirli (in assenza, ricadono sullo
-stile neutro: accettabile, ma l'obiettivo leggibilità chiede una resa distinta).
+`'crit'|'dodge'|'kill'|'heal'|'block'|'stun'|'dot'|'pen'`. Va aggiunto **solo**
+`'shatter'` (per il colpo che rompe il congelo). `BattleLog.LogTone` +
+`TONE_CLASS` vanno estesi con la tonalità `shatter`. Non servono flag per
+silenzio/disarmo: la loro distinzione è già resa da `controlAt`/`UnitBust`.
 
 ### Non in scope
 
@@ -148,7 +155,8 @@ stile neutro: accettabile, ma l'obiettivo leggibilità chiede una resa distinta)
 - **Nuovi**:
   - `fixedStats` ritorna i midpoint attesi per un campione di maghi.
   - Congelo: un colpo diretto rimuove il `freeze` e infligge ×1.5; un DoT no.
-  - Log azione saltata: stordito → "Stordito", congelato → "Congelato".
+  - `describeEntry`: un'entry con flag `shatter` include il suffisso del ghiaccio.
+  - Glossario: `EFFECT_META` per stun/freeze/silence/disarm espone i nuovi blurb.
   - (Se non già coperti) silenziato ripiega su `base_attack`; disarmato → danno 0
     ma cura/scudo passano.
 
