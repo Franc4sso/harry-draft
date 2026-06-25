@@ -12,6 +12,7 @@ import { affiliationChips } from '@/lib/affiliationChips'
 import { spellTypeChip, spellEffectLines, formatSpellStats } from '@/lib/glossary'
 import { roleTooltip } from '@/lib/roleInfo'
 import { Tooltip } from '@/components/ui/Tooltip'
+import { TRAIT_BY_ID } from '@/data/traits'
 
 export const CARD_STAT_MAX = { hp: 150, atk: 120, def: 120, spd: 120 } as const
 
@@ -110,6 +111,26 @@ export function WizardCard({
               })}
             </div>
           )}
+
+          {wizard.traits && wizard.traits.length > 0 && (() => {
+            const traitChips = wizard.traits
+              .map((id) => TRAIT_BY_ID[id])
+              .filter((t): t is NonNullable<typeof t> => t != null)
+            return traitChips.length > 0 ? (
+              <div className="mt-2 flex flex-wrap items-center gap-1">
+                {traitChips.map((trait) => (
+                  <Tooltip key={trait.id} content={trait.desc}>
+                    <span
+                      className="inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-semibold"
+                      style={{ color: '#c4dff3', borderColor: 'rgba(100,160,220,0.5)', background: 'rgba(60,110,180,0.18)' }}
+                    >
+                      {trait.name}
+                    </span>
+                  </Tooltip>
+                ))}
+              </div>
+            ) : null
+          })()}
 
           <div className="mt-3.5 grid grid-cols-2 gap-x-3 gap-y-2">
             {STAT_CELLS.map((c) => (

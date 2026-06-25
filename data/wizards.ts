@@ -13,6 +13,7 @@ export const WIZARDS: Wizard[] = [
     ranges: { hp: [82, 103], atk: [35, 45], def: [12, 19], spd: [24, 32] },
     spellPool: ['avada', 'sectumsempra', 'fiendfyre', 'serpensortia', 'crucio'],
     tags: ['deatheater'],
+    traits: ['esecuzione', 'furia'],
   },
   {
     id: 'harry', name: 'Harry Potter', house: 'Grifondoro', role: 'Attaccante', tier: 1,
@@ -32,12 +33,14 @@ export const WIZARDS: Wizard[] = [
     ranges: { hp: [76, 95], atk: [20, 27], def: [11, 17], spd: [26, 34] },
     spellPool: ['crucio', 'imperio', 'petrificus', 'confringo'],
     tags: ['deatheater'],
+    traits: ['sifone'],
   },
   {
     id: 'mcgonagall', name: 'Minerva McGonagall', house: 'Grifondoro', role: 'Tank', tier: 2,
     ranges: { hp: [124, 153], atk: [13, 18], def: [29, 39], spd: [14, 19] },
     spellPool: ['protego_maxima', 'fianto', 'reducto', 'bombarda', 'protego'],
     tags: ['order'],
+    traits: ['roccia'],
   },
   {
     id: 'sirius', name: 'Sirius Black', house: 'Grifondoro', role: 'Attaccante', tier: 2,
@@ -50,6 +53,7 @@ export const WIZARDS: Wizard[] = [
     ranges: { hp: [95, 119], atk: [14, 19], def: [17, 23], spd: [20, 27] },
     spellPool: ['expecto', 'episkey', 'vulnera', 'protego', 'riddikulus'],
     tags: ['order', 'marauder'],
+    traits: ['benedizione'],
   },
   {
     id: 'moody', name: 'Alastor Moody', house: 'Grifondoro', role: 'Tank', tier: 2,
