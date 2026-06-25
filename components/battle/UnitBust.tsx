@@ -158,7 +158,7 @@ export function UnitBust({
         x: targeted ? (mirrored ? -4 : 4) : 0,
       }}
       transition={{ type: 'spring', stiffness: 360, damping: 22 }}
-      className={cn('relative w-28 sm:w-32', mirrored && 'text-right')}
+      className={cn('relative w-32 sm:w-36', mirrored && 'text-right')}
       style={{ boxShadow: aura, borderRadius: 16, filter: dead ? 'grayscale(0.85)' : undefined }}
     >
       <RarityFrame tier={unit.tier}>
@@ -190,10 +190,10 @@ export function UnitBust({
         )
       })()}
 
-      <div className="mt-1 truncate text-center text-[11px] font-medium leading-tight">{unit.name}</div>
+      <div className="mt-1 truncate text-center text-xs font-medium leading-tight">{unit.name}</div>
       <div className="mt-0.5"><HpBar hp={hp} maxHp={unit.maxHp} /></div>
 
-      <div className="mt-0.5 flex items-center justify-center gap-1 text-[10px] tabular-nums">
+      <div className="mt-0.5 flex items-center justify-center gap-1 text-[11px] tabular-nums">
         <Stat icon={Sword} stat="atk" value={unit.atk} base={unit.baseAtk} />
         <span className="text-white/25">·</span>
         <Stat icon={Shield} stat="def" value={unit.def} base={unit.baseDef} />
@@ -201,7 +201,7 @@ export function UnitBust({
         <Stat icon={Zap} stat="spd" value={unit.spd} base={unit.baseSpd} />
       </div>
 
-      <div data-role="cooldown" className="mt-0.5 truncate text-center text-[10px] leading-tight">
+      <div data-role="cooldown" className="mt-0.5 truncate text-center text-[11px] leading-tight">
         <span className="text-white/55">{unit.spell.name}: </span>
         {cooldown > 0 ? (
           <span className="text-white/45 tabular-nums">{turnsLabel(cooldown)}</span>
