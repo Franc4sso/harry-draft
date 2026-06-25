@@ -72,3 +72,5 @@ html, body {
   .wizard-row, .wizard-row__sheen { transition: none; }
   .wizard-row:hover { filter: none; }
 }
+.synergy-bar-fill { transition: width 180ms ease; }
+@media (prefers-reduced-motion: reduce) { .synergy-bar-fill { transition: none; } }

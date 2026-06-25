@@ -70,7 +70,7 @@ export function SynergyTracker({
                 </span>
               </div>
               <div className="my-1.5 h-1.5 overflow-hidden rounded-full bg-white/10">
-                <div className="h-full rounded-full" style={{ width: `${ratio * 100}%`, background: 'linear-gradient(90deg,#7c3aed,#b08d57)', transition: 'width 180ms ease' }} />
+                <div className="synergy-bar-fill h-full rounded-full" style={{ width: `${ratio * 100}%`, background: 'linear-gradient(90deg,#7c3aed,#b08d57)' }} />
               </div>
               <p className="text-[10px] text-[#c9bfa0]">{bonus}</p>
             </div>

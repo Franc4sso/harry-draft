@@ -61,10 +61,10 @@ export function WizardCardRow({
       onClick={onClick}
       role={clickable ? 'button' : undefined}
       tabIndex={clickable ? 0 : undefined}
-      onKeyDown={clickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') onClick?.() } : undefined}
+      onKeyDown={clickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.() } } : undefined}
       data-house={wizard.house}
       className={cn(
-        'wizard-row group relative flex w-full select-none overflow-hidden rounded-2xl text-white',
+        'wizard-row relative flex w-full select-none overflow-hidden rounded-2xl text-white',
         clickable && 'cursor-pointer', className,
       )}
       style={{
