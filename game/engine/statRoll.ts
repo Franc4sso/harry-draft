@@ -1,24 +1,18 @@
 import type { DraftedWizard, Spell, Stats, Wizard } from '@/types'
 import type { Rng } from './rng'
-import { BALANCE } from '@/data/constants'
 import { SPELL_BY_ID } from '@/data/spells'
 
-function rollStat(rng: Rng, range: readonly [number, number], bias: number): number {
-  const [lo, hi] = range
-  if (hi <= lo) return lo
-  // bias in [0,1]: blend a uniform roll toward the high end.
-  const u = rng.next()
-  const blended = u * (1 - bias) + Math.max(u, rng.next()) * bias
-  return Math.round(lo + blended * (hi - lo))
+function mid(range: readonly [number, number]): number {
+  return Math.round((range[0] + range[1]) / 2)
 }
 
-export function rollStats(rng: Rng, wizard: Wizard): Stats {
-  const bias = BALANCE.draft.tierRollBias[wizard.tier]
+/** Fixed, deterministic stat block: the rounded midpoint of each range. */
+export function fixedStats(wizard: Wizard): Stats {
   return {
-    hp: rollStat(rng, wizard.ranges.hp, bias),
-    atk: rollStat(rng, wizard.ranges.atk, bias),
-    def: rollStat(rng, wizard.ranges.def, bias),
-    spd: rollStat(rng, wizard.ranges.spd, bias),
+    hp: mid(wizard.ranges.hp),
+    atk: mid(wizard.ranges.atk),
+    def: mid(wizard.ranges.def),
+    spd: mid(wizard.ranges.spd),
   }
 }
 
@@ -30,7 +24,7 @@ export function pickSpell(rng: Rng, wizard: Wizard): Spell {
 }
 
 export function draftWizard(rng: Rng, wizard: Wizard): DraftedWizard {
-  const stats = rollStats(rng, wizard)
+  const stats = fixedStats(wizard)
   const spell = pickSpell(rng, wizard)
   return { wizard, stats, maxHp: stats.hp, spell }
 }

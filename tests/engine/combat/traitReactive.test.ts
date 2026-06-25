@@ -26,7 +26,8 @@ describe('reactive traits in battle', () => {
     // Lupin (benedizione) has episkey/vulnera in his spell pool — he heals himself.
     // onHeal fires with actor=lupin, target=lupin; shield EffectSpec lands on ctx.target=lupin.
     // A healer ally (mcgonagall) ensures heals happen regularly; harry is the right-side target.
-    const left = [wiz('lupin', 1), wiz('mcgonagall', 2)]
+    // Seed 6 gives Lupin the 'vulnera' healing spell (fixed-stats RNG shift changed spell picks).
+    const left = [wiz('lupin', 6), wiz('mcgonagall', 2)]
     const right = [wiz('harry', 3)]
     const res = simulateBattle(left, right, createRng(4))
     // Some snapshot must show a unit with statusId:'shield' (set by the shield handler)

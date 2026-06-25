@@ -47,7 +47,7 @@ Il pezzo più grande. Tutto presentazionale: legge il replay/log esistente e lo 
 ### Plan 4 — Gameplay (spec §8) — DA SCRIVERE ed eseguire
 Tocca il motore — coperto da test.
 - **Fix boss** (bug noto): `BossDef` + `identityId` → forzare **Lord Voldemort** come leader reale del team finale (`game/engine/combat/teamGen.ts:64` `generateBossTeam`), HP×mult, magia forzata, e **applicare la `exclusiveSynergy` `darkLord`** (oggi definita ma mai usata in `data/bosses.ts:19`).
-- **Valore potenza E sinergia**: comprimere il divario tra tier (`tierRollBias`/range in `data/wizards.ts`, `statRoll.ts`) e rinforzare/scalare le sinergie (per numero membri) → una squadra di comuni sinergica regge contro 5 leggendari scoordinati. Tarare con `tests/engine/campaignBalance.test.ts` (+ nuova misura "build sinergica vs solo-potenza").
+- **Valore potenza E sinergia**: comprimere il divario tra tier (le stat sono ora il punto medio fisso di ogni range — niente RNG per-stat, `tierRollBias` rimosso) e rinforzare/scalare le sinergie (per numero membri) → una squadra di comuni sinergica regge contro 5 leggendari scoordinati. Tarare con `tests/engine/campaignBalance.test.ts` (+ nuova misura "build sinergica vs solo-potenza").
 - Difficoltà: lasciata sostanzialmente com'è (non è priorità).
 
 ### Batch arte — ritratti del roster

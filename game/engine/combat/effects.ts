@@ -38,6 +38,13 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
     }
     if (!canAttack(ctx.actor)) return { value: 0 } // disarmed: no damage
     let dmg = computeDamage(ctx.rng, ctx.actor, ctx.target, eff.power, ctx.flags)
+    // Shatter: a direct hit on a frozen target ends the freeze and amplifies THIS hit.
+    const frozen = ctx.target.statusEffects.some(e => e.kind === 'freeze')
+    if (frozen) {
+      dmg = Math.round(dmg * BALANCE.combat.freezeShatterMult)
+      ctx.target.statusEffects = ctx.target.statusEffects.filter(e => e.kind !== 'freeze')
+      ctx.flags.push('shatter')
+    }
     if (ctx.bus) {
       const hc: HookCtx = { turn: ctx.turn, actor: ctx.actor, target: ctx.target, side: ctx.actor.side, flags: ctx.flags }
       dmg = ctx.bus.emitModifier('modifyOutgoingDamage', dmg, hc)

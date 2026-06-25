@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { EFFECT_HANDLERS, computeDamage } from '@/game/engine/combat/effects'
+import { applyStatus, tickStatuses } from '@/game/engine/status'
 import type { BattleUnit, DraftedWizard, LogFlag } from '@/types'
 import { SPELL_BY_ID } from '@/data/spells'
 import type { Rng } from '@/game/engine/rng'
@@ -79,5 +80,39 @@ describe('armor penetration', () => {
     const target = unit({ side: 'right', buffedStats: { hp: 120, atk: 80, def: 9999, spd: 40 } })
     const f: LogFlag[] = []
     expect(computeDamage(noChance, atkWiz, target, 0.1, f)).toBeGreaterThanOrEqual(1)
+  })
+})
+
+describe('freeze shatter', () => {
+  it('a direct hit removes freeze and deals ~1.5x', () => {
+    const actor = unit({ buffedStats: { hp: 120, atk: 40, def: 30, spd: 40 } })
+    const frozen = unit({ side: 'right', hp: 999, maxHp: 999, buffedStats: { hp: 999, atk: 80, def: 10, spd: 40 } })
+    applyStatus(frozen, 'freeze')
+    const flags: LogFlag[] = []
+
+    const plainActor = unit({ buffedStats: { hp: 120, atk: 40, def: 30, spd: 40 } })
+    const plainTarget = unit({ side: 'right', hp: 999, maxHp: 999, buffedStats: { hp: 999, atk: 80, def: 10, spd: 40 } })
+    const baseFlags: LogFlag[] = []
+    const base = EFFECT_HANDLERS.damage(
+      { rng: noChance, turn: 1, actor: plainActor, target: plainTarget, flags: baseFlags },
+      { kind: 'damage', power: 1 },
+    ).value!
+
+    const res = EFFECT_HANDLERS.damage(
+      { rng: noChance, turn: 1, actor, target: frozen, flags },
+      { kind: 'damage', power: 1 },
+    )
+
+    expect(frozen.statusEffects.some(e => e.kind === 'freeze')).toBe(false) // freeze removed
+    expect(flags).toContain('shatter')
+    expect(res.value).toBe(Math.round(base * 1.5))
+  })
+
+  it('a DoT tick does not shatter freeze', () => {
+    const u = unit({ side: 'right' })
+    applyStatus(u, 'freeze')
+    applyStatus(u, 'burn')
+    tickStatuses(1, u)
+    expect(u.statusEffects.some(e => e.kind === 'freeze')).toBe(true)
   })
 })
