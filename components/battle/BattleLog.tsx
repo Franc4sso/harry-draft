@@ -54,6 +54,7 @@ export function describeEntry(
 
   if (entry.flags.includes('heal')) return `${actor} lancia ${entry.action} e cura ${entry.value ?? 0} HP`
   if (entry.flags.includes('dodge')) return `${actor} lancia ${entry.action} ma ${target ?? 'il bersaglio'} schiva`
+  if (entry.flags.includes('block')) return `${actor} lancia ${entry.action} ma ${target ?? 'il bersaglio'} para il colpo`
   if (entry.type === 'Difesa') return `${actor} si protegge con ${entry.action}`
 
   const crit = entry.flags.includes('crit') ? ' (critico!)' : ''
