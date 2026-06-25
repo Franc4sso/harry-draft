@@ -2,13 +2,24 @@ import { describe, it, expect } from 'vitest'
 import { simulateBattle, toBattleUnits } from '@/game/engine/combat/simulate'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
-import { WIZARDS } from '@/data/wizards'
+import { WIZARDS, WIZARD_BY_ID } from '@/data/wizards'
 import { RELIC_BY_ID } from '@/data/relics'
 import type { ActiveRelic } from '@/types'
 
 function team(seed: number, n = 5) {
   const r = createRng(seed)
   return WIZARDS.slice(0, n).map(w => draftWizard(r, w))
+}
+
+/** A team whose wizards carry NO dot-producing trait (no `veleno`), so the only
+ *  possible source of 'dot' log flags is a relic — used to prove a relic's dot
+ *  contribution without RNG luck deciding whether a trait happens to fire. */
+function dotFreeTeam(seed: number) {
+  const r = createRng(seed)
+  // dumbledore=pietrificazione, mcgonagall=roccia, harry=esecuzione/furia,
+  // ron=roccia, hagrid=roccia — none apply a dot.
+  return ['dumbledore', 'mcgonagall', 'harry', 'ron', 'hagrid']
+    .map(id => draftWizard(r, WIZARD_BY_ID[id]!))
 }
 const ar = (id: string): ActiveRelic => ({ relic: RELIC_BY_ID[id]!, stageObtained: 0 })
 
@@ -45,14 +56,17 @@ describe('relics in combat', () => {
   })
 
   it('onHit relic (boccino-doro) produces dot flags vs a no-relic run', () => {
-    // seed 6: dotWith=5, dotWithout=0 — the left roster (WIZARDS[0-4]) has no veleno
-    // trait, so the only dot source in the baseline run is the relic itself.
-    // seed 23 no longer works now that all 60 wizards carry traits (Snape at index 3
-    // has veleno, so the no-relic baseline also produces dots at that seed).
-    const withRelic = simulateBattle(team(1), team(2), createRng(6), { leftRelics: [ar('boccino-doro')] })
-    const without = simulateBattle(team(1), team(2), createRng(6))
+    // The left team is dot-free BY CONSTRUCTION (no `veleno` trait), so the no-relic
+    // baseline can produce zero dots regardless of RNG — the only dot source is the
+    // relic. This is robust to seed/RNG-path changes, unlike picking a seed where a
+    // veleno carrier happens not to fire. (The default team() has Snape@idx3 = veleno.)
+    const left = dotFreeTeam(1)
+    const right = dotFreeTeam(2)
+    const withRelic = simulateBattle(left, right, createRng(6), { leftRelics: [ar('boccino-doro')] })
+    const without = simulateBattle(left, right, createRng(6))
     const dotWith = withRelic.log.filter(e => e.flags.includes('dot')).length
     const dotWithout = without.log.filter(e => e.flags.includes('dot')).length
+    expect(dotWithout).toBe(0)
     expect(dotWith).toBeGreaterThan(dotWithout)
   })
 })
