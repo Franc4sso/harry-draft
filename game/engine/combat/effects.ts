@@ -49,6 +49,7 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
   },
   heal: (ctx, eff) => {
     if (eff.kind !== 'heal') return {}
+    if (!ctx.target.alive) return { value: 0 } // never heal/revive a dead unit
     let amount = eff.amount
     if (ctx.bus) {
       // modifyHealing is gated on the HEALED unit's side (ctx.target), not the caster's.

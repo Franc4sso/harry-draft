@@ -7,7 +7,7 @@ function lowestHp(units: BattleUnit[]): BattleUnit | undefined {
 }
 
 export function mostWounded(units: BattleUnit[]): BattleUnit | undefined {
-  const wounded = units.filter(u => u.hp < u.maxHp)
+  const wounded = units.filter(u => u.alive && u.hp < u.maxHp)
   return wounded.sort((a, b) =>
     (a.hp / a.maxHp) - (b.hp / b.maxHp) || a.wizard.id.localeCompare(b.wizard.id),
   )[0]
