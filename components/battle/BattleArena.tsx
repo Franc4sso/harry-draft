@@ -89,8 +89,8 @@ export function BattleArena({
   return (
     <div ref={arenaRef} data-testid="battle-arena" className="relative flex flex-col items-center gap-4 w-full">
       <section className="flex flex-col items-center gap-2 w-full">
-        <h3 className="text-xs uppercase tracking-widest text-white/40">{rightTitle}</h3>
-        <div data-testid="row-enemies" className="flex flex-nowrap justify-center gap-2 sm:gap-3">{renderSide(right, true)}</div>
+        <h3 className="text-xs uppercase tracking-widest text-white/40">{leftTitle}</h3>
+        <div data-testid="row-player" className="flex flex-nowrap justify-center gap-2 sm:gap-3">{renderSide(left, false)}</div>
       </section>
 
       <div className="self-center min-h-[1.5rem] w-full flex items-center justify-center">
@@ -98,8 +98,8 @@ export function BattleArena({
       </div>
 
       <section className="flex flex-col items-center gap-2 w-full">
-        <div data-testid="row-player" className="flex flex-nowrap justify-center gap-2 sm:gap-3">{renderSide(left, false)}</div>
-        <h3 className="text-xs uppercase tracking-widest text-white/40">{leftTitle}</h3>
+        <div data-testid="row-enemies" className="flex flex-nowrap justify-center gap-2 sm:gap-3">{renderSide(right, true)}</div>
+        <h3 className="text-xs uppercase tracking-widest text-white/40">{rightTitle}</h3>
       </section>
 
       {!blocked && <SpellFx entry={entry} from={fx?.from} to={fx?.to} fxKey={frameKey} />}

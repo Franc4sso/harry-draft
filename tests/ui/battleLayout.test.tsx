@@ -12,12 +12,12 @@ const replay = {
   frames: [{ statusEffects: {}, cooldowns: {} }],
 } as unknown as Replay
 
-it('enemies row sits above the player row in the DOM', () => {
+it('player row sits above the enemies row in the DOM', () => {
   render(<BattleArena replay={replay} hp={{ 'left:a': 100, 'right:b': 100 }} entry={null} />)
-  const enemies = screen.getByTestId('row-enemies')
   const player = screen.getByTestId('row-player')
-  // enemies appears before player in document order
-  expect(enemies.compareDocumentPosition(player) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  const enemies = screen.getByTestId('row-enemies')
+  // player appears before enemies in document order
+  expect(player.compareDocumentPosition(enemies) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
 })
 
 it('renders the center node between the rows', () => {
