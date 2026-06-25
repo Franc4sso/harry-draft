@@ -175,6 +175,7 @@ export function UnitBust({
       </RarityFrame>
 
       {(() => {
+        if (dead) return null // a dead unit shows the "Morto" tombstone, not a control overlay
         const ctrl = effects.find(e => CONTROL_OVERLAY[e.kind])
         if (!ctrl) return null
         const o = CONTROL_OVERLAY[ctrl.kind]!
