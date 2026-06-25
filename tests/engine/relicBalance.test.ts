@@ -11,7 +11,7 @@ const ar = (id: string): ActiveRelic => ({ relic: RELIC_BY_ID[id]!, stageObtaine
 describe('relic balance sanity', () => {
   it('a few common relics help but do not trivialize a fair fight', () => {
     let winsNoRelic = 0, winsRelic = 0
-    const N = 60
+    const N = 200
     const relics = [ar('mappa-malandrino'), ar('giratempo'), ar('mantello-invisibilita')]
     for (let i = 0; i < N; i++) {
       const player = generateEnemyTeam(createRng(`p${i}`), budgetForStage(2))
