@@ -30,14 +30,26 @@ const TONE_CLASS: Record<LogTone, string> = {
 }
 
 /** Renders a single log entry into Italian narration. Exported for testing. */
-export function describeEntry(entry: LogEntry, names: Record<string, string>): string {
+export function describeEntry(
+  entry: LogEntry,
+  names: Record<string, string>,
+  controlKind?: 'stun' | 'freeze' | 'silence' | 'disarm',
+): string {
   const actor = entry.actorSide ? names[unitKey(entry.actorSide, entry.actorId)] ?? entry.actorId : entry.actorId
   const target = entry.targetId && entry.targetSide
     ? names[unitKey(entry.targetSide, entry.targetId)] ?? entry.targetId
     : undefined
 
   if (entry.action === 'KO') return `${target ?? actor} viene eliminato`
-  if (entry.action === 'Stordito') return `${actor} è stordito e salta il turno`
+  if (entry.action === 'Stordito') {
+    const who = actor
+    switch (controlKind) {
+      case 'freeze':  return `${who} è congelato e salta il turno`
+      case 'silence': return `${who} è silenziato: niente incantesimi`
+      case 'disarm':  return `${who} è disarmato: niente attacchi`
+      default:        return `${who} è stordito e salta il turno`
+    }
+  }
   if (entry.action === 'Veleno') return `${actor} subisce ${entry.value ?? 0} danni da veleno`
 
   if (entry.flags.includes('heal')) return `${actor} lancia ${entry.action} e cura ${entry.value ?? 0} HP`
@@ -53,11 +65,12 @@ export function describeEntry(entry: LogEntry, names: Record<string, string>): s
 }
 
 export function BattleLog({
-  entries, units, max = 7,
+  entries, units, max = 7, controlAt,
 }: {
   entries: LogEntry[]
   units: ReplayUnit[]
   max?: number
+  controlAt?: (entry: LogEntry) => 'stun' | 'freeze' | 'silence' | 'disarm' | undefined
 }) {
   const names: Record<string, string> = {}
   for (const u of units) names[u.key] = u.name
@@ -79,7 +92,7 @@ export function BattleLog({
                 className={cn('leading-snug', TONE_CLASS[toneFor(entry)])}
               >
                 <span className="text-white/30 tabular-nums mr-1">T{entry.turn}</span>
-                {describeEntry(entry, names)}
+                {describeEntry(entry, names, controlAt?.(entry))}
               </motion.li>
             )
           })}
