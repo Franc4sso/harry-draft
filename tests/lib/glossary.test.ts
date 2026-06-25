@@ -64,6 +64,15 @@ describe('spellEffectChips', () => {
   })
 })
 
+describe('EFFECT_META control blurbs', () => {
+  it('describe each control distinctly', () => {
+    expect(EFFECT_META.freeze!.blurb).toContain('infrange')
+    expect(EFFECT_META.stun!.blurb.toLowerCase()).toContain('rimuovere')
+    expect(EFFECT_META.silence!.blurb).toContain('Anti-magia')
+    expect(EFFECT_META.disarm!.blurb).toContain('Anti-attacco')
+  })
+})
+
 describe('synergyBonusText', () => {
   it('formats flat stats', () => {
     expect(synergyBonusText({ atk: 10, def: 14 })).toEqual(['+10 ATK', '+14 DIF'])
