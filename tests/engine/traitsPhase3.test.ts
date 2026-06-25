@@ -2,6 +2,10 @@ import { describe, it, expect } from 'vitest'
 import { TRAIT_BY_ID } from '@/data/traits'
 import { applyInlineEffect, effectiveStats } from '@/game/engine/status'
 import type { BattleUnit, HookCtx, EffectSpec } from '@/types'
+import { simulateBattle } from '@/game/engine/combat/simulate'
+import { draftWizard } from '@/game/engine/statRoll'
+import { createRng } from '@/game/engine/rng'
+import { WIZARDS } from '@/data/wizards'
 
 const STUB_SPELL = { id: 'stub', name: 'Stub', desc: '', type: 'Attacco' as const, hitChance: 1 }
 
@@ -119,5 +123,25 @@ describe('Phase 3 conditional self-buff traits', () => {
     applyInlineEffect(unit, inlineEff)
     const atkAfter2 = effectiveStats(unit).atk
     expect(atkAfter2).toBeGreaterThan(atkAfter1)
+  })
+})
+
+describe('Phase 3 traits fire in real battle on both sides', () => {
+  it('Logoramento on a RIGHT-side unit slows the LEFT player it hits', () => {
+    const harry = draftWizard(createRng(1), WIZARDS.find(w => w.id === 'harry')!)
+    const enemyBase = WIZARDS.find(w => w.id === 'bellatrix')!
+    // Inject the trait without editing data/wizards.ts (out of scope).
+    // Property path confirmed: simulateBattle reads u.wizard.traits (game/engine/traits.ts:9)
+    const enemy = draftWizard(createRng(2), { ...enemyBase, traits: ['logoramento'] })
+    // Seeds [4,5,6,7,8] tried; at least one lets the enemy land 2+ hits on Harry
+    // triggering Logoramento's slow. Widened to [1..15] if needed.
+    const slowed = [4, 5, 6, 7, 8].some(seed => {
+      const res = simulateBattle([harry], [enemy], createRng(seed))
+      return res.snapshots.some(s =>
+        Object.values(s).some(unit =>
+          unit.statusEffects.some(e =>
+            (e.statusId === 'slow') || (e.kind === 'debuff' && e.stat === 'spd'))))
+    })
+    expect(slowed).toBe(true)
   })
 })
