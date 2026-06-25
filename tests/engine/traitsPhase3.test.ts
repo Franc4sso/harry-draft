@@ -61,3 +61,10 @@ describe('Phase 3 dot + slow traits', () => {
     if (eff.kind === 'applyStatus') expect(eff.chance).toBeGreaterThan(0.18)
   })
 })
+
+describe('Phase 3 self-buff-on-hit trait', () => {
+  it('Ferocia buffs the ACTOR (self) on hit, not the enemy', () => {
+    const [eff] = reactiveEffects('ferocia')
+    expect(eff).toMatchObject({ kind: 'applyStatus', target: 'self', statusId: 'atkUp' })
+  })
+})

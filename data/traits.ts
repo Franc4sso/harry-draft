@@ -20,6 +20,8 @@ const POISON_DURATION = 2
 const ATTRITION_CHANCE = 0.4
 const ATTRITION_DURATION = 2
 
+const FEROCITY_DURATION = 2
+
 export const TRAITS: Trait[] = [
   {
     id: 'esecuzione', name: 'Esecuzione',
@@ -107,6 +109,14 @@ export const TRAITS: Trait[] = [
     trigger: {
       kind: 'reactive', hook: 'onHit', owner: 'actor',
       effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'slow', chance: ATTRITION_CHANCE, duration: ATTRITION_DURATION }],
+    },
+  },
+  {
+    id: 'ferocia', name: 'Ferocia',
+    desc: 'Ogni colpo che mette a segno aumenta il suo attacco.',
+    trigger: {
+      kind: 'reactive', hook: 'onHit', owner: 'actor',
+      effects: () => [{ kind: 'applyStatus', target: 'self', statusId: 'atkUp', duration: FEROCITY_DURATION }],
     },
   },
 ]
