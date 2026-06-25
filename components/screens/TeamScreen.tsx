@@ -2,10 +2,8 @@
 import type { DraftedWizard } from '@/types'
 import { detectSynergies } from '@/game/engine/synergy'
 import { synergyBonusText } from '@/lib/glossary'
-import { WizardCard } from '@/components/cards/WizardCard'
-import { GlowPanel } from '@/components/ui/GlowPanel'
+import { WizardCardRow } from '@/components/cards/WizardCardRow'
 import { Button } from '@/components/ui/Button'
-import { Chip } from '@/components/ui/Chip'
 
 export function TeamScreen({
   team, onConfirm, onRestart,
@@ -16,41 +14,66 @@ export function TeamScreen({
 }) {
   const synergies = detectSynergies(team)
   const nameById = new Map(team.map((d) => [d.wizard.id, d.wizard.name]))
+
   return (
-    <main className="flex-1 flex flex-col items-center gap-8 p-8">
-      <h1 className="font-display text-4xl mt-4">La tua squadra</h1>
+    <main className="flex-1 flex flex-col items-center gap-7 p-6">
+      <h1 className="font-display text-4xl mt-2">La tua squadra</h1>
 
-      <div className="flex flex-wrap justify-center gap-5">
-        {team.map((m) => (
-          <WizardCard key={m.wizard.id} drafted={m} />
-        ))}
-      </div>
+      {/* Synergies first — a modern gold band at the top, before the roster. */}
+      <section className="w-full max-w-3xl">
+        <div className="mb-3 flex items-baseline justify-between">
+          <h2 className="font-display text-lg">Sinergie attive</h2>
+          <span className="text-[11px] uppercase tracking-widest text-amber-200/70">
+            {synergies.length} {synergies.length === 1 ? 'attiva' : 'attive'}
+          </span>
+        </div>
 
-      <GlowPanel className="p-5 w-full max-w-xl">
-        <h2 className="font-display text-xl mb-3">Sinergie attive</h2>
         {synergies.length === 0 ? (
-          <p className="text-white/60 text-sm">Nessuna sinergia attiva.</p>
+          <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/55">
+            Nessuna sinergia attiva.
+          </p>
         ) : (
-          <ul className="flex flex-col gap-3">
+          <div className="flex flex-wrap gap-2.5">
             {synergies.map((s) => {
               const members = s.memberIds.map((id) => nameById.get(id)).filter(Boolean) as string[]
               return (
-                <li key={s.synergy.id} className="rounded-xl bg-white/5 border border-white/10 p-3">
-                  <p className="font-display text-base">{s.synergy.name}</p>
-                  <div className="mt-1.5 flex flex-wrap gap-1.5">
-                    {synergyBonusText(s.synergy.bonus).map((t) => (
-                      <Chip key={t} label={t} color="#7CFC9B" />
-                    ))}
+                <div
+                  key={s.synergy.id}
+                  className="flex items-center gap-3 rounded-2xl border border-amber-300/25 bg-gradient-to-br from-amber-300/[0.12] to-transparent px-3.5 py-2.5"
+                >
+                  <span aria-hidden className="text-lg leading-none text-amber-300">✦</span>
+                  <div className="flex min-w-0 flex-col gap-1">
+                    <span className="font-display text-sm leading-tight">{s.synergy.name.replace(/^\d+\s+/, '')}</span>
+                    <div className="flex flex-wrap gap-1">
+                      {synergyBonusText(s.synergy.bonus).map((t) => (
+                        <span
+                          key={t}
+                          className="rounded-full bg-emerald-300/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-200"
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  {members.length > 0 && (
-                    <p className="mt-1.5 text-xs text-white/55">{members.join(' · ')}</p>
-                  )}
-                </li>
+                  <span
+                    title={members.join(' · ')}
+                    className="ml-1 shrink-0 rounded-full bg-black/30 px-2 py-0.5 text-[10px] font-semibold tabular-nums text-white/60"
+                  >
+                    ×{members.length}
+                  </span>
+                </div>
               )
             })}
-          </ul>
+          </div>
         )}
-      </GlowPanel>
+      </section>
+
+      {/* Roster — horizontal cards, consistent with the draft. */}
+      <div className="flex w-full max-w-3xl flex-col gap-3">
+        {team.map((m) => (
+          <WizardCardRow key={m.wizard.id} drafted={m} />
+        ))}
+      </div>
 
       <div className="flex gap-3">
         <Button onClick={onConfirm}>Combatti</Button>
