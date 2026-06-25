@@ -10,6 +10,11 @@ const SIPHON_DURATION = 2
 const BLESS_SHIELD = 25
 const BLESS_DURATION = 2
 
+const CONTROL_CHANCE = 0.18
+const STUN_DURATION = 1
+const SILENCE_DURATION = 2
+const DISARM_DURATION = 2
+
 export const TRAITS: Trait[] = [
   {
     id: 'esecuzione', name: 'Esecuzione',
@@ -57,6 +62,30 @@ export const TRAITS: Trait[] = [
     trigger: {
       kind: 'reactive', hook: 'onHeal', owner: 'actor',
       effects: () => [{ kind: 'shield', amount: BLESS_SHIELD, duration: BLESS_DURATION }],
+    },
+  },
+  {
+    id: 'pietrificazione', name: 'Pietrificazione',
+    desc: 'I suoi colpi possono stordire il bersaglio.',
+    trigger: {
+      kind: 'reactive', hook: 'onHit', owner: 'actor',
+      effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'stun', chance: CONTROL_CHANCE, duration: STUN_DURATION }],
+    },
+  },
+  {
+    id: 'bavaglio', name: 'Bavaglio',
+    desc: 'I suoi colpi possono silenziare il bersaglio (niente incantesimi).',
+    trigger: {
+      kind: 'reactive', hook: 'onHit', owner: 'actor',
+      effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'silence', chance: CONTROL_CHANCE, duration: SILENCE_DURATION }],
+    },
+  },
+  {
+    id: 'disarmo', name: 'Disarmo',
+    desc: 'I suoi colpi possono disarmare il bersaglio (niente attacchi).',
+    trigger: {
+      kind: 'reactive', hook: 'onHit', owner: 'actor',
+      effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'disarm', chance: CONTROL_CHANCE, duration: DISARM_DURATION }],
     },
   },
 ]
