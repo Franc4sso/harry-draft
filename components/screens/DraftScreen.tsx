@@ -60,9 +60,12 @@ export function DraftScreen({ seed, onComplete }: { seed: string; onComplete: (t
         Single-column on mobile: candidates first, tracker below.
         Two-column on desktop (md+): candidates left, tracker right rail.
       */}
-      <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 p-4 md:grid-cols-[1fr_280px]">
+      <div className="mx-auto grid max-w-5xl grid-cols-1 items-start gap-6 p-4 md:grid-cols-[1fr_280px]">
+        {/* items-start (above) + content-start (here) keep each candidate at its
+            own height: without them the column stretches to match the synergy
+            rail, growing the hovered card downward when the rail gets taller. */}
         <section
-          className="grid grid-cols-1 gap-4"
+          className="grid grid-cols-1 content-start gap-4"
           onPointerLeave={() => setConsidered(null)}
         >
           {current.map((c, i) => (
