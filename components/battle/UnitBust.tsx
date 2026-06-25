@@ -241,7 +241,7 @@ export function UnitBust({
             const Icon = STATUS_ICON[e.kind] ?? Flame
             return (
               <span
-                key={`${e.kind}-${e.statusId ?? i}`}
+                key={`${e.kind}-${e.statusId ?? 'n'}-${i}`}
                 data-status-kind={e.kind}
                 title={describeEffect(e)}
                 className={cn('inline-flex items-center gap-0.5 rounded bg-black/55 px-0.5 text-[9px] font-semibold tabular-nums', STATUS_CLASS[e.kind])}
