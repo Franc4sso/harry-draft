@@ -54,7 +54,7 @@ export function BattleScreen({
       <div className="flex flex-col items-center gap-1">
         <h1 className="font-display text-2xl">{title}</h1>
         <p className="text-[11px] uppercase tracking-widest text-white/35">
-          Turno {r.entry?.turn ?? 0} · azione {r.index}/{r.total - 1}
+          Turno {r.entry?.turn ?? 0}
           {r.entry?.actorId ? <> · agisce <span className="text-white/60">{replay.units.find(u => u.id === r.entry!.actorId && u.side === r.entry!.actorSide)?.name ?? r.entry!.actorId}</span></> : null}
         </p>
       </div>
