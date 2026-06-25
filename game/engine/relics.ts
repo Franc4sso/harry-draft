@@ -1,4 +1,4 @@
-import type { ActiveRelic, DraftedWizard, RelicCondition, Stats } from '@/types'
+import type { ActiveRelic, DraftedWizard, RelicCondition, Stats, Side } from '@/types'
 import type { Relic } from '@/types'
 import type { Rng } from './rng'
 import type { EventBus } from './combat/eventBus'
@@ -16,12 +16,13 @@ export function relicMatchesCondition(team: DraftedWizard[], condition?: RelicCo
 }
 
 /**
- * Register every left-relic trigger as a bus listener, in relic order then
- * trigger-array order. Condition gates are checked once at registration
- * (team composition is fixed for the battle). RNG is NOT consumed here.
+ * Register relic triggers as bus listeners for the given owner side (default 'left').
+ * Listeners gate on `side` so relics only fire for the team that owns them.
+ * Condition gates are checked once at registration (team composition is fixed).
+ * RNG is NOT consumed here.
  */
 export function registerRelicTriggers(
-  bus: EventBus, team: DraftedWizard[], relics: ActiveRelic[],
+  bus: EventBus, team: DraftedWizard[], relics: ActiveRelic[], side: Side = 'left',
 ): void {
   for (const { relic } of relics) {
     for (const trig of relic.triggers ?? []) {
@@ -33,18 +34,17 @@ export function registerRelicTriggers(
           || trig.hook === 'onHeal' || trig.hook === 'onDeath'
           || trig.hook === 'onAllyDeath' || trig.hook === 'onTurnStart'
           || trig.hook === 'onTurnEnd' || trig.hook === 'onHpThreshold') {
-          bus.onReactive(trig.hook, (ctx) => (ctx.side === 'left' ? specs : []))
+          bus.onReactive(trig.hook, (ctx) => (ctx.side === side ? specs : []))
         }
       }
       if (trig.modifier
         && (trig.hook === 'modifyOutgoingDamage' || trig.hook === 'modifyIncomingDamage'
           || trig.hook === 'modifyHealing')) {
         const { mult = 1, flat = 0 } = trig.modifier
-        // Relics are LEFT-only: a left relic must never modify damage/healing for
-        // RIGHT (enemy) units. Gate on the side carried in the HookCtx (set by the
-        // emitModifier call sites: attacker side for outgoing, target side for
-        // incoming, healed-unit side for healing).
-        bus.onModifier(trig.hook, (v, ctx) => (ctx.side === 'left' ? v * mult + flat : v))
+        // Gate on the owner side so a relic must never modify damage/healing for
+        // the opposing team. Side is carried in HookCtx (attacker side for outgoing,
+        // target side for incoming, healed-unit side for healing).
+        bus.onModifier(trig.hook, (v, ctx) => (ctx.side === side ? v * mult + flat : v))
       }
     }
   }

@@ -38,17 +38,17 @@ export function simulateBattle(
   left: DraftedWizard[],
   right: DraftedWizard[],
   rng: Rng,
-  opts: { leftSyn?: ActiveSynergy[]; rightSyn?: ActiveSynergy[]; leftRelics?: ActiveRelic[] } = {},
+  opts: { leftSyn?: ActiveSynergy[]; rightSyn?: ActiveSynergy[]; leftRelics?: ActiveRelic[]; rightRelics?: ActiveRelic[]; rightMenace?: number } = {},
 ): BattleResult {
   const leftSyn = opts.leftSyn ?? []
   const rightSyn = opts.rightSyn ?? []
-  // Relics only ever apply to the LEFT (player) team. The enemy never gets relics.
   const leftRelics = opts.leftRelics ?? []
+  const rightRelics = opts.rightRelics ?? []
   const L = toBattleUnits(left, 'left', leftSyn, leftRelics)
-  const R = toBattleUnits(right, 'right', rightSyn)
+  const R = toBattleUnits(right, 'right', rightSyn, rightRelics)
   const regen: Record<Side, number> = {
     left: totalRegen(leftSyn) + totalRelicRegen(left, leftRelics),
-    right: totalRegen(rightSyn),
+    right: totalRegen(rightSyn) + totalRelicRegen(right, rightRelics),
   }
   const log: LogEntry[] = []
   // Per-step engine snapshots, kept 1:1 with `log` via pushLog. Each captures a DEEP COPY
@@ -76,9 +76,10 @@ export function simulateBattle(
   const sync = (u: BattleUnit) => { if (u.hp <= 0) { u.hp = 0; u.alive = false } }
   const sideUnits = (s: Side) => (s === 'left' ? L : R).filter(u => u.alive)
 
-  // Relic triggers dispatch through the EventBus. Only the LEFT team carries relics.
+  // Relic triggers dispatch through the EventBus. Each side's relics fire only for that side.
   const bus = createEventBus()
-  registerRelicTriggers(bus, left, leftRelics)
+  registerRelicTriggers(bus, left, leftRelics, 'left')
+  registerRelicTriggers(bus, right, rightRelics, 'right')
   registerTraitTriggers(bus, [...L, ...R])
 
   // Apply a collected reactive hook for `unit`. Guarded by collectReactive().length
@@ -101,9 +102,8 @@ export function simulateBattle(
     }
   }
   // onHpThreshold fires once per downward crossing per unit; key `${side}:${id}:${threshold}`.
-  // The threshold fractions come straight from the left relics' onHpThreshold triggers
-  // (only the LEFT team carries relics). When none exist this stays empty → no rng, no log.
-  const registeredThresholds = leftRelics.flatMap(({ relic }) =>
+  // Thresholds from both sides' relics are collected. When none exist this stays empty → no rng, no log.
+  const registeredThresholds = [...leftRelics, ...rightRelics].flatMap(({ relic }) =>
     (relic.triggers ?? [])
       .filter(t => t.hook === 'onHpThreshold' && typeof t.threshold === 'number')
       .map(t => t.threshold!),
@@ -130,6 +130,22 @@ export function simulateBattle(
     const specs = bus.collectReactive('onBattleStart', ctx0(L[0] ?? ({} as BattleUnit)))
     for (const eff of specs) {
       for (const unit of L) {
+        const flags: LogFlag[] = []
+        const r = EFFECT_HANDLERS[eff.kind]({ rng, turn: 0, actor: unit, target: unit, flags }, eff)
+        pushLog({
+          turn: 0, actorId: unit.wizard.id, actorSide: unit.side, action: 'Reliquia',
+          targetId: unit.wizard.id, targetSide: unit.side, type: 'system', value: r.value, flags,
+        })
+      }
+    }
+  }
+  // onBattleStart: apply collected specs to every right unit.
+  // Guarded by specsR.length so an empty enemy-relic set draws no rng and logs nothing.
+  {
+    const ctxR = (u: BattleUnit): HookCtx => ({ turn: 0, actor: u, side: 'right', flags: [] })
+    const specsR = bus.collectReactive('onBattleStart', ctxR(R[0] ?? ({} as BattleUnit)))
+    for (const eff of specsR) {
+      for (const unit of R) {
         const flags: LogFlag[] = []
         const r = EFFECT_HANDLERS[eff.kind]({ rng, turn: 0, actor: unit, target: unit, flags }, eff)
         pushLog({
