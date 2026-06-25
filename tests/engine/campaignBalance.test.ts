@@ -76,12 +76,14 @@ describe('campaign difficulty curve', () => {
     // full clear now requires surviving every floor AND the boss with a roster
     // intact enough to win. After the C1 fix (the snapshot/roster path no longer
     // clobbers a surviving player with a same-id enemy entry — survivors are kept,
-    // not dropped) the clear rate rose to ~0.04 measured (n=200). The intent we
+    // not dropped) the clear rate rose to ~0.04 measured (n=200). Assigning traits
+    // to all 60 wizards made enemies meaningfully tougher; the new measured rate
+    // settled at ~0.015–0.016 (n=200 and n=500, deterministic). The intent we
     // protect is unchanged: the campaign is still WINNABLE for optimal play (clears
-    // happen, rate > 0) yet far from a guaranteed clear (no pushover). Floor set
-    // ~half the measured rate (0.02, meaningfully > 0 — guards "still winnable");
-    // the upper bound (no-pushover) is left wide and unchanged.
-    expect(stats.clearRate).toBeGreaterThan(0.02)
+    // happen, rate > 0) yet far from a guaranteed clear (no pushover). Floor re-based
+    // to ~half the new measured rate (0.008, meaningfully > 0 — guards "still
+    // winnable"); the upper bound (no-pushover) is left wide and unchanged.
+    expect(stats.clearRate).toBeGreaterThan(0.008)
     expect(stats.clearRate).toBeLessThan(0.72)
   })
 

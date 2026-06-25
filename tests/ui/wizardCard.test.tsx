@@ -110,8 +110,10 @@ describe('WizardCard compact', () => {
   })
 
   it('shows no trait chips for a trait-less wizard', () => {
-    // ron has no traits field in data/wizards.ts
-    const draftless = draftWizard(createRng(1), WIZARD_BY_ID['ron']!)
+    // All wizards now carry traits — synthesize a trait-less wizard by drafting ron
+    // and stripping its traits array before rendering.
+    const base = draftWizard(createRng(1), WIZARD_BY_ID['ron']!)
+    const draftless = { ...base, wizard: { ...base.wizard, traits: [] } }
     render(<WizardCard drafted={draftless} />)
     // No chip matching any catalog trait name.
     for (const id of Object.keys(TRAIT_BY_ID)) {

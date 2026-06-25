@@ -45,10 +45,12 @@ describe('relics in combat', () => {
   })
 
   it('onHit relic (boccino-doro) produces dot flags vs a no-relic run', () => {
-    // seed 23: with boccino-doro the left team's onHit poison fires; seed 9 no longer
-    // produces dots now that Bellatrix carries sifone (shifts turn order / battle length).
-    const withRelic = simulateBattle(team(1), team(2), createRng(23), { leftRelics: [ar('boccino-doro')] })
-    const without = simulateBattle(team(1), team(2), createRng(23))
+    // seed 6: dotWith=5, dotWithout=0 — the left roster (WIZARDS[0-4]) has no veleno
+    // trait, so the only dot source in the baseline run is the relic itself.
+    // seed 23 no longer works now that all 60 wizards carry traits (Snape at index 3
+    // has veleno, so the no-relic baseline also produces dots at that seed).
+    const withRelic = simulateBattle(team(1), team(2), createRng(6), { leftRelics: [ar('boccino-doro')] })
+    const without = simulateBattle(team(1), team(2), createRng(6))
     const dotWith = withRelic.log.filter(e => e.flags.includes('dot')).length
     const dotWithout = without.log.filter(e => e.flags.includes('dot')).length
     expect(dotWith).toBeGreaterThan(dotWithout)
