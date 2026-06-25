@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { DraftedWizard } from '@/types'
 import { useDraft } from '@/hooks/useDraft'
 import { SquadPanel } from '@/components/draft/SquadPanel'
@@ -20,8 +20,16 @@ export function DraftScreen({ seed, onComplete }: { seed: string; onComplete: (t
   const current_rows = synergyProgress(picks)
   const activeSynergies = current_rows.filter((s) => s.active).length
   const rows = considered ? previewSynergies(picks, considered) : current_rows
-  const hotByCandidate = (c: DraftedWizard): ReadonlySet<string> =>
-    new Set(previewSynergies(picks, c).filter((p) => p.advances).map((p) => p.synergy.id))
+  // Memoize the per-candidate "hot synergy" sets so they keep a stable identity
+  // across re-renders (e.g. when `considered` changes on hover). Recomputing a new
+  // Set for every candidate on every render was a source of hover churn.
+  const hotByCandidate = useMemo(() => {
+    const m = new Map<string, ReadonlySet<string>>()
+    for (const c of current) {
+      m.set(c.wizard.id, new Set(previewSynergies(picks, c).filter((p) => p.advances).map((p) => p.synergy.id)))
+    }
+    return m
+  }, [current, picks])
 
   if (done) return <main className="flex-1" />
 
@@ -53,17 +61,15 @@ export function DraftScreen({ seed, onComplete }: { seed: string; onComplete: (t
         Two-column on desktop (md+): candidates left, tracker right rail.
       */}
       <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 p-4 md:grid-cols-[1fr_280px]">
-        {/* Candidates: single column on mobile (one under the other), 2-up on
-            small screens, 3-up on large. */}
         <section
-          className="grid grid-cols-1 items-start justify-items-center gap-5 sm:grid-cols-2 lg:grid-cols-3"
+          className="grid grid-cols-1 gap-4"
           onPointerLeave={() => setConsidered(null)}
         >
           {current.map((c, i) => (
             <DraftCandidateCard
               key={c.wizard.id}
               drafted={c}
-              hotSynergyIds={hotByCandidate(c)}
+              hotSynergyIds={hotByCandidate.get(c.wizard.id)}
               onConsider={() => setConsidered(c)}
               onPick={() => { setConsidered(null); pick(i) }}
             />
