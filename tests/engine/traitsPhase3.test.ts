@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { TRAIT_BY_ID } from '@/data/traits'
+import { applyInlineEffect, effectiveStats } from '@/game/engine/status'
 import type { BattleUnit, HookCtx, EffectSpec } from '@/types'
 
 const STUB_SPELL = { id: 'stub', name: 'Stub', desc: '', type: 'Attacco' as const, hitChance: 1 }
@@ -84,5 +85,39 @@ describe('Phase 3 turn-start self traits', () => {
       expect(eff.target).toBe('self')
       expect(eff.effect).toMatchObject({ kind: 'buff', stat: 'spd' })
     }
+  })
+})
+
+describe('Phase 3 conditional self-buff traits', () => {
+  it('Crescendo buffs the actor atk at turn start', () => {
+    const [eff] = reactiveEffects('crescendo')
+    expect(eff.kind).toBe('applyStatus')
+    if (eff.kind === 'applyStatus') {
+      expect(eff.target).toBe('self')
+      expect(eff.effect).toMatchObject({ kind: 'buff', stat: 'atk' })
+    }
+    const t = TRAIT_BY_ID['crescendo']!.trigger
+    if (t.kind === 'reactive') expect(t.hook).toBe('onTurnStart')
+  })
+
+  it('Vendetta buffs the actor atk when an ally dies', () => {
+    const [eff] = reactiveEffects('vendetta')
+    expect(eff.kind).toBe('applyStatus')
+    if (eff.kind === 'applyStatus') {
+      expect(eff.target).toBe('self')
+      expect(eff.effect).toMatchObject({ kind: 'buff', stat: 'atk' })
+    }
+    const t = TRAIT_BY_ID['vendetta']!.trigger
+    if (t.kind === 'reactive') expect(t.hook).toBe('onAllyDeath')
+  })
+
+  it('Crescendo stacks: applying it twice raises effective atk more than once', () => {
+    const unit = u()
+    const inlineEff = { kind: 'buff' as const, stat: 'atk' as const, amount: 6, duration: 3 }
+    applyInlineEffect(unit, inlineEff)
+    const atkAfter1 = effectiveStats(unit).atk
+    applyInlineEffect(unit, inlineEff)
+    const atkAfter2 = effectiveStats(unit).atk
+    expect(atkAfter2).toBeGreaterThan(atkAfter1)
   })
 })

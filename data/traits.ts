@@ -26,6 +26,11 @@ const REGEN_DURATION = 3
 const ANTICIPATE_SPD = 10
 const ANTICIPATE_DURATION = 1
 
+const CRESCENDO_ATK = 6
+const CRESCENDO_DURATION = 3
+const VENDETTA_ATK = 30
+const VENDETTA_DURATION = 3
+
 export const TRAITS: Trait[] = [
   {
     id: 'esecuzione', name: 'Esecuzione',
@@ -137,6 +142,22 @@ export const TRAITS: Trait[] = [
     trigger: {
       kind: 'reactive', hook: 'onTurnStart', owner: 'actor',
       effects: () => [{ kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'spd', amount: ANTICIPATE_SPD, duration: ANTICIPATE_DURATION } }],
+    },
+  },
+  {
+    id: 'crescendo', name: 'Crescendo',
+    desc: 'Più dura lo scontro, più diventa forte.',
+    trigger: {
+      kind: 'reactive', hook: 'onTurnStart', owner: 'actor',
+      effects: () => [{ kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'atk', amount: CRESCENDO_ATK, duration: CRESCENDO_DURATION } }],
+    },
+  },
+  {
+    id: 'vendetta', name: 'Vendetta',
+    desc: 'Quando un alleato cade, si infuria (+ATT).',
+    trigger: {
+      kind: 'reactive', hook: 'onAllyDeath', owner: 'actor',
+      effects: () => [{ kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'atk', amount: VENDETTA_ATK, duration: VENDETTA_DURATION } }],
     },
   },
 ]
