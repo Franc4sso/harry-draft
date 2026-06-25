@@ -9,7 +9,6 @@ import { BattleArena } from '@/components/battle/BattleArena'
 import { ActionPanel } from '@/components/battle/ActionPanel'
 import { BattleLog } from '@/components/battle/BattleLog'
 import { BattleRecap } from '@/components/battle/BattleRecap'
-import { StatusLegend } from '@/components/battle/StatusLegend'
 import { Button } from '@/components/ui/Button'
 import { SynergyRibbon } from '@/components/battle/SynergyRibbon'
 import { lastRealEntryAt } from '@/lib/initiative'
@@ -59,31 +58,31 @@ export function BattleScreen({
         </p>
       </div>
 
-      <div className="grid w-full max-w-5xl grid-cols-1 lg:grid-cols-[5rem_1fr_12rem] gap-4 items-start">
+      <div className="grid w-full max-w-5xl grid-cols-1 lg:grid-cols-[7rem_1fr_13rem] gap-4 items-start">
         <div className="hidden lg:block">
           <InitiativeBar replay={replay} index={r.index} />
         </div>
 
         <div className="flex flex-col items-center gap-3 min-w-0">
-          <div className="flex w-full items-start justify-between gap-3">
-            <SynergyRibbon synergies={playerSyn} relics={playerRelics ?? []} align="left" title="Le tue sinergie" tone="ally" />
-            <SynergyRibbon synergies={enemySyn} align="right" title="Sinergie nemiche" tone="enemy" />
-          </div>
+          <SynergyRibbon synergies={playerSyn} relics={playerRelics ?? []} align="left" title="Le tue sinergie" tone="ally" />
           <BattleArena
             replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle}
             center={<ActionPanel entry={stickyEntry} units={replay.units} />}
           />
+          <SynergyRibbon synergies={enemySyn} align="left" title="Sinergie nemiche" tone="enemy" />
         </div>
 
-        <div className="hidden lg:block">
-          <StatusLegend defaultOpen />
+        <div className="hidden lg:flex lg:flex-col gap-3">
+          <BattleRecap frames={replay.frames.slice(0, r.index + 1)} units={replay.units} side="left" title="I tuoi danni" tone="ally" />
+          <BattleRecap frames={replay.frames.slice(0, r.index + 1)} units={replay.units} side="right" title="Danni nemici" tone="enemy" />
         </div>
       </div>
 
-      {/* initiative + legend stack here so small screens still get them */}
+      {/* initiative + recaps stack here so small screens still get them */}
       <div className="flex flex-col items-center gap-3 lg:hidden w-full">
         <InitiativeBar replay={replay} index={r.index} />
-        <StatusLegend />
+        <BattleRecap frames={replay.frames.slice(0, r.index + 1)} units={replay.units} side="left" title="I tuoi danni" tone="ally" />
+        <BattleRecap frames={replay.frames.slice(0, r.index + 1)} units={replay.units} side="right" title="Danni nemici" tone="enemy" />
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
@@ -113,7 +112,6 @@ export function BattleScreen({
         )}
       </div>
 
-      <BattleRecap frames={replay.frames.slice(0, r.index + 1)} units={replay.units} side="left" />
       <BattleLog
         entries={replay.frames.slice(1, r.index + 1).map(f => f.entry!)}
         units={replay.units}

@@ -324,8 +324,30 @@ describe('BattleScreen', () => {
         enemy={r} enemySyn={detectSynergies(r)} title="Sfida 1 di 5" onFinish={() => {}}
       />,
     )
-    expect(screen.getByText(/Le tue sinergie/i)).toBeInTheDocument()
-    expect(screen.getByText(/Sinergie nemiche/i)).toBeInTheDocument()
+    // Both ribbons render twice (desktop + below-lg); getAllByText asserts presence.
+    expect(screen.getAllByText(/Le tue sinergie/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/Sinergie nemiche/i).length).toBeGreaterThanOrEqual(1)
+  })
+
+  function renderBattleScreen() {
+    const l = left(), r = right()
+    const result = simulateBattle(l, r, createRng(42), {
+      leftSyn: detectSynergies(l), rightSyn: detectSynergies(r),
+    })
+    render(
+      <BattleScreen
+        result={result} playerTeam={l} playerSyn={detectSynergies(l)}
+        enemy={r} enemySyn={detectSynergies(r)} title="Sfida 1 di 5" onFinish={() => {}}
+      />,
+    )
+  }
+
+  it('shows dual damage recaps and no status legend', () => {
+    renderBattleScreen()
+    // Both recaps render twice (desktop grid + below-lg block); getAllByText asserts at least one present.
+    expect(screen.getAllByText(/I tuoi danni/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByText(/Danni nemici/i).length).toBeGreaterThanOrEqual(1)
+    expect(screen.queryByTestId('status-legend')).toBeNull()
   })
 })
 
