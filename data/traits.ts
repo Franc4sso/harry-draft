@@ -15,6 +15,11 @@ const STUN_DURATION = 1
 const SILENCE_DURATION = 2
 const DISARM_DURATION = 2
 
+const POISON_CHANCE = 0.5
+const POISON_DURATION = 2
+const ATTRITION_CHANCE = 0.4
+const ATTRITION_DURATION = 2
+
 export const TRAITS: Trait[] = [
   {
     id: 'esecuzione', name: 'Esecuzione',
@@ -86,6 +91,22 @@ export const TRAITS: Trait[] = [
     trigger: {
       kind: 'reactive', hook: 'onHit', owner: 'actor',
       effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'disarm', chance: CONTROL_CHANCE, duration: DISARM_DURATION }],
+    },
+  },
+  {
+    id: 'veleno', name: 'Veleno',
+    desc: 'I suoi colpi avvelenano: danno nel tempo al bersaglio.',
+    trigger: {
+      kind: 'reactive', hook: 'onHit', owner: 'actor',
+      effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'burn', chance: POISON_CHANCE, duration: POISON_DURATION }],
+    },
+  },
+  {
+    id: 'logoramento', name: 'Logoramento',
+    desc: 'I suoi colpi rallentano il bersaglio (-VEL).',
+    trigger: {
+      kind: 'reactive', hook: 'onHit', owner: 'actor',
+      effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'slow', chance: ATTRITION_CHANCE, duration: ATTRITION_DURATION }],
     },
   },
 ]

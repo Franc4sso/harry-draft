@@ -47,3 +47,17 @@ describe('Phase 3 control-on-hit traits', () => {
     if (eff.kind === 'applyStatus') expect(eff.chance).toBeGreaterThan(0)
   })
 })
+
+describe('Phase 3 dot + slow traits', () => {
+  it('Veleno applies a burn (dot) to the enemy on hit', () => {
+    const [eff] = reactiveEffects('veleno')
+    expect(eff).toMatchObject({ kind: 'applyStatus', target: 'enemy', statusId: 'burn' })
+    if (eff.kind === 'applyStatus') expect(eff.chance).toBeGreaterThan(0.18)
+  })
+
+  it('Logoramento applies a slow (spd debuff) to the enemy on hit', () => {
+    const [eff] = reactiveEffects('logoramento')
+    expect(eff).toMatchObject({ kind: 'applyStatus', target: 'enemy', statusId: 'slow' })
+    if (eff.kind === 'applyStatus') expect(eff.chance).toBeGreaterThan(0.18)
+  })
+})
