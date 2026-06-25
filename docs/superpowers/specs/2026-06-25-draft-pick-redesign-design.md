@@ -80,10 +80,10 @@ destra da `sm` in su e **scende sotto le stat** (wrap) su mobile.
   `box-shadow`/bordo (glow casata intensificato) ed eventuale sheen via classe CSS.
 - Click = pick (riuso `role="button"`, `tabIndex`, gestione tastiera Enter/Spazio come oggi).
 
-**Estrazione condivisa:** estrarre la cella stat in un piccolo presentational `StatBar`
-(`components/cards/StatBar.tsx`) riusato dalla row (e opzionalmente dalla verticale, senza cambiarne il
-rendering). Tutta la formattazione resta nei helper esistenti (`lib/glossary`, `lib/affiliationChips`,
-`data/traits`).
+**Cella stat:** il nome `StatBar` è già occupato da `components/battle/StatBar.tsx` (API diversa), quindi
+la cella stat resta **inline** nella row (piccola, ~12 righe) invece di essere estratta in un componente
+condiviso — così `WizardCard` non va toccata. Tutta la formattazione resta nei helper esistenti
+(`lib/glossary`, `lib/affiliationChips`, `data/traits`).
 
 ### 2. `components/draft/DraftCandidateCard.tsx` (modifica)
 
@@ -151,7 +151,6 @@ provoca re-render, non i loro valori.
 | File | Azione |
 |------|--------|
 | `components/cards/WizardCardRow.tsx` | **nuovo** — card orizzontale cinematografica |
-| `components/cards/StatBar.tsx` | **nuovo** — cella stat condivisa (estratta) |
 | `components/draft/DraftCandidateCard.tsx` | rende la row, full-width |
 | `components/screens/DraftScreen.tsx` | colonna unica + memo `hotByCandidate` |
 | `components/draft/SynergyTracker.tsx` | ordine stabile, altezze fisse, transizioni |
