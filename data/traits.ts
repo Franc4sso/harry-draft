@@ -122,7 +122,7 @@ export const TRAITS: Trait[] = [
   },
   {
     id: 'ferocia', name: 'Ferocia',
-    desc: 'Ogni colpo che mette a segno aumenta il suo attacco.',
+    desc: 'Mettendo a segno un colpo rinforza il suo attacco.',
     trigger: {
       kind: 'reactive', hook: 'onHit', owner: 'actor',
       effects: () => [{ kind: 'applyStatus', target: 'self', statusId: 'atkUp', duration: FEROCITY_DURATION }],
