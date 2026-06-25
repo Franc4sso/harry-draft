@@ -28,7 +28,7 @@ export function StatusLegend({ defaultOpen = false }: { defaultOpen?: boolean })
         <Info size={13} aria-hidden /> Legenda stati
       </button>
       {open && (
-        <ul className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
+        <ul className="mt-2 flex flex-col gap-1 text-[11px]">
           {LEGEND.map((s) => (
             <li key={s.name} className="flex justify-between gap-2">
               <span className="font-semibold text-white/80">{s.name}</span>

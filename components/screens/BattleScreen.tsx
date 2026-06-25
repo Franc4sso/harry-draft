@@ -59,17 +59,32 @@ export function BattleScreen({
         </p>
       </div>
 
-      <InitiativeBar replay={replay} index={r.index} />
+      <div className="grid w-full max-w-5xl grid-cols-1 lg:grid-cols-[5rem_1fr_12rem] gap-4 items-start">
+        <div className="hidden lg:block">
+          <InitiativeBar replay={replay} index={r.index} />
+        </div>
 
-      <div className="flex w-full max-w-3xl items-start justify-between gap-4 px-1">
-        <SynergyRibbon synergies={playerSyn} relics={playerRelics ?? []} align="left" />
-        <SynergyRibbon synergies={enemySyn} align="right" />
+        <div className="flex flex-col items-center gap-3 min-w-0">
+          <div className="flex w-full items-start justify-between gap-3">
+            <SynergyRibbon synergies={playerSyn} relics={playerRelics ?? []} align="left" title="Le tue sinergie" tone="ally" />
+            <SynergyRibbon synergies={enemySyn} align="right" title="Sinergie nemiche" tone="enemy" />
+          </div>
+          <BattleArena
+            replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle}
+            center={<ActionPanel entry={stickyEntry} units={replay.units} />}
+          />
+        </div>
+
+        <div className="hidden lg:block">
+          <StatusLegend defaultOpen />
+        </div>
       </div>
 
-      <BattleArena
-        replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle}
-        center={<ActionPanel entry={stickyEntry} units={replay.units} />}
-      />
+      {/* initiative + legend stack here so small screens still get them */}
+      <div className="flex flex-col items-center gap-3 lg:hidden w-full">
+        <InitiativeBar replay={replay} index={r.index} />
+        <StatusLegend />
+      </div>
 
       <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
         {!r.done ? (
@@ -98,7 +113,6 @@ export function BattleScreen({
         )}
       </div>
 
-      <StatusLegend />
       <BattleRecap frames={replay.frames.slice(0, r.index + 1)} units={replay.units} side="left" />
       <BattleLog
         entries={replay.frames.slice(1, r.index + 1).map(f => f.entry!)}

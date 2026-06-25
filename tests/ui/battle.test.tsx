@@ -307,7 +307,25 @@ describe('BattleScreen', () => {
         enemy={r} enemySyn={detectSynergies(r)} title="Sfida 1 di 5" onFinish={() => {}}
       />,
     )
-    expect(screen.queryByText(/azione/i)).toBeNull()
+    // The header (h1 + subtitle) must not contain an action counter.
+    // (StatusLegend text like "nessuna azione" is intentionally excluded from this check.)
+    const header = screen.getByRole('heading', { level: 1 }).closest('div')!
+    expect(header.textContent).not.toMatch(/\bazione\b/i)
+  })
+
+  it('shows separate labeled mine/enemy synergy ribbons', () => {
+    const l = left(), r = right()
+    const result = simulateBattle(l, r, createRng(42), {
+      leftSyn: detectSynergies(l), rightSyn: detectSynergies(r),
+    })
+    render(
+      <BattleScreen
+        result={result} playerTeam={l} playerSyn={detectSynergies(l)}
+        enemy={r} enemySyn={detectSynergies(r)} title="Sfida 1 di 5" onFinish={() => {}}
+      />,
+    )
+    expect(screen.getByText(/Le tue sinergie/i)).toBeInTheDocument()
+    expect(screen.getByText(/Sinergie nemiche/i)).toBeInTheDocument()
   })
 })
 
