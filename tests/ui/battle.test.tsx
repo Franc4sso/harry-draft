@@ -342,6 +342,14 @@ describe('BattleScreen', () => {
     )
   }
 
+  it('renders the playback controls above the battle grid', () => {
+    renderBattleScreen()
+    const passo = screen.getByRole('button', { name: /Passo/i })
+    const arena = screen.getByTestId('battle-arena')
+    // Controls appear before the arena in the DOM.
+    expect(passo.compareDocumentPosition(arena) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  })
+
   it('shows dual damage recaps and no status legend', () => {
     renderBattleScreen()
     // Both recaps render twice (desktop grid + below-lg block); getAllByText asserts at least one present.

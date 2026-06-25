@@ -12,6 +12,7 @@ import { BattleRecap } from '@/components/battle/BattleRecap'
 import { Button } from '@/components/ui/Button'
 import { SynergyRibbon } from '@/components/battle/SynergyRibbon'
 import { lastRealEntryAt } from '@/lib/initiative'
+import { BattleEndModal } from '@/components/battle/BattleEndModal'
 
 export function BattleScreen({
   result, playerTeam, playerSyn, playerRelics, enemy, enemySyn, title, rightTitle, onFinish,
@@ -58,6 +59,27 @@ export function BattleScreen({
         </p>
       </div>
 
+      {!r.done && (
+        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+          <Button variant="ghost" onClick={r.toggle} className="px-4" aria-label={r.playing ? 'Pausa' : 'Riproduci'}>
+            {r.playing ? <Pause size={18} /> : <Play size={18} />}
+          </Button>
+          <Button variant="ghost" onClick={r.step} className="px-4 gap-1 inline-flex items-center" aria-label="Passo">
+            <ChevronRight size={16} /> Passo
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => r.setSpeed(REPLAY_SPEEDS[(REPLAY_SPEEDS.indexOf(r.speed) + 1) % REPLAY_SPEEDS.length]!)}
+            className="px-4 gap-1 inline-flex items-center"
+          >
+            <FastForward size={16} /> {r.speed}×
+          </Button>
+          <Button variant="ghost" onClick={r.skip} className="px-4 gap-1 inline-flex items-center">
+            <SkipForward size={16} /> Salta
+          </Button>
+        </div>
+      )}
+
       <div className="grid w-full max-w-5xl grid-cols-1 lg:grid-cols-[7rem_1fr_13rem] gap-4 items-start">
         <div className="hidden lg:block">
           <InitiativeBar replay={replay} index={r.index} />
@@ -85,38 +107,15 @@ export function BattleScreen({
         <BattleRecap frames={replay.frames.slice(0, r.index + 1)} units={replay.units} side="right" title="Danni nemici" tone="enemy" />
       </div>
 
-      <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-        {!r.done ? (
-          <>
-            <Button variant="ghost" onClick={r.toggle} className="px-4" aria-label={r.playing ? 'Pausa' : 'Play'}>
-              {r.playing ? <Pause size={18} /> : <Play size={18} />}
-            </Button>
-            <Button variant="ghost" onClick={r.step} className="px-4 gap-1 inline-flex items-center" aria-label="Passo">
-              <ChevronRight size={16} /> Passo
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => r.setSpeed(REPLAY_SPEEDS[(REPLAY_SPEEDS.indexOf(r.speed) + 1) % REPLAY_SPEEDS.length]!)}
-              className="px-4 gap-1 inline-flex items-center"
-            >
-              <FastForward size={16} /> {r.speed}×
-            </Button>
-            <Button variant="ghost" onClick={r.skip} className="px-4 gap-1 inline-flex items-center">
-              <SkipForward size={16} /> Salta
-            </Button>
-          </>
-        ) : (
-          <Button onClick={onFinish}>
-            {result.winner === 'left' ? 'Continua' : 'Vedi esito'}
-          </Button>
-        )}
-      </div>
-
       <BattleLog
         entries={replay.frames.slice(1, r.index + 1).map(f => f.entry!)}
         units={replay.units}
         controlAt={controlAt}
       />
+
+      {r.done && (
+        <BattleEndModal outcome={result.winner === 'left' ? 'win' : 'loss'} onConfirm={onFinish} />
+      )}
     </main>
   )
 }
