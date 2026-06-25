@@ -28,8 +28,8 @@
 | Ruolo | Pool di tratti |
 |-------|----------------|
 | **Attaccante** | esecuzione, furia, ferocia, crescendo, veleno |
-| **Controllo** | pietrificazione, bavaglio, disarmo, logoramento, sifone |
-| **Supporto** | benedizione, rigenerazione, anticipo |
+| **Controllo** | pietrificazione, bavaglio, disarmo, logoramento, sifone, anticipo |
+| **Supporto** | benedizione, rigenerazione |
 | **Tank** | roccia, vendetta |
 
 Regola: ogni wizard riceve un tratto dal pool del suo ruolo. La scelta dentro il
@@ -67,7 +67,7 @@ Legenda: `id` → `[tratti]` · motivo.
 - `george` (Attaccante) → `[crescendo]` · gemello incalzante.
 - `molly` (Supporto) → `[benedizione]` · madre protettiva (scudo a chi cura).
 - `arthur` (Supporto) → `[rigenerazione]` · sostegno costante.
-- `tonks` (Controllo) → `[disarmo]` · auror, disarma gli avversari.
+- `tonks` (Controllo) → `[anticipo]` · metamorfomaga reattiva e velocissima, prende l'iniziativa.
 - `narcissa` (Supporto) → `[benedizione]` · protegge i suoi.
 - `dolohov` (Attaccante) → `[veleno]` · maledizioni persistenti.
 - `greyback` (Tank) → `[vendetta]` · belva che si scatena.
@@ -75,7 +75,7 @@ Legenda: `id` → `[tratti]` · motivo.
 - `cedric` (Attaccante) → `[ferocia]` · campione corretto ma incalzante.
 - `slughorn` (Supporto) → `[rigenerazione]` · pozioni di sostegno.
 - `hagrid` (Tank) → `[roccia]` · resistenza fisica enorme.
-- `flitwick` (Controllo) → `[disarmo]` · maestro di incantesimi (Expelliarmus).
+- `flitwick` (Controllo) → `[anticipo]` · piccolo e fulmineo, agisce per primo (spd più alta del roster).
 - `sprout` (Supporto) → `[rigenerazione]` · erbologia curativa.
 
 ### Tier 4
@@ -118,20 +118,18 @@ Conta per tratto (i 4 esistenti inclusi):
 - veleno: snape, draco, dolohov, blaise → 4
 - pietrificazione: dumbledore, cho, terry, theodore → 4
 - bavaglio: hermione, pansy, leanne → 3
-- disarmo: tonks, flitwick, padma → 3
+- disarmo: padma → 1
+- anticipo: tonks, flitwick → 2
 - logoramento: fred, parvati, zacharias, megan → 4
 - sifone: bellatrix → 1
 - roccia: mcgonagall, moody, kingsley, ron, hagrid, goyle, crabbe, anthony, ernie → 9
 - vendetta: moody, neville, greyback, roger, eloise → 5
 - benedizione: lupin, molly, narcissa, lavender, hannah, astoria → 6
 - rigenerazione: luna, arthur, slughorn, sprout, pettigrew, marietta, susan, penelope → 8
-- anticipo: — → 0
 
-**Nota su `anticipo` e `sifone`:** entrambi restano poco usati. `sifone` è già su
-bellatrix (esistente, invariato). `anticipo` (buff VEL a inizio turno) non capita
-nel pool Supporto naturale per nessun personaggio iconico; resta nel catalogo,
-assegnabile a mano se in futuro si vuole un Supporto/Controllo veloce. Questo è
-accettato: la copertura dei tratti non è un obiettivo, la coerenza di ruolo sì.
+**Nota su `sifone`:** resta su bellatrix soltanto (esistente, invariato). È una
+versione più debole di `logoramento` (anch'esso -VEL); tenerlo raro evita
+ridondanza. Tutti gli altri 14 tratti sono in gioco su almeno un wizard.
 
 ## File toccati
 
