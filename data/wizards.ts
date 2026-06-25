@@ -29,7 +29,7 @@ export const WIZARDS: Wizard[] = [
     id: 'snape', name: 'Severus Piton', house: 'Serpeverde', role: 'Attaccante', tier: 2,
     ranges: { hp: [70, 86], atk: [28, 37], def: [11, 16], spd: [19, 27] },
     spellPool: ['sectumsempra', 'levicorpus', 'confringo', 'reducto', 'stupeficium'],
-    traits: ['veleno'],
+    traits: ['veleno', 'frantumazione'],
   },
   {
     id: 'bellatrix', name: 'Bellatrix Lestrange', house: 'Serpeverde', role: 'Controllo', tier: 2,
@@ -140,7 +140,7 @@ export const WIZARDS: Wizard[] = [
     ranges: { hp: [72, 91], atk: [16, 22], def: [12, 17], spd: [22, 31] },
     spellPool: ['confundo', 'tarantallegra', 'flipendo', 'oppugno'],
     tags: ['weasley'],
-    traits: ['logoramento'],
+    traits: ['logoramento', 'frantumazione'],
   },
   {
     id: 'george', name: 'George Weasley', house: 'Grifondoro', role: 'Attaccante', tier: 3,
@@ -196,7 +196,7 @@ export const WIZARDS: Wizard[] = [
     ranges: { hp: [70, 89], atk: [16, 22], def: [11, 17], spd: [22, 31] },
     spellPool: ['confundo', 'levicorpus', 'tarantallegra', 'reducto'],
     tags: ['da'],
-    traits: ['pietrificazione'],
+    traits: ['pietrificazione', 'gelo'],
   },
   {
     id: 'cedric', name: 'Cedric Diggory', house: 'Tassorosso', role: 'Attaccante', tier: 3,
@@ -220,7 +220,7 @@ export const WIZARDS: Wizard[] = [
     id: 'flitwick', name: 'Filius Vitious', house: 'Corvonero', role: 'Controllo', tier: 3,
     ranges: { hp: [68, 87], atk: [16, 22], def: [11, 17], spd: [25, 33] },
     spellPool: ['confundo', 'levicorpus', 'petrificus', 'tarantallegra', 'langlock'],
-    traits: ['anticipo'],
+    traits: ['anticipo', 'gelo'],
   },
   {
     id: 'sprout', name: 'Pomona Sprite', house: 'Tassorosso', role: 'Supporto', tier: 3,

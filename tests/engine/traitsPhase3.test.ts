@@ -70,9 +70,9 @@ describe('Phase 3 dot + slow traits', () => {
     expect(eff.chance).toBeGreaterThan(0.18)
   })
 
-  it('Logoramento applies a slow (spd debuff) to the enemy on hit', () => {
+  it('Logoramento applies weaken2 (atk debuff) to the enemy on hit', () => {
     const eff = firstApplyStatus('logoramento')
-    expect(eff).toMatchObject({ kind: 'applyStatus', target: 'enemy', statusId: 'slow' })
+    expect(eff).toMatchObject({ kind: 'applyStatus', target: 'enemy', statusId: 'weaken2' })
     expect(eff.chance).toBeGreaterThan(0.18)
   })
 })
@@ -128,21 +128,21 @@ describe('Phase 3 conditional self-buff traits', () => {
 })
 
 describe('Phase 3 traits fire in real battle on both sides', () => {
-  it('Logoramento on a RIGHT-side unit slows the LEFT player it hits', () => {
+  it('Logoramento on a RIGHT-side unit weakens (-ATT) the LEFT player it hits', () => {
     const harry = draftWizard(createRng(1), WIZARDS.find(w => w.id === 'harry')!)
     const enemyBase = WIZARDS.find(w => w.id === 'bellatrix')!
     // Inject the trait without editing data/wizards.ts (out of scope).
     // Property path confirmed: simulateBattle reads u.wizard.traits (game/engine/traits.ts:9)
     const enemy = draftWizard(createRng(2), { ...enemyBase, traits: ['logoramento'] })
     // Seeds [4,5,6,7,8] tried; at least one lets the enemy land 2+ hits on Harry
-    // triggering Logoramento's slow. Widened to [1..15] if needed.
-    const slowed = [4, 5, 6, 7, 8].some(seed => {
+    // triggering Logoramento's weaken2. Widened to [1..15] if needed.
+    const weakened = [4, 5, 6, 7, 8].some(seed => {
       const res = simulateBattle([harry], [enemy], createRng(seed))
       return res.snapshots.some(s =>
         Object.values(s).some(unit =>
           unit.statusEffects.some(e =>
-            (e.statusId === 'slow') || (e.kind === 'debuff' && e.stat === 'spd'))))
+            e.statusId === 'weaken2')))
     })
-    expect(slowed).toBe(true)
+    expect(weakened).toBe(true)
   })
 })

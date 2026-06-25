@@ -5,12 +5,10 @@ const EXECUTE_MULT = 1.5
 const FURY_MAX_BONUS = 0.6     // up to +60% at 1 HP
 const ROCK_REDUCTION = 0.2     // -20% incoming
 
-const SIPHON_SPD = 8
-const SIPHON_DURATION = 2
 const BLESS_SHIELD = 25
 const BLESS_DURATION = 2
 
-const CONTROL_CHANCE = 0.18
+const CONTROL_CHANCE = 0.3
 const STUN_DURATION = 1
 const SILENCE_DURATION = 2
 const DISARM_DURATION = 2
@@ -66,10 +64,10 @@ export const TRAITS: Trait[] = [
   },
   {
     id: 'sifone', name: 'Sifone',
-    desc: 'I suoi colpi rallentano il bersaglio (-VEL).',
+    desc: 'I suoi colpi rallentano il bersaglio (-VEL%).',
     trigger: {
       kind: 'reactive', hook: 'onHit', owner: 'actor',
-      effects: () => [{ kind: 'applyStatus', target: 'enemy', effect: { kind: 'debuff', stat: 'spd', amount: SIPHON_SPD, duration: SIPHON_DURATION } }],
+      effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'slow1' }],
     },
   },
   {
@@ -114,10 +112,10 @@ export const TRAITS: Trait[] = [
   },
   {
     id: 'logoramento', name: 'Logoramento',
-    desc: 'I suoi colpi rallentano il bersaglio (-VEL).',
+    desc: 'I suoi colpi indeboliscono il bersaglio (-ATT%).',
     trigger: {
       kind: 'reactive', hook: 'onHit', owner: 'actor',
-      effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'slow', chance: ATTRITION_CHANCE, duration: ATTRITION_DURATION }],
+      effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'weaken2', chance: ATTRITION_CHANCE, duration: ATTRITION_DURATION }],
     },
   },
   {
@@ -158,6 +156,22 @@ export const TRAITS: Trait[] = [
     trigger: {
       kind: 'reactive', hook: 'onAllyDeath', owner: 'actor',
       effects: () => [{ kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'atk', amount: VENDETTA_ATK, duration: VENDETTA_DURATION } }],
+    },
+  },
+  {
+    id: 'frantumazione', name: 'Frantumazione',
+    desc: 'I suoi colpi aprono la difesa del bersaglio (-DIF%).',
+    trigger: {
+      kind: 'reactive', hook: 'onHit', owner: 'actor',
+      effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'expose2', chance: 0.5, duration: 2 }],
+    },
+  },
+  {
+    id: 'gelo', name: 'Gelo',
+    desc: 'I suoi colpi possono congelare il bersaglio (salta il turno).',
+    trigger: {
+      kind: 'reactive', hook: 'onHit', owner: 'actor',
+      effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'freeze', chance: 0.25, duration: 2 }],
     },
   },
 ]

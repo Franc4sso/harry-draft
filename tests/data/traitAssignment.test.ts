@@ -4,8 +4,8 @@ import { TRAIT_BY_ID } from '@/data/traits'
 
 /** The trait pool each role may draw from (must match the design spec). */
 const ROLE_POOLS: Record<string, string[]> = {
-  Attaccante: ['esecuzione', 'furia', 'ferocia', 'crescendo', 'veleno'],
-  Controllo: ['pietrificazione', 'bavaglio', 'disarmo', 'logoramento', 'sifone', 'anticipo'],
+  Attaccante: ['esecuzione', 'furia', 'ferocia', 'crescendo', 'veleno', 'frantumazione'],
+  Controllo: ['pietrificazione', 'bavaglio', 'disarmo', 'logoramento', 'sifone', 'anticipo', 'frantumazione', 'gelo'],
   Supporto: ['benedizione', 'rigenerazione'],
   Tank: ['roccia', 'vendetta'],
 }
