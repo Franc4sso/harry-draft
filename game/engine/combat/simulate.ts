@@ -163,7 +163,7 @@ export function simulateBattle(
       const enemies = actor.side === 'left' ? R : L
       const spell = selectSpell(actor)
       const healIntent = spell.type === 'Cura'
-      const target = selectTarget(actor, allies, enemies)
+      const target = selectTarget(actor, allies, enemies, spell)
       if (!target) { fireReactive('onTurnEnd', actor, turn); continue }
       const realTarget = healIntent
         ? (mostWounded(allies.filter(a => a.alive)) ?? actor)

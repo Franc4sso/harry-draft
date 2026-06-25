@@ -1,6 +1,29 @@
-import type { BattleUnit } from '@/types'
+import type { BattleUnit, Spell } from '@/types'
 import { BALANCE } from '@/data/constants'
 import { effectiveStats } from '../status'
+import { normalizeSpell } from './normalizeSpell'
+import { STATUS_BY_ID } from '@/data/statuses'
+
+const CONTROL_KINDS = new Set(['stun', 'freeze', 'silence', 'disarm'])
+
+/** The set of control kinds a spell applies to its enemy target (empty for non-control spells). */
+export function appliesControl(spell: Spell): Set<string> {
+  const out = new Set<string>()
+  for (const eff of normalizeSpell(spell)) {
+    if (eff.kind !== 'applyStatus' || eff.target !== 'enemy') continue
+    const kind = eff.statusId ? STATUS_BY_ID[eff.statusId]?.kind : eff.effect?.kind
+    if (kind && CONTROL_KINDS.has(kind)) out.add(kind)
+  }
+  return out
+}
+
+/** True if `unit` already has an active status of any kind in `kinds`. */
+function underAnyControl(unit: BattleUnit, kinds: Set<string>): boolean {
+  return unit.statusEffects.some(e => {
+    const k = e.statusId ? STATUS_BY_ID[e.statusId]?.kind : e.kind
+    return !!k && kinds.has(k)
+  })
+}
 
 function lowestHp(units: BattleUnit[]): BattleUnit | undefined {
   return units.slice().sort((a, b) => a.hp - b.hp || a.wizard.id.localeCompare(b.wizard.id))[0]
@@ -41,19 +64,29 @@ export function selectTarget(
   actor: BattleUnit,
   allies: BattleUnit[],
   enemies: BattleUnit[],
+  spell?: Spell,
 ): BattleUnit | undefined {
   const liveEnemies = enemies.filter(e => e.alive)
   const liveAllies = allies.filter(a => a.alive)
 
+  // Control spells prefer enemies not already under that control; if everyone is
+  // controlled, fall back to the full live pool (still attack, no wasted priority).
+  const control = spell ? appliesControl(spell) : new Set<string>()
+  const enemyPool = control.size > 0
+    ? (liveEnemies.filter(e => !underAnyControl(e, control)).length
+        ? liveEnemies.filter(e => !underAnyControl(e, control))
+        : liveEnemies)
+    : liveEnemies
+
   switch (actor.wizard.role) {
     case 'Supporto':
-      return mostWounded(liveAllies) ?? lowestHp(liveEnemies)
+      return mostWounded(liveAllies) ?? lowestHp(enemyPool)
     case 'Controllo':
-      return backlineTarget(liveEnemies)
+      return backlineTarget(enemyPool)
     case 'Tank':
-      return lowestHp(liveEnemies) // low damage by design; opportunistic finisher
+      return lowestHp(enemyPool)
     case 'Attaccante':
     default:
-      return highestThreat(liveEnemies) // taunt makes a live Tank the focus
+      return highestThreat(enemyPool)
   }
 }
