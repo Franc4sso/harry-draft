@@ -26,4 +26,9 @@ describe('SynergyRibbon', () => {
     const { container } = render(<SynergyRibbon synergies={[]} />)
     expect(container.querySelector('[data-testid="synergy-ribbon"]')).toBeNull()
   })
+  it('renders a title and an enemy tone accent', () => {
+    render(<SynergyRibbon synergies={[{ synergy: { id: 'x', name: 'Test', kind: 'house', requires: {}, bonus: {} }, memberIds: [] }] as any} title="Sinergie nemiche" tone="enemy" />)
+    expect(screen.getByText('Sinergie nemiche')).toBeInTheDocument()
+    expect(screen.getByTestId('synergy-ribbon').getAttribute('data-tone')).toBe('enemy')
+  })
 })
