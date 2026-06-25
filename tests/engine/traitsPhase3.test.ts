@@ -2,6 +2,9 @@ import { describe, it, expect } from 'vitest'
 import { TRAIT_BY_ID } from '@/data/traits'
 import { applyInlineEffect, effectiveStats } from '@/game/engine/status'
 import type { BattleUnit, HookCtx, EffectSpec } from '@/types'
+
+/** The applyStatus variant of EffectSpec — the only kind these traits emit. */
+type ApplyStatusSpec = Extract<EffectSpec, { kind: 'applyStatus' }>
 import { simulateBattle } from '@/game/engine/combat/simulate'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
@@ -25,6 +28,15 @@ function reactiveEffects(id: string): EffectSpec[] {
   return t.effects(ctx())
 }
 
+/** First effect of a reactive trait, narrowed to applyStatus (the only kind
+ *  these traits emit). Throws if the trait emits nothing or a different kind,
+ *  so the cast is guarded rather than blind. */
+function firstApplyStatus(id: string): ApplyStatusSpec {
+  const eff = reactiveEffects(id)[0]
+  if (!eff || eff.kind !== 'applyStatus') throw new Error(`${id} expected an applyStatus effect`)
+  return eff
+}
+
 describe('Phase 3 control-on-hit traits', () => {
   it('Pietrificazione applies a chance-gated stun to the enemy on hit', () => {
     const t = TRAIT_BY_ID['pietrificazione']!.trigger
@@ -32,85 +44,74 @@ describe('Phase 3 control-on-hit traits', () => {
     if (t.kind !== 'reactive') return
     expect(t.hook).toBe('onHit')
     expect(t.owner).toBe('actor')
-    const [eff] = t.effects(ctx())
+    const eff = firstApplyStatus('pietrificazione')
     expect(eff).toMatchObject({ kind: 'applyStatus', target: 'enemy', statusId: 'stun' })
-    if (eff.kind === 'applyStatus') {
-      expect(eff.chance).toBeGreaterThan(0)
-      expect(eff.chance).toBeLessThan(0.5)
-    }
+    expect(eff.chance).toBeGreaterThan(0)
+    expect(eff.chance).toBeLessThan(0.5)
   })
 
   it('Bavaglio applies a chance-gated silence to the enemy on hit', () => {
-    const [eff] = reactiveEffects('bavaglio')
+    const eff = firstApplyStatus('bavaglio')
     expect(eff).toMatchObject({ kind: 'applyStatus', target: 'enemy', statusId: 'silence' })
-    if (eff.kind === 'applyStatus') expect(eff.chance).toBeGreaterThan(0)
+    expect(eff.chance).toBeGreaterThan(0)
   })
 
   it('Disarmo applies a chance-gated disarm to the enemy on hit', () => {
-    const [eff] = reactiveEffects('disarmo')
+    const eff = firstApplyStatus('disarmo')
     expect(eff).toMatchObject({ kind: 'applyStatus', target: 'enemy', statusId: 'disarm' })
-    if (eff.kind === 'applyStatus') expect(eff.chance).toBeGreaterThan(0)
+    expect(eff.chance).toBeGreaterThan(0)
   })
 })
 
 describe('Phase 3 dot + slow traits', () => {
   it('Veleno applies a burn (dot) to the enemy on hit', () => {
-    const [eff] = reactiveEffects('veleno')
+    const eff = firstApplyStatus('veleno')
     expect(eff).toMatchObject({ kind: 'applyStatus', target: 'enemy', statusId: 'burn' })
-    if (eff.kind === 'applyStatus') expect(eff.chance).toBeGreaterThan(0.18)
+    expect(eff.chance).toBeGreaterThan(0.18)
   })
 
   it('Logoramento applies a slow (spd debuff) to the enemy on hit', () => {
-    const [eff] = reactiveEffects('logoramento')
+    const eff = firstApplyStatus('logoramento')
     expect(eff).toMatchObject({ kind: 'applyStatus', target: 'enemy', statusId: 'slow' })
-    if (eff.kind === 'applyStatus') expect(eff.chance).toBeGreaterThan(0.18)
+    expect(eff.chance).toBeGreaterThan(0.18)
   })
 })
 
 describe('Phase 3 self-buff-on-hit trait', () => {
   it('Ferocia buffs the ACTOR (self) on hit, not the enemy', () => {
-    const [eff] = reactiveEffects('ferocia')
+    const eff = firstApplyStatus('ferocia')
     expect(eff).toMatchObject({ kind: 'applyStatus', target: 'self', statusId: 'atkUp' })
   })
 })
 
 describe('Phase 3 turn-start self traits', () => {
   it('Rigenerazione grants the actor regen at turn start', () => {
-    const [eff] = reactiveEffects('rigenerazione')
+    const eff = firstApplyStatus('rigenerazione')
     expect(eff).toMatchObject({ kind: 'applyStatus', target: 'self', statusId: 'regen' })
     const t = TRAIT_BY_ID['rigenerazione']!.trigger
     if (t.kind === 'reactive') expect(t.hook).toBe('onTurnStart')
   })
 
   it('Anticipo grants the actor a spd buff at turn start', () => {
-    const [eff] = reactiveEffects('anticipo')
-    expect(eff.kind).toBe('applyStatus')
-    if (eff.kind === 'applyStatus') {
-      expect(eff.target).toBe('self')
-      expect(eff.effect).toMatchObject({ kind: 'buff', stat: 'spd' })
-    }
+    const eff = firstApplyStatus('anticipo')
+    expect(eff.target).toBe('self')
+    expect(eff.effect).toMatchObject({ kind: 'buff', stat: 'spd' })
   })
 })
 
 describe('Phase 3 conditional self-buff traits', () => {
   it('Crescendo buffs the actor atk at turn start', () => {
-    const [eff] = reactiveEffects('crescendo')
-    expect(eff.kind).toBe('applyStatus')
-    if (eff.kind === 'applyStatus') {
-      expect(eff.target).toBe('self')
-      expect(eff.effect).toMatchObject({ kind: 'buff', stat: 'atk' })
-    }
+    const eff = firstApplyStatus('crescendo')
+    expect(eff.target).toBe('self')
+    expect(eff.effect).toMatchObject({ kind: 'buff', stat: 'atk' })
     const t = TRAIT_BY_ID['crescendo']!.trigger
     if (t.kind === 'reactive') expect(t.hook).toBe('onTurnStart')
   })
 
   it('Vendetta buffs the actor atk when an ally dies', () => {
-    const [eff] = reactiveEffects('vendetta')
-    expect(eff.kind).toBe('applyStatus')
-    if (eff.kind === 'applyStatus') {
-      expect(eff.target).toBe('self')
-      expect(eff.effect).toMatchObject({ kind: 'buff', stat: 'atk' })
-    }
+    const eff = firstApplyStatus('vendetta')
+    expect(eff.target).toBe('self')
+    expect(eff.effect).toMatchObject({ kind: 'buff', stat: 'atk' })
     const t = TRAIT_BY_ID['vendetta']!.trigger
     if (t.kind === 'reactive') expect(t.hook).toBe('onAllyDeath')
   })
