@@ -103,4 +103,15 @@ describe('ActionPanel', () => {
     expect(p).toBeInTheDocument()
     expect(p.querySelector('[data-role="target"]')).toBeNull()
   })
+
+  it('renders a plain Italian narration sentence for a damage action', () => {
+    const dmgEntry: LogEntry = {
+      turn: 1, actorId: 'harry', actorSide: 'left', action: 'Expelliarmus',
+      targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 30, flags: [],
+    }
+    render(<ActionPanel entry={dmgEntry} units={units} />)
+    const narration = screen.getByRole('note')
+    expect(narration.textContent).toMatch(/Expelliarmus/)
+    expect(narration.textContent).toMatch(/30/)
+  })
 })

@@ -76,7 +76,7 @@ export function ActionPanel({ entry, units }: { entry: LogEntry | null; units: R
   }
 
   // Shell (no display class) + a centered grid variant for placeholder/degraded.
-  const shell = 'glass rounded-2xl px-4 py-3 w-full max-w-xl min-h-[5rem]'
+  const shell = 'rounded-2xl border border-[#C9A24B]/20 bg-[rgba(20,16,33,0.55)] px-4 py-3 w-full max-w-xl min-h-[5rem] backdrop-blur-sm'
   const centered = cn(shell, 'grid place-items-center')
 
   if (!entry) {
@@ -114,7 +114,7 @@ export function ActionPanel({ entry, units }: { entry: LogEntry | null; units: R
       <div data-testid="action-panel" className={cn(shell, 'flex items-center justify-center gap-3 sm:gap-5')}>
         <Combatant unit={attacker} role="attacker" />
         <div className="flex flex-col items-center gap-1 min-w-[5rem]">
-          <span data-role="spell" className="text-center text-sm font-display text-white/85">
+          <span data-role="spell" className="text-center text-base font-display text-[#F0D98A]">
             {entry.action}
           </span>
           {result && (
@@ -150,28 +150,35 @@ export function ActionPanel({ entry, units }: { entry: LogEntry | null; units: R
 
   const middle = (
     <div className="flex flex-col items-center gap-1 min-w-[5rem]">
-      <span data-role="spell" className="text-center text-sm font-display text-white/85">
+      <span data-role="spell" className="text-center text-base font-display text-[#F0D98A]">
         {entry.action}
       </span>
       <ArrowRight size={22} className={cn('text-white/40', mirrored && 'rotate-180')} aria-hidden />
     </div>
   )
 
+  const narration = describeEntry(entry, names)
+
   return (
-    <div data-testid="action-panel" className={cn(shell, 'flex items-center justify-center gap-3 sm:gap-5')}>
-      {mirrored ? (
-        <>
-          {targetCol}
-          {middle}
-          {attackerCol}
-        </>
-      ) : (
-        <>
-          {attackerCol}
-          {middle}
-          {targetCol}
-        </>
-      )}
+    <div data-testid="action-panel" className={cn(shell, 'flex flex-col items-center gap-1.5')}>
+      <div className="flex items-center justify-center gap-3 sm:gap-5 w-full">
+        {mirrored ? (
+          <>
+            {targetCol}
+            {middle}
+            {attackerCol}
+          </>
+        ) : (
+          <>
+            {attackerCol}
+            {middle}
+            {targetCol}
+          </>
+        )}
+      </div>
+      <p role="note" data-role="narration" className="text-center text-[11px] text-white/55 leading-snug">
+        {narration}
+      </p>
     </div>
   )
 }
