@@ -10,9 +10,10 @@ const unit = {
   spell: { id: 's', name: 'Incantesimo', cooldown: 0 },
 } as unknown as ReplayUnit
 
-it('weaken pill shows percentage value', () => {
+// Buff/debuff no longer render a status pill — the stat bars (▲/▼ + color) show the
+// change instead. A weaken (debuff) must therefore produce NO pill.
+it('weaken (debuff) does not render a status pill', () => {
   const eff = { kind: 'debuff', statusId: 'weaken2', remaining: 2, stat: 'atk', amount: 25 } as unknown as ActiveEffect
-  render(<UnitBust unit={unit} hp={100} effects={[eff]} />)
-  const pill = screen.getByTitle(/Indebolimento atk -25%/)
-  expect(pill.textContent).toContain('-25%')
+  const { container } = render(<UnitBust unit={unit} hp={100} effects={[eff]} />)
+  expect(container.querySelector('[data-status-kind="debuff"]')).toBeNull()
 })

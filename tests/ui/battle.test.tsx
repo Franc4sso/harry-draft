@@ -206,7 +206,7 @@ describe('UnitBust', () => {
       expect(dot.getAttribute('title')).toMatch(/veleno/i)
       expect(dot.getAttribute('title')).toContain('6')
     })
-    it('renders one icon per active effect', () => {
+    it('renders one icon per active control/over-time effect', () => {
       render(
         <UnitBust
           unit={u}
@@ -214,18 +214,17 @@ describe('UnitBust', () => {
           effects={[
             { kind: 'dot', amount: 6, remaining: 2 },
             { kind: 'stun', remaining: 1 },
-            { kind: 'buff', stat: 'atk', amount: 10, remaining: 3 },
+            { kind: 'shield', absorbLeft: 30, remaining: 3 },
           ]}
         />,
       )
       const root = screen.getByTestId('battle-unit')
       expect(root.querySelectorAll('[data-status-kind]').length).toBe(3)
     })
-    it('describes a buff with its stat and amount in the title', () => {
+    it('does NOT render a pill for buff/debuff effects (stat bars show those)', () => {
       render(<UnitBust unit={u} hp={50} effects={[{ kind: 'buff', stat: 'atk', amount: 10, remaining: 2 }]} />)
-      const buff = screen.getByTestId('battle-unit').querySelector('[data-status-kind="buff"]') as HTMLElement
-      expect(buff.getAttribute('title')).toMatch(/atk/i)
-      expect(buff.getAttribute('title')).toContain('10')
+      const root = screen.getByTestId('battle-unit')
+      expect(root.querySelector('[data-status-kind="buff"]')).toBeNull()
     })
   })
 

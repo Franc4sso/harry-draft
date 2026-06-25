@@ -150,7 +150,12 @@ export function UnitBust({
         scale: acting ? 1.04 : 1,
         x: impact ? (isCrit ? [0, -6, 6, -3, 0] : [0, -3, 3, 0]) : (targeted ? (mirrored ? -4 : 4) : 0),
       }}
-      transition={{ type: 'spring', stiffness: 360, damping: 22 }}
+      transition={{
+        type: 'spring', stiffness: 360, damping: 22,
+        x: impact
+          ? { type: 'tween', duration: isCrit ? 0.4 : 0.28, ease: 'easeOut' }
+          : { type: 'spring', stiffness: 360, damping: 22 },
+      }}
       className={cn('relative w-28 sm:w-32 rounded-2xl border border-[#C9A24B]/15 bg-[rgba(20,16,33,0.45)] p-1.5 backdrop-blur-sm', mirrored && 'text-right')}
       style={{ boxShadow: aura, filter: dead ? 'grayscale(0.85)' : undefined }}
     >
@@ -214,14 +219,14 @@ export function UnitBust({
         )}
       </div>
 
-      <div className={cn('absolute bottom-14 pointer-events-none', mirrored ? 'right-1' : 'left-1')}>
+      <div data-role-badge className={cn('absolute top-1 z-10 pointer-events-none', mirrored ? 'right-1' : 'left-1')}>
         {(() => {
           const RoleIcon = ROLE_ICON[unit.role] ?? Shield
           return (
             <span
               title={unit.role === 'Tank' ? 'Provocazione: i nemici attaccano questo bersaglio per primi' : unit.role}
-              className={cn('inline-flex items-center gap-0.5 rounded bg-black/55 px-0.5 text-[9px] font-semibold',
-                unit.role === 'Tank' ? 'text-sky-300' : 'text-white/70')}
+              className={cn('inline-flex items-center gap-0.5 rounded bg-black/60 px-1 py-0.5 text-[9px] font-semibold backdrop-blur-sm',
+                unit.role === 'Tank' ? 'text-sky-300' : 'text-white/80')}
             >
               <RoleIcon size={9} aria-hidden />
               {ROLE_LABEL[unit.role] ?? unit.role}
@@ -230,9 +235,9 @@ export function UnitBust({
         })()}
       </div>
 
-      {effects.length > 0 && (
+      {effects.some(e => e.kind !== 'buff' && e.kind !== 'debuff') && (
         <div className={cn('absolute top-1 flex flex-wrap gap-0.5', mirrored ? 'left-1' : 'right-1')}>
-          {effects.map((e, i) => {
+          {effects.filter(e => e.kind !== 'buff' && e.kind !== 'debuff').map((e, i) => {
             const Icon = STATUS_ICON[e.kind] ?? Flame
             return (
               <span
@@ -242,7 +247,7 @@ export function UnitBust({
                 className={cn('inline-flex items-center gap-0.5 rounded bg-black/55 px-0.5 text-[9px] font-semibold tabular-nums', STATUS_CLASS[e.kind])}
               >
                 <Icon size={11} aria-hidden />
-                {(e.kind === 'buff' || e.kind === 'debuff') ? magnitudeLabel(e) : effectCount(e)}
+                {effectCount(e)}
               </span>
             )
           })}
