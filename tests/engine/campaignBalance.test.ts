@@ -77,12 +77,16 @@ describe('campaign difficulty curve', () => {
     // intact enough to win. After the C1 fix (the snapshot/roster path no longer
     // clobbers a surviving player with a same-id enemy entry — survivors are kept,
     // not dropped) the clear rate rose to ~0.04 measured (n=200). Assigning traits
-    // to all 60 wizards made enemies meaningfully tougher; the new measured rate
-    // settled at ~0.015–0.016 (n=200 and n=500, deterministic). The intent we
-    // protect is unchanged: the campaign is still WINNABLE for optimal play (clears
-    // happen, rate > 0) yet far from a guaranteed clear (no pushover). Floor re-based
-    // to ~half the new measured rate (0.008, meaningfully > 0 — guards "still
-    // winnable"); the upper bound (no-pushover) is left wide and unchanged.
+    // to all 60 wizards made enemies meaningfully tougher; that measured rate
+    // settled at ~0.015–0.016 (n=200 and n=500, deterministic). The 2026-06-25
+    // combat overhaul (graduated 2/3/4 synergies + percentage debuffs + 30%
+    // control) re-measured the optimal-play clear rate at ~0.023 (n=300,
+    // deterministic): graduated synergies help the optimal drafter slightly more
+    // than the stronger debuffs hurt, so the rate nudged up, not down. The intent
+    // we protect is unchanged: the campaign is still WINNABLE for optimal play
+    // (clears happen, rate > 0) yet far from a guaranteed clear (no pushover). The
+    // floor stays 0.008 (~a third of the new measured rate — ample margin, guards
+    // "still winnable"); the upper bound (no-pushover) is left wide and unchanged.
     expect(stats.clearRate).toBeGreaterThan(0.008)
     expect(stats.clearRate).toBeLessThan(0.72)
   })
@@ -96,9 +100,10 @@ describe('campaign difficulty curve', () => {
     // (and often depleted), so the boss win-rate among boss plays sits well below
     // the old full-heal ~0.5. After the C1 fix (wounded survivors are correctly
     // carried to the boss instead of being dropped/clobbered) the boss win-rate
-    // among boss plays is ~0.25 measured (n=200). Intent preserved: the boss is a
-    // real climax — not impossible (rate > 0, wins do happen) and not a pushover
-    // (well under the old ceiling). Floor set ~0.05 below the measured 0.25.
+    // among boss plays is ~0.25–0.33 measured (n=200–300; the 2026-06-25 combat
+    // overhaul nudged it to ~0.33). Intent preserved: the boss is a real climax —
+    // not impossible (rate > 0, wins do happen) and not a pushover (well under the
+    // old ceiling). Floor set comfortably below the measured band.
     expect(stats.bossWinRate).toBeGreaterThan(0.20)
     expect(stats.bossWinRate).toBeLessThan(0.85)
   })
