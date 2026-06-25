@@ -41,8 +41,13 @@ Meccanica già funzionante ma invisibile:
 |---------|----------|--------|
 | **Stordito** | colpo secco | blocca tutto, 1 turno, **non** dispellabile. Invariato. |
 | **Congelato** | prigione fragile | blocca tutto, 2 turni, dispellabile, **si infrange al primo danno diretto**: il congelo termina e quel colpo infligge **+50%** danno. |
-| **Silenziato** | bacchetta spezzata | niente magie 2 turni → attacco base debole. Invariato (solo leggibilità). |
-| **Disarmato** | niente colpi | danno → 0 per 2 turni, utility ancora attiva. Invariato (solo leggibilità). |
+| **Silenziato** | bacchetta spezzata (anti-magia) | niente magie 2 turni → attacco base debole. Meccanica invariata, **solo leggibilità**. |
+| **Disarmato** | niente colpi (anti-attacco) | danno → 0 per 2 turni, utility ancora attiva. Meccanica invariata, **solo leggibilità**. |
+
+> Decisione brainstorming: silenzio e disarmo restano **counter puri** (nessun
+> effetto secondario/rider). Il loro valore dipende dal bersaglio per *design*
+> (anti-magia vs anti-attacco); risolviamo la confusione percettiva con
+> leggibilità, non con nuove meccaniche.
 
 ### Cambi richiesti
 
@@ -68,13 +73,33 @@ Meccanica già funzionante ma invisibile:
    l'identità, non il generico "salta il turno":
    - stun: "Salta il turno. Breve ma impossibile da rimuovere."
    - freeze: "Blocca le azioni più a lungo, ma si infrange (con danno extra) al primo colpo."
-   - silence: "Niente magie: il bersaglio ripiega su un attacco base debole."
-   - disarm: "Azzera i danni del bersaglio, che può ancora curare e difendere."
+   - silence: "Anti-magia: niente incantesimi, il bersaglio ripiega su un attacco base debole."
+   - disarm: "Anti-attacco: azzera i danni del bersaglio, che può ancora curare e difendere."
+
+5. **Leggibilità di silenzio e disarmo in battaglia** (counter puri, nessuna
+   meccanica nuova) — far emergere a colpo d'occhio *cosa* stanno facendo:
+   - **Disarmato**: quando un colpo va a 0 per `!canAttack`, loggarlo come azione
+     "Disarmato" con flag `disarm` (non un normale colpo da 0), così la UI lo
+     mostra come "neutralizzato" invece che come un danno nullo qualunque.
+   - **Silenziato**: quando `selectSpell` ripiega su `base_attack` perché
+     silenziato, marcare il log con flag `silence`, così la UI segnala "ridotto
+     all'attacco base".
+   - I chip-effetto su card/compendio usano già `EFFECT_META`: aggiornare label
+     e blurb (punto 4) li copre senza nuova UI.
+
+### Nota tecnica — flag di log
+
+`LogFlag` (`types/combat.ts`) oggi è
+`'crit'|'dodge'|'kill'|'heal'|'block'|'stun'|'dot'|'pen'`. Vanno aggiunti
+`'freeze'|'shatter'|'silence'|'disarm'`. Il renderer della battaglia che colora
+le voci di log in base ai flag va esteso per gestirli (in assenza, ricadono sullo
+stile neutro: accettabile, ma l'obiettivo leggibilità chiede una resa distinta).
 
 ### Non in scope
 
 - Rimappare quali magie applicano quali controlli.
 - Nuovi controlli oltre ai quattro esistenti.
+- Effetti secondari/rider su silenzio e disarmo (restano counter puri).
 
 ---
 
