@@ -31,11 +31,23 @@ function membersFor(syn: Synergy, team: DraftedWizard[]): string[] | null {
 }
 
 export function detectSynergies(team: DraftedWizard[]): ActiveSynergy[] {
-  const out: ActiveSynergy[] = []
+  const all: ActiveSynergy[] = []
   for (const syn of SYNERGIES) {
     const members = membersFor(syn, team)
-    if (members) out.push({ synergy: syn, memberIds: members })
+    if (members) all.push({ synergy: syn, memberIds: members })
   }
+  // Within a family, keep only the highest threshold that is active.
+  const bestByFamily = new Map<string, ActiveSynergy>()
+  const out: ActiveSynergy[] = []
+  for (const a of all) {
+    const fam = a.synergy.family
+    if (!fam) { out.push(a); continue }
+    const cur = bestByFamily.get(fam)
+    if (!cur || synergyThreshold(a.synergy) > synergyThreshold(cur.synergy)) {
+      bestByFamily.set(fam, a)
+    }
+  }
+  out.push(...bestByFamily.values())
   return out
 }
 

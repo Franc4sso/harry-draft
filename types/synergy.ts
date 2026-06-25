@@ -18,6 +18,8 @@ export interface Synergy {
   id: string
   name: string
   kind: 'house' | 'role' | 'group' | 'origin'
+  /** Mutually-exclusive tier group, e.g. 'house:Grifondoro'. Only the highest active tier in a family applies. Undefined = standalone (groups). */
+  family?: string
   requires: SynergyRequirement
   bonus: SynergyBonus
 }

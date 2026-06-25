@@ -1,16 +1,32 @@
 import type { Synergy } from '@/types'
 
 export const SYNERGIES: Synergy[] = [
-  // Houses (3+)
-  { id: 'gryffindor3', name: '3 Grifondoro', kind: 'house', requires: { house: 'Grifondoro', count: 3 }, bonus: { def: 20 } },
-  { id: 'slytherin3', name: '3 Serpeverde', kind: 'house', requires: { house: 'Serpeverde', count: 3 }, bonus: { atk: 20 } },
-  { id: 'ravenclaw3', name: '3 Corvonero', kind: 'house', requires: { house: 'Corvonero', count: 3 }, bonus: { spd: 20 } },
-  { id: 'hufflepuff3', name: '3 Tassorosso', kind: 'house', requires: { house: 'Tassorosso', count: 3 }, bonus: { regen: 12 } },
-  // Roles (3+)
-  { id: 'attackers3', name: '3 Attaccanti', kind: 'role', requires: { role: 'Attaccante', count: 3 }, bonus: { atk: 15 } },
-  { id: 'tanks3', name: '3 Tank', kind: 'role', requires: { role: 'Tank', count: 3 }, bonus: { def: 18 } },
-  { id: 'supports3', name: '3 Supporti', kind: 'role', requires: { role: 'Supporto', count: 3 }, bonus: { regen: 10 } },
-  { id: 'controllers3', name: '3 Controllo', kind: 'role', requires: { role: 'Controllo', count: 3 }, bonus: { spd: 15 } },
+  // Houses (2/3/4) — flavour stat preserved; family keeps only the highest active tier.
+  { id: 'gryffindor2', name: '2 Grifondoro', kind: 'house', family: 'house:Grifondoro', requires: { house: 'Grifondoro', count: 2 }, bonus: { def: 10 } },
+  { id: 'gryffindor3', name: '3 Grifondoro', kind: 'house', family: 'house:Grifondoro', requires: { house: 'Grifondoro', count: 3 }, bonus: { def: 22 } },
+  { id: 'gryffindor4', name: '4 Grifondoro', kind: 'house', family: 'house:Grifondoro', requires: { house: 'Grifondoro', count: 4 }, bonus: { def: 40 } },
+  { id: 'slytherin2', name: '2 Serpeverde', kind: 'house', family: 'house:Serpeverde', requires: { house: 'Serpeverde', count: 2 }, bonus: { atk: 10 } },
+  { id: 'slytherin3', name: '3 Serpeverde', kind: 'house', family: 'house:Serpeverde', requires: { house: 'Serpeverde', count: 3 }, bonus: { atk: 22 } },
+  { id: 'slytherin4', name: '4 Serpeverde', kind: 'house', family: 'house:Serpeverde', requires: { house: 'Serpeverde', count: 4 }, bonus: { atk: 40 } },
+  { id: 'ravenclaw2', name: '2 Corvonero', kind: 'house', family: 'house:Corvonero', requires: { house: 'Corvonero', count: 2 }, bonus: { spd: 10 } },
+  { id: 'ravenclaw3', name: '3 Corvonero', kind: 'house', family: 'house:Corvonero', requires: { house: 'Corvonero', count: 3 }, bonus: { spd: 22 } },
+  { id: 'ravenclaw4', name: '4 Corvonero', kind: 'house', family: 'house:Corvonero', requires: { house: 'Corvonero', count: 4 }, bonus: { spd: 40 } },
+  { id: 'hufflepuff2', name: '2 Tassorosso', kind: 'house', family: 'house:Tassorosso', requires: { house: 'Tassorosso', count: 2 }, bonus: { regen: 6 } },
+  { id: 'hufflepuff3', name: '3 Tassorosso', kind: 'house', family: 'house:Tassorosso', requires: { house: 'Tassorosso', count: 3 }, bonus: { regen: 12 } },
+  { id: 'hufflepuff4', name: '4 Tassorosso', kind: 'house', family: 'house:Tassorosso', requires: { house: 'Tassorosso', count: 4 }, bonus: { regen: 22 } },
+  // Roles (2/3/4)
+  { id: 'attackers2', name: '2 Attaccanti', kind: 'role', family: 'role:Attaccante', requires: { role: 'Attaccante', count: 2 }, bonus: { atk: 8 } },
+  { id: 'attackers3', name: '3 Attaccanti', kind: 'role', family: 'role:Attaccante', requires: { role: 'Attaccante', count: 3 }, bonus: { atk: 15 } },
+  { id: 'attackers4', name: '4 Attaccanti', kind: 'role', family: 'role:Attaccante', requires: { role: 'Attaccante', count: 4 }, bonus: { atk: 28 } },
+  { id: 'tanks2', name: '2 Tank', kind: 'role', family: 'role:Tank', requires: { role: 'Tank', count: 2 }, bonus: { def: 9 } },
+  { id: 'tanks3', name: '3 Tank', kind: 'role', family: 'role:Tank', requires: { role: 'Tank', count: 3 }, bonus: { def: 18 } },
+  { id: 'tanks4', name: '4 Tank', kind: 'role', family: 'role:Tank', requires: { role: 'Tank', count: 4 }, bonus: { def: 34 } },
+  { id: 'supports2', name: '2 Supporti', kind: 'role', family: 'role:Supporto', requires: { role: 'Supporto', count: 2 }, bonus: { regen: 5 } },
+  { id: 'supports3', name: '3 Supporti', kind: 'role', family: 'role:Supporto', requires: { role: 'Supporto', count: 3 }, bonus: { regen: 10 } },
+  { id: 'supports4', name: '4 Supporti', kind: 'role', family: 'role:Supporto', requires: { role: 'Supporto', count: 4 }, bonus: { regen: 18 } },
+  { id: 'controllers2', name: '2 Controllo', kind: 'role', family: 'role:Controllo', requires: { role: 'Controllo', count: 2 }, bonus: { spd: 8 } },
+  { id: 'controllers3', name: '3 Controllo', kind: 'role', family: 'role:Controllo', requires: { role: 'Controllo', count: 3 }, bonus: { spd: 15 } },
+  { id: 'controllers4', name: '4 Controllo', kind: 'role', family: 'role:Controllo', requires: { role: 'Controllo', count: 4 }, bonus: { spd: 28 } },
   // Groups
   { id: 'goldenTrio', name: 'Golden Trio', kind: 'group', requires: { ids: ['harry', 'ron', 'hermione'] }, bonus: { allPct: 0.15 } },
   { id: 'weasley', name: 'Famiglia Weasley', kind: 'group', requires: { tag: 'weasley', count: 3 }, bonus: { regen: 8, def: 10 } },
