@@ -6,8 +6,9 @@ import { WIZARD_BY_ID } from '@/data/wizards'
 describe('synergies data', () => {
   it('has house, role and group synergies', () => {
     const kinds = SYNERGIES.map(s => s.kind)
-    expect(kinds.filter(k => k === 'house').length).toBe(4)
-    expect(kinds.filter(k => k === 'role').length).toBe(4)
+    // 4 houses × 3 tiers (2/3/4) = 12 house entries; same for roles
+    expect(kinds.filter(k => k === 'house').length).toBe(12)
+    expect(kinds.filter(k => k === 'role').length).toBe(12)
     expect(kinds.filter(k => k === 'group').length).toBeGreaterThanOrEqual(5)
   })
   it('group synergies reference existing wizards', () => {
