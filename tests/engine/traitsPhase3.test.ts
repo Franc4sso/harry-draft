@@ -68,3 +68,21 @@ describe('Phase 3 self-buff-on-hit trait', () => {
     expect(eff).toMatchObject({ kind: 'applyStatus', target: 'self', statusId: 'atkUp' })
   })
 })
+
+describe('Phase 3 turn-start self traits', () => {
+  it('Rigenerazione grants the actor regen at turn start', () => {
+    const [eff] = reactiveEffects('rigenerazione')
+    expect(eff).toMatchObject({ kind: 'applyStatus', target: 'self', statusId: 'regen' })
+    const t = TRAIT_BY_ID['rigenerazione']!.trigger
+    if (t.kind === 'reactive') expect(t.hook).toBe('onTurnStart')
+  })
+
+  it('Anticipo grants the actor a spd buff at turn start', () => {
+    const [eff] = reactiveEffects('anticipo')
+    expect(eff.kind).toBe('applyStatus')
+    if (eff.kind === 'applyStatus') {
+      expect(eff.target).toBe('self')
+      expect(eff.effect).toMatchObject({ kind: 'buff', stat: 'spd' })
+    }
+  })
+})

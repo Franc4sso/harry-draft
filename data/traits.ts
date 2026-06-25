@@ -22,6 +22,10 @@ const ATTRITION_DURATION = 2
 
 const FEROCITY_DURATION = 2
 
+const REGEN_DURATION = 3
+const ANTICIPATE_SPD = 10
+const ANTICIPATE_DURATION = 1
+
 export const TRAITS: Trait[] = [
   {
     id: 'esecuzione', name: 'Esecuzione',
@@ -117,6 +121,22 @@ export const TRAITS: Trait[] = [
     trigger: {
       kind: 'reactive', hook: 'onHit', owner: 'actor',
       effects: () => [{ kind: 'applyStatus', target: 'self', statusId: 'atkUp', duration: FEROCITY_DURATION }],
+    },
+  },
+  {
+    id: 'rigenerazione', name: 'Rigenerazione',
+    desc: 'Si rigenera un poco di vita ogni turno.',
+    trigger: {
+      kind: 'reactive', hook: 'onTurnStart', owner: 'actor',
+      effects: () => [{ kind: 'applyStatus', target: 'self', statusId: 'regen', duration: REGEN_DURATION }],
+    },
+  },
+  {
+    id: 'anticipo', name: 'Anticipo',
+    desc: 'A inizio turno guadagna velocità.',
+    trigger: {
+      kind: 'reactive', hook: 'onTurnStart', owner: 'actor',
+      effects: () => [{ kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'spd', amount: ANTICIPATE_SPD, duration: ANTICIPATE_DURATION } }],
     },
   },
 ]
