@@ -71,6 +71,7 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
   applyStatus: (ctx, eff) => {
     if (eff.kind !== 'applyStatus') return {}
     if (eff.chance !== undefined && !ctx.rng.chance(eff.chance)) return {}
+    // NOTE: 'ally' currently collapses to ctx.target like 'enemy'; no shipped trait/spell uses 'ally' here. Revisit if one does.
     const unit = eff.target === 'self' ? ctx.actor : ctx.target
     if (eff.statusId) {
       applyStatus(unit, eff.statusId, { duration: eff.duration, sourceId: sourceId(ctx.actor) })

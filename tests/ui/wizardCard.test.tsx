@@ -119,4 +119,3 @@ describe('WizardCard compact', () => {
     }
   })
 })
-
