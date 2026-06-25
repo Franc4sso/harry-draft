@@ -50,19 +50,17 @@ export function InitiativeBar({ replay, index }: { replay: Replay; index: number
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: isCurrent ? 1 : 0.6, scale: isCurrent ? 1.05 : 1 }}
             transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-            className="relative flex items-center gap-1.5 rounded-lg px-1 py-0.5"
+            className="relative flex flex-col items-center gap-0.5 rounded-lg px-1 py-1"
           >
             <div className={cn('relative h-8 w-8 shrink-0 overflow-hidden rounded-full ring-2', ring, isCurrent && 'ring-4')}>
               <PortraitImage id={u.id} house={u.house} alt={u.name} variant="bust" />
             </div>
-            <div className="min-w-0 flex-1 leading-none">
-              <span aria-hidden className={cn('text-[8px]', mine ? 'text-emerald-300' : 'text-rose-300')}>{mine ? '▲' : '▼'}</span>
-              <span className="mt-0.5 flex items-center gap-0.5 text-[9px] tabular-nums text-white/55">
-                <Zap className="h-2.5 w-2.5 text-amber-300/80" aria-hidden />{u.spd}
-              </span>
-            </div>
+            <span className="flex items-center gap-0.5 text-[9px] tabular-nums text-white/60 leading-none">
+              <span aria-hidden className={mine ? 'text-emerald-300' : 'text-rose-300'}>{mine ? '▲' : '▼'}</span>
+              <Zap className="h-2.5 w-2.5 text-amber-300/80" aria-hidden />{u.spd}
+            </span>
             {isCurrent && (
-              <span data-role="ora-label" className="absolute -top-1 right-1 rounded bg-white/15 px-1 text-[7px] uppercase tracking-widest text-white/80">Ora</span>
+              <span data-role="ora-label" className="absolute -top-1 right-0 rounded bg-white/15 px-1 text-[7px] uppercase tracking-widest text-white/80">Ora</span>
             )}
           </motion.div>
         )

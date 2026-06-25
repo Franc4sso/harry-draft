@@ -36,3 +36,10 @@ it('does not render the unit name in the rail', () => {
   expect(screen.queryByText('Aaa')).toBeNull()
   expect(screen.queryByText('Bbb')).toBeNull()
 })
+
+it('lays each slot as a vertical stack (fits the narrow column, no clip)', () => {
+  const { container } = render(<InitiativeBar replay={replay} index={0} />)
+  const slot = container.querySelector('[data-side]') as HTMLElement
+  // Vertical stack: the slot uses flex-col so face + spd line stack, keeping width within the column.
+  expect(slot.className).toMatch(/flex-col/)
+})
