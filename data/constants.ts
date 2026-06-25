@@ -17,6 +17,9 @@ export const BALANCE = {
     // instead of grinding to turnCap. Normal fights end long before fatigueStart.
     fatigueStart: 30,
     fatiguePctStep: 0.05,
+    // A direct damage hit on a frozen unit shatters the freeze: it ends and the
+    // breaking hit deals this multiplier. DoT ticks do NOT shatter.
+    freezeShatterMult: 1.5,
   },
   draft: {
     screenSize: 5,

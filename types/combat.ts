@@ -33,7 +33,7 @@ export interface BattleUnit extends DraftedWizard {
   alive: boolean
 }
 
-export type LogFlag = 'crit' | 'dodge' | 'kill' | 'heal' | 'block' | 'stun' | 'dot' | 'pen'
+export type LogFlag = 'crit' | 'dodge' | 'kill' | 'heal' | 'block' | 'stun' | 'dot' | 'pen' | 'shatter'
 
 export interface LogEntry {
   turn: number
