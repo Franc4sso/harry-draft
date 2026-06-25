@@ -54,6 +54,14 @@ const STATUS_CLASS: Record<StatusKind, string> = {
   regen: 'text-emerald-300',
 }
 
+/** Control kinds get a full-bust overlay so a skipped/limited turn reads instantly. */
+const CONTROL_OVERLAY: Record<string, { label: string; cls: string }> = {
+  stun:    { label: 'Stordito',   cls: 'bg-yellow-300/25 ring-2 ring-yellow-300/60' },
+  freeze:  { label: 'Congelato',  cls: 'bg-cyan-300/25 ring-2 ring-cyan-300/60' },
+  silence: { label: 'Silenziato', cls: 'bg-violet-300/20 ring-2 ring-violet-300/50' },
+  disarm:  { label: 'Disarmato',  cls: 'bg-amber-300/20 ring-2 ring-amber-300/50' },
+}
+
 const STAT_LABEL: Record<string, string> = { hp: 'HP', atk: 'atk', def: 'def', spd: 'spd' }
 const ROLE_LABEL: Record<string, string> = { Tank: 'Prov.', Attaccante: 'Att.', Controllo: 'Contr.', Supporto: 'Sup.' }
 const ROLE_ICON: Record<string, LucideIcon> = { Tank: Shield, Attaccante: Sword, Controllo: Zap, Supporto: Heart }
@@ -165,6 +173,22 @@ export function UnitBust({
           )}
         </div>
       </RarityFrame>
+
+      {(() => {
+        const ctrl = effects.find(e => CONTROL_OVERLAY[e.kind])
+        if (!ctrl) return null
+        const o = CONTROL_OVERLAY[ctrl.kind]!
+        return (
+          <div
+            data-control={ctrl.kind}
+            className={cn('pointer-events-none absolute inset-x-0 top-0 z-10 grid place-items-center rounded-xl aspect-[3/4]', o.cls)}
+          >
+            <span className="rounded bg-black/65 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
+              {o.label}
+            </span>
+          </div>
+        )
+      })()}
 
       <div className="mt-1 truncate text-center text-[11px] font-medium leading-tight">{unit.name}</div>
       <div className="mt-0.5"><HpBar hp={hp} maxHp={unit.maxHp} /></div>
