@@ -25,10 +25,13 @@ export function SynergyTracker({
   const superseded = (r: SynergyProgress | SynergyPreview) =>
     r.active && !!r.synergy.family && (topActiveByFamily.get(r.synergy.family) ?? 0) > r.threshold
 
-  const sorted = [...relevant].sort((a, b) => {
-    if (a.active !== b.active) return a.active ? -1 : 1
-    return b.count / b.threshold - a.count / a.threshold
-  })
+  // Stable order so rows never swap places between the current and preview states
+  // (reordering on hover was the tracker's flicker). In-progress synergies (count>0)
+  // stay first in a fixed family→threshold order; brand-new preview synergies
+  // (count===0) are appended last. The key uses pre-pick `count`, identical in both modes.
+  const orderKey = (r: SynergyProgress | SynergyPreview) =>
+    `${r.count > 0 ? 0 : 1}|${r.synergy.family ?? r.synergy.id}|${String(r.threshold).padStart(3, '0')}|${r.synergy.id}`
+  const sorted = [...relevant].sort((a, b) => orderKey(a).localeCompare(orderKey(b)))
 
   return (
     <div className="w-full">
@@ -67,7 +70,7 @@ export function SynergyTracker({
                 </span>
               </div>
               <div className="my-1.5 h-1.5 overflow-hidden rounded-full bg-white/10">
-                <div className="h-full rounded-full" style={{ width: `${ratio * 100}%`, background: 'linear-gradient(90deg,#7c3aed,#b08d57)' }} />
+                <div className="h-full rounded-full" style={{ width: `${ratio * 100}%`, background: 'linear-gradient(90deg,#7c3aed,#b08d57)', transition: 'width 180ms ease' }} />
               </div>
               <p className="text-[10px] text-[#c9bfa0]">{bonus}</p>
             </div>
