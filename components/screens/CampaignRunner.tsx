@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { DraftedWizard } from '@/types'
 import { useRun } from '@/hooks/useRun'
+import { detectSynergies } from '@/game/engine/synergy'
 import { BOSSES } from '@/data/bosses'
 import { TeamScreen } from './TeamScreen'
 import { BattleScreen } from './BattleScreen'
@@ -110,6 +111,8 @@ export function CampaignRunner({
         <RelicChoiceScreen
           choices={c.relicChoices}
           owned={c.run.relics}
+          team={c.run.team}
+          synergies={detectSynergies(c.run.team)}
           onChoose={c.chooseRelic}
         />
       )
