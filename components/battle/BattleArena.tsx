@@ -5,6 +5,7 @@ import type { LogEntry } from '@/types'
 import type { Replay, ReplayUnit } from '@/game/engine/combat/replay'
 import { unitKey } from '@/game/engine/combat/replay'
 import { UnitBust } from './UnitBust'
+import { ArenaBackdrop } from './ArenaBackdrop'
 import { SpellFx, ShieldFx, type FxPoint } from './SpellFx'
 import { floatFor } from './damageFloat'
 import { archetypeFor } from '@/lib/spellArchetype'
@@ -88,6 +89,7 @@ export function BattleArena({
 
   return (
     <div ref={arenaRef} data-testid="battle-arena" className="relative flex flex-col items-center gap-4 w-full">
+      <ArenaBackdrop />
       <section className="flex flex-col items-center gap-2 w-full">
         <h3 className="text-xs uppercase tracking-widest text-white/40">{leftTitle}</h3>
         <div data-testid="row-player" className="flex flex-nowrap justify-center gap-2 sm:gap-3">{renderSide(left, false)}</div>

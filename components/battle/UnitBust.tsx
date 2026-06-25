@@ -137,6 +137,8 @@ export function UnitBust({
   const reduce = useReducedMotion()
   const dead = hp <= 0
   const aura = acting ? '0 0 22px rgba(124,252,155,0.55)' : targeted ? '0 0 22px rgba(255,107,107,0.6)' : undefined
+  const impact = targeted && !!float
+  const isCrit = float?.tone === 'crit'
 
   return (
     <motion.div
@@ -146,7 +148,7 @@ export function UnitBust({
       data-acting={acting || undefined}
       animate={reduce ? {} : {
         scale: acting ? 1.04 : 1,
-        x: targeted ? (mirrored ? -4 : 4) : 0,
+        x: impact ? (isCrit ? [0, -6, 6, -3, 0] : [0, -3, 3, 0]) : (targeted ? (mirrored ? -4 : 4) : 0),
       }}
       transition={{ type: 'spring', stiffness: 360, damping: 22 }}
       className={cn('relative w-32 sm:w-36', mirrored && 'text-right')}
@@ -181,6 +183,18 @@ export function UnitBust({
           </div>
         )
       })()}
+
+      {impact && !reduce && (
+        <motion.div
+          key={`impact-${floatKey}`}
+          data-impact={isCrit ? 'crit' : 'hit'}
+          aria-hidden
+          className={cn('pointer-events-none absolute inset-x-0 top-0 z-20 rounded-xl aspect-[3/4]', isCrit ? 'bg-amber-300/40' : 'bg-rose-400/30')}
+          initial={{ opacity: 0.8 }}
+          animate={{ opacity: 0 }}
+          transition={{ duration: isCrit ? 0.5 : 0.32, ease: 'easeOut' }}
+        />
+      )}
 
       <div className="mt-1 truncate text-center text-xs font-medium leading-tight">{unit.name}</div>
       <div className="mt-0.5"><HpBar hp={hp} maxHp={unit.maxHp} /></div>
