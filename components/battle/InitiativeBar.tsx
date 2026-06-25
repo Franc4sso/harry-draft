@@ -56,10 +56,7 @@ export function InitiativeBar({ replay, index }: { replay: Replay; index: number
               <PortraitImage id={u.id} house={u.house} alt={u.name} variant="bust" />
             </div>
             <div className="min-w-0 flex-1 leading-none">
-              <div className="flex items-center gap-1">
-                <span aria-hidden className={cn('text-[8px]', mine ? 'text-emerald-300' : 'text-rose-300')}>{mine ? '▲' : '▼'}</span>
-                <span className="truncate text-[10px] text-white/85">{u.name}</span>
-              </div>
+              <span aria-hidden className={cn('text-[8px]', mine ? 'text-emerald-300' : 'text-rose-300')}>{mine ? '▲' : '▼'}</span>
               <span className="mt-0.5 flex items-center gap-0.5 text-[9px] tabular-nums text-white/55">
                 <Zap className="h-2.5 w-2.5 text-amber-300/80" aria-hidden />{u.spd}
               </span>

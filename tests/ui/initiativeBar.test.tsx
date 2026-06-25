@@ -29,3 +29,10 @@ it('renders a face image per unit', () => {
   // PortraitImage renders an <img data-variant="bust"> (jsdom won't fire onError, so the img stays).
   expect(container.querySelectorAll('img[data-variant="bust"]').length).toBeGreaterThanOrEqual(2)
 })
+
+it('does not render the unit name in the rail', () => {
+  render(<InitiativeBar replay={replay} index={0} />)
+  // The fixture units are named 'Aaa' / 'Bbb' — they must NOT appear as text now.
+  expect(screen.queryByText('Aaa')).toBeNull()
+  expect(screen.queryByText('Bbb')).toBeNull()
+})

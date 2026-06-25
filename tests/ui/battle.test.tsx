@@ -98,8 +98,8 @@ describe('InitiativeBar', () => {
     render(<InitiativeBar replay={replay} index={firstReal} />)
     const bar = screen.getByTestId('initiative-bar')
     const current = bar.querySelector('[data-current]') as HTMLElement
-    // name visible as text (truncated render still keeps full textContent)
-    expect(current.textContent).toContain(actor.name)
+    // slot is highlighted for the correct actor — face alt carries the name, spd shown as text
+    expect(current.querySelector('img[alt]')?.getAttribute('alt')).toBe(actor.name)
     // buffed spd shown
     expect(current.textContent).toContain(String(actor.spd))
   })
@@ -130,7 +130,8 @@ describe('InitiativeBar', () => {
     // Highlight follows the last real actor and persists across the system frame.
     const current = bar.querySelector('[data-current]') as HTMLElement
     expect(current).not.toBeNull()
-    expect(current.textContent).toContain(actor.name)
+    // face alt carries the name; name no longer rendered as visible text
+    expect(current.querySelector('img[alt]')?.getAttribute('alt')).toBe(actor.name)
   })
 
   it('shows the alive units sorted by spd on a system frame', () => {
