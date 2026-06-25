@@ -18,14 +18,14 @@ export function StatBar({
   const pct = Math.min(100, (value / STAT_REF) * 100)
   const valueColor = buff === 'up' ? 'text-emerald-300' : buff === 'down' ? 'text-rose-300' : 'text-white/85'
   return (
-    <div data-stat={label} data-buff={buff} className="flex items-center gap-1 w-full">
-      <Icon size={11} aria-hidden className="shrink-0 text-white/50" />
-      <span className="w-7 shrink-0 text-[9px] uppercase tracking-wide text-white/40">{label}</span>
-      <span className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
+    <div data-stat={label} data-buff={buff} className="flex items-center gap-2 w-full">
+      <Icon size={12} aria-hidden className="shrink-0 text-white/45" />
+      <span className="w-8 shrink-0 text-[10px] uppercase tracking-wider text-white/45">{label}</span>
+      <span className="relative h-2 flex-1 overflow-hidden rounded-full bg-white/[0.06] ring-1 ring-[#C9A24B]/15">
         <span data-role="fill" className={cn('absolute inset-y-0 left-0 rounded-full', color)} style={{ width: `${pct}%` }} />
       </span>
-      <span className={cn('w-6 shrink-0 text-right text-[11px] font-semibold tabular-nums', valueColor)}>{value}</span>
-      {buff !== 'none' && <span aria-hidden className={cn('text-[8px]', valueColor)}>{buff === 'up' ? '▲' : '▼'}</span>}
+      <span className={cn('w-7 shrink-0 text-right text-xs font-semibold tabular-nums', valueColor)}>{value}</span>
+      {buff !== 'none' && <span aria-hidden className={cn('w-2 text-[9px]', valueColor)}>{buff === 'up' ? '▲' : '▼'}</span>}
     </div>
   )
 }
