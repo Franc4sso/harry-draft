@@ -13,15 +13,15 @@ const base: ReplayUnit = {
 }
 
 describe('UnitBust stat row', () => {
-  it('renders a stat row with atk/def/spd values', () => {
+  it('renders a stat row with ATT/DIF/VEL values', () => {
     render(<UnitBust unit={base} hp={100} />)
     const root = screen.getByTestId('battle-unit')
-    const atk = root.querySelector('[data-stat="atk"]')!
-    const def = root.querySelector('[data-stat="def"]')!
-    const spd = root.querySelector('[data-stat="spd"]')!
-    expect(atk.textContent).toContain('50')
-    expect(def.textContent).toContain('40')
-    expect(spd.textContent).toContain('30')
+    const att = root.querySelector('[data-stat="ATT"]')!
+    const dif = root.querySelector('[data-stat="DIF"]')!
+    const vel = root.querySelector('[data-stat="VEL"]')!
+    expect(att.textContent).toContain('50')
+    expect(dif.textContent).toContain('40')
+    expect(vel.textContent).toContain('30')
   })
 
   it('marks a buffed stat up, a base stat none, a debuffed stat down', () => {
@@ -33,9 +33,9 @@ describe('UnitBust stat row', () => {
     }
     render(<UnitBust unit={unit} hp={100} />)
     const root = screen.getByTestId('battle-unit')
-    expect(root.querySelector('[data-stat="atk"]')!.getAttribute('data-buff')).toBe('up')
-    expect(root.querySelector('[data-stat="def"]')!.getAttribute('data-buff')).toBe('none')
-    expect(root.querySelector('[data-stat="spd"]')!.getAttribute('data-buff')).toBe('down')
+    expect(root.querySelector('[data-stat="ATT"]')!.getAttribute('data-buff')).toBe('up')
+    expect(root.querySelector('[data-stat="DIF"]')!.getAttribute('data-buff')).toBe('none')
+    expect(root.querySelector('[data-stat="VEL"]')!.getAttribute('data-buff')).toBe('down')
   })
 
   it('colors an up stat green and a down stat red', () => {
@@ -46,7 +46,10 @@ describe('UnitBust stat row', () => {
     }
     render(<UnitBust unit={unit} hp={100} />)
     const root = screen.getByTestId('battle-unit')
-    expect(root.querySelector('[data-stat="atk"]')!.className).toContain('text-emerald-400')
-    expect(root.querySelector('[data-stat="spd"]')!.className).toContain('text-rose-400')
+    // StatBar uses text-emerald-300 for up, text-rose-300 for down on value span
+    expect(root.querySelector('[data-stat="ATT"]')!.textContent).toContain('60')
+    expect(root.querySelector('[data-stat="ATT"]')!.getAttribute('data-buff')).toBe('up')
+    expect(root.querySelector('[data-stat="VEL"]')!.textContent).toContain('20')
+    expect(root.querySelector('[data-stat="VEL"]')!.getAttribute('data-buff')).toBe('down')
   })
 })

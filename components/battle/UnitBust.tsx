@@ -10,6 +10,7 @@ import { STATUS_BY_ID } from '@/data/statuses'
 import { RarityFrame } from '@/components/ui/RarityFrame'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { HpBar } from './HpBar'
+import { StatBar } from './StatBar'
 import type { FloatDescriptor, FloatTone } from './damageFloat'
 import { cn } from '@/lib/theme'
 
@@ -19,16 +20,6 @@ const FLOAT_CLASS: Record<FloatTone, string> = {
   heal: 'text-emerald-300',
   dodge: 'text-white/60 text-[11px] uppercase tracking-wider',
 }
-
-/** Buff direction of a stat: buffed > base (up), < base (down), or equal (none). */
-function buffState(buffed: number, base: number): 'up' | 'down' | 'none' {
-  return buffed > base ? 'up' : buffed < base ? 'down' : 'none'
-}
-const BUFF_CLASS = {
-  up: 'text-emerald-400',
-  down: 'text-rose-400',
-  none: 'text-white/70',
-} as const
 
 /** StatusKind → icon + color for the status row. */
 const STATUS_ICON: Record<StatusKind, LucideIcon> = {
@@ -194,12 +185,10 @@ export function UnitBust({
       <div className="mt-1 truncate text-center text-xs font-medium leading-tight">{unit.name}</div>
       <div className="mt-0.5"><HpBar hp={hp} maxHp={unit.maxHp} /></div>
 
-      <div className="mt-0.5 flex items-center justify-center gap-1 text-[11px] tabular-nums">
-        <Stat icon={Sword} stat="atk" value={unit.atk} base={unit.baseAtk} />
-        <span className="text-white/25">·</span>
-        <Stat icon={Shield} stat="def" value={unit.def} base={unit.baseDef} />
-        <span className="text-white/25">·</span>
-        <Stat icon={Zap} stat="spd" value={unit.spd} base={unit.baseSpd} />
+      <div className="mt-1 flex flex-col gap-0.5">
+        <StatBar label="ATT" value={unit.atk} base={unit.baseAtk} color="bg-rose-400" icon={Sword} />
+        <StatBar label="DIF" value={unit.def} base={unit.baseDef} color="bg-sky-400" icon={Shield} />
+        <StatBar label="VEL" value={unit.spd} base={unit.baseSpd} color="bg-amber-400" icon={Zap} />
       </div>
 
       <div data-role="cooldown" className="mt-0.5 truncate text-center text-[11px] leading-tight">
@@ -268,24 +257,3 @@ export function UnitBust({
   )
 }
 
-/** One stat in the bust stat row, colored by its buff direction (green/red/white). */
-function Stat({
-  icon: Icon, stat, value, base,
-}: {
-  icon: typeof Sword
-  stat: 'atk' | 'def' | 'spd'
-  value: number
-  base: number
-}) {
-  const buff = buffState(value, base)
-  return (
-    <span
-      data-stat={stat}
-      data-buff={buff}
-      className={cn('inline-flex items-center gap-0.5', BUFF_CLASS[buff])}
-    >
-      <Icon size={10} aria-hidden />
-      {value}
-    </span>
-  )
-}
