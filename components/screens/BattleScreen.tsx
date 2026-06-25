@@ -1,13 +1,15 @@
 'use client'
 import { useMemo } from 'react'
 import { Play, Pause, SkipForward, FastForward, ChevronRight } from 'lucide-react'
-import type { ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard } from '@/types'
+import type { ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard, LogEntry } from '@/types'
 import { buildReplay } from '@/game/engine/combat/replay'
 import { useBattleReplay, REPLAY_SPEEDS } from '@/hooks/useBattleReplay'
 import { InitiativeBar } from '@/components/battle/InitiativeBar'
 import { BattleArena } from '@/components/battle/BattleArena'
 import { ActionPanel } from '@/components/battle/ActionPanel'
 import { BattleLog } from '@/components/battle/BattleLog'
+import { BattleRecap } from '@/components/battle/BattleRecap'
+import { StatusLegend } from '@/components/battle/StatusLegend'
 import { Button } from '@/components/ui/Button'
 import { SynergyRibbon } from '@/components/battle/SynergyRibbon'
 import { lastRealEntryAt } from '@/lib/initiative'
@@ -36,6 +38,17 @@ export function BattleScreen({
   // track the real frame.
   const stickyEntry = useMemo(() => lastRealEntryAt(replay, r.index), [replay, r.index])
 
+  const controlAt = useMemo(() => {
+    const kinds = ['stun', 'freeze', 'silence', 'disarm'] as const
+    return (entry: LogEntry) => {
+      const fi = replay.frames.findIndex(f => f.entry === entry)
+      if (fi < 0 || !entry.actorSide) return undefined
+      const key = `${entry.actorSide}:${entry.actorId}`
+      const effs = replay.frames[fi]?.statusEffects?.[key] ?? []
+      return kinds.find(k => effs.some(e => e.kind === k))
+    }
+  }, [replay])
+
   return (
     <main className="flex-1 flex flex-col items-center gap-5 p-4 sm:p-6">
       <div className="flex flex-col items-center gap-1">
@@ -53,9 +66,10 @@ export function BattleScreen({
         <SynergyRibbon synergies={enemySyn} align="right" />
       </div>
 
-      <BattleArena replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle} />
-
-      <ActionPanel entry={stickyEntry} units={replay.units} />
+      <BattleArena
+        replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle}
+        center={<ActionPanel entry={stickyEntry} units={replay.units} />}
+      />
 
       <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
         {!r.done ? (
@@ -84,7 +98,13 @@ export function BattleScreen({
         )}
       </div>
 
-      <BattleLog entries={replay.frames.slice(1, r.index + 1).map(f => f.entry!)} units={replay.units} />
+      <StatusLegend />
+      <BattleRecap frames={replay.frames.slice(0, r.index + 1)} units={replay.units} side="left" />
+      <BattleLog
+        entries={replay.frames.slice(1, r.index + 1).map(f => f.entry!)}
+        units={replay.units}
+        controlAt={controlAt}
+      />
     </main>
   )
 }

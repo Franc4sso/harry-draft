@@ -1,5 +1,6 @@
 'use client'
 import { useLayoutEffect, useRef, useState } from 'react'
+import type React from 'react'
 import type { LogEntry } from '@/types'
 import type { Replay, ReplayUnit } from '@/game/engine/combat/replay'
 import { unitKey } from '@/game/engine/combat/replay'
@@ -14,7 +15,7 @@ import { archetypeFor } from '@/lib/spellArchetype'
  * defender. Statuses are derived per frame; HP comes from the current frame.
  */
 export function BattleArena({
-  replay, hp, entry, frameKey = 0, leftTitle = 'La tua squadra', rightTitle = 'Avversari',
+  replay, hp, entry, frameKey = 0, leftTitle = 'La tua squadra', rightTitle = 'Avversari', center,
 }: {
   replay: Replay
   hp: Record<string, number>
@@ -22,6 +23,7 @@ export function BattleArena({
   frameKey?: number
   leftTitle?: string
   rightTitle?: string
+  center?: React.ReactNode
 }) {
   const actingKey = entry?.actorSide ? unitKey(entry.actorSide, entry.actorId) : null
   const targetKey = entry?.targetSide && entry.targetId ? unitKey(entry.targetSide, entry.targetId) : null
@@ -91,7 +93,9 @@ export function BattleArena({
         <div data-testid="row-enemies" className="flex flex-nowrap justify-center gap-2 sm:gap-3">{renderSide(right, true)}</div>
       </section>
 
-      <div className="font-display text-2xl text-white/30 select-none">VS</div>
+      <div className="self-center min-h-[1.5rem] w-full flex items-center justify-center">
+        {center ?? <span className="font-display text-2xl text-white/30 select-none">VS</span>}
+      </div>
 
       <section className="flex flex-col items-center gap-2 w-full">
         <div data-testid="row-player" className="flex flex-nowrap justify-center gap-2 sm:gap-3">{renderSide(left, false)}</div>

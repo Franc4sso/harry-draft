@@ -19,3 +19,8 @@ it('enemies row sits above the player row in the DOM', () => {
   // enemies appears before player in document order
   expect(enemies.compareDocumentPosition(player) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
 })
+
+it('renders the center node between the rows', () => {
+  render(<BattleArena replay={replay} hp={{ 'left:a': 100, 'right:b': 100 }} entry={null} center={<div data-testid="center-slot">X</div>} />)
+  expect(screen.getByTestId('center-slot')).toBeInTheDocument()
+})
