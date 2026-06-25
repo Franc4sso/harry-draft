@@ -151,8 +151,8 @@ export function UnitBust({
         x: impact ? (isCrit ? [0, -6, 6, -3, 0] : [0, -3, 3, 0]) : (targeted ? (mirrored ? -4 : 4) : 0),
       }}
       transition={{ type: 'spring', stiffness: 360, damping: 22 }}
-      className={cn('relative w-32 sm:w-36', mirrored && 'text-right')}
-      style={{ boxShadow: aura, borderRadius: 16, filter: dead ? 'grayscale(0.85)' : undefined }}
+      className={cn('relative w-28 sm:w-32 rounded-2xl border border-[#C9A24B]/15 bg-[rgba(20,16,33,0.45)] p-1.5 backdrop-blur-sm', mirrored && 'text-right')}
+      style={{ boxShadow: aura, filter: dead ? 'grayscale(0.85)' : undefined }}
     >
       <RarityFrame tier={unit.tier}>
         <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl">
@@ -199,7 +199,7 @@ export function UnitBust({
       <div className="mt-1 truncate text-center text-xs font-medium leading-tight">{unit.name}</div>
       <div className="mt-0.5"><HpBar hp={hp} maxHp={unit.maxHp} /></div>
 
-      <div className="mt-1 flex flex-col gap-0.5">
+      <div className="mt-1.5 flex flex-col gap-1">
         <StatBar label="ATT" value={unit.atk} base={unit.baseAtk} color="bg-rose-400" icon={Sword} />
         <StatBar label="DIF" value={unit.def} base={unit.baseDef} color="bg-sky-400" icon={Shield} />
         <StatBar label="VEL" value={unit.spd} base={unit.baseSpd} color="bg-amber-400" icon={Zap} />
