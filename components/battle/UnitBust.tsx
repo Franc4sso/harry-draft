@@ -6,6 +6,7 @@ import {
 import type { LucideIcon } from 'lucide-react'
 import type { ReplayUnit } from '@/game/engine/combat/replay'
 import type { ActiveEffect, StatusKind } from '@/types'
+import { STATUS_BY_ID } from '@/data/statuses'
 import { RarityFrame } from '@/components/ui/RarityFrame'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { HpBar } from './HpBar'
@@ -86,12 +87,24 @@ function describeEffect(e: ActiveEffect): string {
         ? `Scudo: assorbe ${e.absorbLeft}`
         : `Scudo: ${turns}`
     case 'buff':
-      return `Potenziamento ${stat} +${e.amount ?? 0}, ${turns}`
+      return `Potenziamento ${stat} ${magnitudeLabel(e)}, ${turns}`
     case 'debuff':
-      return `Indebolimento ${stat} -${e.amount ?? 0}, ${turns}`
+      return `Indebolimento ${stat} ${magnitudeLabel(e)}, ${turns}`
     default:
       return turns
   }
+}
+
+/** True if this effect's statMod is percentage-based. */
+function isPct(e: ActiveEffect): boolean {
+  return !!(e.statusId && STATUS_BY_ID[e.statusId]?.statMod?.pct)
+}
+
+/** Magnitude label for a stat debuff/buff pill: '-25%' or '+10'. */
+function magnitudeLabel(e: ActiveEffect): string {
+  const amt = e.amount ?? 0
+  const sign = e.kind === 'debuff' ? '-' : '+'
+  return isPct(e) ? `${sign}${amt}%` : `${sign}${amt}`
 }
 
 /** The number to show beside a status icon: shield prefers absorbLeft, else remaining. */
@@ -195,7 +208,7 @@ export function UnitBust({
                 className={cn('inline-flex items-center gap-0.5 rounded bg-black/55 px-0.5 text-[9px] font-semibold tabular-nums', STATUS_CLASS[e.kind])}
               >
                 <Icon size={11} aria-hidden />
-                {effectCount(e)}
+                {(e.kind === 'buff' || e.kind === 'debuff') ? magnitudeLabel(e) : effectCount(e)}
               </span>
             )
           })}
