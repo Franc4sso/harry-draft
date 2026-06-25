@@ -14,11 +14,18 @@ import { selectSpell } from './selectSpell'
 import { mostWounded, selectTarget } from './targeting'
 
 export function toBattleUnits(
-  team: DraftedWizard[], side: Side, synergies: ActiveSynergy[], relics: ActiveRelic[] = [],
+  team: DraftedWizard[], side: Side, synergies: ActiveSynergy[], relics: ActiveRelic[] = [], menacePct = 0,
 ): BattleUnit[] {
   return team.map(dw => {
     const synBuffed = applyBonuses(dw.stats, synergies)
-    const buffed = applyRelicBonuses(synBuffed, team, relics)
+    const relicBuffed = applyRelicBonuses(synBuffed, team, relics)
+    const m = 1 + menacePct
+    const buffed = menacePct === 0 ? relicBuffed : {
+      hp: Math.round(relicBuffed.hp * m),
+      atk: Math.round(relicBuffed.atk * m),
+      def: Math.round(relicBuffed.def * m),
+      spd: Math.round(relicBuffed.spd * m),
+    }
     const startHp = dw.currentHp ?? buffed.hp
     return {
       ...dw, side, buffedStats: buffed, maxHp: buffed.hp,
@@ -45,7 +52,7 @@ export function simulateBattle(
   const leftRelics = opts.leftRelics ?? []
   const rightRelics = opts.rightRelics ?? []
   const L = toBattleUnits(left, 'left', leftSyn, leftRelics)
-  const R = toBattleUnits(right, 'right', rightSyn, rightRelics)
+  const R = toBattleUnits(right, 'right', rightSyn, rightRelics, opts.rightMenace ?? 0)
   const regen: Record<Side, number> = {
     left: totalRegen(leftSyn) + totalRelicRegen(left, leftRelics),
     right: totalRegen(rightSyn) + totalRelicRegen(right, rightRelics),

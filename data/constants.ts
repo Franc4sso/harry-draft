@@ -35,6 +35,14 @@ export const BALANCE = {
     // power-percentile. Smaller = steeper difficulty (late enemies/boss draft
     // from the very top of the roster). Tuned for ~50% clear at optimal play.
     difficultySpan: 7,
+    // "Menace": every enemy team's stats are multiplied by (1 + menacePct), where
+    // menacePct = menaceBase + menacePerStage * stage, ×menaceEliteMult on elite,
+    // ×menaceBossMult on boss. Low base keeps stage 1 gentle; steep per-stage makes
+    // late fights and the boss brutal (whip curve). Calibrated in the balance test.
+    menaceBase: 0,
+    menacePerStage: 0.06,
+    menaceEliteMult: 1.5,
+    menaceBossMult: 2,
   },
   map: {
     floors: 6,            // total floors incl. start(0) + boss(last); 4 middle floors
