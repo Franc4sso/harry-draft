@@ -11,7 +11,7 @@ import { floatFor } from './damageFloat'
 import { archetypeFor } from '@/lib/spellArchetype'
 
 /**
- * Staged battlefield: player's busts on the left, enemies on the right, the
+ * Staged battlefield: player's busts on top, enemies on the bottom, the
  * spell-effect layer between them, and the Protego dome over a blocking
  * defender. Statuses are derived per frame; HP comes from the current frame.
  */
