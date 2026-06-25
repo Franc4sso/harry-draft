@@ -53,3 +53,22 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   .resa-animated { animation: none !important; }
 }
+
+/* Draft roster row: hover treatment uses glow + sheen only (NO transform), so the
+   card never shifts out from under the cursor — that shift was the old hover flicker. */
+.wizard-row { transition: filter 200ms ease; }
+.wizard-row:hover { filter: brightness(1.06); }
+.wizard-row__sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity 220ms ease;
+  background: linear-gradient(100deg, transparent 38%, rgba(255,255,255,0.10) 50%, transparent 62%);
+}
+.wizard-row:hover .wizard-row__sheen { opacity: 1; }
+@media (prefers-reduced-motion: reduce) {
+  .wizard-row, .wizard-row__sheen { transition: none; }
+  .wizard-row:hover { filter: none; }
+}
