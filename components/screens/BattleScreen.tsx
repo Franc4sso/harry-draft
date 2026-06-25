@@ -51,7 +51,7 @@ export function BattleScreen({
   return (
     <main className="flex-1 flex flex-col items-center gap-5 p-4 sm:p-6">
       <div className="flex flex-col items-center gap-1">
-        <h1 className="font-display text-2xl">{title}</h1>
+        <h1 className="font-display text-2xl text-[#F0D98A] [text-shadow:0_0_18px_rgba(201,162,75,0.25)]">{title}</h1>
         <p className="text-[11px] uppercase tracking-widest text-white/35">
           Turno {r.entry?.turn ?? 0}
           {r.entry?.actorId ? <> · agisce <span className="text-white/60">{replay.units.find(u => u.id === r.entry!.actorId && u.side === r.entry!.actorSide)?.name ?? r.entry!.actorId}</span></> : null}
