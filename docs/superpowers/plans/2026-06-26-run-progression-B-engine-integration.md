@@ -1241,11 +1241,8 @@ function runOne(seed: string): 'win' | 'defeat' {
       const p = s.pendingLevelUps![0]!
       s = applyLevelUp(s, p.wizardId, { atLevel: p.atLevel, kind: 'atk' }); continue
     }
-    if (s.phase === 'victory') {
-      const wasBoss = node.type === 'boss'
-      s = wasBoss ? clearAreaAndAdvance(s, createRng(seed)) : { ...s, phase: 'map' }
-      continue
-    }
+    if (s.phase === 'area-cleared') { s = clearAreaAndAdvance(s, createRng(seed)); continue }
+    if (s.phase === 'victory') { s = { ...s, phase: 'map' }; continue }
     break
   }
   return 'defeat'
