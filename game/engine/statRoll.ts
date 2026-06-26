@@ -25,12 +25,13 @@ export function pickSpell(rng: Rng, wizard: Wizard): Spell {
   return spell
 }
 
-export function draftWizard(rng: Rng, wizard: Wizard): DraftedWizard {
+export function draftWizard(rng: Rng, wizard: Wizard, allowShiny = false): DraftedWizard {
   const stats = fixedStats(wizard)
   const spell = pickSpell(rng, wizard)
-  // Shiny roll AFTER the spell pick (fixed order; shifts the draft stream by design).
-  const shiny = rng.chance(BALANCE.draft.shinyChance)
-    ? { traitId: rng.pick(SHINY_TRAIT_IDS) }
-    : undefined
+  // Always DRAW the roll (keeps the rng stream identical for every caller), but only
+  // ATTACH shiny when the caller opts in. Enemies/boss teams never opt in → never shiny,
+  // yet their draft stream (and thus composition) is unchanged. Shiny is PLAYER-DRAFT ONLY.
+  const rolled = rng.chance(BALANCE.draft.shinyChance) ? { traitId: rng.pick(SHINY_TRAIT_IDS) } : undefined
+  const shiny = allowShiny ? rolled : undefined
   return { wizard, stats, maxHp: stats.hp, spell, ...(shiny ? { shiny } : {}) }
 }

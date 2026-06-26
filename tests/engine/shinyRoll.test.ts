@@ -8,8 +8,8 @@ const harry = WIZARD_BY_ID['harry']!
 
 describe('draftWizard shiny roll', () => {
   it('is deterministic for a given seed', () => {
-    const a = draftWizard(createRng('seed-x'), harry)
-    const b = draftWizard(createRng('seed-x'), harry)
+    const a = draftWizard(createRng('seed-x'), harry, true)
+    const b = draftWizard(createRng('seed-x'), harry, true)
     expect(a.shiny).toEqual(b.shiny)
   })
 
@@ -17,7 +17,7 @@ describe('draftWizard shiny roll', () => {
     let shinies = 0
     const N = 20000
     for (let i = 0; i < N; i++) {
-      const d = draftWizard(createRng(`seed-${i}`), harry)
+      const d = draftWizard(createRng(`seed-${i}`), harry, true)
       if (d.shiny) {
         shinies++
         expect(SHINY_TRAIT_IDS).toContain(d.shiny.traitId)
