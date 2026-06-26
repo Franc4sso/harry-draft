@@ -6,6 +6,7 @@ import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
 import { WIZARD_BY_ID } from '@/data/wizards'
 import { TRAIT_BY_ID } from '@/data/traits'
+import { displayName } from '@/lib/displayName'
 
 const harry = () => draftWizard(createRng(1), WIZARD_BY_ID['harry']!)
 
@@ -13,7 +14,7 @@ describe('WizardCardRow', () => {
   it('renders name, all four stat labels and the spell name', () => {
     const d = harry()
     render(<WizardCardRow drafted={d} />)
-    expect(screen.getByText('Harry Potter')).toBeInTheDocument()
+    expect(screen.getByText(displayName(d))).toBeInTheDocument()
     for (const stat of ['HP', 'ATK', 'DIF', 'VEL']) {
       expect(screen.getByText(stat)).toBeInTheDocument()
     }
@@ -40,17 +41,25 @@ describe('WizardCardRow', () => {
     expect(strip.querySelector('[data-synergy="goldenTrio"][data-hot]')).not.toBeNull()
   })
 
-  it('renders trait chips for a wizard that has traits', () => {
-    const voldemort = draftWizard(createRng(1), WIZARD_BY_ID['voldemort']!)
-    render(<WizardCardRow drafted={voldemort} />)
-    const trait = TRAIT_BY_ID[voldemort.wizard.traits![0]!]!
-    expect(screen.getByText(trait.name)).toBeInTheDocument()
+  it('shows a trait chip when the wizard is shiny', () => {
+    const base = harry()
+    const shiny = { ...base, shiny: { traitId: 'veleno' } }
+    render(<WizardCardRow drafted={shiny} />)
+    expect(screen.getByText(TRAIT_BY_ID['veleno']!.name)).toBeInTheDocument()
+  })
+
+  it('shows no trait chip when the wizard is not shiny', () => {
+    render(<WizardCardRow drafted={{ ...harry(), shiny: undefined }} />)
+    for (const id of Object.keys(TRAIT_BY_ID)) {
+      expect(screen.queryByText(TRAIT_BY_ID[id]!.name)).toBeNull()
+    }
   })
 
   it('fires onClick when clickable', async () => {
     const handler = vi.fn()
-    render(<WizardCardRow drafted={harry()} onClick={handler} />)
-    await userEvent.click(screen.getByText('Harry Potter'))
+    const d = harry()
+    render(<WizardCardRow drafted={d} onClick={handler} />)
+    await userEvent.click(screen.getByText(displayName(d)))
     expect(handler).toHaveBeenCalledOnce()
   })
 

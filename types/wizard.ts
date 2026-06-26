@@ -18,5 +18,4 @@ export interface Wizard {
   ranges: StatRanges
   spellPool: string[]
   tags?: string[]
-  traits?: string[]
 }

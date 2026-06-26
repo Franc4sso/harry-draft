@@ -6,6 +6,7 @@ import { DraftSlot } from '@/components/draft/DraftSlot'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
 import { WIZARD_BY_ID } from '@/data/wizards'
+import { displayName } from '@/lib/displayName'
 
 const card = draftWizard(createRng(1), WIZARD_BY_ID['harry']!)
 
@@ -20,13 +21,13 @@ describe('DraftSlot', () => {
   it('renders the card and fires onPick on click', async () => {
     const onPick = vi.fn()
     render(<DraftSlot drafted={card} onPick={onPick} />)
-    await userEvent.click(screen.getByText(card.wizard.name))
+    await userEvent.click(screen.getByText(displayName(card)))
     expect(onPick).toHaveBeenCalledOnce()
   })
   it('does not fire onPick when disabled', async () => {
     const onPick = vi.fn()
     render(<DraftSlot drafted={card} onPick={onPick} disabled />)
-    await userEvent.click(screen.getByText(card.wizard.name))
+    await userEvent.click(screen.getByText(displayName(card)))
     expect(onPick).not.toHaveBeenCalled()
   })
 })

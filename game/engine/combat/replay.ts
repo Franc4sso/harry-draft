@@ -2,6 +2,7 @@ import type {
   ActiveEffect, ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard, House, LogEntry, Role, Side, Tier,
 } from '@/types'
 import { toBattleUnits } from './simulate'
+import { displayName } from '@/lib/displayName'
 
 /** Stable identity for a unit within a single battle: side + wizard id. */
 export function unitKey(side: Side, id: string): string {
@@ -71,7 +72,7 @@ export function buildReplay(
     key: unitKey(u.side, u.wizard.id),
     side: u.side,
     id: u.wizard.id,
-    name: u.wizard.name,
+    name: displayName(u),
     house: u.wizard.house,
     role: u.wizard.role,
     tier: u.wizard.tier,

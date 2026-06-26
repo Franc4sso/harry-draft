@@ -7,6 +7,7 @@ import { createRng } from '@/game/engine/rng'
 import { WIZARD_BY_ID } from '@/data/wizards'
 import { synergyBonusText } from '@/lib/glossary'
 import { detectSynergies } from '@/game/engine/synergy'
+import { displayName } from '@/lib/displayName'
 
 function team(ids: string[]) {
   const r = createRng(1)
@@ -17,7 +18,7 @@ describe('TeamScreen', () => {
   it('renders all team members', () => {
     const t = team(['harry', 'ron', 'hermione', 'luna', 'neville'])
     render(<TeamScreen team={t} />)
-    for (const m of t) expect(screen.getByText(m.wizard.name)).toBeInTheDocument()
+    for (const m of t) expect(screen.getByText(displayName(m))).toBeInTheDocument()
   })
   it('shows the golden trio synergy when present', () => {
     const t = team(['harry', 'ron', 'hermione', 'luna', 'neville'])

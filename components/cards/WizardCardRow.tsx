@@ -13,6 +13,7 @@ import { roleTooltip } from '@/lib/roleInfo'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { TRAIT_BY_ID } from '@/data/traits'
 import { SIGNATURE_BY_ID } from '@/data/signatures'
+import { displayName } from '@/lib/displayName'
 
 const STAT_CELLS: Array<{ key: keyof typeof CARD_STAT_MAX; label: string; color: string }> = [
   { key: 'hp', label: 'HP', color: '#7CFC9B' },
@@ -55,9 +56,8 @@ export function WizardCardRow({
   const effectChips = spellEffectChips(spell)
   const spellStats = formatSpellStats(spell)
   const specialChips = affiliationChips(wizard).filter((c) => c.kind === 'special')
-  const traitChips = (wizard.traits ?? [])
-    .map((id) => TRAIT_BY_ID[id])
-    .filter((t): t is NonNullable<typeof t> => t != null)
+  const shinyTrait = drafted.shiny ? TRAIT_BY_ID[drafted.shiny.traitId] : undefined
+  const shinyGlow = drafted.shiny ? ', 0 0 22px rgba(255,200,80,0.55), inset 0 0 0 2px rgba(255,210,90,0.7)' : ''
   const signature = SIGNATURE_BY_ID[wizard.id]
 
   return (
@@ -77,8 +77,8 @@ export function WizardCardRow({
       style={{
         border: `2px solid ${theme.color}`,
         boxShadow: selected
-          ? `0 10px 30px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,255,255,0.85), 0 0 18px ${theme.glow}55`
-          : `0 10px 30px rgba(0,0,0,0.5), 0 0 16px ${theme.glow}30`,
+          ? `0 10px 30px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,255,255,0.85), 0 0 18px ${theme.glow}55${shinyGlow}`
+          : `0 10px 30px rgba(0,0,0,0.5), 0 0 16px ${theme.glow}30${shinyGlow}`,
       }}
     >
       {/* Background layer (house gradient + hover sheen), clipped to the rounded
@@ -109,7 +109,10 @@ export function WizardCardRow({
       <div className="relative z-10 flex min-w-0 flex-1 flex-col gap-1.5 p-3">
         {/* Name + synergy chips (gold, round) */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <h3 className="font-display text-[17px] leading-none">{wizard.name}</h3>
+          <h3 className="font-display text-[17px] leading-none">
+            {displayName(drafted)}
+            {drafted.shiny && <span aria-hidden className="ml-1 text-amber-300">✨</span>}
+          </h3>
           {specialChips.length > 0 && (
             <div data-testid="affiliation-strip" className="flex flex-wrap items-center gap-1">
               {specialChips.map((c) => {
@@ -152,22 +155,19 @@ export function WizardCardRow({
           </div>
         )}
 
-        {/* Traits — visually distinct from synergies: own row, blue, squared,
-            star glyph, and a tiny "Tratti" label. */}
-        {traitChips.length > 0 && (
+        {/* Shiny trait — only present when the wizard rolled shiny. */}
+        {shinyTrait && (
           <div className="flex flex-wrap items-center gap-1">
-            <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-sky-300/55">Tratti</span>
-            {traitChips.map((trait) => (
-              <Tooltip key={trait.id} content={trait.desc}>
-                <span
-                  className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold"
-                  style={{ color: '#bcd9f5', borderColor: 'rgba(96,156,214,0.55)', background: 'rgba(40,92,162,0.22)' }}
-                >
-                  <span aria-hidden className="text-sky-300">✦</span>
-                  {trait.name}
-                </span>
-              </Tooltip>
-            ))}
+            <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-sky-300/55">Tratto</span>
+            <Tooltip content={shinyTrait.desc}>
+              <span
+                className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold"
+                style={{ color: '#bcd9f5', borderColor: 'rgba(96,156,214,0.55)', background: 'rgba(40,92,162,0.22)' }}
+              >
+                <span aria-hidden className="text-sky-300">✦</span>
+                {shinyTrait.name}
+              </span>
+            </Tooltip>
           </div>
         )}
 

@@ -2,6 +2,7 @@
 import type { DraftedWizard } from '@/types'
 import { HouseCrest } from '@/components/ui/HouseCrest'
 import { houseTheme } from '@/lib/theme'
+import { displayName } from '@/lib/displayName'
 
 export function SquadPanel({
   picks, teamSize, layout = 'row',
@@ -22,7 +23,7 @@ export function SquadPanel({
               {p.wizard.name.charAt(0)}
             </span>
             <span className="flex items-center gap-1 text-xs font-semibold text-white/90">
-              <HouseCrest house={p.wizard.house} size={12} />{p.wizard.name}
+              <HouseCrest house={p.wizard.house} size={12} />{displayName(p)}
             </span>
           </div>
         )

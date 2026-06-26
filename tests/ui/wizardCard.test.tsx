@@ -7,13 +7,15 @@ import { createRng } from '@/game/engine/rng'
 import { WIZARD_BY_ID } from '@/data/wizards'
 import { SPELLS } from '@/data/spells'
 import { TRAIT_BY_ID } from '@/data/traits'
+import { displayName } from '@/lib/displayName'
 
 const harry = () => draftWizard(createRng(1), WIZARD_BY_ID['harry']!)
 
 describe('WizardCard compact', () => {
   it('renders at the card width and shows the name and all four stat labels', () => {
-    const { container } = render(<WizardCard drafted={harry()} />)
-    expect(screen.getByText('Harry Potter')).toBeInTheDocument()
+    const d = harry()
+    const { container } = render(<WizardCard drafted={d} />)
+    expect(screen.getByText(displayName(d))).toBeInTheDocument()
     for (const stat of ['HP', 'ATK', 'DIF', 'VEL']) {
       expect(screen.getByText(stat)).toBeInTheDocument()
     }
@@ -22,9 +24,10 @@ describe('WizardCard compact', () => {
 
   it('fires onClick when clickable', async () => {
     const handler = vi.fn()
-    render(<WizardCard drafted={harry()} onClick={handler} />)
+    const d = harry()
+    render(<WizardCard drafted={d} onClick={handler} />)
     // Click the card body (the name) — not the role badge, which is its own button now.
-    await userEvent.click(screen.getByText('Harry Potter'))
+    await userEvent.click(screen.getByText(displayName(d)))
     expect(handler).toHaveBeenCalledOnce()
   })
 
@@ -102,20 +105,15 @@ describe('WizardCard compact', () => {
     expect(screen.getByText('Precisione:')).toBeInTheDocument()
   })
 
-  it('renders trait chips with a tooltip for a wizard that has traits', () => {
-    const voldemort = draftWizard(createRng(1), WIZARD_BY_ID['voldemort']!)
-    render(<WizardCard drafted={voldemort} />)
-    const trait = TRAIT_BY_ID[voldemort.wizard.traits![0]!]!
-    expect(screen.getByText(trait.name)).toBeInTheDocument()
+  it('shows a trait chip when the wizard is shiny', () => {
+    const base = harry()
+    const shiny = { ...base, shiny: { traitId: 'veleno' } }
+    render(<WizardCard drafted={shiny} />)
+    expect(screen.getByText(TRAIT_BY_ID['veleno']!.name)).toBeInTheDocument()
   })
 
-  it('shows no trait chips for a trait-less wizard', () => {
-    // All wizards now carry traits — synthesize a trait-less wizard by drafting ron
-    // and stripping its traits array before rendering.
-    const base = draftWizard(createRng(1), WIZARD_BY_ID['ron']!)
-    const draftless = { ...base, wizard: { ...base.wizard, traits: [] } }
-    render(<WizardCard drafted={draftless} />)
-    // No chip matching any catalog trait name.
+  it('shows no trait chip when the wizard is not shiny', () => {
+    render(<WizardCard drafted={{ ...harry(), shiny: undefined }} />)
     for (const id of Object.keys(TRAIT_BY_ID)) {
       expect(screen.queryByText(TRAIT_BY_ID[id]!.name)).toBeNull()
     }

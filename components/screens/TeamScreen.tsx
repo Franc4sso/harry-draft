@@ -4,6 +4,7 @@ import { detectSynergies } from '@/game/engine/synergy'
 import { synergyBonusText } from '@/lib/glossary'
 import { WizardCardRow } from '@/components/cards/WizardCardRow'
 import { Button } from '@/components/ui/Button'
+import { displayName } from '@/lib/displayName'
 
 export function TeamScreen({
   team, onConfirm, onRestart,
@@ -13,7 +14,7 @@ export function TeamScreen({
   onRestart?: () => void
 }) {
   const synergies = detectSynergies(team)
-  const nameById = new Map(team.map((d) => [d.wizard.id, d.wizard.name]))
+  const nameById = new Map(team.map((d) => [d.wizard.id, displayName(d)]))
 
   return (
     <main className="flex-1 flex flex-col items-center gap-7 p-6">
