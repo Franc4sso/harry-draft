@@ -90,7 +90,8 @@ Riferimenti di scala dai tratti attuali (es. `esecuzione` +50% sotto 30%, `rocci
 ## 4. Primitive usate (nessuna nuova)
 
 - **Modifier**: `modifyOutgoingDamage`, `modifyIncomingDamage`, `modifyHealing` con `apply` inline (costanti di budget).
-- **Reactive**: `onHit`, `onTurnStart`, `onHpThreshold`, `onHeal`, `onAllyDeath`, `onDeath`, `onTurnEnd` → ritornano `EffectSpec[]`.
+- **Reactive**: `onHit`, `onTurnStart`, `onHeal`, `onAllyDeath`, `onDeath`, `onTurnEnd` → ritornano `EffectSpec[]`.
+  - ⚠️ **`onHpThreshold` NON è usabile dalle signature**: l'engine fa fire solo per soglie registrate dai *relic* (`registeredThresholds` in `simulate.ts`), e il trigger reattivo non porta un valore-soglia. Gli effetti "quando ferito" si fanno su **`onTurnStart`** con un gate interno sulla percentuale HP del proprietario (`ctx.actor.hp / ctx.actor.maxHp < soglia`): se non ferito, `effects()` ritorna `[]` → nessun rng, nessun log.
 - **EffectSpec** disponibili: `damage`, `heal`, `shield {amount,duration}`, `applyStatus {statusId|effect, chance, duration, target}`.
 - **Status esistenti riusati**: `stun, freeze, silence, disarm, burn, regen, shield, atkUp, defUp, slow, weaken1/2/3, expose1/2/3, slow1/2/3`.
 - **Buff/debuff custom** con `effect: { kind:'buff'|'debuff', stat, amount, duration }` inline quando serve un valore non coperto dai preset.
@@ -107,7 +108,7 @@ Legenda hook: OD=modifyOutgoingDamage, ID=modifyIncomingDamage, H=onHit, TS=onTu
 |------|---------|---------|
 | **dumbledore** | Bacchetta di Sambuco | OD +30% danni; H 40% → `stun` 1t |
 | **voldemort** | Terrore Immortale | OD +50% vs bersagli sotto 40% HP; H 35% → `weaken3` 2t (terrore) |
-| **harry** | Coraggio del Grifondoro | OD scala con HP mancante fino a +70%; HP<50% → `shield` 45 (2t) una tantum |
+| **harry** | Coraggio del Grifondoro | OD scala con HP mancante fino a +70%; TS, se HP<50% → self `regen` 3t (l'amore lo protegge) |
 
 ### Tier 2 (1 trigger, può emettere 2 effetti)
 
@@ -117,7 +118,7 @@ Legenda hook: OD=modifyOutgoingDamage, ID=modifyIncomingDamage, H=onHit, TS=onTu
 | **bellatrix** | Crudeltà Cruciatus | H 35% → `stun` 1t **e** `heal` self 12 (sifone crudele) |
 | **mcgonagall** | Trasfigurazione Marziale | ID −30% danni subiti |
 | **sirius** | Lealtà Feroce | H 45% → self `effect:buff atk +22` 2t |
-| **lupin** | Furia Lupesca | HP<50% → `effect:buff atk +25` 3t **e** `regen` 3t |
+| **lupin** | Furia Lupesca | TS, se HP<50% → self `effect:buff atk +25` 2t |
 | **moody** | Vigilanza Costante | ID −25%; TS 100% → `defUp` 1t (mantiene la guardia) |
 | **lucius** | Esecutore Spietato | OD +45% vs bersagli sotto 35% HP |
 | **kingsley** | Pugno dell'Auror | ID −20%; H 40% → `slow2` 2t |
@@ -139,7 +140,7 @@ Legenda hook: OD=modifyOutgoingDamage, ID=modifyIncomingDamage, H=onHit, TS=onTu
 | **molly** | Istinto Materno | HL → self `shield` 30 (2t) |
 | **arthur** | Tenacia Babbana | ID −15% |
 | **tonks** | Riflessi Mutanti | TS → self `effect:buff spd +10` 1t |
-| **narcissa** | Patto Materno | HP<40% → self `regen` 3t una tantum |
+| **narcissa** | Patto Materno | TS, se HP<40% → self `regen` 3t |
 | **dolohov** | Maledizione Viola | H 35% → `burn` 2t **e** `slow1` 2t |
 | **greyback** | Morso Selvaggio | OD +20% vs bersagli sotto 50% HP |
 | **cho** | Lacrime Gelide | H 25% → `freeze` 2t |
@@ -161,7 +162,7 @@ Legenda hook: OD=modifyOutgoingDamage, ID=modifyIncomingDamage, H=onHit, TS=onTu
 | **goyle** | Stazza | ID −10% |
 | **crabbe** | Stazza | ID −10% |
 | **marcus** | Gioco Duro | OD scala con HP mancante fino a +20% |
-| **pettigrew** | Codardia Vigile | HP<35% → self `effect:buff spd +6` 2t una tantum |
+| **pettigrew** | Codardia Vigile | TS, se HP<35% → self `effect:buff spd +6` 2t |
 | **padma** | Studio Attento | H 18% → `disarm` 2t |
 | **terry** | Concentrazione | H 18% → `stun` 1t |
 | **michael** | Slancio | OD +10% |
