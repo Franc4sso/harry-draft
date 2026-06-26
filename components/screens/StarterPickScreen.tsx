@@ -29,10 +29,14 @@ export function StarterPickScreen({
           <div
             key={d.wizard.id}
             data-testid={`pick-${d.wizard.id}`}
-            tabIndex={-1}
+            role="button"
+            tabIndex={0}
+            aria-pressed={picked.includes(d.wizard.id)}
             onClick={() => toggle(d.wizard.id)}
+            onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(d.wizard.id) } }}
+            className="cursor-pointer rounded-xl"
           >
-            <WizardCard drafted={d} selected={picked.includes(d.wizard.id)} onClick={() => toggle(d.wizard.id)} />
+            <WizardCard drafted={d} selected={picked.includes(d.wizard.id)} />
           </div>
         ))}
       </div>
