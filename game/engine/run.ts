@@ -1,6 +1,7 @@
 import type { ActiveSynergy, BattleResult, DraftedWizard, Relic, RunNode, RunState, Side, UnitSnapshot } from '@/types'
 import { createRng } from './rng'
 import { detectSynergies } from './synergy'
+import { selectEnemyRelics } from './relics'
 import { simulateBattle } from './combat/simulate'
 import { generateEnemyTeam, generateBossTeam, budgetForStage } from './combat/teamGen'
 import { generateMap, mapRngChannel, nodeDepth } from './map'
@@ -83,6 +84,19 @@ export function runPhaseAfterBattle(
   return 'victory'
 }
 
+/**
+ * Per-stage enemy stat multiplier percentage. Gentle early (menaceBase), steep
+ * late (menacePerStage * depth), amplified on elite/boss nodes. Calibrated in
+ * the campaign balance test.
+ */
+export function menacePctFor(depth: number, nodeType: 'normal' | 'elite' | 'boss'): number {
+  const c = BALANCE.campaign
+  const base = c.menaceBase + c.menacePerStage * depth
+  if (nodeType === 'elite') return base * c.menaceEliteMult
+  if (nodeType === 'boss') return base * c.menaceBossMult
+  return base
+}
+
 export function nextBattle(state: RunState): BattleOutcome {
   const cur = state.currentNodeId ? nodeById(state, state.currentNodeId) : undefined
   const isBoss = cur?.type === 'boss'
@@ -95,10 +109,27 @@ export function nextBattle(state: RunState): BattleOutcome {
   const enemy = isBoss
     ? generateBossTeam(enemyRng, BOSSES[0]!)
     : generateEnemyTeam(enemyRng, Math.round(budgetForStage(depth) * eliteMult))
-  const enemySyn = detectSynergies(enemy)
+  const nodeType: 'normal' | 'elite' | 'boss' = isBoss ? 'boss' : (cur?.type === 'elite' ? 'elite' : 'normal')
+
+  // Boss carries its exclusive synergy (previously defined but never applied).
+  // ActiveSynergy is { synergy, memberIds }; applyBonuses sums synergy.bonus
+  // regardless of memberIds, so listing the whole roster applies it team-wide.
+  const bossSyn = isBoss ? BOSSES[0]!.exclusiveSynergy : undefined
+  const enemySyn = bossSyn
+    ? [...detectSynergies(enemy), { synergy: bossSyn, memberIds: enemy.map(d => d.wizard.id) }]
+    : detectSynergies(enemy)
+
+  // Real relics for elite/boss enemies (forked rng channel so it never disturbs
+  // the enemy-draft or battle streams).
+  const relicCount = nodeType === 'boss' ? BALANCE.campaign.enemyRelicsBoss
+    : nodeType === 'elite' ? BALANCE.campaign.enemyRelicsElite : 0
+  const rightRelics = relicCount > 0
+    ? selectEnemyRelics(base.fork(depth + 200), relicCount)
+    : []
 
   const result = simulateBattle(state.team, enemy, battleRng, {
     leftSyn: state.activeSynergies, rightSyn: enemySyn, leftRelics: state.relics,
+    rightRelics, rightMenace: menacePctFor(depth, nodeType),
   })
 
   const newTeam = applyBattleToRoster(state.team, result.finalSnapshot)

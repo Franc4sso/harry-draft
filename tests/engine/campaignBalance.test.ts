@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { startDraft, pickFrom } from '@/game/engine/draftSession'
-import { startRun, confirmTeam, nextBattle, advanceToNode, nodeById } from '@/game/engine/run'
+import { startRun, confirmTeam, nextBattle, advanceToNode, nodeById, addRelic } from '@/game/engine/run'
+import { offerRelics } from '@/game/engine/relics'
+import { createRng } from '@/game/engine/rng'
 import { powerOf } from '@/game/engine/combat/teamGen'
 
 /**
@@ -17,6 +19,19 @@ function greedyTeam(seed: string) {
     s = pickFrom(s, best)
   }
   return s.picks
+}
+
+// Strongest-by-aggregate-bonus heuristic: an upper-bound "optimal relic grab".
+function relicScore(r: { bonus?: { hp?: number; atk?: number; def?: number; spd?: number; allPct?: number } }): number {
+  const b = r.bonus ?? {}
+  return (b.hp ?? 0) + (b.atk ?? 0) * 2 + (b.def ?? 0) * 1.5 + (b.spd ?? 0) + (b.allPct ?? 0) * 400
+}
+
+function grabRelic(state: ReturnType<typeof startRun>, n: number) {
+  const offers = offerRelics(createRng(`${state.seed}-relic-${n}`), state.relics, state.stage)
+  if (offers.length === 0) return state
+  const best = offers.reduce((a, b) => (relicScore(b) >= relicScore(a) ? b : a))
+  return addRelic(state, best)
 }
 
 interface CampaignStats {
@@ -41,6 +56,10 @@ function simulateCampaigns(n: number): CampaignStats {
     // Walk the map graph: fight the current node, and on a normal victory step
     // to the first reachable next node before the next fight (the linear
     // `stage` loop is gone — progression is now node-by-node through the graph).
+    // The greedy player also grabs the strongest available relic before the
+    // first fight and after each normal victory, mirroring real relic accrual so
+    // the difficulty band is measured WITH relics on both sides.
+    state = grabRelic(state, 0)
     let firstFight = true
     let guard = 0
     while (guard++ < 50) {
@@ -56,6 +75,7 @@ function simulateCampaigns(n: number): CampaignStats {
       // Normal victory: advance to the next floor via the first legal edge.
       const cur = nodeById(state, state.currentNodeId!)!
       state = advanceToNode(state, cur.next[0]!)
+      state = grabRelic(state, guard)
     }
   }
 
@@ -70,43 +90,18 @@ function simulateCampaigns(n: number): CampaignStats {
 describe('campaign difficulty curve', () => {
   const stats = simulateCampaigns(200)
 
-  it('is winnable but not trivial for optimal play', () => {
-    // BAND, not an exact target. Persistent HP + permanent death (HP-persistence
-    // feature) means wounds carry and deaths compound across the graph walk, so a
-    // full clear now requires surviving every floor AND the boss with a roster
-    // intact enough to win. After the C1 fix (the snapshot/roster path no longer
-    // clobbers a surviving player with a same-id enemy entry — survivors are kept,
-    // not dropped) the clear rate rose to ~0.04 measured (n=200). Assigning traits
-    // to all 60 wizards made enemies meaningfully tougher; that measured rate
-    // settled at ~0.015–0.016 (n=200 and n=500, deterministic). The 2026-06-25
-    // combat overhaul (graduated 2/3/4 synergies + percentage debuffs + 30%
-    // control) re-measured the optimal-play clear rate at ~0.023 (n=300,
-    // deterministic): graduated synergies help the optimal drafter slightly more
-    // than the stronger debuffs hurt, so the rate nudged up, not down. The intent
-    // we protect is unchanged: the campaign is still WINNABLE for optimal play
-    // (clears happen, rate > 0) yet far from a guaranteed clear (no pushover). The
-    // floor stays 0.008 (~a third of the new measured rate — ample margin, guards
-    // "still winnable"); the upper bound (no-pushover) is left wide and unchanged.
-    expect(stats.clearRate).toBeGreaterThan(0.008)
-    expect(stats.clearRate).toBeLessThan(0.72)
+  it('is brutal but winnable for optimal play (with relics)', () => {
+    expect(stats.clearRate).toBeGreaterThan(0.08)
+    expect(stats.clearRate).toBeLessThan(0.18)
   })
 
   it('starts gently — the first fight is usually won', () => {
-    // Fixed midpoint stats shifted the seeded RNG stream; measured rate is now ~0.775 (n=200).
-    expect(stats.firstStageWinRate).toBeGreaterThan(0.70)
+    expect(stats.firstStageWinRate).toBeGreaterThan(0.65)
   })
 
-  it('peaks at the boss — a real climax, neither a pushover nor impossible', () => {
-    // BAND. Under HP-persistence the rosters that reach the boss arrive wounded
-    // (and often depleted), so the boss win-rate among boss plays sits well below
-    // the old full-heal ~0.5. After the C1 fix (wounded survivors are correctly
-    // carried to the boss instead of being dropped/clobbered) the boss win-rate
-    // among boss plays is ~0.25–0.33 measured (n=200–300; the 2026-06-25 combat
-    // overhaul nudged it to ~0.33). Intent preserved: the boss is a real climax —
-    // not impossible (rate > 0, wins do happen) and not a pushover (well under the
-    // old ceiling). Floor set comfortably below the measured band.
-    expect(stats.bossWinRate).toBeGreaterThan(0.20)
-    expect(stats.bossWinRate).toBeLessThan(0.85)
+  it('peaks at a merciless boss — winnable but rarely', () => {
+    expect(stats.bossWinRate).toBeGreaterThan(0)
+    expect(stats.bossWinRate).toBeLessThan(0.30)
   })
 
   it('rarely stalls to the turn cap', () => {
