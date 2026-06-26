@@ -29,19 +29,24 @@ export const BALANCE = {
   },
   campaign: {
     enemyCount: 5,
-    baseBudget: 1500,
-    budgetStep: 220,
+    // Brutal calibration: mid-game enemies are deliberately gentle so optimal
+    // players survive the HP-persistence attrition of the 4 middle fights and
+    // reach the boss (~37% reach rate — the structural ceiling). Brutality is
+    // concentrated in the boss (relics + exclusive synergy + menace), giving a
+    // whip curve. Calibrated against tests/engine/campaignBalance.test.ts.
+    baseBudget: 700,
+    budgetStep: 120,
     // Stages of budget headroom used to map an enemy budget onto a roster
-    // power-percentile. Smaller = steeper difficulty (late enemies/boss draft
-    // from the very top of the roster). Tuned for ~50% clear at optimal play.
-    difficultySpan: 7,
+    // power-percentile. Larger = gentler (enemies draft from lower percentiles).
+    difficultySpan: 12,
     // "Menace": every enemy team's stats are multiplied by (1 + menacePct), where
     // menacePct = menaceBase + menacePerStage * stage, ×menaceEliteMult on elite,
-    // ×menaceBossMult on boss. Low base keeps stage 1 gentle; steep per-stage makes
-    // late fights and the boss brutal (whip curve). Calibrated in the balance test.
+    // ×menaceBossMult on boss. A small per-stage ramp keeps mid fights gentle
+    // (~+2% mid) while the boss term bites (~+10%); larger ramps overshoot the
+    // brutal band because HP-persistence compounds mid-game losses.
     menaceBase: 0,
-    menacePerStage: 0.06,
-    menaceEliteMult: 1.5,
+    menacePerStage: 0.01,
+    menaceEliteMult: 1.3,
     menaceBossMult: 2,
     // Real relics handed to enemy teams on elite/boss nodes (deterministic per seed).
     enemyRelicsElite: 1,

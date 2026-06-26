@@ -13,7 +13,7 @@ export const BOSSES: BossDef[] = [
   {
     id: 'voldemort_boss',
     name: 'Lord Voldemort',
-    budget: 2600,
+    budget: 1800,
     hpMult: 1.4,
     forcedSpellIds: ['avada', 'fiendfyre'],
     exclusiveSynergy: {
