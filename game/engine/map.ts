@@ -82,6 +82,11 @@ export function parseAreaNodeId(id: string): { area: number; floor: number; idx:
  * from `assignAreaCategories`. Edges connect only adjacent floors with full
  * coverage (no orphans, no dead ends before the boss) — same wiring as
  * `generateMap`, but area-tagged.
+ *
+ * RNG: `area` is NOT folded into the random stream — it only tags node ids. The
+ * CALLER owns per-area isolation: pass a per-area-forked rng (e.g.
+ * `mapRng.fork(area)`) so two areas with equal widths don't generate identical
+ * categories/layouts. (Spec §6.4: fork per (seed, mapChannel, area).)
  */
 export function generateArea(rng: Rng, area: number, bias: AreaBias): RunNode[] {
   const { floorsPerArea, minWidth, maxWidth } = BALANCE.map
