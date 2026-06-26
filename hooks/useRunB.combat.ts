@@ -1,0 +1,36 @@
+import type { ActiveSynergy, BattleResult, DraftedWizard, RunState } from '@/types'
+import type { Rng } from '@/game/engine/rng'
+import { createRng } from '@/game/engine/rng'
+import { resolveCombat } from '@/game/engine/resolvers/combat'
+import { battleReadyTeam } from '@/game/engine/battlePrep'
+import { detectSynergies } from '@/game/engine/synergy'
+import { parseAreaNodeId } from '@/game/engine/map'
+
+export interface ActiveBattleB {
+  result: BattleResult
+  enemy: DraftedWizard[]
+  enemySyn: ActiveSynergy[]
+  isBoss: boolean
+  playerTeam: DraftedWizard[]
+  playerSyn: ActiveSynergy[]
+}
+
+const combatChannel = 2
+
+/** Deterministic rng for the current combat node; shared by snapshot + commit. */
+export function combatRng(run: RunState): Rng {
+  const node = run.map!.find(n => n.id === run.currentNodeId)!
+  const { area, floor } = parseAreaNodeId(node.id)
+  return createRng(run.seed).fork(combatChannel).fork(area).fork(floor)
+}
+
+/** Build the replay snapshot: the leveled roster that fought + the pure result. */
+export function prepareCombat(run: RunState): ActiveBattleB {
+  const node = run.map!.find(n => n.id === run.currentNodeId)!
+  const out = resolveCombat(run, node, combatRng(run))
+  const ready = battleReadyTeam(run.team)
+  return {
+    result: out.result, enemy: out.enemy, enemySyn: out.enemySyn, isBoss: out.isBoss,
+    playerTeam: ready, playerSyn: detectSynergies(ready),
+  }
+}
