@@ -22,9 +22,10 @@ export interface CombatResult {
   milestones: { wizardId: string; level: number }[]
 }
 
-/** Global progression depth across areas: area * (floors-1) + floor. */
-function globalDepth(area: number, floor: number): number {
-  return area * (BALANCE.map.floorsPerArea - 1) + floor
+/** Monotonic progression depth across areas: areas are spaced by floorsPerArea so
+ *  the last node of one area and the first of the next never collide. */
+export function globalDepth(area: number, floor: number): number {
+  return area * BALANCE.map.floorsPerArea + floor
 }
 
 export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatResult {

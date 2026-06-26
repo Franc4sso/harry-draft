@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { resolveCombat } from '@/game/engine/resolvers/combat'
+import { resolveCombat, globalDepth } from '@/game/engine/resolvers/combat'
+import { BALANCE } from '@/data/constants'
 import { generateArea } from '@/game/engine/map'
 import { createRng } from '@/game/engine/rng'
 import { offerRecruits, recruitVia } from '@/game/engine/recruit'
@@ -14,6 +15,25 @@ function starterState(): RunState {
 }
 const firstBattleNode = (s: RunState): RunNode =>
   s.map!.find(n => n.type === 'battle' && n.id !== s.currentNodeId) ?? s.map!.find(n => n.type === 'battle')!
+
+describe('globalDepth', () => {
+  it('is strictly monotonic and never collides across area boundaries', () => {
+    const F = BALANCE.map.floorsPerArea
+    // last node of area a and first node of area a+1 must differ
+    for (let a = 0; a < BALANCE.map.areas - 1; a++) {
+      expect(globalDepth(a, F - 1)).toBeLessThan(globalDepth(a + 1, 0))
+    }
+    // strictly increasing within and across areas
+    let prev = -1
+    for (let a = 0; a < BALANCE.map.areas; a++) {
+      for (let f = 0; f < F; f++) {
+        const d = globalDepth(a, f)
+        expect(d).toBeGreaterThan(prev)
+        prev = d
+      }
+    }
+  })
+})
 
 describe('resolveCombat', () => {
   it('returns a battle result and awards positive EXP to survivors', () => {
