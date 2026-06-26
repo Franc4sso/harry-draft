@@ -26,15 +26,14 @@ export function StarterPickScreen({
       <SquadPanel picks={pickedWizards} teamSize={2} layout="row" />
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-w-5xl">
         {offer.map(d => (
-          <button
+          <div
             key={d.wizard.id}
             data-testid={`pick-${d.wizard.id}`}
+            tabIndex={-1}
             onClick={() => toggle(d.wizard.id)}
-            type="button"
-            className="appearance-none border-none bg-transparent p-0 cursor-pointer"
           >
             <WizardCard drafted={d} selected={picked.includes(d.wizard.id)} onClick={() => toggle(d.wizard.id)} />
-          </button>
+          </div>
         ))}
       </div>
       <div className="flex gap-3">
