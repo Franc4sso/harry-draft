@@ -7,7 +7,7 @@ function unit(id: string, traits: string[]): BattleUnit {
   const stats = { hp: 100, atk: 30, def: 20, spd: 25 }
   return {
     wizard: { id, name: id, house: 'Grifondoro', role: 'Attaccante', tier: 3,
-      ranges: { hp: [100,100], atk: [30,30], def: [20,20], spd: [25,25] }, spellPool: ['base_attack'], traits },
+      gender: 'm' as const, ranges: { hp: [100,100], atk: [30,30], def: [20,20], spd: [25,25] }, spellPool: ['base_attack'], traits },
     stats, maxHp: 100, spell: { id: 'base_attack', name: 'x', desc: '', type: 'Attacco', hitChance: 1 },
     side: 'left', hp: 100, cooldowns: {}, statusEffects: [], buffedStats: stats, alive: true,
   } as BattleUnit
@@ -16,6 +16,7 @@ function unit(id: string, traits: string[]): BattleUnit {
 // A test trait: +100% outgoing damage, owner = actor.
 const DOUBLE: Trait = {
   id: 'double', name: 'Double', desc: 'x2',
+  epithet: { m: 'x', f: 'x' },
   trigger: { kind: 'modifier', hook: 'modifyOutgoingDamage', owner: 'actor', apply: (v) => v * 2 },
 }
 

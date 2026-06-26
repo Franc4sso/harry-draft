@@ -4,7 +4,7 @@ import { createEventBus } from '@/game/engine/combat/eventBus'
 import { registerSignatures } from '@/game/engine/signatures'
 
 function unit(id: string, over: Partial<BattleUnit> = {}): BattleUnit {
-  const wizard = { id, name: id, house: 'Grifondoro', role: 'Attaccante', tier: 3, ranges: { hp: [1, 1], atk: [1, 1], def: [1, 1], spd: [1, 1] }, spellPool: [] } as Wizard
+  const wizard = { id, name: id, house: 'Grifondoro', role: 'Attaccante', tier: 3, gender: 'm' as const, ranges: { hp: [1, 1], atk: [1, 1], def: [1, 1], spd: [1, 1] }, spellPool: [] } as Wizard
   const stats = { hp: 100, atk: 20, def: 10, spd: 20 }
   return {
     wizard, stats, maxHp: 100, spell: { id: 's', name: 's', desc: '', type: 'Attacco', hitChance: 1 },

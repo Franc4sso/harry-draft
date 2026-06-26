@@ -10,7 +10,7 @@ function unit(id: string, spellId: string, over: Partial<BattleUnit> = {}): Batt
   const stats = { hp: 120, atk: 80, def: 30, spd: 40 }
   const dw: DraftedWizard = {
     wizard: { id, name: id, house: 'Grifondoro', role: 'Attaccante', tier: 3,
-      ranges: { hp: [120,120], atk: [80,80], def: [30,30], spd: [40,40] }, spellPool: [spellId] },
+      gender: 'm' as const, ranges: { hp: [120,120], atk: [80,80], def: [30,30], spd: [40,40] }, spellPool: [spellId] },
     stats, maxHp: 120, spell: SPELL_BY_ID[spellId]!,
   }
   return { ...dw, side: 'left', hp: 120, cooldowns: {}, statusEffects: [], buffedStats: stats, alive: true, ...over }

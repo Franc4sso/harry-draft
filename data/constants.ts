@@ -26,6 +26,7 @@ export const BALANCE = {
     teamSize: 5,
     tierWeights: { 1: 4, 2: 12, 3: 32, 4: 52 } as Record<Tier, number>,
     maxTier1PerScreen: 1,
+    shinyChance: 0.015,
   },
   campaign: {
     enemyCount: 5,

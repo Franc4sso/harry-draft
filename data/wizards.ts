@@ -4,6 +4,7 @@ export const WIZARDS: Wizard[] = [
   // ===== Tier 1 (rare, strongest) =====
   {
     id: 'dumbledore', name: 'Albus Silente', house: 'Grifondoro', role: 'Controllo', tier: 1,
+    gender: 'm',
     ranges: { hp: [105, 128], atk: [22, 30], def: [18, 26], spd: [28, 38] },
     spellPool: ['imperio', 'petrificus', 'confundo', 'levicorpus', 'fiendfyre'],
     tags: ['order'],
@@ -11,6 +12,7 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'voldemort', name: 'Lord Voldemort', house: 'Serpeverde', role: 'Attaccante', tier: 1,
+    gender: 'm',
     ranges: { hp: [82, 103], atk: [35, 45], def: [12, 19], spd: [24, 32] },
     spellPool: ['avada', 'sectumsempra', 'fiendfyre', 'serpensortia', 'crucio'],
     tags: ['deatheater'],
@@ -18,6 +20,7 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'harry', name: 'Harry Potter', house: 'Grifondoro', role: 'Attaccante', tier: 1,
+    gender: 'm',
     ranges: { hp: [86, 107], atk: [31, 40], def: [12, 19], spd: [26, 35] },
     spellPool: ['expelliarmus', 'stupeficium', 'reducto', 'sectumsempra', 'confundo'],
     tags: ['trio', 'da'],
@@ -27,12 +30,14 @@ export const WIZARDS: Wizard[] = [
   // ===== Tier 2 (strong) =====
   {
     id: 'snape', name: 'Severus Piton', house: 'Serpeverde', role: 'Attaccante', tier: 2,
+    gender: 'm',
     ranges: { hp: [70, 86], atk: [28, 37], def: [11, 16], spd: [19, 27] },
     spellPool: ['sectumsempra', 'levicorpus', 'confringo', 'reducto', 'stupeficium'],
     traits: ['veleno', 'frantumazione'],
   },
   {
     id: 'bellatrix', name: 'Bellatrix Lestrange', house: 'Serpeverde', role: 'Controllo', tier: 2,
+    gender: 'f',
     ranges: { hp: [76, 95], atk: [20, 27], def: [11, 17], spd: [26, 34] },
     spellPool: ['crucio', 'imperio', 'petrificus', 'confringo'],
     tags: ['deatheater'],
@@ -40,6 +45,7 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'mcgonagall', name: 'Minerva McGonagall', house: 'Grifondoro', role: 'Tank', tier: 2,
+    gender: 'f',
     ranges: { hp: [124, 153], atk: [13, 18], def: [29, 39], spd: [14, 19] },
     spellPool: ['protego_maxima', 'fianto', 'reducto', 'bombarda', 'protego'],
     tags: ['order'],
@@ -47,6 +53,7 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'sirius', name: 'Sirius Black', house: 'Grifondoro', role: 'Attaccante', tier: 2,
+    gender: 'm',
     ranges: { hp: [72, 89], atk: [27, 35], def: [11, 16], spd: [22, 29] },
     spellPool: ['stupeficium', 'expelliarmus', 'reducto', 'flipendo', 'confundo'],
     tags: ['order', 'marauder'],
@@ -54,6 +61,7 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'lupin', name: 'Remus Lupin', house: 'Grifondoro', role: 'Supporto', tier: 2,
+    gender: 'm',
     ranges: { hp: [95, 119], atk: [14, 19], def: [17, 23], spd: [20, 27] },
     spellPool: ['expecto', 'episkey', 'vulnera', 'protego', 'riddikulus'],
     tags: ['order', 'marauder'],
@@ -61,6 +69,7 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'moody', name: 'Alastor Moody', house: 'Grifondoro', role: 'Tank', tier: 2,
+    gender: 'm',
     ranges: { hp: [127, 156], atk: [14, 19], def: [29, 39], spd: [12, 17] },
     spellPool: ['protego_maxima', 'fianto', 'stupeficium', 'reducto', 'salvio'],
     tags: ['order'],
@@ -68,6 +77,7 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'lucius', name: 'Lucius Malfoy', house: 'Serpeverde', role: 'Attaccante', tier: 2,
+    gender: 'm',
     ranges: { hp: [69, 85], atk: [25, 33], def: [12, 16], spd: [19, 27] },
     spellPool: ['serpensortia', 'sectumsempra', 'reducto', 'confringo'],
     tags: ['deatheater'],
@@ -75,6 +85,7 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'kingsley', name: 'Kingsley Shacklebolt', house: 'Corvonero', role: 'Tank', tier: 2,
+    gender: 'm',
     ranges: { hp: [125, 153], atk: [14, 19], def: [27, 38], spd: [14, 19] },
     spellPool: ['protego', 'fianto', 'stupeficium', 'bombarda', 'protego_maxima'],
     tags: ['order'],
@@ -82,12 +93,14 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'fleur', name: 'Fleur Delacour', house: 'Corvonero', role: 'Attaccante', tier: 2,
+    gender: 'f',
     ranges: { hp: [67, 84], atk: [26, 34], def: [10, 15], spd: [23, 30] },
     spellPool: ['incendio', 'confringo', 'reducto', 'flipendo'],
     traits: ['ferocia'],
   },
   {
     id: 'viktor', name: 'Viktor Krum', house: 'Corvonero', role: 'Attaccante', tier: 2,
+    gender: 'm',
     ranges: { hp: [71, 87], atk: [27, 35], def: [12, 16], spd: [21, 28] },
     spellPool: ['confringo', 'bombarda', 'reducto', 'oppugno', 'stupeficium'],
     traits: ['crescendo'],
@@ -96,6 +109,7 @@ export const WIZARDS: Wizard[] = [
   // ===== Tier 3 (mid) =====
   {
     id: 'hermione', name: 'Hermione Granger', house: 'Grifondoro', role: 'Controllo', tier: 3,
+    gender: 'f',
     ranges: { hp: [68, 87], atk: [16, 22], def: [11, 17], spd: [24, 32] },
     spellPool: ['petrificus', 'confundo', 'levicorpus', 'langlock', 'reducto'],
     tags: ['trio', 'da'],
@@ -103,6 +117,7 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'ron', name: 'Ron Weasley', house: 'Grifondoro', role: 'Tank', tier: 3,
+    gender: 'm',
     ranges: { hp: [109, 135], atk: [13, 18], def: [23, 33], spd: [11, 16] },
     spellPool: ['protego', 'fianto', 'expelliarmus', 'flipendo', 'salvio'],
     tags: ['trio', 'weasley', 'da'],
@@ -110,12 +125,14 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'draco', name: 'Draco Malfoy', house: 'Serpeverde', role: 'Attaccante', tier: 3,
+    gender: 'm',
     ranges: { hp: [61, 77], atk: [21, 28], def: [9, 14], spd: [17, 25] },
     spellPool: ['serpensortia', 'sectumsempra', 'flipendo', 'expelliarmus'],
     traits: ['veleno'],
   },
   {
     id: 'ginny', name: 'Ginny Weasley', house: 'Grifondoro', role: 'Attaccante', tier: 3,
+    gender: 'f',
     ranges: { hp: [61, 77], atk: [22, 30], def: [9, 14], spd: [19, 27] },
     spellPool: ['reducto', 'stupeficium', 'flipendo', 'oppugno', 'expelliarmus'],
     tags: ['weasley', 'da'],
@@ -123,6 +140,7 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'neville', name: 'Neville Paciock', house: 'Grifondoro', role: 'Tank', tier: 3,
+    gender: 'm',
     ranges: { hp: [111, 137], atk: [13, 18], def: [25, 34], spd: [10, 15] },
     spellPool: ['protego', 'fianto', 'diffindo', 'reducto', 'flipendo'],
     tags: ['da'],
@@ -130,6 +148,7 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'luna', name: 'Luna Lovegood', house: 'Corvonero', role: 'Supporto', tier: 3,
+    gender: 'f',
     ranges: { hp: [81, 102], atk: [12, 18], def: [12, 19], spd: [18, 25] },
     spellPool: ['episkey', 'rennervate', 'protego', 'salvio', 'riddikulus'],
     tags: ['da'],
@@ -137,6 +156,7 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'fred', name: 'Fred Weasley', house: 'Grifondoro', role: 'Controllo', tier: 3,
+    gender: 'm',
     ranges: { hp: [72, 91], atk: [16, 22], def: [12, 17], spd: [22, 31] },
     spellPool: ['confundo', 'tarantallegra', 'flipendo', 'oppugno'],
     tags: ['weasley'],
@@ -144,6 +164,7 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'george', name: 'George Weasley', house: 'Grifondoro', role: 'Attaccante', tier: 3,
+    gender: 'm',
     ranges: { hp: [62, 79], atk: [21, 28], def: [10, 15], spd: [18, 26] },
     spellPool: ['flipendo', 'oppugno', 'diffindo', 'expelliarmus'],
     tags: ['weasley'],
@@ -151,6 +172,7 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'molly', name: 'Molly Weasley', house: 'Grifondoro', role: 'Supporto', tier: 3,
+    gender: 'f',
     ranges: { hp: [93, 114], atk: [13, 18], def: [16, 22], spd: [14, 20] },
     spellPool: ['vulnera', 'episkey', 'ferula', 'protego', 'fianto'],
     tags: ['weasley', 'order'],
@@ -158,6 +180,7 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'arthur', name: 'Arthur Weasley', house: 'Grifondoro', role: 'Supporto', tier: 3,
+    gender: 'm',
     ranges: { hp: [91, 112], atk: [12, 18], def: [16, 22], spd: [15, 21] },
     spellPool: ['episkey', 'rennervate', 'protego', 'salvio'],
     tags: ['weasley', 'order'],
@@ -165,6 +188,7 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'tonks', name: 'Nymphadora Tonks', house: 'Tassorosso', role: 'Controllo', tier: 3,
+    gender: 'f',
     ranges: { hp: [74, 93], atk: [16, 22], def: [12, 17], spd: [24, 32] },
     spellPool: ['confundo', 'petrificus', 'levicorpus', 'tarantallegra'],
     tags: ['order'],
@@ -172,6 +196,7 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'narcissa', name: 'Narcissa Malfoy', house: 'Serpeverde', role: 'Supporto', tier: 3,
+    gender: 'f',
     ranges: { hp: [87, 108], atk: [12, 18], def: [16, 22], spd: [16, 22] },
     spellPool: ['vulnera', 'episkey', 'protego', 'fianto'],
     tags: ['deatheater'],
@@ -179,6 +204,7 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'dolohov', name: 'Antonin Dolohov', house: 'Serpeverde', role: 'Attaccante', tier: 3,
+    gender: 'm',
     ranges: { hp: [66, 82], atk: [24, 31], def: [10, 15], spd: [17, 25] },
     spellPool: ['confringo', 'sectumsempra', 'reducto', 'serpensortia'],
     tags: ['deatheater'],
@@ -186,6 +212,7 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'greyback', name: 'Fenrir Greyback', house: 'Serpeverde', role: 'Tank', tier: 3,
+    gender: 'm',
     ranges: { hp: [116, 142], atk: [16, 21], def: [23, 33], spd: [11, 16] },
     spellPool: ['diffindo', 'reducto', 'protego', 'fianto', 'oppugno'],
     tags: ['deatheater'],
@@ -193,6 +220,7 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'cho', name: 'Cho Chang', house: 'Corvonero', role: 'Controllo', tier: 3,
+    gender: 'f',
     ranges: { hp: [70, 89], atk: [16, 22], def: [11, 17], spd: [22, 31] },
     spellPool: ['confundo', 'levicorpus', 'tarantallegra', 'reducto'],
     tags: ['da'],
@@ -200,30 +228,35 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'cedric', name: 'Cedric Diggory', house: 'Tassorosso', role: 'Attaccante', tier: 3,
+    gender: 'm',
     ranges: { hp: [67, 84], atk: [24, 31], def: [11, 16], spd: [19, 27] },
     spellPool: ['stupeficium', 'expelliarmus', 'reducto', 'flipendo'],
     traits: ['ferocia'],
   },
   {
     id: 'slughorn', name: 'Horace Lumacorno', house: 'Serpeverde', role: 'Supporto', tier: 3,
+    gender: 'm',
     ranges: { hp: [93, 114], atk: [12, 18], def: [17, 23], spd: [13, 19] },
     spellPool: ['vulnera', 'episkey', 'anapneo', 'protego', 'fianto'],
     traits: ['rigenerazione'],
   },
   {
     id: 'hagrid', name: 'Rubeus Hagrid', house: 'Grifondoro', role: 'Tank', tier: 3,
+    gender: 'm',
     ranges: { hp: [130, 158], atk: [14, 19], def: [26, 36], spd: [9, 14] },
     spellPool: ['oppugno', 'flipendo', 'protego', 'fianto'],
     traits: ['roccia'],
   },
   {
     id: 'flitwick', name: 'Filius Vitious', house: 'Corvonero', role: 'Controllo', tier: 3,
+    gender: 'm',
     ranges: { hp: [68, 87], atk: [16, 22], def: [11, 17], spd: [25, 33] },
     spellPool: ['confundo', 'levicorpus', 'petrificus', 'tarantallegra', 'langlock'],
     traits: ['anticipo', 'gelo'],
   },
   {
     id: 'sprout', name: 'Pomona Sprite', house: 'Tassorosso', role: 'Supporto', tier: 3,
+    gender: 'f',
     ranges: { hp: [91, 112], atk: [11, 17], def: [17, 23], spd: [14, 20] },
     spellPool: ['ferula', 'episkey', 'rennervate', 'protego'],
     traits: ['rigenerazione'],
@@ -232,6 +265,7 @@ export const WIZARDS: Wizard[] = [
   // ===== Tier 4 (weakest / numerous) =====
   {
     id: 'seamus', name: 'Seamus Finnigan', house: 'Grifondoro', role: 'Attaccante', tier: 4,
+    gender: 'm',
     ranges: { hp: [51, 69], atk: [19, 26], def: [8, 12], spd: [16, 23] },
     spellPool: ['incendio', 'confringo', 'flipendo', 'reducto'],
     tags: ['da'],
@@ -239,6 +273,7 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'dean', name: 'Dean Thomas', house: 'Grifondoro', role: 'Attaccante', tier: 4,
+    gender: 'm',
     ranges: { hp: [51, 69], atk: [18, 25], def: [9, 12], spd: [16, 23] },
     spellPool: ['reducto', 'flipendo', 'diffindo', 'expelliarmus'],
     tags: ['da'],
@@ -246,42 +281,49 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'parvati', name: 'Parvati Patil', house: 'Grifondoro', role: 'Controllo', tier: 4,
+    gender: 'f',
     ranges: { hp: [57, 78], atk: [13, 19], def: [9, 14], spd: [20, 27] },
     spellPool: ['confundo', 'tarantallegra', 'levicorpus', 'reducto'],
     traits: ['logoramento'],
   },
   {
     id: 'lavender', name: 'Lavender Brown', house: 'Grifondoro', role: 'Supporto', tier: 4,
+    gender: 'f',
     ranges: { hp: [70, 91], atk: [11, 16], def: [12, 18], spd: [15, 21] },
     spellPool: ['episkey', 'anapneo', 'ferula', 'protego'],
     traits: ['benedizione'],
   },
   {
     id: 'pansy', name: 'Pansy Parkinson', house: 'Serpeverde', role: 'Controllo', tier: 4,
+    gender: 'f',
     ranges: { hp: [57, 78], atk: [13, 19], def: [9, 14], spd: [19, 26] },
     spellPool: ['confundo', 'langlock', 'tarantallegra', 'levicorpus'],
     traits: ['bavaglio'],
   },
   {
     id: 'goyle', name: 'Gregory Goyle', house: 'Serpeverde', role: 'Tank', tier: 4,
+    gender: 'm',
     ranges: { hp: [101, 127], atk: [12, 17], def: [22, 30], spd: [8, 12] },
     spellPool: ['protego', 'fianto', 'flipendo', 'oppugno'],
     traits: ['roccia'],
   },
   {
     id: 'crabbe', name: 'Vincent Tiger', house: 'Serpeverde', role: 'Tank', tier: 4,
+    gender: 'm',
     ranges: { hp: [101, 127], atk: [12, 17], def: [22, 30], spd: [8, 12] },
     spellPool: ['protego', 'fianto', 'diffindo', 'flipendo'],
     traits: ['roccia'],
   },
   {
     id: 'marcus', name: 'Marcus Flint', house: 'Serpeverde', role: 'Attaccante', tier: 4,
+    gender: 'm',
     ranges: { hp: [54, 72], atk: [20, 27], def: [9, 12], spd: [14, 21] },
     spellPool: ['oppugno', 'reducto', 'flipendo', 'diffindo'],
     traits: ['furia'],
   },
   {
     id: 'pettigrew', name: 'Peter Minus', house: 'Serpeverde', role: 'Supporto', tier: 4,
+    gender: 'm',
     ranges: { hp: [68, 91], atk: [11, 16], def: [11, 17], spd: [15, 21] },
     spellPool: ['episkey', 'ferula', 'protego', 'salvio'],
     tags: ['deatheater', 'marauder'],
@@ -289,108 +331,126 @@ export const WIZARDS: Wizard[] = [
   },
   {
     id: 'padma', name: 'Padma Patil', house: 'Corvonero', role: 'Controllo', tier: 4,
+    gender: 'f',
     ranges: { hp: [57, 78], atk: [13, 19], def: [9, 14], spd: [20, 27] },
     spellPool: ['confundo', 'levicorpus', 'langlock', 'tarantallegra'],
     traits: ['disarmo'],
   },
   {
     id: 'terry', name: 'Terry Boot', house: 'Corvonero', role: 'Controllo', tier: 4,
+    gender: 'm',
     ranges: { hp: [57, 78], atk: [14, 20], def: [9, 14], spd: [19, 26] },
     spellPool: ['petrificus', 'confundo', 'levicorpus', 'reducto'],
     traits: ['pietrificazione'],
   },
   {
     id: 'michael', name: 'Michael Corner', house: 'Corvonero', role: 'Attaccante', tier: 4,
+    gender: 'm',
     ranges: { hp: [51, 69], atk: [19, 26], def: [8, 12], spd: [16, 23] },
     spellPool: ['reducto', 'flipendo', 'stupeficium', 'expelliarmus'],
     traits: ['crescendo'],
   },
   {
     id: 'roger', name: 'Roger Davies', house: 'Corvonero', role: 'Tank', tier: 4,
+    gender: 'm',
     ranges: { hp: [97, 123], atk: [11, 16], def: [21, 29], spd: [9, 14] },
     spellPool: ['protego', 'fianto', 'reducto', 'flipendo'],
     traits: ['vendetta'],
   },
   {
     id: 'marietta', name: 'Marietta Edgecombe', house: 'Corvonero', role: 'Supporto', tier: 4,
+    gender: 'f',
     ranges: { hp: [70, 91], atk: [11, 16], def: [12, 18], spd: [15, 21] },
     spellPool: ['episkey', 'anapneo', 'rennervate', 'protego'],
     traits: ['rigenerazione'],
   },
   {
     id: 'anthony', name: 'Anthony Goldstein', house: 'Corvonero', role: 'Tank', tier: 4,
+    gender: 'm',
     ranges: { hp: [99, 125], atk: [11, 16], def: [22, 30], spd: [9, 14] },
     spellPool: ['protego', 'fianto', 'salvio', 'reducto'],
     traits: ['roccia'],
   },
   {
     id: 'hannah', name: 'Hannah Abbott', house: 'Tassorosso', role: 'Supporto', tier: 4,
+    gender: 'f',
     ranges: { hp: [72, 93], atk: [11, 16], def: [14, 19], spd: [14, 20] },
     spellPool: ['episkey', 'ferula', 'anapneo', 'protego'],
     traits: ['benedizione'],
   },
   {
     id: 'susan', name: 'Susan Bones', house: 'Tassorosso', role: 'Supporto', tier: 4,
+    gender: 'f',
     ranges: { hp: [72, 93], atk: [11, 17], def: [14, 19], spd: [14, 20] },
     spellPool: ['episkey', 'rennervate', 'protego', 'salvio'],
     traits: ['rigenerazione'],
   },
   {
     id: 'ernie', name: 'Ernie Macmillan', house: 'Tassorosso', role: 'Tank', tier: 4,
+    gender: 'm',
     ranges: { hp: [99, 125], atk: [11, 16], def: [22, 30], spd: [9, 14] },
     spellPool: ['protego', 'fianto', 'flipendo', 'reducto'],
     traits: ['roccia'],
   },
   {
     id: 'justin', name: 'Justin Finch-Fletchley', house: 'Tassorosso', role: 'Attaccante', tier: 4,
+    gender: 'm',
     ranges: { hp: [52, 71], atk: [19, 26], def: [9, 12], spd: [16, 23] },
     spellPool: ['reducto', 'flipendo', 'expelliarmus', 'diffindo'],
     traits: ['ferocia'],
   },
   {
     id: 'zacharias', name: 'Zacharias Smith', house: 'Tassorosso', role: 'Controllo', tier: 4,
+    gender: 'm',
     ranges: { hp: [57, 78], atk: [13, 19], def: [9, 14], spd: [19, 26] },
     spellPool: ['confundo', 'levicorpus', 'langlock', 'tarantallegra'],
     traits: ['logoramento'],
   },
   {
     id: 'leanne', name: 'Leanne Selwyn', house: 'Tassorosso', role: 'Controllo', tier: 4,
+    gender: 'f',
     ranges: { hp: [57, 78], atk: [13, 19], def: [9, 14], spd: [20, 27] },
     spellPool: ['confundo', 'levicorpus', 'tarantallegra', 'langlock'],
     traits: ['bavaglio'],
   },
   {
     id: 'eloise', name: 'Eloise Midgen', house: 'Tassorosso', role: 'Tank', tier: 4,
+    gender: 'f',
     ranges: { hp: [97, 123], atk: [13, 18], def: [21, 29], spd: [9, 14] },
     spellPool: ['protego', 'fianto', 'salvio', 'flipendo'],
     traits: ['vendetta'],
   },
   {
     id: 'theodore', name: 'Theodore Nott', house: 'Serpeverde', role: 'Controllo', tier: 4,
+    gender: 'm',
     ranges: { hp: [57, 78], atk: [14, 20], def: [9, 14], spd: [19, 26] },
     spellPool: ['confundo', 'levicorpus', 'langlock', 'petrificus'],
     traits: ['pietrificazione'],
   },
   {
     id: 'blaise', name: 'Blaise Zabini', house: 'Serpeverde', role: 'Attaccante', tier: 4,
+    gender: 'm',
     ranges: { hp: [52, 71], atk: [19, 26], def: [9, 12], spd: [16, 23] },
     spellPool: ['sectumsempra', 'reducto', 'flipendo', 'diffindo'],
     traits: ['veleno'],
   },
   {
     id: 'astoria', name: 'Astoria Greengrass', house: 'Serpeverde', role: 'Supporto', tier: 4,
+    gender: 'f',
     ranges: { hp: [70, 91], atk: [11, 16], def: [12, 18], spd: [15, 21] },
     spellPool: ['episkey', 'anapneo', 'ferula', 'protego'],
     traits: ['benedizione'],
   },
   {
     id: 'penelope', name: 'Penelope Clearwater', house: 'Corvonero', role: 'Supporto', tier: 4,
+    gender: 'f',
     ranges: { hp: [70, 91], atk: [11, 16], def: [12, 18], spd: [15, 21] },
     spellPool: ['episkey', 'rennervate', 'anapneo', 'protego'],
     traits: ['rigenerazione'],
   },
   {
     id: 'megan', name: 'Megan Jones', house: 'Tassorosso', role: 'Controllo', tier: 4,
+    gender: 'f',
     ranges: { hp: [57, 78], atk: [13, 19], def: [9, 14], spd: [20, 27] },
     spellPool: ['confundo', 'tarantallegra', 'levicorpus', 'langlock'],
     traits: ['logoramento'],

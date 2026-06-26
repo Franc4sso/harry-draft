@@ -4,6 +4,7 @@ import { wizardAffiliations } from '@/lib/affiliations'
 
 const harry: Wizard = {
   id: 'harry', name: 'Harry', house: 'Grifondoro', role: 'Attaccante', tier: 1,
+  gender: 'm',
   ranges: { hp: [110, 135], atk: [22, 38], def: [16, 28], spd: [22, 32] },
   spellPool: ['x'], tags: ['order', 'da'],
 }

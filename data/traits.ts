@@ -33,6 +33,7 @@ export const TRAITS: Trait[] = [
   {
     id: 'esecuzione', name: 'Esecuzione',
     desc: 'Infligge +50% danni ai bersagli sotto il 30% di vita.',
+    epithet: { m: 'il Carnefice', f: 'la Carnefice' },
     trigger: {
       kind: 'modifier', hook: 'modifyOutgoingDamage', owner: 'actor',
       apply: (v, ctx) => {
@@ -45,6 +46,7 @@ export const TRAITS: Trait[] = [
   {
     id: 'furia', name: 'Furia',
     desc: 'Più è ferito, più colpisce forte (fino a +60%).',
+    epithet: { m: 'il Furioso', f: 'la Furiosa' },
     trigger: {
       kind: 'modifier', hook: 'modifyOutgoingDamage', owner: 'actor',
       apply: (v, ctx) => {
@@ -57,6 +59,7 @@ export const TRAITS: Trait[] = [
   {
     id: 'roccia', name: 'Roccia',
     desc: 'Subisce il 20% di danni in meno.',
+    epithet: { m: "l'Incrollabile", f: "l'Incrollabile" },
     trigger: {
       kind: 'modifier', hook: 'modifyIncomingDamage', owner: 'target',
       apply: (v) => v * (1 - ROCK_REDUCTION),
@@ -65,6 +68,7 @@ export const TRAITS: Trait[] = [
   {
     id: 'sifone', name: 'Sifone',
     desc: 'I suoi colpi rallentano il bersaglio (-VEL%).',
+    epithet: { m: 'il Sanguisuga', f: 'la Sanguisuga' },
     trigger: {
       kind: 'reactive', hook: 'onHit', owner: 'actor',
       effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'slow1' }],
@@ -73,6 +77,7 @@ export const TRAITS: Trait[] = [
   {
     id: 'benedizione', name: 'Benedizione',
     desc: 'Quando viene curato, ottiene anche uno scudo.',
+    epithet: { m: 'il Benedetto', f: 'la Benedetta' },
     trigger: {
       kind: 'reactive', hook: 'onHeal', owner: 'actor',
       effects: () => [{ kind: 'shield', amount: BLESS_SHIELD, duration: BLESS_DURATION }],
@@ -81,6 +86,7 @@ export const TRAITS: Trait[] = [
   {
     id: 'pietrificazione', name: 'Pietrificazione',
     desc: 'I suoi colpi possono stordire il bersaglio.',
+    epithet: { m: 'il Pietrificante', f: 'la Pietrificante' },
     trigger: {
       kind: 'reactive', hook: 'onHit', owner: 'actor',
       effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'stun', chance: CONTROL_CHANCE, duration: STUN_DURATION }],
@@ -89,6 +95,7 @@ export const TRAITS: Trait[] = [
   {
     id: 'bavaglio', name: 'Bavaglio',
     desc: 'I suoi colpi possono silenziare il bersaglio (niente incantesimi).',
+    epithet: { m: 'il Silenziatore', f: 'la Silenziatrice' },
     trigger: {
       kind: 'reactive', hook: 'onHit', owner: 'actor',
       effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'silence', chance: CONTROL_CHANCE, duration: SILENCE_DURATION }],
@@ -97,6 +104,7 @@ export const TRAITS: Trait[] = [
   {
     id: 'disarmo', name: 'Disarmo',
     desc: 'I suoi colpi possono disarmare il bersaglio (niente attacchi).',
+    epithet: { m: 'il Disarmante', f: 'la Disarmante' },
     trigger: {
       kind: 'reactive', hook: 'onHit', owner: 'actor',
       effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'disarm', chance: CONTROL_CHANCE, duration: DISARM_DURATION }],
@@ -105,6 +113,7 @@ export const TRAITS: Trait[] = [
   {
     id: 'veleno', name: 'Veleno',
     desc: 'I suoi colpi avvelenano: danno nel tempo al bersaglio.',
+    epithet: { m: 'il Velenoso', f: 'la Velenosa' },
     trigger: {
       kind: 'reactive', hook: 'onHit', owner: 'actor',
       effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'burn', chance: POISON_CHANCE, duration: POISON_DURATION }],
@@ -113,6 +122,7 @@ export const TRAITS: Trait[] = [
   {
     id: 'logoramento', name: 'Logoramento',
     desc: 'I suoi colpi indeboliscono il bersaglio (-ATT%).',
+    epithet: { m: 'lo Sfiancante', f: 'la Sfiancante' },
     trigger: {
       kind: 'reactive', hook: 'onHit', owner: 'actor',
       effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'weaken2', chance: ATTRITION_CHANCE, duration: ATTRITION_DURATION }],
@@ -121,6 +131,7 @@ export const TRAITS: Trait[] = [
   {
     id: 'ferocia', name: 'Ferocia',
     desc: 'Mettendo a segno un colpo rinforza il suo attacco.',
+    epithet: { m: 'il Feroce', f: 'la Feroce' },
     trigger: {
       kind: 'reactive', hook: 'onHit', owner: 'actor',
       effects: () => [{ kind: 'applyStatus', target: 'self', statusId: 'atkUp', duration: FEROCITY_DURATION }],
@@ -129,6 +140,7 @@ export const TRAITS: Trait[] = [
   {
     id: 'rigenerazione', name: 'Rigenerazione',
     desc: 'Si rigenera un poco di vita ogni turno.',
+    epithet: { m: 'il Rigenerante', f: 'la Rigenerante' },
     trigger: {
       kind: 'reactive', hook: 'onTurnStart', owner: 'actor',
       effects: () => [{ kind: 'applyStatus', target: 'self', statusId: 'regen', duration: REGEN_DURATION }],
@@ -137,6 +149,7 @@ export const TRAITS: Trait[] = [
   {
     id: 'anticipo', name: 'Anticipo',
     desc: 'A inizio turno guadagna velocità.',
+    epithet: { m: 'il Fulmineo', f: 'la Fulminea' },
     trigger: {
       kind: 'reactive', hook: 'onTurnStart', owner: 'actor',
       effects: () => [{ kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'spd', amount: ANTICIPATE_SPD, duration: ANTICIPATE_DURATION } }],
@@ -145,6 +158,7 @@ export const TRAITS: Trait[] = [
   {
     id: 'crescendo', name: 'Crescendo',
     desc: 'Più dura lo scontro, più diventa forte.',
+    epithet: { m: "l'Inarrestabile", f: "l'Inarrestabile" },
     trigger: {
       kind: 'reactive', hook: 'onTurnStart', owner: 'actor',
       effects: () => [{ kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'atk', amount: CRESCENDO_ATK, duration: CRESCENDO_DURATION } }],
@@ -153,6 +167,7 @@ export const TRAITS: Trait[] = [
   {
     id: 'vendetta', name: 'Vendetta',
     desc: 'Quando un alleato cade, si infuria (+ATT).',
+    epithet: { m: 'il Vendicatore', f: 'la Vendicatrice' },
     trigger: {
       kind: 'reactive', hook: 'onAllyDeath', owner: 'actor',
       effects: () => [{ kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'atk', amount: VENDETTA_ATK, duration: VENDETTA_DURATION } }],
@@ -161,6 +176,7 @@ export const TRAITS: Trait[] = [
   {
     id: 'frantumazione', name: 'Frantumazione',
     desc: 'I suoi colpi aprono la difesa del bersaglio (-DIF%).',
+    epithet: { m: 'il Devastatore', f: 'la Devastatrice' },
     trigger: {
       kind: 'reactive', hook: 'onHit', owner: 'actor',
       effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'expose2', chance: 0.5, duration: 2 }],
@@ -169,6 +185,7 @@ export const TRAITS: Trait[] = [
   {
     id: 'gelo', name: 'Gelo',
     desc: 'I suoi colpi possono congelare il bersaglio (salta il turno).',
+    epithet: { m: 'il Glaciale', f: 'la Glaciale' },
     trigger: {
       kind: 'reactive', hook: 'onHit', owner: 'actor',
       effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'freeze', chance: 0.25, duration: 2 }],
@@ -177,3 +194,6 @@ export const TRAITS: Trait[] = [
 ]
 
 export const TRAIT_BY_ID: Record<string, Trait> = Object.fromEntries(TRAITS.map(t => [t.id, t]))
+
+/** The trait ids eligible for a shiny draft roll (all of them). */
+export const SHINY_TRAIT_IDS: string[] = TRAITS.map(t => t.id)

@@ -6,6 +6,7 @@ import { SYNERGIES } from '@/data/synergies'
 function dw(id: string, house: Wizard['house'], role: Wizard['role'], tags: string[] = []): DraftedWizard {
   const wizard: Wizard = {
     id, name: id, house, role, tier: 3,
+    gender: 'm',
     ranges: { hp: [80, 80], atk: [10, 10], def: [10, 10], spd: [10, 10] },
     spellPool: ['x'], tags,
   }

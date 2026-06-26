@@ -12,5 +12,6 @@ export interface Trait {
   id: string
   name: string
   desc: string
+  epithet: { m: string; f: string }
   trigger: TraitTrigger
 }

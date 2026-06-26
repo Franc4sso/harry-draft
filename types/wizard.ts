@@ -14,6 +14,7 @@ export interface Wizard {
   house: House
   role: Role
   tier: Tier
+  gender: 'm' | 'f'
   ranges: StatRanges
   spellPool: string[]
   tags?: string[]
