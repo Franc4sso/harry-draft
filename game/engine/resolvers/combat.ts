@@ -2,10 +2,10 @@ import type { ActiveSynergy, BattleResult, DraftedWizard, RunNode, RunState } fr
 import type { Rng } from '../rng'
 import { battleReadyTeam } from '../battlePrep'
 import { simulateBattle } from '../combat/simulate'
-import { generateEnemyTeam, generateBossTeam, budgetForStage } from '../combat/teamGen'
+import { generateEnemyTeam, generateBossTeam } from '../combat/teamGen'
 import { detectSynergies } from '../synergy'
 import { selectEnemyRelics } from '../relics'
-import { menacePctFor, applyBattleToRoster } from '../run'
+import { applyBattleToRoster } from '../run'
 import { addExp } from '../leveling'
 import { parseAreaNodeId } from '../map'
 import { BALANCE } from '@/data/constants'
@@ -28,34 +28,58 @@ export function globalDepth(area: number, floor: number): number {
   return area * BALANCE.map.floorsPerArea + floor
 }
 
+/** New-loop enemy budget at a global depth (decoupled from the legacy `campaign`). */
+function budgetB(depth: number): number {
+  return BALANCE.campaignB.baseBudget + depth * BALANCE.campaignB.budgetStep
+}
+
+/** New-loop menace (stat multiplier as a pct) at a depth, scaled by node kind. */
+function menaceB(depth: number, kind: 'normal' | 'elite' | 'boss'): number {
+  const cb = BALANCE.campaignB
+  const base = cb.menaceBase + cb.menacePerDepth * depth
+  if (kind === 'elite') return base * cb.menaceEliteMult
+  if (kind === 'boss') return base * cb.menaceBossMult
+  return base
+}
+
 export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatResult {
+  const cb = BALANCE.campaignB
   const { area, floor } = parseAreaNodeId(node.id)
   const isBoss = node.type === 'boss'
+  const isFinalBoss = isBoss && area >= BALANCE.map.areas - 1
   const depth = globalDepth(area, floor)
   const enemyRng = rng.fork(depth + 1)
   const battleRng = rng.fork(depth + 100)
-
-  const eliteMult = node.type === 'elite' ? BALANCE.map.eliteBudgetMult : 1
-  const enemy = isBoss
-    ? generateBossTeam(enemyRng, BOSSES[0]!)
-    : generateEnemyTeam(enemyRng, Math.round(budgetForStage(depth) * eliteMult))
   const nodeType: 'normal' | 'elite' | 'boss' = isBoss ? 'boss' : (node.type === 'elite' ? 'elite' : 'normal')
 
-  const bossSyn = isBoss ? BOSSES[0]!.exclusiveSynergy : undefined
+  // Only the FINAL area's boss is the scripted Voldemort (always a full team of 5).
+  // Earlier area bosses are strong-but-scaled enemy teams on the new-loop budget curve,
+  // and every non-final fight is trimmed to the area's enemy count so a growing player
+  // is not perpetually outnumbered. `generateEnemyTeam` returns its 5 sorted by power
+  // desc, so slicing keeps the strongest `count`.
+  const budgetMult = nodeType === 'elite' ? cb.eliteBudgetMult : isBoss ? cb.bossBudgetMult : 1
+  const count = cb.enemyCountByArea[area] ?? cb.enemyCountByArea[cb.enemyCountByArea.length - 1]!
+  const enemy = isFinalBoss
+    ? generateBossTeam(enemyRng, BOSSES[0]!)
+    : generateEnemyTeam(enemyRng, Math.round(budgetB(depth) * budgetMult)).slice(0, count)
+
+  const bossSyn = isFinalBoss ? BOSSES[0]!.exclusiveSynergy : undefined
   const enemySyn = bossSyn
     ? [...detectSynergies(enemy), { synergy: bossSyn, memberIds: enemy.map(d => d.wizard.id) }]
     : detectSynergies(enemy)
 
-  const relicCount = nodeType === 'boss' ? BALANCE.campaign.enemyRelicsBoss
-    : nodeType === 'elite' ? BALANCE.campaign.enemyRelicsElite : 0
+  const relicCount = nodeType === 'boss' ? cb.enemyRelicsBoss
+    : nodeType === 'elite' ? cb.enemyRelicsElite : 0
   const rightRelics = relicCount > 0 ? selectEnemyRelics(rng.fork(depth + 200), relicCount) : []
+
+  const rightMenace = isFinalBoss ? cb.finalBossMenace : menaceB(depth, nodeType)
 
   // Levels apply HERE, before combat — engine stays pure.
   const ready = battleReadyTeam(state.team)
   const playerSyn = detectSynergies(ready)
   const result = simulateBattle(ready, enemy, battleRng, {
     leftSyn: playerSyn, rightSyn: enemySyn, leftRelics: state.relics,
-    rightRelics, rightMenace: menacePctFor(depth, nodeType),
+    rightRelics, rightMenace,
   })
 
   // Persist HP onto the ORIGINAL (unleveled) roster via the existing helper,

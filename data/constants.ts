@@ -53,6 +53,39 @@ export const BALANCE = {
     enemyRelicsElite: 1,
     enemyRelicsBoss: 3,
   },
+  // New roguelite loop (Plan B) difficulty — DECOUPLED from `campaign` above.
+  // The legacy single-area loop starts with a full drafted team of 5; the new loop
+  // starts with 2 level-1 wizards growing to 5 across 3 areas, so it needs a much
+  // gentler early curve. Enemy budgets below `campaign.baseBudget` (700) make
+  // `pickTowardBudget` draft from the weakest roster percentile. These are the ONLY
+  // numbers the new-loop balance harness (campaignBalanceB.test.ts) calibrates; the
+  // legacy `campaign` block and its test are never touched by new-loop tuning.
+  campaignB: {
+    // Enemy team SIZE per area (index = area). The player starts with 2 and grows to
+    // 5, so early areas field fewer foes; the roster fills out to 5 by the final area.
+    // Area bosses use the area's count; the final boss is always full (5).
+    enemyCountByArea: [3, 4, 5] as readonly number[],
+    // Enemy budget by global depth d = area*floorsPerArea + floor (0..14):
+    //   normal = baseBudget + d*budgetStep, ×eliteBudgetMult on elite, ×bossBudgetMult on area boss.
+    // Budget below campaign.baseBudget already floors enemies at the weakest roster
+    // percentile, so the EARLY curve is driven by `menace` (which can go negative).
+    baseBudget: 300,
+    budgetStep: 70,
+    eliteBudgetMult: 1.15,
+    bossBudgetMult: 1.3,
+    // Menace = stat multiplier (1+pct) = menaceBase + menacePerDepth*d, scaled on elite/boss.
+    // menaceBase is NEGATIVE so area-0 fights drop below the roster floor (a level-1
+    // trio can win); the ramp lifts late fights back above 1.0 for the level-5 endgame.
+    menaceBase: -0.55,
+    menacePerDepth: 0.04,
+    menaceEliteMult: 1.1,
+    menaceBossMult: 1.3,
+    // The FINAL area boss is the scripted Voldemort (BOSSES[0], fixed budget); its
+    // menace is this flat value (independent of the depth ramp) so it stays the climax.
+    finalBossMenace: -0.25,
+    enemyRelicsElite: 0,
+    enemyRelicsBoss: 1,
+  },
   map: {
     floors: 6,            // total floors incl. start(0) + boss(last); 4 middle floors
     minWidth: 2,          // min nodes per middle floor
@@ -75,14 +108,14 @@ export const BALANCE = {
     } as Record<RelicRarity, number>,
   },
   leveling: {
-    autoGrowthPct: 0.06,        // +6% a tutte le stat per livello sopra il 1
+    autoGrowthPct: 0.10,        // +10% a tutte le stat per livello sopra il 1
     milestoneBoostPct: 0.25,    // +25% allo stat scelto a una soglia
     milestoneLevels: [3, 6, 9] as readonly number[],
     levelMax: 10,
-    expStep: 100,               // exp per salire da L a L+1 = expStep * L
-    expBattle: 60,              // exp da un combattimento normale (team-wide)
-    expElite: 140,              // exp da un Elite
-    expBoss: 0,                 // il boss chiude l'area: exp irrilevante
+    expStep: 70,                // exp per salire da L a L+1 = expStep * L
+    expBattle: 80,              // exp da un combattimento normale (team-wide)
+    expElite: 160,              // exp da un Elite
+    expBoss: 120,               // area boss clear → exp per la prossima area (boss finale: irrilevante)
   },
   recruit: {
     offerSize: 3,
