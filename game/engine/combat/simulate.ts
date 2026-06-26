@@ -6,6 +6,7 @@ import { BALANCE } from '@/data/constants'
 import { applyBonuses, totalRegen } from '../synergy'
 import { applyRelicBonuses, registerRelicTriggers, totalRelicRegen } from '../relics'
 import { registerTraitTriggers } from '../traits'
+import { registerSignatures } from '../signatures'
 import { createEventBus } from './eventBus'
 import { canAct } from '../status'
 import { EFFECT_HANDLERS } from './effects'
@@ -88,6 +89,7 @@ export function simulateBattle(
   registerRelicTriggers(bus, left, leftRelics, 'left')
   registerRelicTriggers(bus, right, rightRelics, 'right')
   registerTraitTriggers(bus, [...L, ...R])
+  registerSignatures(bus, [...L, ...R])
 
   // Apply a collected reactive hook for `unit`. Guarded by collectReactive().length
   // so a zero-listener hook draws NO rng and emits NO log line — preserving every
@@ -173,7 +175,7 @@ export function simulateBattle(
     )
     for (const actor of order) {
       if (!actor.alive) continue
-      // onTurnStart: top of each LEFT unit's turn, before it acts (fires even if
+      // onTurnStart: top of each unit's turn (both sides), before it acts (fires even if
       // stunned). Gated by collectReactive().length so zero-listener = no rng/no log.
       fireReactive('onTurnStart', actor, turn)
       if (!canAct(actor)) {

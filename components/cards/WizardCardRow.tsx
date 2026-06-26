@@ -12,6 +12,7 @@ import { spellTypeChip, spellEffectChips, formatSpellStats } from '@/lib/glossar
 import { roleTooltip } from '@/lib/roleInfo'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { TRAIT_BY_ID } from '@/data/traits'
+import { SIGNATURE_BY_ID } from '@/data/signatures'
 
 const STAT_CELLS: Array<{ key: keyof typeof CARD_STAT_MAX; label: string; color: string }> = [
   { key: 'hp', label: 'HP', color: '#7CFC9B' },
@@ -57,6 +58,7 @@ export function WizardCardRow({
   const traitChips = (wizard.traits ?? [])
     .map((id) => TRAIT_BY_ID[id])
     .filter((t): t is NonNullable<typeof t> => t != null)
+  const signature = SIGNATURE_BY_ID[wizard.id]
 
   return (
     <motion.div
@@ -132,6 +134,23 @@ export function WizardCardRow({
             </div>
           )}
         </div>
+
+        {/* Signature — amber/gold, rounded-md, ★ glyph, "Abilità" label.
+            Sits above Traits as the headline unique ability. */}
+        {signature && (
+          <div className="flex flex-wrap items-center gap-1">
+            <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-amber-300/60">Abilità</span>
+            <Tooltip content={signature.desc}>
+              <span
+                className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold"
+                style={{ color: '#f3e0b0', borderColor: 'rgba(202,162,74,0.6)', background: 'rgba(120,90,40,0.28)' }}
+              >
+                <span aria-hidden className="text-amber-300">★</span>
+                {signature.name}
+              </span>
+            </Tooltip>
+          </div>
+        )}
 
         {/* Traits — visually distinct from synergies: own row, blue, squared,
             star glyph, and a tiny "Tratti" label. */}
