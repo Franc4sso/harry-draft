@@ -51,3 +51,49 @@ describe('registerSignatures', () => {
     expect(bus.collectReactive('onHit', { turn: 1, actor: owner, target: owner, side: 'left', flags: [] })).toHaveLength(1)
   })
 })
+
+import { SIGNATURES, SIGNATURE_BY_ID } from '@/data/signatures'
+import { WIZARDS } from '@/data/wizards'
+import { STATUS_BY_ID } from '@/data/statuses'
+import type { HookCtx } from '@/types'
+
+describe('signature catalog integrity', () => {
+  it('has exactly one signature per wizard, ids matching', () => {
+    expect(SIGNATURES).toHaveLength(WIZARDS.length)
+    for (const w of WIZARDS) expect(SIGNATURE_BY_ID[w.id], `missing signature for ${w.id}`).toBeDefined()
+    for (const s of SIGNATURES) expect(WIZARDS.some(w => w.id === s.id), `orphan signature ${s.id}`).toBe(true)
+  })
+
+  it('tier-1 signatures carry 2 triggers; everyone has at least 1', () => {
+    for (const w of WIZARDS) {
+      const sig = SIGNATURE_BY_ID[w.id]!
+      expect(sig.triggers.length, `${w.id} trigger count`).toBeGreaterThanOrEqual(1)
+      if (w.tier === 1) expect(sig.triggers.length, `${w.id} is tier 1`).toBe(2)
+    }
+  })
+
+  it('every referenced statusId exists and no trigger throws', () => {
+    // Stub a wounded actor vs a low-HP target so wounded/execute branches run.
+    const mk = (id: string) => ({
+      wizard: WIZARDS[0], stats: { hp: 100, atk: 20, def: 10, spd: 20 }, maxHp: 100,
+      spell: { id, name: id, desc: '', type: 'Attacco', hitChance: 1 },
+      side: 'left', hp: 5, cooldowns: {}, statusEffects: [], buffedStats: { hp: 100, atk: 20, def: 10, spd: 30 }, alive: true,
+    }) as any
+    const actor = mk('a'); const target = mk('b'); target.buffedStats.spd = 5
+    const ctx: HookCtx = { turn: 1, actor, target, side: 'left', flags: [] }
+    for (const sig of SIGNATURES) {
+      for (const t of sig.triggers) {
+        if (t.kind === 'modifier') {
+          expect(() => t.apply(10, ctx), `${sig.id} modifier throws`).not.toThrow()
+        } else {
+          const effs = t.effects(ctx)
+          for (const e of effs) {
+            if (e.kind === 'applyStatus' && e.statusId) {
+              expect(STATUS_BY_ID[e.statusId], `${sig.id} → unknown status ${e.statusId}`).toBeDefined()
+            }
+          }
+        }
+      }
+    }
+  })
+})
