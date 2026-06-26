@@ -4,9 +4,11 @@ import { nodeDepth } from '@/game/engine/map'
 
 const ICON: Record<RunNodeType, string> = {
   battle: '⚔️', elite: '☠️', boss: '👑', relic: '💎', event: '❓', shop: '🛒',
+  recruit: '🧙', commonRoom: '🏠', library: '📚', potions: '🧪', forest: '🌲',
 }
 const LABEL: Record<RunNodeType, string> = {
   battle: 'Sfida', elite: 'Elite', boss: 'Boss', relic: 'Reliquia', event: 'Evento', shop: 'Negozio',
+  recruit: 'Recluta', commonRoom: 'Sala comune', library: 'Biblioteca', potions: 'Pozioni', forest: 'Foresta',
 }
 
 export function MapScreen({

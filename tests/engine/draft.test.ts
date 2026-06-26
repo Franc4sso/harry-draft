@@ -14,19 +14,19 @@ describe('draft', () => {
       expect(screen.filter(w => w.tier === 1).length).toBeLessThanOrEqual(1)
     }
   })
-  it('guarantees at least one Tier <=2 per screen', () => {
+  it('guarantees at least one Tier <=3 per screen (Raro-or-better quality floor)', () => {
     for (let seed = 0; seed < 50; seed++) {
       const screen = generateScreen(createRng(seed), createDraftPool(), [], 0)
-      expect(screen.some(w => w.tier <= 2)).toBe(true)
+      expect(screen.some(w => w.tier <= 3)).toBe(true)
     }
   })
-  // The Tier<=2 guarantee is unconditional (per-screen invariant), not pick-count-gated pity.
+  // The Tier<=3 quality floor is unconditional (per-screen invariant), not pick-count-gated pity.
   // This test exercises a screen generated after picking only low tiers to confirm the
-  // guarantee holds regardless of prior picks.
-  it('guarantees a Tier<=2 even after picking only low tiers', () => {
+  // guarantee holds regardless of prior picks. Epic/Legendary are deliberately NOT guaranteed.
+  it('guarantees a Tier<=3 even after picking only low tiers', () => {
     const pickedTiers: Tier[] = [4, 4]
     const screen = generateScreen(createRng(11), createDraftPool(), pickedTiers, 2)
-    expect(screen.some(w => w.tier <= 2)).toBe(true)
+    expect(screen.some(w => w.tier <= 3)).toBe(true)
   })
   it('is deterministic per seed', () => {
     const a = generateScreen(createRng(8), createDraftPool(), [], 0).map(w => w.id)
