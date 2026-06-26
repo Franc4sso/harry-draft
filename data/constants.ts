@@ -59,6 +59,11 @@ export const BALANCE = {
     maxWidth: 3,          // max nodes per middle floor
     eliteFloors: [3] as readonly number[],  // 0-based middle-floor indices forced to 'elite'
     eliteBudgetMult: 1.35,// enemy-budget multiplier on elite nodes
+    areas: 3,                   // numero di aree per run
+    floorsPerArea: 5,           // piani per area incl. ingresso(0) + boss(last)
+    eliteMinFloor: 2,           // l'unico Elite dell'area va in [eliteMinFloor, floorsPerArea-2]
+    categoryWeights: { battle: 50, recruit: 28, relic: 22 } as Record<'battle' | 'recruit' | 'relic', number>,
+    recruitBiasBoost: 30,       // peso aggiunto a 'recruit' quando la squadra è incompleta
   },
   relics: {
     offerCount: 3,
@@ -68,6 +73,21 @@ export const BALANCE = {
       'rara': 16,
       'epica': 6,
     } as Record<RelicRarity, number>,
+  },
+  leveling: {
+    autoGrowthPct: 0.06,        // +6% a tutte le stat per livello sopra il 1
+    milestoneBoostPct: 0.25,    // +25% allo stat scelto a una soglia
+    milestoneLevels: [3, 6, 9] as readonly number[],
+    levelMax: 10,
+    expStep: 100,               // exp per salire da L a L+1 = expStep * L
+    expBattle: 60,              // exp da un combattimento normale (team-wide)
+    expElite: 140,              // exp da un Elite
+    expBoss: 0,                 // il boss chiude l'area: exp irrilevante
+  },
+  recruit: {
+    offerSize: 3,
+    houseGuarantee: 1,          // almeno N candidati della Casa del giocatore
+    houseBiasWeight: 1.5,       // moltiplicatore di peso per i non-garantiti della Casa
   },
   roles: {
     tauntBonus: 1000,       // additive threat that makes a live Tank the focus

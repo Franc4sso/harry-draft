@@ -2,6 +2,11 @@ import type { Spell, SpellType, Stat } from './spell'
 import type { StatusKind } from './status'
 import type { Stats, Wizard } from './wizard'
 
+export interface GrowthChoice {
+  atLevel: number
+  kind: 'atk' | 'def' | 'spd' | 'hp'
+}
+
 export interface DraftedWizard {
   wizard: Wizard
   stats: Stats
@@ -11,6 +16,11 @@ export interface DraftedWizard {
   currentHp?: number
   /** Rare draft "shiny" nature: grants one trait + a name epithet. Player-only. */
   shiny?: { traitId: string }
+  /** Run progression (player wizards only; absent on enemy teams → treated as level 1). */
+  level?: number
+  exp?: number
+  recruitedVia?: string
+  growthChoices?: GrowthChoice[]
 }
 
 export interface ActiveEffect {
