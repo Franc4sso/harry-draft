@@ -20,6 +20,11 @@ interface Slot { floor: number; idx: number }
  * recruit bias when the team is incomplete.
  */
 export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias): RunNodeType[][] {
+  if (widths.length < 3) throw new Error(`area needs >=3 floors, got ${widths.length}`)
+  if (widths[0] !== 1 || widths[widths.length - 1] !== 1) {
+    throw new Error(`entry and boss floors must have width 1, got widths[0]=${widths[0]}, widths[last]=${widths[widths.length - 1]}`)
+  }
+
   const last = widths.length - 1
   const cats: RunNodeType[][] = widths.map(w => new Array<RunNodeType>(w).fill('battle'))
 
@@ -34,7 +39,7 @@ export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias)
 
   // 1. Place the single elite within the allowed floor band.
   const eliteFloors: number[] = []
-  for (let f = BALANCE.map.eliteMinFloor; f <= last - 1; f++) {
+  for (let f = Math.max(1, BALANCE.map.eliteMinFloor); f <= last - 1; f++) {
     if (widths[f]! > 0) eliteFloors.push(f)
   }
   const eliteFloor = rng.pick(eliteFloors)
@@ -46,7 +51,7 @@ export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias)
   const free = () => slots.filter(s => !used.has(key(s.floor, s.idx)))
   for (const must of ['recruit', 'relic'] as Filler[]) {
     const pool = free()
-    if (pool.length === 0) break
+    if (pool.length === 0) throw new Error(`not enough middle slots to guarantee a ${must} node`)
     const s = rng.pick(pool)
     setCat(cats, s.floor, s.idx, must)
     used.add(key(s.floor, s.idx))

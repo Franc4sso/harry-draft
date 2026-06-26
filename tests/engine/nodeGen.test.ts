@@ -48,4 +48,20 @@ describe('assignAreaCategories', () => {
     const cats = flat(assignAreaCategories(createRng(4), widths(), bias))
     expect(cats.every(c => allowed.has(c))).toBe(true)
   })
+  it('recruit-bias branch: satisfies all guarantees when team is incomplete', () => {
+    const biasBiased = { teamSize: 3, teamMax: 5 }
+    for (let s = 0; s < 20; s++) {
+      const cats = assignAreaCategories(createRng(s), widths(), biasBiased)
+      expect(cats[0]).toEqual(['battle'])
+      expect(cats[cats.length - 1]).toEqual(['boss'])
+      const all = flat(cats)
+      expect(all.filter(c => c === 'elite')).toHaveLength(1)
+      expect(all.filter(c => c === 'recruit').length).toBeGreaterThanOrEqual(1)
+      expect(all.filter(c => c === 'relic').length).toBeGreaterThanOrEqual(1)
+    }
+  })
+  it('throws on bad widths array', () => {
+    expect(() => assignAreaCategories(createRng(1), [1, 1], { teamSize: 5, teamMax: 5 })).toThrow()
+    expect(() => assignAreaCategories(createRng(1), [2, 3, 1], { teamSize: 5, teamMax: 5 })).toThrow(/width 1/)
+  })
 })
