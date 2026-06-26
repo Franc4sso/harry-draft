@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import {
   startRunB, starterOffer, chooseStarters, reachable, moveTo, resolveCurrent,
-  applyLevelUp, registerCoreResolvers,
+  applyLevelUp, registerCoreResolvers, phaseAfterNode,
 } from '@/game/engine/runEngine'
 import { createRng } from '@/game/engine/rng'
 import { BALANCE } from '@/data/constants'
@@ -43,6 +43,25 @@ describe('run engine — node resolution', () => {
     expect(['victory', 'levelup', 'defeat']).toContain(s.phase)
     // resolved flag set
     expect(s.map!.find(n => n.id === target.id)!.resolved).toBe(true)
+  })
+})
+
+describe('phaseAfterNode', () => {
+  it('wipeout → defeat regardless of node', () => {
+    expect(phaseAfterNode({ isBoss: true, area: 0, areas: 3, wiped: true, hasPending: false })).toBe('defeat')
+  })
+  it('pending level-ups take priority (even after a boss)', () => {
+    expect(phaseAfterNode({ isBoss: true, area: 0, areas: 3, wiped: false, hasPending: true })).toBe('levelup')
+  })
+  it('non-final area boss → area-cleared', () => {
+    expect(phaseAfterNode({ isBoss: true, area: 0, areas: 3, wiped: false, hasPending: false })).toBe('area-cleared')
+    expect(phaseAfterNode({ isBoss: true, area: 1, areas: 3, wiped: false, hasPending: false })).toBe('area-cleared')
+  })
+  it('final area boss → win', () => {
+    expect(phaseAfterNode({ isBoss: true, area: 2, areas: 3, wiped: false, hasPending: false })).toBe('win')
+  })
+  it('non-boss node → victory', () => {
+    expect(phaseAfterNode({ isBoss: false, area: 1, areas: 3, wiped: false, hasPending: false })).toBe('victory')
   })
 })
 

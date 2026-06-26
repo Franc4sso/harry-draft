@@ -14,6 +14,17 @@ import { registerResolver, resolverFor } from './resolvers'
 import type { ResolverChoice } from './resolvers/types'
 import { BALANCE } from '@/data/constants'
 
+/** Pure decision of the phase a node leads to once its resolver has run.
+ *  Order: wipeout > pending level-ups > boss (area-cleared unless final area → win) > victory. */
+export function phaseAfterNode(opts: {
+  isBoss: boolean; area: number; areas: number; wiped: boolean; hasPending: boolean
+}): import('@/types').RunPhase {
+  if (opts.wiped) return 'defeat'
+  if (opts.hasPending) return 'levelup'
+  if (opts.isBoss) return opts.area >= opts.areas - 1 ? 'win' : 'area-cleared'
+  return 'victory'
+}
+
 let registered = false
 export function registerCoreResolvers(): void {
   if (registered) return
@@ -80,19 +91,24 @@ export function resolveCurrent(state: RunState, choice: ResolverChoice, rng: Rng
   const resolved = resolver.resolve(state, node, choice, rng)
   const map = markResolved(resolved, node.id)
   const wiped = resolved.team.length === 0
-  let phase: RunState['phase']
-  if (wiped) phase = 'defeat'
-  else if (node.type === 'boss') phase = 'win' // single-area win; clearAreaAndAdvance handles multi-area below
-  else if ((resolved.pendingLevelUps?.length ?? 0) > 0) phase = 'levelup'
-  else phase = 'victory'
+  const phase = phaseAfterNode({
+    isBoss: node.type === 'boss',
+    area: resolved.area ?? 0,
+    areas: BALANCE.map.areas,
+    wiped,
+    hasPending: (resolved.pendingLevelUps?.length ?? 0) > 0,
+  })
   return { ...resolved, map, phase }
 }
 
 export function applyLevelUp(state: RunState, wizardId: string, choice: GrowthChoice): RunState {
   const team = state.team.map(dw => (dw.wizard.id === wizardId ? applyGrowthChoice(dw, choice) : dw))
   const queue = (state.pendingLevelUps ?? []).slice(1)
-  return { ...state, team, activeSynergies: detectSynergies(team),
-    pendingLevelUps: queue, phase: queue.length > 0 ? 'levelup' : 'victory' }
+  const node = state.map?.find(n => n.id === state.currentNodeId)
+  const phase = queue.length > 0
+    ? 'levelup'
+    : phaseAfterNode({ isBoss: node?.type === 'boss', area: state.area ?? 0, areas: BALANCE.map.areas, wiped: false, hasPending: false })
+  return { ...state, team, activeSynergies: detectSynergies(team), pendingLevelUps: queue, phase }
 }
 
 /** Called after a non-boss victory acknowledged, or after a boss win to roll the next area. */
