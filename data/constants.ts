@@ -43,6 +43,9 @@ export const BALANCE = {
     menacePerStage: 0.06,
     menaceEliteMult: 1.5,
     menaceBossMult: 2,
+    // Real relics handed to enemy teams on elite/boss nodes (deterministic per seed).
+    enemyRelicsElite: 1,
+    enemyRelicsBoss: 3,
   },
   map: {
     floors: 6,            // total floors incl. start(0) + boss(last); 4 middle floors

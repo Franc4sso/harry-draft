@@ -90,6 +90,23 @@ function weightedPick(rng: Rng, pool: Relic[]): Relic {
   return pool[pool.length - 1]!
 }
 
+/**
+ * Pick `count` distinct relics weighted by rarity (reusing `weightedPick`),
+ * wrapped as ActiveRelic with stageObtained 0. Deterministic per rng. Never
+ * returns more than the pool size. Used to arm elite/boss enemy teams.
+ */
+export function selectEnemyRelics(rng: Rng, count: number): ActiveRelic[] {
+  const remaining = [...RELICS]
+  const n = Math.min(count, remaining.length)
+  const out: ActiveRelic[] = []
+  for (let i = 0; i < n; i++) {
+    const pick = weightedPick(rng, remaining)
+    out.push({ relic: pick, stageObtained: 0 })
+    remaining.splice(remaining.indexOf(pick), 1)
+  }
+  return out
+}
+
 export function offerRelics(rng: Rng, owned: ActiveRelic[], _stage: number): Relic[] {
   const ownedIds = new Set(owned.map(o => o.relic.id))
   const available = RELICS.filter(r => !ownedIds.has(r.id))
