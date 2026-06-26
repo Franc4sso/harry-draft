@@ -8,13 +8,17 @@ import { createRng } from '@/game/engine/rng'
 describe('balance sanity', () => {
   it('budget is a meaningful difficulty dial (a clearly richer team usually wins)', () => {
     // Budget must translate into strength: a late-stage team should beat a
-    // baseline one most of the time, but the curve is steep enough that a
-    // small (1-2 stage) gap barely matters — so we test a clear, multi-stage gap.
+    // baseline one most of the time. The brutal-difficulty recalibration made the
+    // budget curve gentler (budgetStep 220->120), so a 4-stage gap is now only
+    // ~1.14x power — too small to be decisive, and under fixed stats the
+    // budget->roster mapping is jumpy (a richer team can lose specific matchups).
+    // We therefore test a clearly richer ~8-stage gap (~1.31x power), where the
+    // dial is unambiguous. Measured winRate ~0.83 (n=60, deterministic).
     let wins = 0
     const N = 60
     for (let i = 0; i < N; i++) {
       const playerRng = createRng(`p${i}`)
-      const player = generateEnemyTeam(playerRng, budgetForStage(4))
+      const player = generateEnemyTeam(playerRng, budgetForStage(8))
       const enemy = generateEnemyTeam(createRng(`e${i}`), budgetForStage(0))
       const res = simulateBattle(player, enemy, createRng(`b${i}`), {
         leftSyn: detectSynergies(player), rightSyn: detectSynergies(enemy),
