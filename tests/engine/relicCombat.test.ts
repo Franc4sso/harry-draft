@@ -11,9 +11,10 @@ function team(seed: number, n = 5) {
   return WIZARDS.slice(0, n).map(w => draftWizard(r, w))
 }
 
-/** A team whose wizards carry NO dot-producing trait (no `veleno`), so the only
- *  possible source of 'dot' log flags is a relic — used to prove a relic's dot
- *  contribution without RNG luck deciding whether a trait happens to fire. */
+/** A team whose wizards carry NO base dot-producing trait (no `veleno`). They can
+ *  still pick up dots from a shiny draft roll or from anti-stall fatigue, so callers
+ *  isolate a relic's contribution by the relic dot's own 'Veleno' action label rather
+ *  than relying on a globally dot-free baseline. */
 function dotFreeTeam(seed: number) {
   const r = createRng(seed)
   // dumbledore=pietrificazione, mcgonagall=roccia, harry=esecuzione/furia,
@@ -56,16 +57,22 @@ describe('relics in combat', () => {
   })
 
   it('onHit relic (boccino-doro) produces dot flags vs a no-relic run', () => {
-    // The left team is dot-free BY CONSTRUCTION (no `veleno` trait), so the no-relic
-    // baseline can produce zero dots regardless of RNG — the only dot source is the
-    // relic. This is robust to seed/RNG-path changes, unlike picking a seed where a
-    // veleno carrier happens not to fire. (The default team() has Snape@idx3 = veleno.)
+    // boccino-doro applies an INLINE dot on hit (a statusId-less `{ kind: 'dot' }`
+    // effect). Inline dots tick under the fallback action label 'Veleno', whereas
+    // named-status dots tick under their status name (e.g. the `burn` status ticks as
+    // 'Bruciatura') and anti-stall fatigue ticks as 'Fatica'. Both of those ALSO carry
+    // the 'dot' flag, and on these teams they can fire unrelated to the relic: a shiny
+    // draft roll may grant a `veleno` (burn) trait, and a long fight reaches fatigue.
+    // So we isolate the RELIC's contribution by counting 'Veleno' ticks specifically —
+    // the only inline-dot source here — which keeps the assertion robust to that noise.
     const left = dotFreeTeam(1)
     const right = dotFreeTeam(2)
+    const relicDots = (res: ReturnType<typeof simulateBattle>) =>
+      res.log.filter(e => e.flags.includes('dot') && e.action === 'Veleno').length
     const withRelic = simulateBattle(left, right, createRng(6), { leftRelics: [ar('boccino-doro')] })
     const without = simulateBattle(left, right, createRng(6))
-    const dotWith = withRelic.log.filter(e => e.flags.includes('dot')).length
-    const dotWithout = without.log.filter(e => e.flags.includes('dot')).length
+    const dotWith = relicDots(withRelic)
+    const dotWithout = relicDots(without)
     expect(dotWithout).toBe(0)
     expect(dotWith).toBeGreaterThan(dotWithout)
   })

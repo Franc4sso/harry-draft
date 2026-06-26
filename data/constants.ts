@@ -48,7 +48,7 @@ export const BALANCE = {
     menaceBase: 0,
     menacePerStage: 0.01,
     menaceEliteMult: 1.3,
-    menaceBossMult: 2,
+    menaceBossMult: 3,
     // Real relics handed to enemy teams on elite/boss nodes (deterministic per seed).
     enemyRelicsElite: 1,
     enemyRelicsBoss: 3,
