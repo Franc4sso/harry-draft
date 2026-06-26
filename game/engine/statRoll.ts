@@ -1,6 +1,8 @@
 import type { DraftedWizard, Spell, Stats, Wizard } from '@/types'
 import type { Rng } from './rng'
 import { SPELL_BY_ID } from '@/data/spells'
+import { BALANCE } from '@/data/constants'
+import { SHINY_TRAIT_IDS } from '@/data/traits'
 
 function mid(range: readonly [number, number]): number {
   return Math.round((range[0] + range[1]) / 2)
@@ -26,5 +28,9 @@ export function pickSpell(rng: Rng, wizard: Wizard): Spell {
 export function draftWizard(rng: Rng, wizard: Wizard): DraftedWizard {
   const stats = fixedStats(wizard)
   const spell = pickSpell(rng, wizard)
-  return { wizard, stats, maxHp: stats.hp, spell }
+  // Shiny roll AFTER the spell pick (fixed order; shifts the draft stream by design).
+  const shiny = rng.chance(BALANCE.draft.shinyChance)
+    ? { traitId: rng.pick(SHINY_TRAIT_IDS) }
+    : undefined
+  return { wizard, stats, maxHp: stats.hp, spell, ...(shiny ? { shiny } : {}) }
 }
