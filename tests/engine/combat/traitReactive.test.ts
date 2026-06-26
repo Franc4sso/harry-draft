@@ -12,7 +12,8 @@ describe('reactive traits in battle', () => {
     // onHit fires with actor=bellatrix, target=harry; applyStatus target:'enemy' resolves
     // to ctx.target (harry), so harry's statusEffects gets { kind:'debuff', stat:'spd' }.
     const left = [wiz('harry', 1)]
-    const right = [wiz('bellatrix', 2)]
+    const bellatrix = { ...wiz('bellatrix', 2), shiny: { traitId: 'sifone' } }
+    const right = [bellatrix]
     // seed 5: Bellatrix survives turn 1 and attacks Harry at least twice, triggering Sifone.
     // seed 3 is excluded — Harry one-shots Bellatrix on turn 1, so onHit never fires.
     const res = simulateBattle(left, right, createRng(5))
@@ -27,7 +28,8 @@ describe('reactive traits in battle', () => {
     // onHeal fires with actor=lupin, target=lupin; shield EffectSpec lands on ctx.target=lupin.
     // A healer ally (mcgonagall) ensures heals happen regularly; harry is the right-side target.
     // Seed 6 gives Lupin the 'vulnera' healing spell (fixed-stats RNG shift changed spell picks).
-    const left = [wiz('lupin', 6), wiz('mcgonagall', 2)]
+    const lupin = { ...wiz('lupin', 6), shiny: { traitId: 'benedizione' } }
+    const left = [lupin, wiz('mcgonagall', 2)]
     const right = [wiz('harry', 3)]
     const res = simulateBattle(left, right, createRng(4))
     // Some snapshot must show a unit with statusId:'shield' (set by the shield handler)

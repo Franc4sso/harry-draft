@@ -3,11 +3,12 @@ import { createEventBus } from '@/game/engine/combat/eventBus'
 import { registerTraitTriggers } from '@/game/engine/traits'
 import type { BattleUnit, Trait } from '@/types'
 
-function unit(id: string, traits: string[]): BattleUnit {
+function unit(id: string, traitId?: string): BattleUnit {
   const stats = { hp: 100, atk: 30, def: 20, spd: 25 }
   return {
     wizard: { id, name: id, house: 'Grifondoro', role: 'Attaccante', tier: 3,
-      gender: 'm' as const, ranges: { hp: [100,100], atk: [30,30], def: [20,20], spd: [25,25] }, spellPool: ['base_attack'], traits },
+      gender: 'm' as const, ranges: { hp: [100,100], atk: [30,30], def: [20,20], spd: [25,25] }, spellPool: ['base_attack'] },
+    ...(traitId ? { shiny: { traitId } } : {}),
     stats, maxHp: 100, spell: { id: 'base_attack', name: 'x', desc: '', type: 'Attacco', hitChance: 1 },
     side: 'left', hp: 100, cooldowns: {}, statusEffects: [], buffedStats: stats, alive: true,
   } as BattleUnit
@@ -23,8 +24,8 @@ const DOUBLE: Trait = {
 describe('registerTraitTriggers (owner gating)', () => {
   it('applies a trait only when its owner is the ctx actor', () => {
     const bus = createEventBus()
-    const owner = unit('owner', ['double'])
-    const other = unit('other', [])
+    const owner = unit('owner', 'double')
+    const other = unit('other')
     // Inject the test trait by id via a local map override:
     registerTraitTriggers(bus, [owner, other], { double: DOUBLE })
     const base = 10
