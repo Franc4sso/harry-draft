@@ -17,7 +17,6 @@ const T2_ID = 0.30           // mcgonagall soak
 const T2_PROC = 0.40
 const T2_BURN = 0.55
 const T2_EXPOSE = 0.35
-const T2_BUFF_ATK = 22
 const T2_WOUND_ATK = 25
 const T2_WOUND_HP = 0.50
 // Tier 3
@@ -30,7 +29,7 @@ const T3_FREEZE = 0.25
 const T3_BURN = 0.40
 const T3_COMBO = 0.35
 const T3_HEAL = 0.20
-const T3_BUFF = 12
+const T3_SPD = 10
 const T3_AD_ATK = 18
 const T3_SHIELD = 30
 const T3_WOUND_HP = 0.40
@@ -150,7 +149,7 @@ export const SIGNATURES: Signature[] = [
   sig('george', 'Sorpresa Esplosiva', 'Infligge +18% danni.', od(T3_DMG)),
   sig('molly', 'Istinto Materno', 'Quando viene curata ottiene anche uno scudo.', healShield(T3_SHIELD, 2)),
   sig('arthur', 'Tocco Premuroso', 'Le sue cure sono più efficaci (+20%).', healMod(T3_HEAL)),
-  sig('tonks', 'Riflessi Mutanti', 'A inizio turno guadagna velocità.', tsSelfBuff('spd', 10, 1)),
+  sig('tonks', 'Riflessi Mutanti', 'A inizio turno guadagna velocità.', tsSelfBuff('spd', T3_SPD, 1)),
   sig('narcissa', 'Patto Materno', 'Sotto il 40% di vita si rigenera.', tsWoundedSelfStatus('regen', T3_WOUND_HP, 3)),
   sig('dolohov', 'Maledizione Viola', 'I suoi colpi possono avvelenare e rallentare.', hitStatuses([{ statusId: 'burn', chance: T3_COMBO, duration: 2 }, { statusId: 'slow1', chance: T3_COMBO, duration: 2 }])),
   sig('greyback', 'Morso Selvaggio', 'Infligge +20% danni ai bersagli sotto metà vita.', odExecute(T3_EXEC, T3_EXEC_HP)),
