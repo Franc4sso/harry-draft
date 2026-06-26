@@ -4,7 +4,7 @@ import { createDraftPool } from './draft'
 import { draftWizard } from './statRoll'
 import { BALANCE } from '@/data/constants'
 
-/** Weighted pick by tier (rarer tiers are less likely), removing the pick from the list. */
+/** Tier-weighted pick (rarer tiers less likely). Mutates the passed array by splicing out the pick — callers pass a throwaway copy. */
 function takeWeighted(rng: Rng, pool: Wizard[]): Wizard {
   const weights = pool.map(w => BALANCE.draft.tierWeights[w.tier])
   const total = weights.reduce((a, b) => a + b, 0)
@@ -44,7 +44,12 @@ export function offerRecruits(
     chosen.push(pickBiased(rng, rest, opts.house, houseBiasWeight))
   }
 
-  // 3. Roll each into a DraftedWizard (player draft → shiny allowed).
+  // 3. Guard: pool must have satisfied the full offer.
+  if (chosen.length < offerSize) {
+    throw new Error(`recruit pool exhausted: got ${chosen.length}/${offerSize} (house=${opts.house}, excluded=${opts.exclude.size})`)
+  }
+
+  // 4. Roll each into a DraftedWizard (player draft → shiny allowed).
   return chosen.map(w => draftWizard(rng, w, true))
 }
 

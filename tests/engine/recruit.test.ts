@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { offerRecruits, recruitVia, replaceMember } from '@/game/engine/recruit'
 import { createRng } from '@/game/engine/rng'
 import { BALANCE } from '@/data/constants'
-import type { DraftedWizard } from '@/types'
+import { createDraftPool } from '@/game/engine/draft'
 
 describe('recruit', () => {
   it('offers exactly offerSize distinct candidates', () => {
@@ -38,6 +38,10 @@ describe('recruit', () => {
     expect(r.level).toBe(1)
     expect(r.exp).toBe(0)
     expect(r.growthChoices).toEqual([])
+  })
+  it('throws when the pool cannot fill the offer', () => {
+    const all = new Set(createDraftPool().map(w => w.id))
+    expect(() => offerRecruits(createRng(1), { house: 'Grifondoro', exclude: all })).toThrow(/pool exhausted/)
   })
   it('replaceMember swaps the targeted member, preserving order length', () => {
     const team = offerRecruits(createRng(3), { house: 'Grifondoro', exclude: new Set() })
