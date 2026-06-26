@@ -41,8 +41,10 @@ export function generateScreen(
     return w
   }
 
-  // Unconditional Tier<=2 guarantee — also satisfies pity protection.
-  take(w => w.tier <= 2)
+  // Unconditional quality floor: guarantee at least one Tier<=3 (Raro or better)
+  // per screen so a screen is never all-Comune. Epic/Legendary are NOT guaranteed —
+  // they only appear via the weighted picks below, keeping them genuinely rare.
+  take(w => w.tier <= 3)
 
   while (chosen.length < screenSize) {
     if (!take()) break
