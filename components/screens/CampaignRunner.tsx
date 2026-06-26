@@ -11,6 +11,7 @@ import { VictoryScreen } from './VictoryScreen'
 import { ResultScreen } from './ResultScreen'
 import { RelicChoiceScreen } from './RelicChoiceScreen'
 import { MapScreen } from './MapScreen'
+import { displayName } from '@/lib/displayName'
 
 const BOSS_NAME = BOSSES[0]?.name ?? 'Boss Finale'
 
@@ -30,8 +31,8 @@ export function CampaignRunner({
   // mvp ids are plain wizard ids; resolve a display name across both teams.
   const nameById = useMemo(() => {
     const map: Record<string, string> = {}
-    for (const dw of team) map[dw.wizard.id] = dw.wizard.name
-    for (const dw of c.battle?.enemy ?? []) map[dw.wizard.id] = dw.wizard.name
+    for (const dw of team) map[dw.wizard.id] = displayName(dw)
+    for (const dw of c.battle?.enemy ?? []) map[dw.wizard.id] = displayName(dw)
     return map
   }, [team, c.battle])
 

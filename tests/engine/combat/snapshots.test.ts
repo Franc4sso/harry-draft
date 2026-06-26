@@ -13,6 +13,7 @@ function dw(id: string, spell: Spell, over: Partial<DraftedWizard> = {}): Drafte
   return {
     wizard: {
       id, name: id, house: 'Grifondoro', role: 'Attaccante', tier: 3,
+      gender: 'm' as const,
       ranges: { hp: [2000, 2000], atk: [30, 30], def: [60, 60], spd: [40, 40] },
       spellPool: [spell.id],
     },

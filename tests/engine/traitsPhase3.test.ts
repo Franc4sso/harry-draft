@@ -15,7 +15,7 @@ const STUB_SPELL = { id: 'stub', name: 'Stub', desc: '', type: 'Attacco' as cons
 function u(hp = 100, maxHp = 100): BattleUnit {
   const stats = { hp: 100, atk: 30, def: 20, spd: 25 }
   return { wizard: { id: 'u', name: 'u', house: 'Grifondoro', role: 'Attaccante', tier: 3,
-    ranges: { hp: [100,100], atk: [30,30], def: [20,20], spd: [25,25] }, spellPool: [] },
+    gender: 'm' as const, ranges: { hp: [100,100], atk: [30,30], def: [20,20], spd: [25,25] }, spellPool: [] },
     stats, maxHp, hp, spell: STUB_SPELL, side: 'left', cooldowns: {}, statusEffects: [], buffedStats: stats, alive: true } as BattleUnit
 }
 
@@ -131,9 +131,8 @@ describe('Phase 3 traits fire in real battle on both sides', () => {
   it('Logoramento on a RIGHT-side unit weakens (-ATT) the LEFT player it hits', () => {
     const harry = draftWizard(createRng(1), WIZARDS.find(w => w.id === 'harry')!)
     const enemyBase = WIZARDS.find(w => w.id === 'bellatrix')!
-    // Inject the trait without editing data/wizards.ts (out of scope).
-    // Property path confirmed: simulateBattle reads u.wizard.traits (game/engine/traits.ts:9)
-    const enemy = draftWizard(createRng(2), { ...enemyBase, traits: ['logoramento'] })
+    // Inject the trait via shiny — combat engine now reads u.shiny?.traitId (game/engine/traits.ts).
+    const enemy = { ...draftWizard(createRng(2), enemyBase), shiny: { traitId: 'logoramento' } }
     // Seeds [4,5,6,7,8] tried; at least one lets the enemy land 2+ hits on Harry
     // triggering Logoramento's weaken2. Widened to [1..15] if needed.
     const weakened = [4, 5, 6, 7, 8].some(seed => {

@@ -19,7 +19,7 @@ function rollScreen(seed: string, pool: Wizard[], pickedTiers: Tier[], screenInd
   const screenRng = root.fork(screenIndex * 2 + 1)
   const rollRng = root.fork(screenIndex * 2 + 2)
   const shown = generateScreen(screenRng, pool, pickedTiers, screenIndex)
-  return shown.map((w) => draftWizard(rollRng, w))
+  return shown.map((w) => draftWizard(rollRng, w, true))
 }
 
 export function startDraft(seed: string): DraftSession {

@@ -4,6 +4,7 @@ import { DraftCandidateCard } from '@/components/draft/DraftCandidateCard'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
 import { WIZARD_BY_ID } from '@/data/wizards'
+import { displayName } from '@/lib/displayName'
 
 const harry = () => draftWizard(createRng(1), WIZARD_BY_ID['harry']!)
 
@@ -27,10 +28,11 @@ describe('DraftCandidateCard affiliation strip', () => {
   })
   it('fires onConsider on pointer enter and onPick on click', () => {
     const onConsider = vi.fn(); const onPick = vi.fn()
-    const { container } = render(<DraftCandidateCard drafted={harry()} onConsider={onConsider} onPick={onPick} />)
+    const drafted = harry()
+    const { container } = render(<DraftCandidateCard drafted={drafted} onConsider={onConsider} onPick={onPick} />)
     fireEvent.pointerEnter(container.firstChild as Element)
     expect(onConsider).toHaveBeenCalled()
-    fireEvent.click(screen.getByText('Harry Potter'))
+    fireEvent.click(screen.getByText(displayName(drafted)))
     expect(onPick).toHaveBeenCalled()
   })
   it('fires onConsider on focus', () => {

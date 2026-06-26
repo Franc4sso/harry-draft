@@ -7,7 +7,7 @@ const STUB_SPELL = { id: 'stub', name: 'Stub', desc: '', type: 'Attacco' as cons
 function u(over: Partial<BattleUnit['buffedStats']> = {}, hp = 100, maxHp = 100): BattleUnit {
   const stats = { hp: 100, atk: 30, def: 20, spd: 25, ...over }
   return { wizard: { id: 'u', name: 'u', house: 'Grifondoro', role: 'Attaccante', tier: 3,
-    ranges: { hp: [100,100], atk: [30,30], def: [20,20], spd: [25,25] }, spellPool: [] },
+    gender: 'm' as const, ranges: { hp: [100,100], atk: [30,30], def: [20,20], spd: [25,25] }, spellPool: [] },
     stats, maxHp, hp, spell: STUB_SPELL, side: 'left', cooldowns: {}, statusEffects: [], buffedStats: stats, alive: true } as BattleUnit
 }
 

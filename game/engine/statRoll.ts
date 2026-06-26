@@ -1,6 +1,8 @@
 import type { DraftedWizard, Spell, Stats, Wizard } from '@/types'
 import type { Rng } from './rng'
 import { SPELL_BY_ID } from '@/data/spells'
+import { BALANCE } from '@/data/constants'
+import { SHINY_TRAIT_IDS } from '@/data/traits'
 
 function mid(range: readonly [number, number]): number {
   return Math.round((range[0] + range[1]) / 2)
@@ -23,8 +25,13 @@ export function pickSpell(rng: Rng, wizard: Wizard): Spell {
   return spell
 }
 
-export function draftWizard(rng: Rng, wizard: Wizard): DraftedWizard {
+export function draftWizard(rng: Rng, wizard: Wizard, allowShiny = false): DraftedWizard {
   const stats = fixedStats(wizard)
   const spell = pickSpell(rng, wizard)
-  return { wizard, stats, maxHp: stats.hp, spell }
+  // Always DRAW the roll (keeps the rng stream identical for every caller), but only
+  // ATTACH shiny when the caller opts in. Enemies/boss teams never opt in → never shiny,
+  // yet their draft stream (and thus composition) is unchanged. Shiny is PLAYER-DRAFT ONLY.
+  const rolled = rng.chance(BALANCE.draft.shinyChance) ? { traitId: rng.pick(SHINY_TRAIT_IDS) } : undefined
+  const shiny = allowShiny ? rolled : undefined
+  return { wizard, stats, maxHp: stats.hp, spell, ...(shiny ? { shiny } : {}) }
 }

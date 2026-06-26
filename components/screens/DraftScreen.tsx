@@ -6,6 +6,7 @@ import { SquadPanel } from '@/components/draft/SquadPanel'
 import { SynergyTracker } from '@/components/draft/SynergyTracker'
 import { DraftCandidateCard } from '@/components/draft/DraftCandidateCard'
 import { synergyProgress, previewSynergies } from '@/game/engine/synergy'
+import { displayName } from '@/lib/displayName'
 
 export function DraftScreen({ seed, onComplete }: { seed: string; onComplete: (team: DraftedWizard[]) => void }) {
   const { current, picks, teamSize, done, pick } = useDraft(seed)
@@ -84,7 +85,7 @@ export function DraftScreen({ seed, onComplete }: { seed: string; onComplete: (t
         {/* Synergy tracker: right rail on desktop, stacks below candidates on mobile */}
         <aside>
           <div className="sticky top-28 rounded-xl border border-white/10 bg-white/[0.03] p-3">
-            <SynergyTracker rows={rows} candidateName={considered?.wizard.name} />
+            <SynergyTracker rows={rows} candidateName={considered ? displayName(considered) : undefined} />
           </div>
         </aside>
       </div>

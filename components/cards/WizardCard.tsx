@@ -13,6 +13,7 @@ import { spellTypeChip, spellEffectLines, formatSpellStats } from '@/lib/glossar
 import { roleTooltip } from '@/lib/roleInfo'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { TRAIT_BY_ID } from '@/data/traits'
+import { displayName } from '@/lib/displayName'
 
 export const CARD_STAT_MAX = { hp: 150, atk: 120, def: 120, spd: 120 } as const
 
@@ -81,10 +82,11 @@ export function WizardCard({
           >
             <RoleIcon role={wizard.role} size={13} className="text-white/90" />
           </Tooltip>
+          {drafted.shiny && <div aria-hidden className="pointer-events-none absolute inset-0 rounded-t-xl" style={{ boxShadow: 'inset 0 0 0 2px rgba(255,210,90,0.8), 0 0 18px rgba(255,200,80,0.5)' }} />}
         </div>
 
         <div className="flex flex-1 flex-col p-3.5 pt-2.5">
-          <h3 className="font-display text-sm leading-tight truncate">{wizard.name}</h3>
+          <h3 className="font-display text-sm leading-tight truncate">{displayName(drafted)}{drafted.shiny && <span aria-hidden className="ml-1 text-amber-300">✨</span>}</h3>
           {specialChips.length > 0 && (
             <div data-testid="affiliation-strip" className="mt-2 flex flex-wrap items-center gap-1">
               {specialChips.map((c) => {
@@ -112,22 +114,18 @@ export function WizardCard({
             </div>
           )}
 
-          {wizard.traits && wizard.traits.length > 0 && (() => {
-            const traitChips = wizard.traits
-              .map((id) => TRAIT_BY_ID[id])
-              .filter((t): t is NonNullable<typeof t> => t != null)
-            return traitChips.length > 0 ? (
+          {drafted.shiny && (() => {
+            const trait = TRAIT_BY_ID[drafted.shiny.traitId]
+            return trait ? (
               <div className="mt-2 flex flex-wrap items-center gap-1">
-                {traitChips.map((trait) => (
-                  <Tooltip key={trait.id} content={trait.desc}>
-                    <span
-                      className="inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-semibold"
-                      style={{ color: '#c4dff3', borderColor: 'rgba(100,160,220,0.5)', background: 'rgba(60,110,180,0.18)' }}
-                    >
-                      {trait.name}
-                    </span>
-                  </Tooltip>
-                ))}
+                <Tooltip content={trait.desc}>
+                  <span
+                    className="inline-flex items-center rounded-full border px-1.5 py-0.5 text-[10px] font-semibold"
+                    style={{ color: '#c4dff3', borderColor: 'rgba(100,160,220,0.5)', background: 'rgba(60,110,180,0.18)' }}
+                  >
+                    {trait.name}
+                  </span>
+                </Tooltip>
               </div>
             ) : null
           })()}

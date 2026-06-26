@@ -9,6 +9,8 @@ export interface DraftedWizard {
   spell: Spell
   /** Current HP carried across battles in a run. Absent = full (treated as maxHp). */
   currentHp?: number
+  /** Rare draft "shiny" nature: grants one trait + a name epithet. Player-only. */
+  shiny?: { traitId: string }
 }
 
 export interface ActiveEffect {

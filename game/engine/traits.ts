@@ -6,7 +6,7 @@ export function registerTraitTriggers(
   bus: EventBus, units: BattleUnit[], catalog: Record<string, Trait> = TRAIT_BY_ID,
 ): void {
   for (const u of units) {
-    for (const id of u.wizard.traits ?? []) {
+    for (const id of (u.shiny ? [u.shiny.traitId] : [])) {
       const trait = catalog[id]
       if (!trait) continue
       const t = trait.trigger

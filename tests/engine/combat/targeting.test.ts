@@ -7,7 +7,7 @@ function u(id: string, role: Role, side: 'left' | 'right', over: Partial<BattleU
   const stats = { hp: 120, atk: 30, def: 20, spd: 25, ...over }
   return {
     wizard: { id, name: id, house: 'Grifondoro', role, tier: 3,
-      ranges: { hp: [120,120], atk: [30,30], def: [20,20], spd: [25,25] }, spellPool: ['base_attack'] },
+      gender: 'm' as const, ranges: { hp: [120,120], atk: [30,30], def: [20,20], spd: [25,25] }, spellPool: ['base_attack'] },
     stats, maxHp: stats.hp, spell: SPELL_BY_ID['base_attack']!,
     side, hp: stats.hp, cooldowns: {}, statusEffects: [], buffedStats: stats, alive: true,
   }

@@ -7,6 +7,7 @@ describe('types', () => {
     const spell: Spell = { id: 's', name: 'S', desc: '', type: 'Attacco', power: 1, hitChance: 1 }
     const wizard: Wizard = {
       id: 'w', name: 'W', house: 'Grifondoro', role: 'Attaccante', tier: 3,
+      gender: 'm',
       ranges: { hp: [10, 20], atk: [10, 20], def: [10, 20], spd: [10, 20] }, spellPool: ['s'],
     }
     const dw: DraftedWizard = { wizard, stats: { hp: 15, atk: 15, def: 15, spd: 15 }, maxHp: 15, spell }

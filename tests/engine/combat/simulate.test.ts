@@ -63,7 +63,10 @@ describe('simulate', () => {
     // A wall of tanks (low atk, high def -> min-damage grind) used to run all 100 turns.
     // Escalating end-of-turn fatigue (true damage past fatigueStart) must end it much sooner.
     const tanks = WIZARDS.filter(w => w.role === 'Tank')
-    const left = tanks.slice(0, 5).map(w => draftWizard(createRng(1), w))
+    // Seeds chosen so NO tank rolls a shiny trait: a shiny offensive trait (e.g. the
+    // `veleno` burn that seed 1 rolls) would give the wall real damage output and end
+    // the fight before fatigueStart, defeating the point of this stalemate test.
+    const left = tanks.slice(0, 5).map(w => draftWizard(createRng(4), w))
     const right = tanks.slice(0, 5).map(w => draftWizard(createRng(2), w))
     // Pass synergies like the real game: the "3 Tank" +def synergy is what builds the
     // wall that grinds to turnCap without fatigue.
