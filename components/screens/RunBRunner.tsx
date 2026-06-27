@@ -163,7 +163,7 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
   }
 
   return (
-    <AnimatePresence>
+    <AnimatePresence mode="wait">
       <motion.div
         key={animKey}
         initial={{ opacity: 0 }}
