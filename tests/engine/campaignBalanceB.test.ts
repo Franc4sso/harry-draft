@@ -6,6 +6,7 @@ import {
 import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
 import { createRng } from '@/game/engine/rng'
 import { powerOf } from '@/game/engine/combat/teamGen'
+import { BALANCE } from '@/data/constants'
 import type { RunNode, RunState } from '@/types'
 
 // Register at module scope (idempotent): the greedy runs below are evaluated in
@@ -27,7 +28,7 @@ function pickNode(s: RunState): RunNode {
   return opts.find(n => n.type === 'boss') ?? opts[0]!
 }
 
-function runOne(seed: string): 'win' | 'defeat' {
+function runOne(seed: string, battleTurns?: number[]): 'win' | 'defeat' {
   let s = startRunB(seed)
   const offer = starterOffer(seed, 'Grifondoro')
   const starters = [...offer].sort((a, b) => powerOf(b) - powerOf(a)).slice(0, 2).map(d => d.wizard.id)
@@ -39,7 +40,11 @@ function runOne(seed: string): 'win' | 'defeat' {
     if (s.phase === 'map') { s = moveTo(s, pickNode(s).id); continue }
     const node = s.map!.find(n => n.id === s.currentNodeId)!
     const rng = createRng(seed).fork(2).fork(s.area ?? 0)
-    if (s.phase === 'battle') { s = resolveCurrent(s, { kind: 'combat-ack' }, rng); continue }
+    if (s.phase === 'battle') {
+      s = resolveCurrent(s, { kind: 'combat-ack' }, rng)
+      if (battleTurns && s.lastBattle) battleTurns.push(s.lastBattle.turns)
+      continue
+    }
     if (s.phase === 'recruit-node') {
       const off = recruitOffer(s, node, createRng(seed))
       const best = [...off].sort((a, b) => powerOf(b) - powerOf(a))[0]!
@@ -76,5 +81,11 @@ describe('campaign balance (new loop)', () => {
   it('is deterministic (same seeds → same outcomes)', () => {
     const again = Array.from({ length: N }, (_, i) => runOne(`run-${i}`))
     expect(again).toEqual(outcomes)
+  })
+  it('no battle stalls to the turn cap on any seed (avoids stalemates)', () => {
+    const turns: number[] = []
+    for (let i = 0; i < N; i++) runOne(`run-${i}`, turns)
+    expect(turns.length).toBeGreaterThan(0)
+    expect(Math.max(...turns)).toBeLessThan(BALANCE.combat.turnCap)
   })
 })
