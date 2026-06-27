@@ -76,10 +76,12 @@ export const BALANCE = {
     // Menace = stat multiplier (1+pct) = menaceBase + menacePerDepth*d, scaled on elite/boss.
     // menaceBase is NEGATIVE so area-0 fights drop below the roster floor (a level-1
     // trio can win); the ramp lifts late fights back above 1.0 for the level-5 endgame.
-    // -0.65 (was -0.60): the nearest-2 map wiring (C1) gives a near-optimal player
-    // slightly tighter EXP-fight paths, shaving one win off the 120-seed harness;
-    // this re-eases the area-0 floor to restore the calibrated >15% win target.
-    menaceBase: -0.65,
+    // -0.95 (was -0.65): per-wizard stat growth (leveled stats now spread the growth
+    // budget across a wizard's profile instead of stacking 3 milestone choices into one
+    // stat) lowered the near-optimal player's effective power, dropping the 120-seed
+    // harness to 0.125. Easing the area-0 floor restores the calibrated >15% target
+    // (21/120 = 0.175, comfortably inside the [0.15, 0.55] band).
+    menaceBase: -0.95,
     menacePerDepth: 0.04,
     menaceEliteMult: 1.1,
     menaceBossMult: 1.3,
@@ -111,9 +113,9 @@ export const BALANCE = {
     } as Record<RelicRarity, number>,
   },
   leveling: {
-    autoGrowthPct: 0.10,        // +10% a tutte le stat per livello sopra il 1
-    milestoneBoostPct: 0.25,    // +25% allo stat scelto a una soglia
-    milestoneLevels: [3, 6, 9] as readonly number[],
+    autoGrowthPct: 0.10,        // yardstick: legacy uniform per-level growth; still used by deriveEnemyLevel
+    growthBudgetPerLevel: 0.40, // total per-level growth budget, distributed per-wizard by growthWeights
+                                // (0.40 × an average 0.25 weight = the old uniform +10%/level)
     levelMax: 10,
     expStep: 70,                // exp per salire da L a L+1 = expStep * L
     expBattle: 80,              // exp da un combattimento normale (team-wide)

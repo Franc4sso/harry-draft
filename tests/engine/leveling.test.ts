@@ -1,20 +1,30 @@
 import { describe, it, expect } from 'vitest'
-import { expForLevel, levelFromExp, isMilestone, addExp, leveledStats, applyGrowthChoice } from '@/game/engine/leveling'
+import { expForLevel, levelFromExp, addExp, leveledStats, growthWeights } from '@/game/engine/leveling'
 import { BALANCE } from '@/data/constants'
-import type { DraftedWizard } from '@/types'
+import { WIZARDS } from '@/data/wizards'
+import type { DraftedWizard, Stats } from '@/types'
 
-function dw(partial: Partial<DraftedWizard> = {}): DraftedWizard {
+function dw(stats: Stats, partial: Partial<DraftedWizard> = {}): DraftedWizard {
   return {
     wizard: { id: 'x', name: 'X', house: 'Grifondoro', role: 'Attaccante', tier: 4, gender: 'm',
-      ranges: { hp: [100, 100], atk: [50, 50], def: [40, 40], spd: [30, 30] }, spellPool: ['s'] },
-    stats: { hp: 100, atk: 50, def: 40, spd: 30 }, maxHp: 100,
+      ranges: { hp: [stats.hp, stats.hp], atk: [stats.atk, stats.atk], def: [stats.def, stats.def], spd: [stats.spd, stats.spd] }, spellPool: ['s'] },
+    stats, maxHp: stats.hp,
     spell: { id: 's' } as DraftedWizard['spell'],
     level: 1, exp: 0, growthChoices: [],
     ...partial,
   }
 }
 
-describe('leveling', () => {
+// Roster average base stat (range midpoints) — recomputed here independently so the
+// "average profile" assertions don't depend on a private engine constant.
+const ROSTER_MEAN: Stats = (() => {
+  const s = { hp: 0, atk: 0, def: 0, spd: 0 }
+  for (const w of WIZARDS) for (const k of ['hp', 'atk', 'def', 'spd'] as const) s[k] += (w.ranges[k][0] + w.ranges[k][1]) / 2
+  const n = WIZARDS.length
+  return { hp: s.hp / n, atk: s.atk / n, def: s.def / n, spd: s.spd / n }
+})()
+
+describe('leveling — exp curve', () => {
   it('expForLevel is 0 at level 1 and strictly increasing', () => {
     expect(expForLevel(1)).toBe(0)
     expect(expForLevel(2)).toBeGreaterThan(expForLevel(1))
@@ -26,34 +36,63 @@ describe('leveling', () => {
     expect(levelFromExp(expForLevel(3) - 1)).toBe(2)
     expect(levelFromExp(10_000_000)).toBe(BALANCE.leveling.levelMax)
   })
-  it('isMilestone matches configured levels', () => {
-    expect(isMilestone(3)).toBe(true)
-    expect(isMilestone(4)).toBe(false)
-  })
-  it('addExp bumps level and reports newly crossed milestones', () => {
-    const r = addExp(dw({ level: 1, exp: 0 }), expForLevel(3))
+  it('addExp raises the level automatically from exp (no milestones)', () => {
+    const r = addExp(dw(ROSTER_MEAN, { level: 1, exp: 0 }), expForLevel(3))
     expect(r.dw.level).toBe(3)
     expect(r.dw.exp).toBe(expForLevel(3))
-    expect(r.milestones).toContain(3)
+    expect(r).not.toHaveProperty('milestones')
   })
-  it('addExp does not re-report an already-passed milestone', () => {
-    const at3 = addExp(dw({ level: 1, exp: 0 }), expForLevel(3)).dw
-    const r = addExp(at3, expForLevel(4) - expForLevel(3))
-    expect(r.dw.level).toBe(4)
-    expect(r.milestones).not.toContain(3)
+})
+
+describe('leveling — per-wizard growth', () => {
+  it('growthWeights sum to 1 and an average-profile wizard is uniform (0.25 each)', () => {
+    const w = growthWeights(ROSTER_MEAN)
+    expect(w.hp + w.atk + w.def + w.spd).toBeCloseTo(1, 10)
+    expect(w.hp).toBeCloseTo(0.25, 10)
+    expect(w.atk).toBeCloseTo(0.25, 10)
+    expect(w.def).toBeCloseTo(0.25, 10)
+    expect(w.spd).toBeCloseTo(0.25, 10)
   })
-  it('leveledStats grows with level', () => {
-    const lo = leveledStats(dw({ level: 1 }))
-    const hi = leveledStats(dw({ level: 5 }))
+
+  it('an average-profile wizard still grows by the legacy uniform 1 + 0.10*(level-1)', () => {
+    const L = BALANCE.leveling
+    const lvl = 6
+    const got = leveledStats(dw(ROSTER_MEAN, { level: lvl }))
+    const mult = 1 + L.autoGrowthPct * (lvl - 1) // 0.40 budget × 0.25 weight == 0.10/level
+    expect(got.hp).toBe(Math.round(ROSTER_MEAN.hp * mult))
+    expect(got.atk).toBe(Math.round(ROSTER_MEAN.atk * mult))
+    expect(got.def).toBe(Math.round(ROSTER_MEAN.def * mult))
+    expect(got.spd).toBe(Math.round(ROSTER_MEAN.spd * mult))
+  })
+
+  it('a wizard strong in one stat specializes: that stat gets the largest weight and multiplier', () => {
+    const strong = dw({ hp: ROSTER_MEAN.hp, atk: ROSTER_MEAN.atk * 2, def: ROSTER_MEAN.def, spd: ROSTER_MEAN.spd })
+    const w = growthWeights(strong.stats)
+    expect(w.atk).toBeGreaterThan(w.hp)
+    expect(w.atk).toBeGreaterThan(w.def)
+    expect(w.atk).toBeGreaterThan(w.spd)
+    const hi = leveledStats({ ...strong, level: BALANCE.leveling.levelMax })
+    const atkMult = hi.atk / strong.stats.atk
+    const defMult = hi.def / strong.stats.def
+    expect(atkMult).toBeGreaterThan(defMult)
+  })
+
+  it('leveledStats is identity at level 1 and treats a missing level as 1', () => {
+    expect(leveledStats(dw(ROSTER_MEAN, { level: 1 }))).toEqual({
+      hp: Math.round(ROSTER_MEAN.hp), atk: Math.round(ROSTER_MEAN.atk),
+      def: Math.round(ROSTER_MEAN.def), spd: Math.round(ROSTER_MEAN.spd),
+    })
+    const base = { hp: 100, atk: 50, def: 40, spd: 30 }
+    expect(leveledStats(dw(base, { level: undefined }))).toEqual(base)
+  })
+
+  it('every stat grows with level (no stat is left behind)', () => {
+    const base = { hp: 100, atk: 50, def: 40, spd: 30 }
+    const lo = leveledStats(dw(base, { level: 1 }))
+    const hi = leveledStats(dw(base, { level: BALANCE.leveling.levelMax }))
+    expect(hi.hp).toBeGreaterThan(lo.hp)
     expect(hi.atk).toBeGreaterThan(lo.atk)
-    expect(lo.atk).toBe(50) // livello 1 = stat base
-  })
-  it('leveledStats treats missing level as 1', () => {
-    expect(leveledStats(dw({ level: undefined }))).toEqual({ hp: 100, atk: 50, def: 40, spd: 30 })
-  })
-  it('applyGrowthChoice boosts the chosen stat', () => {
-    const grown = applyGrowthChoice(dw({ level: 3 }), { atLevel: 3, kind: 'atk' })
-    expect(grown.growthChoices).toHaveLength(1)
-    expect(leveledStats(grown).atk).toBeGreaterThan(leveledStats(dw({ level: 3 })).atk)
+    expect(hi.def).toBeGreaterThan(lo.def)
+    expect(hi.spd).toBeGreaterThan(lo.spd)
   })
 })

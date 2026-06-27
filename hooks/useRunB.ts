@@ -1,9 +1,9 @@
 'use client'
 import { useState, useRef, useCallback, useMemo } from 'react'
-import type { DraftedWizard, GrowthChoice, PendingLevelUp, RunNode, RunState } from '@/types'
+import type { DraftedWizard, RunNode, RunState } from '@/types'
 import {
   startRunB, confirmDraftPicks, reachable as engineReachable,
-  moveTo, resolveCurrent, applyLevelUp, clearAreaAndAdvance, registerCoreResolvers,
+  moveTo, resolveCurrent, clearAreaAndAdvance, registerCoreResolvers,
 } from '@/game/engine/runEngine'
 import { createRng } from '@/game/engine/rng'
 import { saveRun, loadRun, clearRun } from '@/lib/runStore'
@@ -14,19 +14,18 @@ registerCoreResolvers()
 
 export type RunBView =
   | 'draft' | 'map' | 'battle' | 'victory'
-  | 'levelup' | 'recruit' | 'relic' | 'area-cleared' | 'win' | 'defeat'
+  | 'recruit' | 'relic' | 'area-cleared' | 'win' | 'defeat'
 
 export interface RunBController {
   run: RunState; view: RunBView
   battle: ActiveBattleB | null; reachable: RunNode[]; currentNode: RunNode | undefined
-  area: number; areasTotal: number; pendingLevelUp: PendingLevelUp | null; lastFallen: string[]
+  area: number; areasTotal: number; lastFallen: string[]
   completeDraft: (picked: DraftedWizard[]) => void
   chooseNode: (nodeId: string) => void
   commitBattle: () => void
   acknowledgeVictory: () => void
   chooseRecruit: (wizardId: string, replaceId?: string) => void
   chooseRelic: (relicId: string) => void
-  applyGrowth: (choice: GrowthChoice) => void
   advanceArea: () => void
   restart: () => void
 }
@@ -37,7 +36,6 @@ const viewForPhase = (p: RunState['phase']): RunBView => {
     case 'map': return 'map'
     case 'battle': return 'battle'
     case 'victory': return 'victory'
-    case 'levelup': return 'levelup'
     case 'recruit-node': return 'recruit'
     case 'relic-node': return 'relic'
     case 'area-cleared': return 'area-cleared'
@@ -95,12 +93,6 @@ export function useRunB(seed: string): RunBController {
     commit({ ...next, phase: 'map' }, 'map')
   }, [commit])
 
-  const applyGrowth = useCallback((choice: GrowthChoice) => {
-    const p = runRef.current.pendingLevelUps?.[0]
-    if (!p) return
-    commit(applyLevelUp(runRef.current, p.wizardId, choice))
-  }, [commit])
-
   const advanceArea = useCallback(() => { commit(clearAreaAndAdvance(runRef.current, createRng(runRef.current.seed))) }, [commit])
 
   const restart = useCallback(() => {
@@ -113,8 +105,8 @@ export function useRunB(seed: string): RunBController {
 
   return {
     run, view, battle, reachable, currentNode,
-    area: run.area ?? 0, areasTotal: BALANCE.map.areas, pendingLevelUp: run.pendingLevelUps?.[0] ?? null, lastFallen,
+    area: run.area ?? 0, areasTotal: BALANCE.map.areas, lastFallen,
     completeDraft, chooseNode, commitBattle, acknowledgeVictory,
-    chooseRecruit, chooseRelic, applyGrowth, advanceArea, restart,
+    chooseRecruit, chooseRelic, advanceArea, restart,
   }
 }

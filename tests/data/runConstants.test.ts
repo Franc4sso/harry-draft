@@ -4,7 +4,8 @@ import { BALANCE } from '@/data/constants'
 describe('run progression constants', () => {
   it('leveling has sane values', () => {
     const l = BALANCE.leveling
-    expect(l.levelMax).toBeGreaterThan(Math.max(...l.milestoneLevels))
+    expect(l.levelMax).toBeGreaterThan(1)
+    expect(l.growthBudgetPerLevel).toBeGreaterThan(0)
     expect(l.autoGrowthPct).toBeGreaterThan(0)
     expect(l.expBattle).toBeGreaterThan(0)
     expect(l.expElite).toBeGreaterThan(l.expBattle)

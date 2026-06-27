@@ -6,7 +6,6 @@ import { MapScreen } from './MapScreen'
 import { BattleScreen } from './BattleScreen'
 import { VictoryScreen } from './VictoryScreen'
 import { ResultScreen } from './ResultScreen'
-import { LevelUpScreen } from './LevelUpScreen'
 import { RecruitScreen } from './RecruitScreen'
 import { RelicNodeScreen } from './RelicNodeScreen'
 import { AreaClearedScreen } from './AreaClearedScreen'
@@ -24,8 +23,8 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
   const animKey = `${c.view}-${c.run.currentNodeId ?? c.area}`
   // Persistent team + synergy strip on the between-battle phases. Battle has its
   // own in-fight synergy display, and the end screens (draft/win/defeat) don't
-  // need it — so it's scoped to map/recruit/relic/levelup only.
-  const showTeamBar = c.view === 'map' || c.view === 'recruit' || c.view === 'relic' || c.view === 'levelup'
+  // need it — so it's scoped to map/recruit/relic only.
+  const showTeamBar = c.view === 'map' || c.view === 'recruit' || c.view === 'relic'
 
   const renderView = () => {
     switch (c.view) {
@@ -83,20 +82,6 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
             bossNext={bossNext}
             fallenNames={c.lastFallen}
             onNext={c.acknowledgeVictory}
-          />
-        )
-      }
-
-      case 'levelup': {
-        const wizard = c.run.team.find(t => t.wizard.id === c.pendingLevelUp!.wizardId)!
-        return (
-          <LevelUpScreen
-            pending={c.pendingLevelUp!}
-            wizard={wizard}
-            team={c.run.team}
-            synergies={c.run.activeSynergies}
-            relics={c.run.relics}
-            onChoose={c.applyGrowth}
           />
         )
       }

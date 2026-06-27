@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   startRunB, starterOffer, chooseStarters, reachable, moveTo, resolveCurrent,
-  applyLevelUp, clearAreaAndAdvance, registerCoreResolvers,
+  clearAreaAndAdvance, registerCoreResolvers,
 } from '@/game/engine/runEngine'
 import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
 import { createRng } from '@/game/engine/rng'
@@ -57,10 +57,6 @@ function runOne(seed: string, battleTurns?: number[]): 'win' | 'defeat' {
       const off = relicOffer(s, node, createRng(seed))
       s = resolveCurrent(s, { kind: 'relic-pick', relicId: off[0]!.id }, createRng(seed))
       s = { ...s, phase: 'map' }; continue
-    }
-    if (s.phase === 'levelup') {
-      const p = s.pendingLevelUps![0]!
-      s = applyLevelUp(s, p.wizardId, { atLevel: p.atLevel, kind: 'atk' }); continue
     }
     if (s.phase === 'area-cleared') { s = clearAreaAndAdvance(s, createRng(seed)); continue }
     if (s.phase === 'victory') { s = { ...s, phase: 'map' }; continue }

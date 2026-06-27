@@ -1,7 +1,32 @@
-import type { DraftedWizard, GrowthChoice, Stats } from '@/types'
+import type { DraftedWizard, Stats } from '@/types'
 import { BALANCE } from '@/data/constants'
+import { WIZARDS } from '@/data/wizards'
 
 const L = BALANCE.leveling
+
+const STAT_KEYS = ['hp', 'atk', 'def', 'spd'] as const
+
+// Roster average base stat (range midpoint) per stat — the yardstick a wizard's
+// growth leans against: above-average stats grow faster.
+const ROSTER_MEAN: Stats = (() => {
+  const s = { hp: 0, atk: 0, def: 0, spd: 0 }
+  for (const w of WIZARDS) for (const k of STAT_KEYS) s[k] += (w.ranges[k][0] + w.ranges[k][1]) / 2
+  const n = WIZARDS.length || 1
+  return { hp: s.hp / n, atk: s.atk / n, def: s.def / n, spd: s.spd / n }
+})()
+
+/** Per-wizard growth weights: each stat weighted by how it compares to the roster
+ *  average (squared to sharpen specialization), normalized to sum to 1. */
+export function growthWeights(base: Stats): Stats {
+  const raw = {
+    hp: (base.hp / ROSTER_MEAN.hp) ** 2,
+    atk: (base.atk / ROSTER_MEAN.atk) ** 2,
+    def: (base.def / ROSTER_MEAN.def) ** 2,
+    spd: (base.spd / ROSTER_MEAN.spd) ** 2,
+  }
+  const total = raw.hp + raw.atk + raw.def + raw.spd || 1
+  return { hp: raw.hp / total, atk: raw.atk / total, def: raw.def / total, spd: raw.spd / total }
+}
 
 /** Cumulative EXP required to BE at `level`. Level 1 = 0. Step grows linearly. */
 export function expForLevel(level: number): number {
@@ -16,37 +41,28 @@ export function levelFromExp(exp: number): number {
   return lvl
 }
 
-export function isMilestone(level: number): boolean {
-  return L.milestoneLevels.includes(level)
-}
-
-export function addExp(dw: DraftedWizard, amount: number): { dw: DraftedWizard; milestones: number[] } {
-  const oldLevel = dw.level ?? 1
+/** Award EXP and recompute level. Levels rise automatically from exp — there is no
+ *  milestone stat-choice; growth is applied per-wizard in `leveledStats`. */
+export function addExp(dw: DraftedWizard, amount: number): { dw: DraftedWizard } {
   const newExp = (dw.exp ?? 0) + Math.max(0, amount)
   const newLevel = levelFromExp(newExp)
-  const milestones: number[] = []
-  for (let lv = oldLevel + 1; lv <= newLevel; lv++) {
-    if (isMilestone(lv)) milestones.push(lv)
-  }
-  return { dw: { ...dw, exp: newExp, level: newLevel }, milestones }
+  return { dw: { ...dw, exp: newExp, level: newLevel } }
 }
 
-/** Effective stats: base × auto-growth, then each milestone growth choice boosts its stat. */
+/** Effective stats: every stat grows EVERY level by a per-wizard share of the total
+ *  growth budget. A wizard's strongest stats (vs the roster average) get the larger
+ *  share, so each wizard specializes in what it is already good at. With an average
+ *  profile (each weight = 0.25) the multiplier collapses to 1 + 0.10*(level-1) — the
+ *  same total budget as the old uniform auto-growth, just redistributed per-wizard. */
 export function leveledStats(dw: DraftedWizard): Stats {
   const level = dw.level ?? 1
-  const growth = 1 + L.autoGrowthPct * (level - 1)
-  const out: Stats = {
-    hp: dw.stats.hp * growth,
-    atk: dw.stats.atk * growth,
-    def: dw.stats.def * growth,
-    spd: dw.stats.spd * growth,
+  const steps = level - 1
+  const w = growthWeights(dw.stats)
+  const m = (k: keyof Stats) => 1 + L.growthBudgetPerLevel * w[k] * steps
+  return {
+    hp: Math.round(dw.stats.hp * m('hp')),
+    atk: Math.round(dw.stats.atk * m('atk')),
+    def: Math.round(dw.stats.def * m('def')),
+    spd: Math.round(dw.stats.spd * m('spd')),
   }
-  for (const c of dw.growthChoices ?? []) {
-    out[c.kind] *= 1 + L.milestoneBoostPct
-  }
-  return { hp: Math.round(out.hp), atk: Math.round(out.atk), def: Math.round(out.def), spd: Math.round(out.spd) }
-}
-
-export function applyGrowthChoice(dw: DraftedWizard, choice: GrowthChoice): DraftedWizard {
-  return { ...dw, growthChoices: [...(dw.growthChoices ?? []), choice] }
 }

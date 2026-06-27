@@ -20,7 +20,6 @@ export interface CombatResult {
   isFinalBoss: boolean
   survivors: DraftedWizard[]
   expEach: number
-  milestones: { wizardId: string; level: number }[]
   /** Enemy level shown in the UI, derived from the right-side menace. */
   enemyLevel: number
 }
@@ -97,14 +96,9 @@ export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatR
   const persisted = applyBattleToRoster(state.team, result.finalSnapshot)
   const expEach = isBoss ? BALANCE.leveling.expBoss
     : node.type === 'elite' ? BALANCE.leveling.expElite : BALANCE.leveling.expBattle
-  const milestones: { wizardId: string; level: number }[] = []
-  const survivors = persisted.map(dw => {
-    const { dw: leveled, milestones: ms } = addExp(dw, expEach)
-    for (const lv of ms) milestones.push({ wizardId: dw.wizard.id, level: lv })
-    return leveled
-  })
+  const survivors = persisted.map(dw => addExp(dw, expEach).dw)
 
-  return { result, enemy, enemySyn, isBoss, isFinalBoss, survivors, expEach, milestones, enemyLevel: deriveEnemyLevel(rightMenace) }
+  return { result, enemy, enemySyn, isBoss, isFinalBoss, survivors, expEach, enemyLevel: deriveEnemyLevel(rightMenace) }
 }
 
 export const combatResolver: NodeResolver = {
@@ -112,18 +106,11 @@ export const combatResolver: NodeResolver = {
   enter: () => ({ offers: {}, isCombat: true }),
   resolve: (state, node, _choice, rng) => {
     const out = resolveCombat(state, node, rng)
-    const newLog = [...(state.log ?? []), ...out.milestones.map(m => ({
-      area: state.area ?? 0, nodeId: node.id, kind: 'levelMilestone' as const,
-      summary: `${m.wizardId} raggiunge il livello ${m.level}`,
-    }))]
-    const pending = [...(state.pendingLevelUps ?? []), ...out.milestones.map(m => ({ wizardId: m.wizardId, atLevel: m.level }))]
     return {
       ...state,
       team: out.survivors,
       activeSynergies: detectSynergies(out.survivors),
       lastBattle: out.result,
-      log: newLog,
-      pendingLevelUps: pending,
     }
   },
 }

@@ -13,7 +13,7 @@ describe('RunState additive shape', () => {
     expect(full.area).toBe(0)
   })
   it('RunPhase includes the new phases', () => {
-    const phases: RunPhase[] = ['house', 'starter', 'levelup', 'recruit-node', 'relic-node', 'area-cleared']
-    expect(phases).toHaveLength(6)
+    const phases: RunPhase[] = ['house', 'starter', 'recruit-node', 'relic-node', 'area-cleared']
+    expect(phases).toHaveLength(5)
   })
 })
