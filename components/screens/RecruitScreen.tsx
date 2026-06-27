@@ -6,8 +6,42 @@ import { WizardCardRow } from '@/components/cards/WizardCardRow'
 import { SynergyTracker } from '@/components/draft/SynergyTracker'
 import { Button } from '@/components/ui/Button'
 import { powerOf } from '@/game/engine/combat/teamGen'
-import { synergyProgress, previewSynergies } from '@/game/engine/synergy'
+import { synergyProgress, previewSynergies, type SynergyPreview } from '@/game/engine/synergy'
 import { displayName } from '@/lib/displayName'
+
+/** Per-card glance: which synergies this recruit would activate or build toward. */
+function ImpactRibbon({ previews }: { previews: SynergyPreview[] }) {
+  const advancing = [...previews]
+    .filter(p => p.advances)
+    .sort((a, b) => Number(b.willActivate) - Number(a.willActivate) || b.nextCount - a.nextCount)
+  if (advancing.length === 0) {
+    return <p className="mt-1.5 text-center text-[10px] text-white/35">Nessuna nuova sinergia</p>
+  }
+  return (
+    <div className="mt-1.5 flex flex-wrap justify-center gap-1">
+      {advancing.slice(0, 3).map(p => {
+        const name = p.synergy.name.replace(/^\d+\s+/, '')
+        return p.willActivate ? (
+          <span
+            key={p.synergy.id}
+            className="inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold"
+            style={{ color: '#bdf0bd', borderColor: 'rgba(124,220,124,0.5)', background: 'rgba(124,220,124,0.14)' }}
+          >
+            <span aria-hidden>✦</span>{name}
+          </span>
+        ) : (
+          <span
+            key={p.synergy.id}
+            className="inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold"
+            style={{ color: '#ead9b0', borderColor: 'rgba(176,141,87,0.5)', background: 'rgba(176,141,87,0.14)' }}
+          >
+            +{p.nextCount - p.count} {name}
+          </span>
+        )
+      })}
+    </div>
+  )
+}
 
 export function RecruitScreen({
   offer, team, teamMax, onPick,
@@ -73,6 +107,7 @@ export function RecruitScreen({
                 className="cursor-pointer rounded-xl"
               >
                 <WizardCard drafted={d} selected={pick === d.wizard.id} />
+                <ImpactRibbon previews={previewSynergies(baseTeam, d)} />
               </div>
             ))}
           </section>
