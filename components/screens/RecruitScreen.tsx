@@ -1,44 +1,66 @@
 'use client'
 import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import type { DraftedWizard } from '@/types'
 import { WizardCard } from '@/components/cards/WizardCard'
 import { WizardCardRow } from '@/components/cards/WizardCardRow'
-import { SynergyTracker } from '@/components/draft/SynergyTracker'
 import { Button } from '@/components/ui/Button'
 import { powerOf } from '@/game/engine/combat/teamGen'
-import { synergyProgress, previewSynergies, type SynergyPreview } from '@/game/engine/synergy'
+import { previewSynergies, type SynergyPreview } from '@/game/engine/synergy'
+import { synergyBonusText } from '@/lib/glossary'
 import { displayName } from '@/lib/displayName'
 
-/** Per-card glance: which synergies this recruit would activate or build toward. */
-function ImpactRibbon({ previews }: { previews: SynergyPreview[] }) {
-  const advancing = [...previews]
-    .filter(p => p.advances)
-    .sort((a, b) => Number(b.willActivate) - Number(a.willActivate) || b.nextCount - a.nextCount)
-  if (advancing.length === 0) {
-    return <p className="mt-1.5 text-center text-[10px] text-white/35">Nessuna nuova sinergia</p>
-  }
+/** Right rail: the synergies that WOULD ACTIVATE if you recruit the focused
+ *  candidate (accounting for the swap when the squad is full). Activation is the
+ *  only thing shown — building-but-inactive synergies are deliberately omitted. */
+function ActivationRail({ candidate, activating }: { candidate: DraftedWizard | null; activating: SynergyPreview[] }) {
   return (
-    <div className="mt-1.5 flex flex-wrap justify-center gap-1">
-      {advancing.slice(0, 3).map(p => {
-        const name = p.synergy.name.replace(/^\d+\s+/, '')
-        return p.willActivate ? (
-          <span
-            key={p.synergy.id}
-            className="inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold"
-            style={{ color: '#bdf0bd', borderColor: 'rgba(124,220,124,0.5)', background: 'rgba(124,220,124,0.14)' }}
-          >
-            <span aria-hidden>✦</span>{name}
-          </span>
-        ) : (
-          <span
-            key={p.synergy.id}
-            className="inline-flex items-center gap-0.5 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold"
-            style={{ color: '#ead9b0', borderColor: 'rgba(176,141,87,0.5)', background: 'rgba(176,141,87,0.14)' }}
-          >
-            +{p.nextCount - p.count} {name}
-          </span>
-        )
-      })}
+    <div className="overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02]">
+      <div className="border-b border-white/10 bg-[#7cdc7c]/[0.06] px-4 py-3">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Sinergie attivate</p>
+        <p className="mt-0.5 text-sm font-display text-white/90">
+          {candidate ? <>Reclutando <span className="text-[#8ee68e]">{displayName(candidate)}</span></> : 'Scegli una recluta'}
+        </p>
+      </div>
+
+      <div className="p-3">
+        {!candidate && (
+          <p className="px-1 py-6 text-center text-xs text-white/40">
+            Passa sopra o seleziona una recluta per vedere quali sinergie attiva.
+          </p>
+        )}
+        {candidate && activating.length === 0 && (
+          <p className="px-1 py-6 text-center text-xs text-white/45">
+            Nessuna sinergia si attiva con questa scelta.
+          </p>
+        )}
+        <div className="flex flex-col gap-2">
+          <AnimatePresence initial={false}>
+            {activating.map(p => (
+              <motion.div
+                key={p.synergy.id}
+                initial={{ opacity: 0, x: 12 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 12 }}
+                transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+                className="rounded-xl border p-2.5"
+                style={{ borderColor: 'rgba(124,220,124,0.5)', background: 'rgba(124,220,124,0.10)', boxShadow: '0 0 16px rgba(124,220,124,0.14)' }}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-white/95">
+                    <span aria-hidden className="text-[#8ee68e]">✦</span>
+                    {p.synergy.name.replace(/^\d+\s+/, '')}
+                  </span>
+                  <span className="shrink-0 rounded-full bg-[#7cdc7c]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#8ee68e]">
+                    si attiva
+                  </span>
+                </div>
+                <p className="mt-1 text-[11px] leading-snug text-[#cfeccf]">{synergyBonusText(p.synergy.bonus).join(' · ')}</p>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      </div>
     </div>
   )
 }
@@ -60,12 +82,11 @@ export function RecruitScreen({
   const [replaceId, setReplaceId] = useState<string | undefined>(weakestId)
 
   const pickedWizard = pick ? offer.find(d => d.wizard.id === pick) ?? null : null
-  // What the synergy rail previews: the hovered candidate, else the selected one.
-  const previewCand = considered ?? pickedWizard
-  // When the squad is full a recruit swaps someone out, so the synergy baseline is
-  // the team WITHOUT the wizard being replaced; the candidate is then added on top.
+  const focus = considered ?? pickedWizard
+  // When the squad is full a recruit swaps someone out, so synergy activation is
+  // evaluated against the team WITHOUT the wizard being replaced.
   const baseTeam = full && replaceId ? team.filter(t => t.wizard.id !== replaceId) : team
-  const rows = previewCand ? previewSynergies(baseTeam, previewCand) : synergyProgress(team)
+  const activating = focus ? previewSynergies(baseTeam, focus).filter(p => p.willActivate) : []
   const replacedName = full && replaceId
     ? displayName(team.find(t => t.wizard.id === replaceId)!)
     : undefined
@@ -85,7 +106,7 @@ export function RecruitScreen({
         {/* Offer + (when full) the swap roster */}
         <div className="flex flex-col gap-5">
           <section
-            className="grid grid-cols-1 gap-4 sm:grid-cols-3"
+            className="grid grid-cols-1 justify-items-center gap-4 sm:grid-cols-2"
             onPointerLeave={() => setConsidered(null)}
           >
             {offer.map(d => (
@@ -107,7 +128,6 @@ export function RecruitScreen({
                 className="cursor-pointer rounded-xl"
               >
                 <WizardCard drafted={d} selected={pick === d.wizard.id} />
-                <ImpactRibbon previews={previewSynergies(baseTeam, d)} />
               </div>
             ))}
           </section>
@@ -146,11 +166,9 @@ export function RecruitScreen({
           )}
         </div>
 
-        {/* Synergy rail — current team synergies, or the preview for a candidate. */}
+        {/* Activation rail — sticky on desktop. */}
         <aside className="md:sticky md:top-4">
-          <div className="rounded-xl border border-white/10 bg-white/[0.03] p-3">
-            <SynergyTracker rows={rows} candidateName={previewCand ? displayName(previewCand) : undefined} />
-          </div>
+          <ActivationRail candidate={focus} activating={activating} />
         </aside>
       </div>
 
