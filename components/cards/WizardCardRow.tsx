@@ -41,13 +41,14 @@ function StatCell({ label, value, max, color }: { label: string; value: number; 
  * escape the card bounds instead of being cut off by `overflow-hidden`.
  */
 export function WizardCardRow({
-  drafted, selected, onClick, className, hotSynergyIds,
+  drafted, selected, onClick, className, hotSynergyIds, testId,
 }: {
   drafted: DraftedWizard
   selected?: boolean
   onClick?: () => void
   className?: string
   hotSynergyIds?: ReadonlySet<string>
+  testId?: string
 }) {
   const { wizard, stats, spell } = drafted
   const clickable = Boolean(onClick)
@@ -70,6 +71,7 @@ export function WizardCardRow({
       tabIndex={clickable ? 0 : undefined}
       onKeyDown={clickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.() } } : undefined}
       data-house={wizard.house}
+      data-testid={testId}
       className={cn(
         'wizard-row relative flex w-full min-h-[8.75rem] select-none rounded-2xl text-white',
         clickable && 'cursor-pointer', className,

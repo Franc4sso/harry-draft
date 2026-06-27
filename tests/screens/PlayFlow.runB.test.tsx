@@ -20,8 +20,8 @@ beforeEach(() => {
 })
 
 describe('PlayFlow → new loop', () => {
-  it('starts the new loop at house selection', () => {
+  it('starts the new loop at the draft screen', () => {
     render(<PlayFlow seed="pf-seed" />)
-    expect(screen.getByText(/Scegli la tua Casa/)).toBeInTheDocument()
+    expect(screen.getByTestId('draft-screen')).toBeInTheDocument()
   })
 })

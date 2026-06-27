@@ -1,8 +1,7 @@
 'use client'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useRunB } from '@/hooks/useRunB'
-import { HouseSelectScreen } from './HouseSelectScreen'
-import { StarterPickScreen } from './StarterPickScreen'
+import { DraftScreen } from './DraftScreen'
 import { MapScreen } from './MapScreen'
 import { BattleScreen } from './BattleScreen'
 import { VictoryScreen } from './VictoryScreen'
@@ -25,18 +24,8 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
 
   const renderView = () => {
     switch (c.view) {
-      case 'house':
-        return <HouseSelectScreen onSelect={c.selectHouse} />
-
-      case 'starter':
-        return (
-          <StarterPickScreen
-            house={c.house!}
-            offer={c.starterOffer}
-            onConfirm={c.confirmStarters}
-            onBack={c.backToHouse}
-          />
-        )
+      case 'draft':
+        return <DraftScreen seed={seed} onComplete={c.completeDraft} />
 
       case 'map':
         return (

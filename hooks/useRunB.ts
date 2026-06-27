@@ -1,8 +1,8 @@
 'use client'
 import { useState, useRef, useCallback, useMemo } from 'react'
-import type { DraftedWizard, GrowthChoice, House, PendingLevelUp, RunNode, RunState } from '@/types'
+import type { DraftedWizard, GrowthChoice, PendingLevelUp, RunNode, RunState } from '@/types'
 import {
-  startRunB, starterOffer as engineStarterOffer, chooseStarters, reachable as engineReachable,
+  startRunB, confirmDraftPicks, reachable as engineReachable,
   moveTo, resolveCurrent, applyLevelUp, clearAreaAndAdvance, registerCoreResolvers,
 } from '@/game/engine/runEngine'
 import { createRng } from '@/game/engine/rng'
@@ -13,16 +13,14 @@ import { prepareCombat, combatRng, type ActiveBattleB } from './useRunB.combat'
 registerCoreResolvers()
 
 export type RunBView =
-  | 'house' | 'starter' | 'map' | 'battle' | 'victory'
+  | 'draft' | 'map' | 'battle' | 'victory'
   | 'levelup' | 'recruit' | 'relic' | 'area-cleared' | 'win' | 'defeat'
 
 export interface RunBController {
-  run: RunState; view: RunBView; house: House | null; starterOffer: DraftedWizard[]
+  run: RunState; view: RunBView
   battle: ActiveBattleB | null; reachable: RunNode[]; currentNode: RunNode | undefined
   area: number; areasTotal: number; pendingLevelUp: PendingLevelUp | null; lastFallen: string[]
-  selectHouse: (house: House) => void
-  backToHouse: () => void
-  confirmStarters: (starterIds: string[]) => void
+  completeDraft: (picked: DraftedWizard[]) => void
   chooseNode: (nodeId: string) => void
   commitBattle: () => void
   acknowledgeVictory: () => void
@@ -35,10 +33,7 @@ export interface RunBController {
 
 const viewForPhase = (p: RunState['phase']): RunBView => {
   switch (p) {
-    // B2: the engine now starts in 'draft'; the legacy UI still renders house
-    // selection here until B3 replaces it with the draft screen.
-    case 'draft': return 'house'
-    case 'house': return 'house'
+    case 'draft': return 'draft'
     case 'map': return 'map'
     case 'battle': return 'battle'
     case 'victory': return 'victory'
@@ -55,7 +50,6 @@ const viewForPhase = (p: RunState['phase']): RunBView => {
 export function useRunB(seed: string): RunBController {
   const [run, setRunState] = useState<RunState>(() => loadRun() ?? startRunB(seed))
   const [view, setView] = useState<RunBView>(() => viewForPhase((loadRun() ?? startRunB(seed)).phase))
-  const [house, setHouse] = useState<House | null>(() => (loadRun()?.house ?? null))
   const [battle, setBattle] = useState<ActiveBattleB | null>(null)
   const [lastFallen, setLastFallen] = useState<string[]>([])
   const runRef = useRef(run); runRef.current = run
@@ -65,13 +59,10 @@ export function useRunB(seed: string): RunBController {
     setView(v ?? viewForPhase(next.phase))
   }, [])
 
-  const selectHouse = useCallback((h: House) => { setHouse(h); setView('starter') }, [])
-  const backToHouse = useCallback(() => { setHouse(null); setView('house') }, [])
-
-  const confirmStarters = useCallback((ids: string[]) => {
-    const next = chooseStarters(runRef.current, house!, ids, createRng(runRef.current.seed))
+  const completeDraft = useCallback((picked: DraftedWizard[]) => {
+    const next = confirmDraftPicks(runRef.current, picked, createRng(runRef.current.seed))
     commit(next, 'map')
-  }, [house, commit])
+  }, [commit])
 
   const chooseNode = useCallback((nodeId: string) => {
     const moved = moveTo(runRef.current, nodeId)
@@ -114,17 +105,16 @@ export function useRunB(seed: string): RunBController {
 
   const restart = useCallback(() => {
     clearRun(); const fresh = startRunB(seed)
-    setHouse(null); setBattle(null); setLastFallen([]); commit(fresh, 'house')
+    setBattle(null); setLastFallen([]); commit(fresh, 'draft')
   }, [seed, commit])
 
-  const offer = useMemo(() => (house ? engineStarterOffer(run.seed, house) : []), [house, run.seed])
   const reachable = useMemo(() => engineReachable(run), [run])
   const currentNode = run.map?.find(n => n.id === run.currentNodeId)
 
   return {
-    run, view, house, starterOffer: offer, battle, reachable, currentNode,
+    run, view, battle, reachable, currentNode,
     area: run.area ?? 0, areasTotal: BALANCE.map.areas, pendingLevelUp: run.pendingLevelUps?.[0] ?? null, lastFallen,
-    selectHouse, backToHouse, confirmStarters, chooseNode, commitBattle, acknowledgeVictory,
+    completeDraft, chooseNode, commitBattle, acknowledgeVictory,
     chooseRecruit, chooseRelic, applyGrowth, advanceArea, restart,
   }
 }
