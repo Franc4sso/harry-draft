@@ -211,7 +211,7 @@ export function UnitBust({
         <span className="truncate text-xs font-medium">{unit.name}</span>
         <span
           data-role="level-badge"
-          className="shrink-0 rounded bg-[#C9A24B]/15 px-1 text-[9px] font-bold tabular-nums text-[#F0D98A]"
+          className="shrink-0 rounded border border-[#C9A24B]/45 bg-[#C9A24B]/25 px-1 text-[10px] font-bold tabular-nums text-[#F4DE9A]"
         >
           Lv. {shownLevel}
         </span>

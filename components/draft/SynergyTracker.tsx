@@ -25,13 +25,14 @@ export function SynergyTracker({
   const superseded = (r: SynergyProgress | SynergyPreview) =>
     r.active && !!r.synergy.family && (topActiveByFamily.get(r.synergy.family) ?? 0) > r.threshold
 
-  // Stable order so rows never swap places between the current and preview states
-  // (reordering on hover was the tracker's flicker). In-progress synergies (count>0)
-  // stay first in a fixed family→threshold order; brand-new preview synergies
-  // (count===0) are appended last. The key uses pre-pick `count`, identical in both modes.
-  const orderKey = (r: SynergyProgress | SynergyPreview) =>
-    `${r.count > 0 ? 0 : 1}|${r.synergy.family ?? r.synergy.id}|${String(r.threshold).padStart(3, '0')}|${r.synergy.id}`
-  const sorted = [...relevant].sort((a, b) => orderKey(a).localeCompare(orderKey(b)))
+  // Order by how built-up each synergy is: most members first, then active ones,
+  // then closest-to-threshold, then id. Sorting on the pre-pick `count` (identical
+  // in the current and preview states) keeps rows from swapping places on hover.
+  const sorted = [...relevant].sort((a, b) =>
+    b.count - a.count ||
+    Number(b.active) - Number(a.active) ||
+    a.threshold - b.threshold ||
+    a.synergy.id.localeCompare(b.synergy.id))
 
   return (
     <div className="w-full">
