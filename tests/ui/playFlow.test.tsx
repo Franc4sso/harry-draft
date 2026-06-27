@@ -1,20 +1,14 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
-import { BALANCE } from '@/data/constants'
+// NOTE: This test was updated when PlayFlow was flipped from the legacy
+// DraftScreen → CampaignRunner flow to the new RunBRunner loop (Task 10).
+// The old draft-to-team interaction test is retired here; the full
+// house → starter → map flow is covered in tests/screens/RunBRunner.test.tsx.
+
+import { describe, it, expect, beforeEach, vi } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import React from 'react'
+import { clearRun } from '@/lib/runStore'
 
 // Render Framer Motion synchronously without AnimatePresence's exit-deferral.
-// This test verifies the draft→team flow wiring, not the animation. Without
-// the mock, exiting cards linger in the DOM during the popLayout transition,
-// so `getAllByRole('button')[0]` can grab a stale exiting card under parallel
-// test load — making the test flaky. Stripping the animation makes each click
-// land deterministically on the current screen's cards.
-//
-// IMPORTANT: the cache below is required. The Proxy getter is called on every
-// render, so without caching it creates a new component function each time.
-// React treats a new function reference as a different component type and
-// unmounts + remounts the subtree — detaching any DOM node userEvent is
-// holding a reference to mid-click, so onClick never fires.
 vi.mock('framer-motion', () => {
   const cache = new Map<string, (p: Record<string, unknown> & { children?: React.ReactNode }) => React.ReactNode>()
   const passthrough = (tag: string) => {
@@ -32,30 +26,21 @@ vi.mock('framer-motion', () => {
   return {
     AnimatePresence: ({ children }: { children?: React.ReactNode }) => children,
     motion: new Proxy({}, { get: (_t, tag: string) => passthrough(tag) }),
+    useReducedMotion: () => false,
   }
 })
 
 // Import AFTER the mock is registered.
 const { PlayFlow } = await import('@/components/screens/PlayFlow')
 
+beforeEach(() => {
+  try { clearRun() } catch { /* ignore */ }
+  localStorage.clear()
+})
+
 describe('PlayFlow', () => {
-  it('starts in draft and reaches the team screen after a full draft', async () => {
+  it('delegates to the new run loop — shows house selection on fresh start', () => {
     render(<PlayFlow seed="flow-seed" />)
-    const total = BALANCE.draft.teamSize
-
-    // draft phase: first screen visible (new layout uses heading instead of DraftProgress)
-    expect(screen.getByText(/Scegli il 1/i)).toBeInTheDocument()
-
-    for (let i = 0; i < total; i++) {
-      // With animations stripped, the only role=button elements are the current
-      // screen's wizard cards. Re-query each round and click the first.
-      const cards = screen.getAllByRole('button')
-      await userEvent.click(cards[0]!)
-    }
-
-    // After the final pick the flow transitions to the team screen.
-    expect(await screen.findByText(/La tua squadra/i)).toBeInTheDocument()
-    const main = screen.getByRole('main')
-    expect(within(main).getByText(/Sinergie attive/i)).toBeInTheDocument()
+    expect(screen.getByText(/Scegli la tua Casa/i)).toBeInTheDocument()
   })
 })

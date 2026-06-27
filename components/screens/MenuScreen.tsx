@@ -1,4 +1,5 @@
 'use client'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, useReducedMotion } from 'framer-motion'
@@ -6,16 +7,29 @@ import { WizardCard } from '@/components/cards/WizardCard'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
 import { WIZARD_BY_ID } from '@/data/wizards'
+import { loadRun, clearRun } from '@/lib/runStore'
 
 const teaser = draftWizard(createRng(7), WIZARD_BY_ID['harry']!)
 
 export function MenuScreen() {
   const router = useRouter()
   const reduce = useReducedMotion()
+  const [hasSavedRun, setHasSavedRun] = useState(false)
 
-  // No seed to type: the run is summoned fresh. The /play gate mints a random
-  // seed when none is present, so the player never has to copy/paste anything.
-  const play = () => router.push('/play')
+  // Guard localStorage access — must run only after mount so SSR is safe.
+  useEffect(() => {
+    setHasSavedRun(loadRun() !== null)
+  }, [])
+
+  const play = () => {
+    clearRun()
+    router.push('/play')
+  }
+
+  const continua = () => {
+    // Do NOT clear the run — useRunB will resume from the saved state.
+    router.push('/play')
+  }
 
   return (
     <main className="relative flex-1 flex flex-col items-center justify-center gap-9 overflow-hidden p-8 text-center">
@@ -81,7 +95,7 @@ export function MenuScreen() {
         transition={{ duration: 0.6, delay: 0.25, ease: 'easeOut' }}
         className="relative flex flex-col items-center gap-4"
       >
-        <div className="relative">
+        <div className="relative flex flex-col items-center gap-3">
           {/* Summoning aura behind the call to action. */}
           {!reduce && (
             <motion.span
@@ -103,6 +117,16 @@ export function MenuScreen() {
           >
             Gioca
           </button>
+
+          {hasSavedRun && (
+            <button
+              type="button"
+              onClick={continua}
+              className="font-display text-sm uppercase tracking-wider text-gold/80 transition-colors hover:text-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f3e6a0]"
+            >
+              Continua run
+            </button>
+          )}
         </div>
         <p className="text-xs text-white/45">Ogni partita, una nuova mano del destino.</p>
 
