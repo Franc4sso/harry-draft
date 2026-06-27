@@ -10,6 +10,7 @@ import { LevelUpScreen } from './LevelUpScreen'
 import { RecruitScreen } from './RecruitScreen'
 import { RelicNodeScreen } from './RelicNodeScreen'
 import { AreaClearedScreen } from './AreaClearedScreen'
+import { TeamSynergyBar } from '@/components/run/TeamSynergyBar'
 import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
 import { createRng } from '@/game/engine/rng'
 import { runSummary } from '@/lib/runSummary'
@@ -21,6 +22,10 @@ import { parseAreaNodeId } from '@/game/engine/map'
 export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: () => void }) {
   const c = useRunB(seed)
   const animKey = `${c.view}-${c.run.currentNodeId ?? c.area}`
+  // Persistent team + synergy strip on the between-battle phases. Battle has its
+  // own in-fight synergy display, and the end screens (draft/win/defeat) don't
+  // need it — so it's scoped to map/recruit/relic/levelup only.
+  const showTeamBar = c.view === 'map' || c.view === 'recruit' || c.view === 'relic' || c.view === 'levelup'
 
   const renderView = () => {
     switch (c.view) {
@@ -161,6 +166,11 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
         exit={{ opacity: 0 }}
         className="flex-1 flex flex-col"
       >
+        {showTeamBar && (
+          <div className="sticky top-0 z-10 px-3 pt-3">
+            <TeamSynergyBar team={c.run.team} synergies={c.run.activeSynergies} />
+          </div>
+        )}
         {renderView()}
       </motion.div>
     </AnimatePresence>

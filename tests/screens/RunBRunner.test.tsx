@@ -20,4 +20,17 @@ describe('RunBRunner', () => {
     await userEvent.click(screen.getByTestId('draft-pick-0'))
     expect(screen.getByText(/Scegli il tuo cammino/)).toBeInTheDocument()
   })
+
+  it('shows the team+synergy bar on map but not during draft', async () => {
+    render(<RunBRunner seed="seed-runner" />)
+    // draft phase: no persistent bar
+    expect(screen.getByTestId('draft-screen')).toBeInTheDocument()
+    expect(screen.queryByTestId('team-synergy-bar')).not.toBeInTheDocument()
+    // drive to map
+    await userEvent.click(screen.getByTestId('draft-pick-0'))
+    await userEvent.click(screen.getByTestId('draft-pick-0'))
+    expect(screen.getByText(/Scegli il tuo cammino/)).toBeInTheDocument()
+    // map phase: bar is mounted as a persistent strip
+    expect(screen.getByTestId('team-synergy-bar')).toBeInTheDocument()
+  })
 })
