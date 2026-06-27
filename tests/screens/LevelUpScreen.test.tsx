@@ -5,7 +5,7 @@ import { LevelUpScreen } from '@/components/screens/LevelUpScreen'
 import { offerRecruits, recruitVia } from '@/game/engine/recruit'
 import { createRng } from '@/game/engine/rng'
 
-const team = offerRecruits(createRng(1), { house: 'Grifondoro', exclude: new Set() }).slice(0, 2).map(d => recruitVia(d, 'iniziale'))
+const team = offerRecruits(createRng(1), { exclude: new Set() }).slice(0, 2).map(d => recruitVia(d, 'iniziale'))
 
 describe('LevelUpScreen', () => {
   it('reports the chosen growth at the pending level', async () => {

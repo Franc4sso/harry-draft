@@ -6,7 +6,7 @@ import { generateArea } from '@/game/engine/map'
 import type { RunState } from '@/types'
 
 function baseState(): RunState {
-  const team = offerRecruits(createRng(1), { house: 'Tassorosso', exclude: new Set() })
+  const team = offerRecruits(createRng(1), { exclude: new Set() })
     .slice(0, 2).map(d => recruitVia(d, 'iniziale'))
   const map = generateArea(createRng(2).fork(4).fork(0), 0, { teamSize: 2, teamMax: 5 })
   const recruitNode = map.find(n => n.type === 'recruit')!
@@ -34,7 +34,7 @@ describe('recruit resolver', () => {
   it('replaces a member when the team is full', () => {
     const s = baseState()
     // pad team to teamMax
-    const filler = offerRecruits(createRng(9), { house: 'Grifondoro', exclude: new Set(s.team.map(t => t.wizard.id)) })
+    const filler = offerRecruits(createRng(9), { exclude: new Set(s.team.map(t => t.wizard.id)) })
     s.team = [...s.team, ...filler].slice(0, 5)
     const node = s.map!.find(n => n.type === 'recruit')!
     const offer = recruitOffer(s, node, createRng(s.seed))

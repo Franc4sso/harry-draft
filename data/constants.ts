@@ -122,8 +122,6 @@ export const BALANCE = {
   },
   recruit: {
     offerSize: 3,
-    houseGuarantee: 1,          // almeno N candidati della Casa del giocatore
-    houseBiasWeight: 1.5,       // moltiplicatore di peso per i non-garantiti della Casa
   },
   roles: {
     tauntBonus: 1000,       // additive threat that makes a live Tank the focus
