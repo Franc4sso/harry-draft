@@ -38,6 +38,6 @@ describe('status integration', () => {
     const a = unit('a', 'silencio'); const b = unit('b', 'sectumsempra', { side: 'right' })
     resolveAction(createRng(1), 1, a, b, SPELL_BY_ID['silencio']!)
     expect(canCastSpell(b)).toBe(false)
-    expect(selectSpell(b).id).toBe('base_attack')
+    expect(selectSpell(b)?.id).toBe('base_attack')
   })
 })
