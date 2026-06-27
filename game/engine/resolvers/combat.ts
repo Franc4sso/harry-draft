@@ -17,6 +17,7 @@ export interface CombatResult {
   enemy: DraftedWizard[]
   enemySyn: ActiveSynergy[]
   isBoss: boolean
+  isFinalBoss: boolean
   survivors: DraftedWizard[]
   expEach: number
   milestones: { wizardId: string; level: number }[]
@@ -94,7 +95,7 @@ export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatR
     return leveled
   })
 
-  return { result, enemy, enemySyn, isBoss, survivors, expEach, milestones }
+  return { result, enemy, enemySyn, isBoss, isFinalBoss, survivors, expEach, milestones }
 }
 
 export const combatResolver: NodeResolver = {

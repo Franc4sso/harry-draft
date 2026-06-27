@@ -52,4 +52,20 @@ describe('resolveCombat', () => {
     const b = resolveCombat(s, node, createRng('s').fork(2)).result.winner
     expect(a).toBe(b)
   })
+  it('flags isFinalBoss only for the final area boss, not earlier-area bosses', () => {
+    const last = BALANCE.map.areas - 1
+    const s0 = starterState()
+    // area 0 boss node: a boss fight, but NOT the scripted final boss
+    const boss0 = s0.map!.find(n => n.type === 'boss')!
+    const out0 = resolveCombat(s0, boss0, createRng('s').fork(2))
+    expect(out0.isBoss).toBe(true)
+    expect(out0.isFinalBoss).toBe(false)
+    // final-area boss node: the scripted Voldemort fight
+    const finalMap = generateArea(createRng(1).fork(4).fork(last), last, { teamSize: 2, teamMax: 5 })
+    const bossF = finalMap.find(n => n.type === 'boss')!
+    const sF: RunState = { ...s0, area: last, map: finalMap, currentNodeId: finalMap[0]!.id }
+    const outF = resolveCombat(sF, bossF, createRng('s').fork(2))
+    expect(outF.isBoss).toBe(true)
+    expect(outF.isFinalBoss).toBe(true)
+  })
 })

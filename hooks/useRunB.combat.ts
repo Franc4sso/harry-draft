@@ -11,6 +11,7 @@ export interface ActiveBattleB {
   enemy: DraftedWizard[]
   enemySyn: ActiveSynergy[]
   isBoss: boolean
+  isFinalBoss: boolean
   playerTeam: DraftedWizard[]
   playerSyn: ActiveSynergy[]
 }
@@ -31,6 +32,6 @@ export function prepareCombat(run: RunState): ActiveBattleB {
   const ready = battleReadyTeam(run.team)
   return {
     result: out.result, enemy: out.enemy, enemySyn: out.enemySyn, isBoss: out.isBoss,
-    playerTeam: ready, playerSyn: detectSynergies(ready),
+    isFinalBoss: out.isFinalBoss, playerTeam: ready, playerSyn: detectSynergies(ready),
   }
 }

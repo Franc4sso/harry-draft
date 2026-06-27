@@ -52,7 +52,7 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
 
       case 'battle': {
         const b = c.battle!
-        const title = b.isBoss ? `Boss: ${BOSSES[0]!.name}` : 'Battaglia'
+        const title = b.isFinalBoss ? `Boss: ${BOSSES[0]!.name}` : b.isBoss ? 'Boss' : 'Battaglia'
         return (
           <BattleScreen
             result={b.result}
