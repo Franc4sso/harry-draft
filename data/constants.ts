@@ -76,7 +76,7 @@ export const BALANCE = {
     // Menace = stat multiplier (1+pct) = menaceBase + menacePerDepth*d, scaled on elite/boss.
     // menaceBase is NEGATIVE so area-0 fights drop below the roster floor (a level-1
     // trio can win); the ramp lifts late fights back above 1.0 for the level-5 endgame.
-    menaceBase: -0.55,
+    menaceBase: -0.60,
     menacePerDepth: 0.04,
     menaceEliteMult: 1.1,
     menaceBossMult: 1.3,
