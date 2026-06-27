@@ -36,9 +36,21 @@ export function registerCoreResolvers(): void {
   registered = true
 }
 
+/** Number of starters the player drafts before the run begins. */
+export const STARTER_PICKS = 2
+
 export function startRunB(seed: string): RunState {
-  return { seed, phase: 'house', team: [], activeSynergies: [], stage: 0, relics: [],
+  return { seed, phase: 'draft', team: [], activeSynergies: [], stage: 0, relics: [],
     area: 0, teamMax: BALANCE.draft.teamSize, log: [], pendingLevelUps: [] }
+}
+
+/** Seed the run from the player's drafted starters: build the team, roll area 0, enter the map. */
+export function confirmDraftPicks(state: RunState, picked: DraftedWizard[], _rng: Rng): RunState {
+  const starters = picked.slice(0, STARTER_PICKS).map(d => recruitVia(d, 'iniziale'))
+  const map = generateArea(areaRng(state.seed, 0), 0, { teamSize: starters.length, teamMax: state.teamMax ?? 5 })
+  const entry = map.find(n => parseAreaNodeId(n.id).floor === 0)!
+  return { ...state, area: 0, team: starters, activeSynergies: detectSynergies(starters),
+    map, currentNodeId: entry.id, phase: 'map' }
 }
 
 /** Deterministic house pool the player picks 2 starters from. */

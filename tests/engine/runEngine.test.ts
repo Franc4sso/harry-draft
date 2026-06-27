@@ -1,19 +1,34 @@
 import { describe, it, expect, beforeAll } from 'vitest'
 import {
-  startRunB, starterOffer, chooseStarters, reachable, moveTo, resolveCurrent,
+  startRunB, starterOffer, chooseStarters, confirmDraftPicks, STARTER_PICKS,
+  reachable, moveTo, resolveCurrent,
   applyLevelUp, registerCoreResolvers, phaseAfterNode,
 } from '@/game/engine/runEngine'
 import { createRng } from '@/game/engine/rng'
+import { createDraftPool } from '@/game/engine/draft'
+import { draftWizard } from '@/game/engine/statRoll'
 import { BALANCE } from '@/data/constants'
 
 beforeAll(() => registerCoreResolvers())
 
 describe('run engine — start & map', () => {
-  it('startRunB begins at house selection with an empty team', () => {
+  it('startRunB begins at the draft phase with an empty team', () => {
     const s = startRunB('seed-1')
-    expect(s.phase).toBe('house')
+    expect(s.phase).toBe('draft')
     expect(s.team).toHaveLength(0)
     expect(s.teamMax).toBe(BALANCE.draft.teamSize)
+  })
+  it('starts in the draft phase and confirmDraftPicks seeds a 2-wizard team on the map', () => {
+    const s = startRunB('seed-x')
+    expect(s.phase).toBe('draft')
+    expect(STARTER_PICKS).toBe(2)
+    const pool = createDraftPool().slice(0, 2).map(w => draftWizard(createRng('seed-x'), w, true))
+    const next = confirmDraftPicks(s, pool, createRng('seed-x'))
+    expect(next.phase).toBe('map')
+    expect(next.team.length).toBe(2)
+    expect(next.team.every(d => d.level === 1 && d.recruitedVia === 'iniziale')).toBe(true)
+    expect(next.map && next.map.length).toBeGreaterThan(0)
+    expect(next.currentNodeId).toBe(next.map!.find(n => n.id.endsWith('f0n0'))!.id)
   })
   it('chooseStarters builds a 2-wizard team and an area-0 map', () => {
     const offer = starterOffer('seed-1', 'Grifondoro')

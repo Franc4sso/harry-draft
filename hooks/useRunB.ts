@@ -35,6 +35,9 @@ export interface RunBController {
 
 const viewForPhase = (p: RunState['phase']): RunBView => {
   switch (p) {
+    // B2: the engine now starts in 'draft'; the legacy UI still renders house
+    // selection here until B3 replaces it with the draft screen.
+    case 'draft': return 'house'
     case 'house': return 'house'
     case 'map': return 'map'
     case 'battle': return 'battle'
