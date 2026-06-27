@@ -41,7 +41,7 @@ function StatCell({ label, value, max, color }: { label: string; value: number; 
  * escape the card bounds instead of being cut off by `overflow-hidden`.
  */
 export function WizardCardRow({
-  drafted, selected, onClick, className, hotSynergyIds, testId,
+  drafted, selected, onClick, className, hotSynergyIds, testId, showLevel,
 }: {
   drafted: DraftedWizard
   selected?: boolean
@@ -49,6 +49,9 @@ export function WizardCardRow({
   className?: string
   hotSynergyIds?: ReadonlySet<string>
   testId?: string
+  /** Show the `Lv. N` chip. Off in the draft/recruit offer (all level 1); on for
+   *  the real roster (team panel, level-up, recruit swap list). */
+  showLevel?: boolean
 }) {
   const { wizard, stats, spell } = drafted
   const clickable = Boolean(onClick)
@@ -99,7 +102,7 @@ export function WizardCardRow({
         </div>
         <div className="absolute left-2 top-2 flex items-center gap-1">
           <TierBadge tier={wizard.tier} />
-          <Chip label={`Lv. ${drafted.level ?? 1}`} color="#F0D98A" />
+          {showLevel && <Chip label={`Lv. ${drafted.level ?? 1}`} color="#F0D98A" />}
         </div>
         <Tooltip
           className="absolute bottom-2 left-2"

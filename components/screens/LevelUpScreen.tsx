@@ -25,7 +25,7 @@ export function LevelUpScreen({
     <main className="flex-1 flex flex-col items-center gap-6 p-6">
       <h1 className="font-display text-3xl">Livello {pending.atLevel}!</h1>
       <p className="text-white/70">{displayName(wizard)} ha raggiunto una soglia. Scegli un potenziamento.</p>
-      <WizardCardRow drafted={wizard} />
+      <WizardCardRow drafted={wizard} showLevel />
       <div className="text-xs text-white/50 flex gap-4">
         <span>Base {layers.base.atk}/{layers.base.def}/{layers.base.spd}</span>
         <span>Livello {layers.afterLevel.atk}/{layers.afterLevel.def}/{layers.afterLevel.spd}</span>

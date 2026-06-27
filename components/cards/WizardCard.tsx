@@ -38,13 +38,16 @@ function StatCell({ label, value, max, color }: { label: string; value: number; 
 }
 
 export function WizardCard({
-  drafted, selected, onClick, className, hotSynergyIds,
+  drafted, selected, onClick, className, hotSynergyIds, showLevel,
 }: {
   drafted: DraftedWizard
   selected?: boolean
   onClick?: () => void
   className?: string
   hotSynergyIds?: ReadonlySet<string>
+  /** Show the `Lv. N` chip. Off in the draft/recruit offer (all level 1); on for
+   *  the real roster (team panel, level-up). */
+  showLevel?: boolean
 }) {
   const { wizard, stats, spell } = drafted
   const clickable = Boolean(onClick)
@@ -73,7 +76,7 @@ export function WizardCard({
           <PortraitImage id={wizard.id} house={wizard.house} alt={wizard.name} variant="card" />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 50%, rgba(12,10,22,0.94))' }} />
           <div className="absolute right-2 top-2 flex items-center gap-1">
-            <Chip label={`Lv. ${drafted.level ?? 1}`} color="#F0D98A" />
+            {showLevel && <Chip label={`Lv. ${drafted.level ?? 1}`} color="#F0D98A" />}
             <TierBadge tier={wizard.tier} />
           </div>
           {/* Role icon badge, bottom-left. Tap/hover reveals what the role DOES
