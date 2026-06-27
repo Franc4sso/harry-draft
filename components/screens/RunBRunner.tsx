@@ -61,6 +61,7 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
             playerRelics={c.run.relics}
             enemy={b.enemy}
             enemySyn={b.enemySyn}
+            enemyLevel={b.enemyLevel}
             title={title}
             onFinish={c.commitBattle}
           />

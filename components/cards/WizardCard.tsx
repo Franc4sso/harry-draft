@@ -72,7 +72,10 @@ export function WizardCard({
         <div className="relative h-36 shrink-0 overflow-hidden rounded-t-xl">
           <PortraitImage id={wizard.id} house={wizard.house} alt={wizard.name} variant="card" />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent 50%, rgba(12,10,22,0.94))' }} />
-          <div className="absolute right-2 top-2"><TierBadge tier={wizard.tier} /></div>
+          <div className="absolute right-2 top-2 flex items-center gap-1">
+            <Chip label={`Lv. ${drafted.level ?? 1}`} color="#F0D98A" />
+            <TierBadge tier={wizard.tier} />
+          </div>
           {/* Role icon badge, bottom-left. Tap/hover reveals what the role DOES
               (taunt/penetration/bypass/heal) — works on mobile too, unlike `title`. */}
           <Tooltip

@@ -24,6 +24,9 @@ export interface ReplayUnit {
   baseAtk: number
   baseDef: number
   baseSpd: number
+  /** Run-progression level (player wizards). Enemies default to 1; the UI shows
+   *  a derived enemy level instead. Optional so lightweight test fixtures stay terse. */
+  level?: number
   /** The wizard's primary (equipped) spell — what the cooldown row displays. */
   spell: { id: string; name: string; cooldown: number }
 }
@@ -83,6 +86,7 @@ export function buildReplay(
     baseAtk: u.stats.atk,
     baseDef: u.stats.def,
     baseSpd: u.stats.spd,
+    level: u.level ?? 1,
     spell: { id: u.spell.id, name: u.spell.name, cooldown: u.spell.cooldown ?? 0 },
   }))
   const maxHp: Record<string, number> = {}

@@ -16,7 +16,7 @@ import { archetypeFor } from '@/lib/spellArchetype'
  * defender. Statuses are derived per frame; HP comes from the current frame.
  */
 export function BattleArena({
-  replay, hp, entry, frameKey = 0, leftTitle = 'La tua squadra', rightTitle = 'Avversari', center,
+  replay, hp, entry, frameKey = 0, leftTitle = 'La tua squadra', rightTitle = 'Avversari', center, enemyLevel = 1,
 }: {
   replay: Replay
   hp: Record<string, number>
@@ -25,6 +25,8 @@ export function BattleArena({
   leftTitle?: string
   rightTitle?: string
   center?: React.ReactNode
+  /** Level shown on every enemy bust (derived from menace). Players use their own. */
+  enemyLevel?: number
 }) {
   const actingKey = entry?.actorSide ? unitKey(entry.actorSide, entry.actorId) : null
   const targetKey = entry?.targetSide && entry.targetId ? unitKey(entry.targetSide, entry.targetId) : null
@@ -81,6 +83,7 @@ export function BattleArena({
             floatKey={frameKey}
             effects={statusEffects[u.key] ?? []}
             cooldown={cooldowns[u.key]?.[u.spell.id] ?? 0}
+            level={u.side === 'right' ? enemyLevel : u.level}
           />
           {u.key === targetKey && <ShieldFx active={blocked} fxKey={frameKey} />}
         </div>

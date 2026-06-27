@@ -21,6 +21,15 @@ export interface CombatResult {
   survivors: DraftedWizard[]
   expEach: number
   milestones: { wizardId: string; level: number }[]
+  /** Enemy level shown in the UI, derived from the right-side menace. */
+  enemyLevel: number
+}
+
+/** Map a right-side menace (stat multiplier pct) onto the player growth curve,
+ *  so enemy level badges read on the same scale as player levels. */
+export function deriveEnemyLevel(menace: number): number {
+  const lvl = Math.round(1 + menace / BALANCE.leveling.autoGrowthPct)
+  return Math.max(1, Math.min(BALANCE.leveling.levelMax, lvl))
 }
 
 /** Monotonic progression depth across areas: areas are spaced by floorsPerArea so
@@ -95,7 +104,7 @@ export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatR
     return leveled
   })
 
-  return { result, enemy, enemySyn, isBoss, isFinalBoss, survivors, expEach, milestones }
+  return { result, enemy, enemySyn, isBoss, isFinalBoss, survivors, expEach, milestones, enemyLevel: deriveEnemyLevel(rightMenace) }
 }
 
 export const combatResolver: NodeResolver = {

@@ -95,7 +95,10 @@ export function WizardCardRow({
           <PortraitImage id={wizard.id} house={wizard.house} alt={wizard.name} variant="card" />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(100deg, transparent 46%, #0c0a16 98%)' }} />
         </div>
-        <div className="absolute left-2 top-2"><TierBadge tier={wizard.tier} /></div>
+        <div className="absolute left-2 top-2 flex items-center gap-1">
+          <TierBadge tier={wizard.tier} />
+          <Chip label={`Lv. ${drafted.level ?? 1}`} color="#F0D98A" />
+        </div>
         <Tooltip
           className="absolute bottom-2 left-2"
           triggerClassName="grid h-6 w-6 place-items-center rounded-full border border-white/25 bg-black/55 backdrop-blur-sm"

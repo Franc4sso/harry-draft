@@ -122,7 +122,7 @@ function effectCount(e: ActiveEffect): number {
  * floating damage/heal number. Reduced-motion → static final state.
  */
 export function UnitBust({
-  unit, hp, acting, targeted, mirrored, float, floatKey, effects = [], cooldown = 0,
+  unit, hp, acting, targeted, mirrored, float, floatKey, effects = [], cooldown = 0, level,
 }: {
   unit: ReplayUnit
   hp: number
@@ -135,7 +135,11 @@ export function UnitBust({
   effects?: ActiveEffect[]
   /** Turns remaining on this unit's primary spell (0 = ready). */
   cooldown?: number
+  /** Displayed level. Players pass their own level; enemies pass a derived one.
+   *  Falls back to the replay unit's own level (1 for enemies). */
+  level?: number
 }) {
+  const shownLevel = level ?? unit.level ?? 1
   const reduce = useReducedMotion()
   const dead = hp <= 0
   const aura = acting ? '0 0 22px rgba(124,252,155,0.55)' : targeted ? '0 0 22px rgba(255,107,107,0.6)' : undefined
@@ -203,7 +207,15 @@ export function UnitBust({
         />
       )}
 
-      <div className="mt-1 truncate text-center text-xs font-medium leading-tight">{unit.name}</div>
+      <div className="mt-1 flex items-center justify-center gap-1 leading-tight">
+        <span className="truncate text-xs font-medium">{unit.name}</span>
+        <span
+          data-role="level-badge"
+          className="shrink-0 rounded bg-[#C9A24B]/15 px-1 text-[9px] font-bold tabular-nums text-[#F0D98A]"
+        >
+          Lv. {shownLevel}
+        </span>
+      </div>
       <div className="mt-0.5"><HpBar hp={hp} maxHp={unit.maxHp} /></div>
 
       <div className="mt-1.5 flex flex-col gap-1">
