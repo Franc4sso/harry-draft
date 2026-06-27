@@ -1,7 +1,7 @@
 'use client'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import {
-  Flame, Zap, Shield, Sword, Snowflake, Ban, Swords, ArrowUp, ArrowDown, Heart,
+  Flame, Zap, Shield, ShieldCheck, Sword, Snowflake, Ban, Swords, ArrowUp, ArrowDown, Heart,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import type { ReplayUnit } from '@/game/engine/combat/replay'
@@ -32,6 +32,7 @@ const STATUS_ICON: Record<StatusKind, LucideIcon> = {
   silence: Ban,
   disarm: Swords,
   regen: Heart,
+  ward: ShieldCheck,
 }
 const STATUS_CLASS: Record<StatusKind, string> = {
   dot: 'text-orange-400',
@@ -43,6 +44,7 @@ const STATUS_CLASS: Record<StatusKind, string> = {
   silence: 'text-violet-300',
   disarm: 'text-amber-300',
   regen: 'text-emerald-300',
+  ward: 'text-indigo-300',
 }
 
 /** Control kinds get a full-bust overlay so a skipped/limited turn reads instantly. */

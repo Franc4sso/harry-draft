@@ -112,3 +112,15 @@ export function absorbDamage(unit: BattleUnit, dmg: number): number {
   }
   return remaining
 }
+
+/** Consume one Protego charge on `unit`. Returns true if a charge was spent
+ *  (and the ward removed when it hits 0). */
+export function consumeWard(unit: BattleUnit): boolean {
+  const ward = unit.statusEffects.find(e => e.statusId === 'protego' && (e.absorbLeft ?? 0) > 0)
+  if (!ward) return false
+  ward.absorbLeft = (ward.absorbLeft ?? 0) - 1
+  if ((ward.absorbLeft ?? 0) <= 0) {
+    unit.statusEffects = unit.statusEffects.filter(e => e !== ward)
+  }
+  return true
+}

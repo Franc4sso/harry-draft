@@ -199,7 +199,7 @@ export function simulateBattle(
       const realTarget = healIntent
         ? (mostWounded(allies.filter(a => a.alive)) ?? actor)
         : (spell.type === 'Difesa' ? actor : target)
-      const entry = resolveAction(rng, turn, actor, realTarget, spell, bus)
+      const entry = resolveAction(rng, turn, actor, realTarget, spell, allies, bus)
       pushLog(entry)
       // onHit: after an actor resolves a spell against an ENEMY target.
       if (realTarget.side !== actor.side) {

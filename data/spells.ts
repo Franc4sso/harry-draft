@@ -31,8 +31,8 @@ export const SPELLS: Spell[] = [
   { id: 'ferula', name: 'Ferula', desc: 'Fascia le ferite, cura nel tempo.', type: 'Cura', heal: 14, hitChance: 1, cooldown: 1, effects: [{ kind: 'buff', stat: 'def', amount: 10, duration: 2 }] },
 
   // Difesa
-  { id: 'protego', name: 'Protego', desc: 'Scudo che aumenta la difesa.', type: 'Difesa', hitChance: 1, cooldown: 1, effects: [{ kind: 'buff', stat: 'def', amount: 25, duration: 2 }] },
-  { id: 'protego_maxima', name: 'Protego Maxima', desc: 'Barriera potente.', type: 'Difesa', hitChance: 1, cooldown: 2, effects: [{ kind: 'buff', stat: 'def', amount: 45, duration: 3 }] },
+  { id: 'protego', name: 'Protego', desc: 'Annulla la prossima magia sul bersaglio.', type: 'Difesa', hitChance: 1, cooldown: 1, spec: [{ kind: 'protego', count: 1 }] },
+  { id: 'protego_maxima', name: 'Protego Maxima', desc: 'Annulla la prossima magia su due alleati.', type: 'Difesa', hitChance: 1, cooldown: 2, spec: [{ kind: 'protego', count: 2 }] },
   { id: 'fianto', name: 'Fianto Duri', desc: 'Rinforza le barriere.', type: 'Difesa', hitChance: 1, cooldown: 1, effects: [{ kind: 'buff', stat: 'def', amount: 30, duration: 2 }] },
   { id: 'salvio', name: 'Salvio Hexia', desc: 'Devia gli incantesimi, +velocità.', type: 'Difesa', hitChance: 1, cooldown: 1, effects: [{ kind: 'buff', stat: 'spd', amount: 20, duration: 2 }] },
   { id: 'riddikulus', name: 'Riddikulus', desc: 'Rinforza il morale, +attacco.', type: 'Difesa', hitChance: 1, cooldown: 1, effects: [{ kind: 'buff', stat: 'atk', amount: 20, duration: 2 }] },
