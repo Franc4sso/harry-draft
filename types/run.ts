@@ -1,9 +1,11 @@
-import type { ActiveSynergy, DraftedWizard, BattleResult } from './index'
+import type { ActiveSynergy, DraftedWizard, BattleResult, House } from './index'
 import type { ActiveRelic } from './relic'
 
 export type RunPhase =
   | 'menu' | 'draft' | 'team' | 'battle'
   | 'victory' | 'defeat' | 'win'
+  // Fase 1 redesign (Plan B):
+  | 'house' | 'starter' | 'map' | 'levelup' | 'recruit-node' | 'relic-node' | 'area-cleared'
 
 export type RunNodeType =
   // Fase 1 — generati e risolti
@@ -45,4 +47,10 @@ export interface RunState {
   relics: ActiveRelic[]
   map?: RunNode[]
   currentNodeId?: string
+  // Fase 1 redesign (Plan B) — all optional so the legacy loop keeps compiling.
+  house?: House
+  area?: number
+  teamMax?: number
+  log?: RunEvent[]
+  pendingLevelUps?: PendingLevelUp[]
 }
