@@ -76,7 +76,10 @@ export const BALANCE = {
     // Menace = stat multiplier (1+pct) = menaceBase + menacePerDepth*d, scaled on elite/boss.
     // menaceBase is NEGATIVE so area-0 fights drop below the roster floor (a level-1
     // trio can win); the ramp lifts late fights back above 1.0 for the level-5 endgame.
-    menaceBase: -0.60,
+    // -0.65 (was -0.60): the nearest-2 map wiring (C1) gives a near-optimal player
+    // slightly tighter EXP-fight paths, shaving one win off the 120-seed harness;
+    // this re-eases the area-0 floor to restore the calibrated >15% win target.
+    menaceBase: -0.65,
     menacePerDepth: 0.04,
     menaceEliteMult: 1.1,
     menaceBossMult: 1.3,
