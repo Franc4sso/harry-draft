@@ -29,6 +29,7 @@ export function LevelUpScreen({
       <div className="text-xs text-white/50 flex gap-4">
         <span>Base {layers.base.atk}/{layers.base.def}/{layers.base.spd}</span>
         <span>Livello {layers.afterLevel.atk}/{layers.afterLevel.def}/{layers.afterLevel.spd}</span>
+        <span>Sinergia {layers.afterSynergy.atk}/{layers.afterSynergy.def}/{layers.afterSynergy.spd}</span>
         <span>Totale {layers.total.atk}/{layers.total.def}/{layers.total.spd}</span>
       </div>
       <div className="grid grid-cols-2 gap-3 max-w-md w-full">
