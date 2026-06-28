@@ -31,17 +31,17 @@ function mk(id: string, stats: Stats): DraftedWizard {
   const wizard = WIZARDS.find(w => w.id === id)!
   return { wizard, stats, maxHp: stats.hp, spell: SPELL_BY_ID['base_attack']! }
 }
-const totalDmgToRight = (r: BattleResult) =>
-  r.log.filter(e => e.targetSide === 'right' && (e.value ?? 0) > 0).reduce((s, e) => s + (e.value ?? 0), 0)
+const firstHitToRight = (r: BattleResult) =>
+  r.log.find(e => e.targetSide === 'right' && (e.value ?? 0) > 0)?.value ?? 0
 
 describe('execute applies to low-HP targets in battle', () => {
   const attacker = [mk('harry', { hp: 400, atk: 30, def: 10, spd: 30 })]
   const woundedEnemy = () => [{ ...mk('greyback', { hp: 400, atk: 1, def: 10, spd: 1 }), currentHp: 50 }] // 12.5% HP — below the 35% Spietatezza threshold
-  const spietatezzaSyn: ActiveSynergy = { synergy: { id: 'spietatezza', name: 'Spietatezza', kind: 'origin', requires: { tag: 'esecuzione', count: 3 }, bonus: { atk: 5 } }, memberIds: [] }
+  const spietatezzaSyn: ActiveSynergy = { synergy: { id: 'spietatezza', name: 'Spietatezza', kind: 'origin', requires: { tag: 'esecuzione', count: 3 }, bonus: {} }, memberIds: [] }
 
   it('a Spietatezza team deals more damage to a wounded enemy than a plain team (same seed)', () => {
     const plain = simulateBattle(attacker, woundedEnemy(), createRng('exec-1'))
     const withExec = simulateBattle(attacker, woundedEnemy(), createRng('exec-1'), { leftSyn: [spietatezzaSyn] })
-    expect(totalDmgToRight(withExec)).toBeGreaterThan(totalDmgToRight(plain))
+    expect(firstHitToRight(withExec)).toBeGreaterThan(firstHitToRight(plain))
   })
 })
