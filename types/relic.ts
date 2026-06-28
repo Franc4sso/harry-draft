@@ -36,6 +36,8 @@ export interface Relic {
   keywords?: Keyword[]
   /** Team-level multiplier added to a keyword's damage (e.g. { veleno: 0.5 } = +50%). */
   keywordMult?: Partial<Record<Keyword, number>>
+  /** Grants the whole team an execute: +bonus damage to targets below `threshold` HP fraction. */
+  grantsExecute?: { threshold: number; bonus: number }
 }
 
 export interface ActiveRelic {

@@ -5,6 +5,7 @@ import type { Rng } from '../rng'
 import { BALANCE } from '@/data/constants'
 import { applyBonuses, totalRegen } from '../synergy'
 import { applyRelicBonuses, keywordDamageMult, registerRelicTriggers, totalRelicRegen } from '../relics'
+import { teamExecute } from '../execute'
 import { registerTraitTriggers } from '../traits'
 import { registerSignatures } from '../signatures'
 import { createEventBus } from './eventBus'
@@ -18,6 +19,7 @@ export function toBattleUnits(
   team: DraftedWizard[], side: Side, synergies: ActiveSynergy[], relics: ActiveRelic[] = [], menacePct = 0,
 ): BattleUnit[] {
   const velenoUncapped = synergies.some(s => s.synergy.id === 'tossicita')
+  const execute = teamExecute(team, relics, synergies)
   return team.map(dw => {
     const synBuffed = applyBonuses(dw.stats, synergies)
     const relicBuffed = applyRelicBonuses(synBuffed, team, relics)
@@ -32,7 +34,7 @@ export function toBattleUnits(
     return {
       ...dw, side, buffedStats: buffed, maxHp: buffed.hp,
       hp: Math.min(buffed.hp, Math.max(0, startHp)),
-      cooldowns: {}, statusEffects: [], alive: true, velenoUncapped,
+      cooldowns: {}, statusEffects: [], alive: true, velenoUncapped, execute,
     }
   })
 }

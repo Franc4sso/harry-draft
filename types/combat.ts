@@ -45,6 +45,8 @@ export interface BattleUnit extends DraftedWizard {
   alive: boolean
   /** True when this unit's side has the Tossicità synergy active → veleno it applies ignores maxStacks. */
   velenoUncapped?: boolean
+  /** This unit's side execute (from relics/Spietatezza): +bonus dmg to targets below `threshold` HP fraction. */
+  execute?: { threshold: number; bonus: number }
 }
 
 export type LogFlag = 'crit' | 'dodge' | 'kill' | 'heal' | 'block' | 'stun' | 'dot' | 'pen' | 'shatter' | 'wait'
