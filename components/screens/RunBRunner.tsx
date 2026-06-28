@@ -1,4 +1,5 @@
 'use client'
+import type { ReactNode } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useRunB } from '@/hooks/useRunB'
 import { DraftScreen } from './DraftScreen'
@@ -10,6 +11,7 @@ import { RecruitScreen } from './RecruitScreen'
 import { RelicNodeScreen } from './RelicNodeScreen'
 import { AreaClearedScreen } from './AreaClearedScreen'
 import { TeamSynergyBar } from '@/components/run/TeamSynergyBar'
+import { RelicBar } from '@/components/relics/RelicBar'
 import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
 import { createRng } from '@/game/engine/rng'
 import { runSummary } from '@/lib/runSummary'
@@ -21,10 +23,23 @@ import { parseAreaNodeId } from '@/game/engine/map'
 export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: () => void }) {
   const c = useRunB(seed)
   const animKey = `${c.view}-${c.run.currentNodeId ?? c.area}`
-  // Persistent team + synergy strip on the between-battle phases. The map view gets
-  // the roster as a larger LEFT sidebar instead (see the 'map' case), so the top
-  // strip is scoped to recruit/relic only.
-  const showTeamBar = c.view === 'recruit' || c.view === 'relic'
+
+  // Between-battle phases (map / recruit / relic) show the roster + owned relics as a
+  // larger LEFT sidebar beside the screen content, so the player can read their wizards
+  // and relics while choosing a path / recruit / relic. Battle and the end screens
+  // don't use it (battle shows relics in-fight).
+  const withTeamSidebar = (content: ReactNode) => (
+    <div className="flex-1 flex flex-row items-start gap-4 p-3">
+      <aside className="sticky top-3 flex w-56 shrink-0 flex-col gap-3">
+        <TeamSynergyBar team={c.run.team} synergies={c.run.activeSynergies} orientation="vertical" />
+        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Reliquie</span>
+          <RelicBar relics={c.run.relics} className="mt-2" />
+        </div>
+      </aside>
+      <div className="min-w-0 flex-1">{content}</div>
+    </div>
+  )
 
   const renderView = () => {
     switch (c.view) {
@@ -32,24 +47,15 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
         return <DraftScreen seed={seed} onComplete={c.completeDraft} />
 
       case 'map':
-        return (
-          // Roster as a larger LEFT sidebar next to the tree (not the small top strip),
-          // so the player can read their wizards while choosing a path.
-          <div className="flex-1 flex flex-row items-start gap-4 p-3">
-            <aside className="sticky top-3 w-56 shrink-0">
-              <TeamSynergyBar team={c.run.team} synergies={c.run.activeSynergies} orientation="vertical" />
-            </aside>
-            <div className="min-w-0 flex-1">
-              <MapScreen
-                map={c.run.map ?? []}
-                currentNodeId={c.run.currentNodeId ?? ''}
-                reachableIds={c.reachable.map(n => n.id)}
-                onChoose={c.chooseNode}
-                area={c.area}
-                areasTotal={c.areasTotal}
-              />
-            </div>
-          </div>
+        return withTeamSidebar(
+          <MapScreen
+            map={c.run.map ?? []}
+            currentNodeId={c.run.currentNodeId ?? ''}
+            reachableIds={c.reachable.map(n => n.id)}
+            onChoose={c.chooseNode}
+            area={c.area}
+            areasTotal={c.areasTotal}
+          />,
         )
 
       case 'battle': {
@@ -96,22 +102,22 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
       }
 
       case 'recruit':
-        return (
+        return withTeamSidebar(
           <RecruitScreen
             offer={recruitOffer(c.run, c.currentNode!, createRng(c.run.seed))}
             team={c.run.team}
             teamMax={c.run.teamMax ?? 5}
             onPick={c.chooseRecruit}
-          />
+          />,
         )
 
       case 'relic':
-        return (
+        return withTeamSidebar(
           <RelicNodeScreen
             offer={relicOffer(c.run, c.currentNode!, createRng(c.run.seed))}
             owned={c.run.relics}
             onPick={c.chooseRelic}
-          />
+          />,
         )
 
       case 'area-cleared':
@@ -160,11 +166,6 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
         exit={{ opacity: 0 }}
         className="flex-1 flex flex-col"
       >
-        {showTeamBar && (
-          <div className="sticky top-0 z-10 px-3 pt-3">
-            <TeamSynergyBar team={c.run.team} synergies={c.run.activeSynergies} />
-          </div>
-        )}
         {renderView()}
       </motion.div>
     </AnimatePresence>
