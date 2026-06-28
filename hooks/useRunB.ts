@@ -48,7 +48,13 @@ const viewForPhase = (p: RunState['phase']): RunBView => {
 export function useRunB(seed: string): RunBController {
   const [run, setRunState] = useState<RunState>(() => loadRun() ?? startRunB(seed))
   const [view, setView] = useState<RunBView>(() => viewForPhase((loadRun() ?? startRunB(seed)).phase))
-  const [battle, setBattle] = useState<ActiveBattleB | null>(null)
+  // The battle snapshot is ephemeral (never persisted). On a fresh page load / HMR
+  // remount mid-fight, the run is restored in the 'battle' or 'victory' phase, so the
+  // snapshot must be rebuilt from the current node — otherwise the battle/victory view
+  // dereferences a null `battle`. prepareCombat is deterministic per (seed, node).
+  const [battle, setBattle] = useState<ActiveBattleB | null>(() =>
+    run.phase === 'battle' || run.phase === 'victory' ? prepareCombat(run) : null,
+  )
   const [lastFallen, setLastFallen] = useState<string[]>([])
   const runRef = useRef(run); runRef.current = run
 
