@@ -43,6 +43,8 @@ export interface BattleUnit extends DraftedWizard {
   statusEffects: ActiveEffect[]
   buffedStats: Stats
   alive: boolean
+  /** True when this unit's side has the Tossicità synergy active → veleno it applies ignores maxStacks. */
+  velenoUncapped?: boolean
 }
 
 export type LogFlag = 'crit' | 'dodge' | 'kill' | 'heal' | 'block' | 'stun' | 'dot' | 'pen' | 'shatter' | 'wait'

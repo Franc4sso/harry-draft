@@ -29,7 +29,7 @@ export function effectiveStats(unit: BattleUnit): Stats {
 }
 
 export function applyStatus(
-  unit: BattleUnit, statusId: string, opts: { duration?: number; sourceId?: string } = {},
+  unit: BattleUnit, statusId: string, opts: { duration?: number; sourceId?: string; maxStacks?: number } = {},
 ): void {
   const def = STATUS_BY_ID[statusId]
   if (!def) return
@@ -41,7 +41,7 @@ export function applyStatus(
     if (def.stack === 'extend') { existing[0]!.remaining += remaining; return }
     if (def.stack === 'accumulate') {
       const cur = existing[0]!
-      const cap = def.maxStacks ?? Infinity
+      const cap = opts.maxStacks ?? def.maxStacks ?? Infinity
       cur.stacks = Math.min(cap, (cur.stacks ?? 1) + 1)
       cur.remaining = remaining
       return

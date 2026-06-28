@@ -36,7 +36,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'f',
     ranges: { hp: [76, 95], atk: [20, 27], def: [11, 17], spd: [26, 34] },
     spellPool: ['crucio', 'imperio', 'petrificus', 'confringo'],
-    tags: ['deatheater'],
+    tags: ['deatheater', 'veleno'],
   },
   {
     id: 'mcgonagall', name: 'Minerva McGonagall', house: 'Grifondoro', role: 'Tank', tier: 2,
@@ -175,21 +175,21 @@ export const WIZARDS: Wizard[] = [
     gender: 'f',
     ranges: { hp: [87, 108], atk: [12, 18], def: [16, 22], spd: [16, 22] },
     spellPool: ['vulnera', 'episkey', 'protego', 'fianto'],
-    tags: ['deatheater'],
+    tags: ['deatheater', 'veleno'],
   },
   {
     id: 'dolohov', name: 'Antonin Dolohov', house: 'Serpeverde', role: 'Attaccante', tier: 3,
     gender: 'm',
     ranges: { hp: [66, 82], atk: [24, 31], def: [10, 15], spd: [17, 25] },
     spellPool: ['confringo', 'sectumsempra', 'reducto', 'serpensortia'],
-    tags: ['deatheater'],
+    tags: ['deatheater', 'veleno'],
   },
   {
     id: 'greyback', name: 'Fenrir Greyback', house: 'Serpeverde', role: 'Tank', tier: 3,
     gender: 'm',
     ranges: { hp: [116, 142], atk: [16, 21], def: [23, 33], spd: [11, 16] },
     spellPool: ['diffindo', 'reducto', 'protego', 'fianto', 'oppugno'],
-    tags: ['deatheater'],
+    tags: ['deatheater', 'veleno'],
   },
   {
     id: 'cho', name: 'Cho Chang', house: 'Corvonero', role: 'Controllo', tier: 3,
@@ -209,6 +209,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'm',
     ranges: { hp: [93, 114], atk: [12, 18], def: [17, 23], spd: [13, 19] },
     spellPool: ['vulnera', 'episkey', 'anapneo', 'protego', 'fianto'],
+    tags: ['veleno'],
   },
   {
     id: 'hagrid', name: 'Rubeus Hagrid', house: 'Grifondoro', role: 'Tank', tier: 3,
@@ -227,6 +228,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'f',
     ranges: { hp: [91, 112], atk: [11, 17], def: [17, 23], spd: [14, 20] },
     spellPool: ['ferula', 'episkey', 'rennervate', 'protego'],
+    tags: ['veleno'],
   },
 
   // ===== Tier 4 (weakest / numerous) =====
@@ -261,6 +263,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'f',
     ranges: { hp: [57, 78], atk: [13, 19], def: [9, 14], spd: [19, 26] },
     spellPool: ['confundo', 'langlock', 'tarantallegra', 'levicorpus'],
+    tags: ['veleno'],
   },
   {
     id: 'goyle', name: 'Gregory Goyle', house: 'Serpeverde', role: 'Tank', tier: 4,
@@ -370,18 +373,21 @@ export const WIZARDS: Wizard[] = [
     gender: 'm',
     ranges: { hp: [57, 78], atk: [14, 20], def: [9, 14], spd: [19, 26] },
     spellPool: ['confundo', 'levicorpus', 'langlock', 'petrificus'],
+    tags: ['veleno'],
   },
   {
     id: 'blaise', name: 'Blaise Zabini', house: 'Serpeverde', role: 'Attaccante', tier: 4,
     gender: 'm',
     ranges: { hp: [52, 71], atk: [19, 26], def: [9, 12], spd: [16, 23] },
     spellPool: ['sectumsempra', 'reducto', 'flipendo', 'diffindo'],
+    tags: ['veleno'],
   },
   {
     id: 'astoria', name: 'Astoria Greengrass', house: 'Serpeverde', role: 'Supporto', tier: 4,
     gender: 'f',
     ranges: { hp: [70, 91], atk: [11, 16], def: [12, 18], spd: [15, 21] },
     spellPool: ['episkey', 'anapneo', 'ferula', 'protego'],
+    tags: ['veleno'],
   },
   {
     id: 'penelope', name: 'Penelope Clearwater', house: 'Corvonero', role: 'Supporto', tier: 4,
