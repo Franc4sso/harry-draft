@@ -1,4 +1,5 @@
 import type { Stat } from './spell'
+import type { Keyword } from './keyword'
 
 export type StatusKind =
   | 'buff' | 'debuff' | 'dot' | 'stun'              // legacy (retro-compat)
@@ -6,7 +7,7 @@ export type StatusKind =
   | 'ward'                                           // spell-negation charge
 
 export type StatusFamily = 'control' | 'dot' | 'regen' | 'shield' | 'buff' | 'debuff'
-export type StatusStackPolicy = 'ignore' | 'refresh' | 'extend' | 'stack'
+export type StatusStackPolicy = 'ignore' | 'refresh' | 'extend' | 'stack' | 'accumulate'
 export type ActionGate = 'action' | 'spell' | 'attack'
 
 export interface StatusDef {
@@ -18,6 +19,12 @@ export interface StatusDef {
   statMod?: { stat: Stat; amount: number; pct?: boolean }
   tickDamage?: number
   tickHeal?: number
+  /** Build keyword tags (e.g. ['veleno']). */
+  keywords?: Keyword[]
+  /** Per-stack damage as a fraction of the target's maxHp (the "divora" component). */
+  tickPctMaxHp?: number
+  /** Stack count above which the %maxHp component stops growing (the guardrail). */
+  tickStackCapForPct?: number
   absorb?: number
   defaultDuration: number
   stack: StatusStackPolicy

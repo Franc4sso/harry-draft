@@ -39,6 +39,13 @@ export function applyStatus(
     if (def.stack === 'ignore') return
     if (def.stack === 'refresh') { existing[0]!.remaining = remaining; return }
     if (def.stack === 'extend') { existing[0]!.remaining += remaining; return }
+    if (def.stack === 'accumulate') {
+      const cur = existing[0]!
+      const cap = def.maxStacks ?? Infinity
+      cur.stacks = Math.min(cap, (cur.stacks ?? 1) + 1)
+      cur.remaining = remaining
+      return
+    }
     if (def.stack === 'stack' && def.maxStacks != null && existing.length >= def.maxStacks) return
   }
   unit.statusEffects.push({
@@ -58,16 +65,22 @@ export function applyInlineEffect(
   })
 }
 
-export function tickStatuses(turn: number, unit: BattleUnit): LogEntry[] {
+export function tickStatuses(turn: number, unit: BattleUnit, opts: { velenoMult?: number } = {}): LogEntry[] {
   const logs: LogEntry[] = []
   for (const e of unit.statusEffects) {
     const def = e.statusId ? STATUS_BY_ID[e.statusId] : undefined
-    const tickDamage = def?.tickDamage ?? (e.kind === 'dot' ? e.amount : undefined)
+    const baseTick = def?.tickDamage ?? (e.kind === 'dot' ? e.amount : undefined)
     const tickHeal = def?.tickHeal
-    if (tickDamage) {
-      unit.hp -= tickDamage
+    if (baseTick != null) {
+      const stacks = e.stacks ?? 1
+      const isVeleno = def?.keywords?.includes('veleno') ?? false
+      const flat = baseTick * stacks * (isVeleno ? (opts.velenoMult ?? 1) : 1)
+      const pctStacks = def?.tickStackCapForPct != null ? Math.min(stacks, def.tickStackCapForPct) : stacks
+      const pct = def?.tickPctMaxHp ? pctStacks * def.tickPctMaxHp * unit.maxHp : 0
+      const total = Math.round(flat + pct)
+      unit.hp -= total
       logs.push({ turn, actorId: unit.wizard.id, actorSide: unit.side, action: def?.name ?? 'Veleno',
-        targetId: unit.wizard.id, targetSide: unit.side, type: 'Controllo', value: tickDamage, flags: ['dot'] })
+        targetId: unit.wizard.id, targetSide: unit.side, type: 'Controllo', value: total, flags: ['dot'] })
     }
     if (tickHeal && unit.alive) {
       // Never regen-heal a dead unit (defense in depth — callers already gate on alive).

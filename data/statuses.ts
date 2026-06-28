@@ -6,6 +6,7 @@ export const STATUS_DEFS: StatusDef[] = [
   { id: 'silence', name: 'Silenziato', kind: 'silence', family: 'control', prevents: ['spell'], defaultDuration: 2, stack: 'refresh', priority: 90, removable: true },
   { id: 'disarm', name: 'Disarmato', kind: 'disarm', family: 'control', prevents: ['attack'], defaultDuration: 2, stack: 'refresh', priority: 90, removable: true },
   { id: 'burn', name: 'Bruciatura', kind: 'dot', family: 'dot', tickDamage: 8, defaultDuration: 2, stack: 'stack', maxStacks: 3, priority: 50, removable: true },
+  { id: 'veleno', name: 'Veleno', kind: 'dot', family: 'dot', keywords: ['veleno'], tickDamage: 4, tickPctMaxHp: 0.005, tickStackCapForPct: 8, defaultDuration: 2, stack: 'accumulate', maxStacks: 8, priority: 50, removable: true },
   { id: 'regen', name: 'Rigenerazione', kind: 'regen', family: 'regen', tickHeal: 12, defaultDuration: 3, stack: 'refresh', priority: 40, removable: true },
   { id: 'shield', name: 'Scudo', kind: 'shield', family: 'shield', absorb: 50, defaultDuration: 3, stack: 'refresh', priority: 10, removable: true },
   { id: 'protego', name: 'Protego', kind: 'ward', family: 'shield', defaultDuration: 3, stack: 'refresh', priority: 15, removable: true, absorb: 1 },
