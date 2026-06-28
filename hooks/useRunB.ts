@@ -4,6 +4,7 @@ import type { DraftedWizard, RunNode, RunState } from '@/types'
 import {
   startRunB, confirmDraftPicks, reachable as engineReachable,
   moveTo, resolveCurrent, clearAreaAndAdvance, registerCoreResolvers,
+  setWizardSpell,
 } from '@/game/engine/runEngine'
 import { createRng } from '@/game/engine/rng'
 import { saveRun, loadRun, clearRun } from '@/lib/runStore'
@@ -27,6 +28,7 @@ export interface RunBController {
   chooseRecruit: (wizardId: string, replaceId?: string) => void
   skipRecruit: () => void
   chooseRelic: (relicId: string) => void
+  setWizardSpell: (wizardId: string, spellId: string) => void
   advanceArea: () => void
   restart: () => void
 }
@@ -107,6 +109,10 @@ export function useRunB(seed: string): RunBController {
     commit({ ...next, phase: 'map' }, 'map')
   }, [commit])
 
+  const setWizardSpellCb = useCallback((wizardId: string, spellId: string) => {
+    commit(setWizardSpell(runRef.current, wizardId, spellId))
+  }, [commit])
+
   const advanceArea = useCallback(() => { commit(clearAreaAndAdvance(runRef.current, createRng(runRef.current.seed))) }, [commit])
 
   const restart = useCallback(() => {
@@ -121,6 +127,7 @@ export function useRunB(seed: string): RunBController {
     run, view, battle, reachable, currentNode,
     area: run.area ?? 0, areasTotal: BALANCE.map.areas, lastFallen,
     completeDraft, chooseNode, commitBattle, acknowledgeVictory,
-    chooseRecruit, skipRecruit, chooseRelic, advanceArea, restart,
+    chooseRecruit, skipRecruit, chooseRelic, setWizardSpell: setWizardSpellCb,
+    advanceArea, restart,
   }
 }

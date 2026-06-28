@@ -11,6 +11,7 @@ import { RecruitScreen } from './RecruitScreen'
 import { RelicNodeScreen } from './RelicNodeScreen'
 import { AreaClearedScreen } from './AreaClearedScreen'
 import { TeamSynergyBar } from '@/components/run/TeamSynergyBar'
+import { LoadoutPanel } from '@/components/run/LoadoutPanel'
 import { RelicBar } from '@/components/relics/RelicBar'
 import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
 import { createRng } from '@/game/engine/rng'
@@ -36,6 +37,7 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
           <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Reliquie</span>
           <RelicBar relics={c.run.relics} className="mt-2" />
         </div>
+        <LoadoutPanel team={c.run.team} onSetSpell={c.setWizardSpell} />
       </aside>
       <div className="min-w-0 flex-1">{content}</div>
     </div>
