@@ -7,7 +7,7 @@ import { offerRecruits, recruitVia } from '@/game/engine/recruit'
 import type { RunState, RunNode } from '@/types'
 
 function starterState(): RunState {
-  const team = offerRecruits(createRng(1), { house: 'Serpeverde', exclude: new Set() })
+  const team = offerRecruits(createRng(1), { exclude: new Set() })
     .slice(0, 2).map(d => recruitVia(d, 'iniziale'))
   const map = generateArea(createRng(1).fork(4).fork(0), 0, { teamSize: 2, teamMax: 5 })
   return { seed: 's', phase: 'map', team, activeSynergies: [], stage: 0, relics: [],

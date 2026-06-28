@@ -3,6 +3,7 @@ import type { Stat } from './spell'
 export type StatusKind =
   | 'buff' | 'debuff' | 'dot' | 'stun'              // legacy (retro-compat)
   | 'freeze' | 'silence' | 'disarm' | 'regen' | 'shield'  // new
+  | 'ward'                                           // spell-negation charge
 
 export type StatusFamily = 'control' | 'dot' | 'regen' | 'shield' | 'buff' | 'debuff'
 export type StatusStackPolicy = 'ignore' | 'refresh' | 'extend' | 'stack'
@@ -42,3 +43,4 @@ export type EffectSpec =
       kind: 'applyStatus'; target: EffectTarget; chance?: number
       statusId?: string; effect?: EffectInline; duration?: number
     }
+  | { kind: 'protego'; count?: number }

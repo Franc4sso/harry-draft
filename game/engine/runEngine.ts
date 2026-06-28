@@ -1,4 +1,4 @@
-import type { DraftedWizard, GrowthChoice, House, RunNode, RunState } from '@/types'
+import type { DraftedWizard, House, RunNode, RunState } from '@/types'
 import type { Rng } from './rng'
 import { createRng } from './rng'
 import { mapRngChannel } from './map'
@@ -7,7 +7,6 @@ import { createDraftPool } from './draft'
 import { draftWizard } from './statRoll'
 import { offerRecruits, recruitVia } from './recruit'
 import { detectSynergies } from './synergy'
-import { applyGrowthChoice } from './leveling'
 import { combatResolver } from './resolvers/combat'
 import { recruitResolver, relicResolver } from './resolvers/recruit'
 import { registerResolver, resolverFor } from './resolvers'
@@ -15,12 +14,12 @@ import type { ResolverChoice } from './resolvers/types'
 import { BALANCE } from '@/data/constants'
 
 /** Pure decision of the phase a node leads to once its resolver has run.
- *  Order: wipeout > pending level-ups > boss (area-cleared unless final area → win) > victory. */
+ *  Order: wipeout > boss (area-cleared unless final area → win) > victory.
+ *  Levels rise automatically from EXP — there is no level-up decision phase. */
 export function phaseAfterNode(opts: {
-  isBoss: boolean; area: number; areas: number; wiped: boolean; hasPending: boolean
+  isBoss: boolean; area: number; areas: number; wiped: boolean
 }): import('@/types').RunPhase {
   if (opts.wiped) return 'defeat'
-  if (opts.hasPending) return 'levelup'
   if (opts.isBoss) return opts.area >= opts.areas - 1 ? 'win' : 'area-cleared'
   return 'victory'
 }
@@ -36,9 +35,21 @@ export function registerCoreResolvers(): void {
   registered = true
 }
 
+/** Number of starters the player drafts before the run begins. */
+export const STARTER_PICKS = 2
+
 export function startRunB(seed: string): RunState {
-  return { seed, phase: 'house', team: [], activeSynergies: [], stage: 0, relics: [],
+  return { seed, phase: 'draft', team: [], activeSynergies: [], stage: 0, relics: [],
     area: 0, teamMax: BALANCE.draft.teamSize, log: [], pendingLevelUps: [] }
+}
+
+/** Seed the run from the player's drafted starters: build the team, roll area 0, enter the map. */
+export function confirmDraftPicks(state: RunState, picked: DraftedWizard[], _rng: Rng): RunState {
+  const starters = picked.slice(0, STARTER_PICKS).map(d => recruitVia(d, 'iniziale'))
+  const map = generateArea(areaRng(state.seed, 0), 0, { teamSize: starters.length, teamMax: state.teamMax ?? 5 })
+  const entry = map.find(n => parseAreaNodeId(n.id).floor === 0)!
+  return { ...state, area: 0, team: starters, activeSynergies: detectSynergies(starters),
+    map, currentNodeId: entry.id, phase: 'map' }
 }
 
 /** Deterministic house pool the player picks 2 starters from. */
@@ -96,19 +107,8 @@ export function resolveCurrent(state: RunState, choice: ResolverChoice, rng: Rng
     area: resolved.area ?? 0,
     areas: BALANCE.map.areas,
     wiped,
-    hasPending: (resolved.pendingLevelUps?.length ?? 0) > 0,
   })
   return { ...resolved, map, phase }
-}
-
-export function applyLevelUp(state: RunState, wizardId: string, choice: GrowthChoice): RunState {
-  const team = state.team.map(dw => (dw.wizard.id === wizardId ? applyGrowthChoice(dw, choice) : dw))
-  const queue = (state.pendingLevelUps ?? []).slice(1)
-  const node = state.map?.find(n => n.id === state.currentNodeId)
-  const phase = queue.length > 0
-    ? 'levelup'
-    : phaseAfterNode({ isBoss: node?.type === 'boss', area: state.area ?? 0, areas: BALANCE.map.areas, wiped: false, hasPending: false })
-  return { ...state, team, activeSynergies: detectSynergies(team), pendingLevelUps: queue, phase }
 }
 
 /** Called after a non-boss victory acknowledged, or after a boss win to roll the next area. */

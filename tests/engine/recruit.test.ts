@@ -7,32 +7,29 @@ import { createDraftPool } from '@/game/engine/draft'
 describe('recruit', () => {
   it('offers exactly offerSize distinct candidates', () => {
     for (let s = 0; s < 30; s++) {
-      const offer = offerRecruits(createRng(s), { house: 'Tassorosso', exclude: new Set() })
+      const offer = offerRecruits(createRng(s), { exclude: new Set() })
       expect(offer).toHaveLength(BALANCE.recruit.offerSize)
       expect(new Set(offer.map(o => o.wizard.id)).size).toBe(offer.length)
     }
   })
-  it('guarantees at least houseGuarantee of the chosen house', () => {
-    for (let s = 0; s < 30; s++) {
-      const offer = offerRecruits(createRng(s), { house: 'Serpeverde', exclude: new Set() })
-      const fromHouse = offer.filter(o => o.wizard.house === 'Serpeverde').length
-      expect(fromHouse).toBeGreaterThanOrEqual(BALANCE.recruit.houseGuarantee)
-    }
+  it('offers tier-weighted recruits with no house guarantee', () => {
+    const offer = offerRecruits(createRng('r'), { exclude: new Set() })
+    expect(offer.length).toBe(BALANCE.recruit.offerSize)
   })
   it('never offers an excluded wizard', () => {
-    const excludeId = offerRecruits(createRng(1), { house: 'Corvonero', exclude: new Set() })[0]!.wizard.id
+    const excludeId = offerRecruits(createRng(1), { exclude: new Set() })[0]!.wizard.id
     for (let s = 0; s < 30; s++) {
-      const offer = offerRecruits(createRng(s), { house: 'Corvonero', exclude: new Set([excludeId]) })
+      const offer = offerRecruits(createRng(s), { exclude: new Set([excludeId]) })
       expect(offer.some(o => o.wizard.id === excludeId)).toBe(false)
     }
   })
   it('is deterministic per seed', () => {
-    const a = offerRecruits(createRng(7), { house: 'Grifondoro', exclude: new Set() }).map(o => o.wizard.id)
-    const b = offerRecruits(createRng(7), { house: 'Grifondoro', exclude: new Set() }).map(o => o.wizard.id)
+    const a = offerRecruits(createRng(7), { exclude: new Set() }).map(o => o.wizard.id)
+    const b = offerRecruits(createRng(7), { exclude: new Set() }).map(o => o.wizard.id)
     expect(a).toEqual(b)
   })
   it('recruitVia sets provenance and initializes progression', () => {
-    const base = offerRecruits(createRng(2), { house: 'Tassorosso', exclude: new Set() })[0]!
+    const base = offerRecruits(createRng(2), { exclude: new Set() })[0]!
     const r = recruitVia(base, 'Elite')
     expect(r.recruitedVia).toBe('Elite')
     expect(r.level).toBe(1)
@@ -41,11 +38,11 @@ describe('recruit', () => {
   })
   it('throws when the pool cannot fill the offer', () => {
     const all = new Set(createDraftPool().map(w => w.id))
-    expect(() => offerRecruits(createRng(1), { house: 'Grifondoro', exclude: all })).toThrow(/pool exhausted/)
+    expect(() => offerRecruits(createRng(1), { exclude: all })).toThrow(/pool exhausted/)
   })
   it('replaceMember swaps the targeted member, preserving order length', () => {
-    const team = offerRecruits(createRng(3), { house: 'Grifondoro', exclude: new Set() })
-    const incoming = offerRecruits(createRng(99), { house: 'Serpeverde', exclude: new Set(team.map(t => t.wizard.id)) })[0]!
+    const team = offerRecruits(createRng(3), { exclude: new Set() })
+    const incoming = offerRecruits(createRng(99), { exclude: new Set(team.map(t => t.wizard.id)) })[0]!
     const out = replaceMember(team, team[1]!.wizard.id, incoming)
     expect(out).toHaveLength(team.length)
     expect(out.some(t => t.wizard.id === team[1]!.wizard.id)).toBe(false)

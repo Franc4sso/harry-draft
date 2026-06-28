@@ -184,16 +184,22 @@ export function simulateBattle(
         fireReactive('onTurnEnd', actor, turn)
         continue
       }
+      const spell = selectSpell(actor)
+      if (!spell) {
+        // Spell recharging: the unit waits (no action). Cooldown still ticks at end-of-turn.
+        pushLog({ turn, actorId: actor.wizard.id, actorSide: actor.side, action: 'Ricarica', type: 'system', flags: ['wait'] })
+        fireReactive('onTurnEnd', actor, turn)
+        continue
+      }
       const allies = actor.side === 'left' ? L : R
       const enemies = actor.side === 'left' ? R : L
-      const spell = selectSpell(actor)
       const healIntent = spell.type === 'Cura'
       const target = selectTarget(actor, allies, enemies, spell)
       if (!target) { fireReactive('onTurnEnd', actor, turn); continue }
       const realTarget = healIntent
         ? (mostWounded(allies.filter(a => a.alive)) ?? actor)
         : (spell.type === 'Difesa' ? actor : target)
-      const entry = resolveAction(rng, turn, actor, realTarget, spell, bus)
+      const entry = resolveAction(rng, turn, actor, realTarget, spell, allies, bus)
       pushLog(entry)
       // onHit: after an actor resolves a spell against an ENEMY target.
       if (realTarget.side !== actor.side) {

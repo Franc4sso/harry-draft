@@ -4,7 +4,8 @@ import { BALANCE } from '@/data/constants'
 describe('run progression constants', () => {
   it('leveling has sane values', () => {
     const l = BALANCE.leveling
-    expect(l.levelMax).toBeGreaterThan(Math.max(...l.milestoneLevels))
+    expect(l.levelMax).toBeGreaterThan(1)
+    expect(l.growthBudgetPerLevel).toBeGreaterThan(0)
     expect(l.autoGrowthPct).toBeGreaterThan(0)
     expect(l.expBattle).toBeGreaterThan(0)
     expect(l.expElite).toBeGreaterThan(l.expBattle)
@@ -16,7 +17,7 @@ describe('run progression constants', () => {
     expect(m.eliteMinFloor).toBeGreaterThanOrEqual(1)
     expect(m.eliteMinFloor).toBeLessThanOrEqual(m.floorsPerArea - 2)
   })
-  it('recruit offer is at least the house guarantee', () => {
-    expect(BALANCE.recruit.offerSize).toBeGreaterThanOrEqual(BALANCE.recruit.houseGuarantee)
+  it('recruit offer has a positive offer size', () => {
+    expect(BALANCE.recruit.offerSize).toBeGreaterThan(0)
   })
 })

@@ -1,4 +1,4 @@
-import type { DraftedWizard, House, Wizard } from '@/types'
+import type { DraftedWizard, Wizard } from '@/types'
 import type { Rng } from './rng'
 import { createDraftPool } from './draft'
 import { draftWizard } from './statRoll'
@@ -18,51 +18,29 @@ function takeWeighted(rng: Rng, pool: Wizard[]): Wizard {
 }
 
 /**
- * Build a recruitment offer: `offerSize` distinct candidates, at least
- * `houseGuarantee` from the player's house, none in `exclude`. House members
- * get a mild weight bias (`houseBiasWeight`) among the non-guaranteed picks.
+ * Build a recruitment offer: `offerSize` distinct tier-weighted candidates,
+ * none in `exclude`. Rarer tiers are less likely (see `BALANCE.draft.tierWeights`).
  */
 export function offerRecruits(
   rng: Rng,
-  opts: { house: House; exclude: ReadonlySet<string> },
+  opts: { exclude: ReadonlySet<string> },
 ): DraftedWizard[] {
-  const { offerSize, houseGuarantee, houseBiasWeight } = BALANCE.recruit
+  const { offerSize } = BALANCE.recruit
   const available = createDraftPool().filter(w => !opts.exclude.has(w.id))
   const chosen: Wizard[] = []
 
-  // 1. Guaranteed house members (tier-weighted among the house pool).
-  for (let g = 0; g < houseGuarantee; g++) {
-    const housePool = available.filter(w => w.house === opts.house && !chosen.includes(w))
-    if (housePool.length === 0) break
-    chosen.push(takeWeighted(rng, [...housePool]))
+  // Fill the offer with distinct tier-weighted picks (takeWeighted splices `available`).
+  while (chosen.length < offerSize && available.length > 0) {
+    chosen.push(takeWeighted(rng, available))
   }
 
-  // 2. Fill the rest from everyone left, with a mild house bias.
-  while (chosen.length < offerSize) {
-    const rest = available.filter(w => !chosen.includes(w))
-    if (rest.length === 0) break
-    chosen.push(pickBiased(rng, rest, opts.house, houseBiasWeight))
-  }
-
-  // 3. Guard: pool must have satisfied the full offer.
+  // Guard: pool must have satisfied the full offer.
   if (chosen.length < offerSize) {
-    throw new Error(`recruit pool exhausted: got ${chosen.length}/${offerSize} (house=${opts.house}, excluded=${opts.exclude.size})`)
+    throw new Error(`recruit pool exhausted: got ${chosen.length}/${offerSize} (excluded=${opts.exclude.size})`)
   }
 
-  // 4. Roll each into a DraftedWizard (player draft → shiny allowed).
+  // Roll each into a DraftedWizard (player draft → shiny allowed).
   return chosen.map(w => draftWizard(rng, w, true))
-}
-
-/** Tier-weighted pick with an extra multiplier for the player's house. Non-mutating. */
-function pickBiased(rng: Rng, pool: Wizard[], house: House, houseBias: number): Wizard {
-  const weights = pool.map(w => BALANCE.draft.tierWeights[w.tier] * (w.house === house ? houseBias : 1))
-  const total = weights.reduce((a, b) => a + b, 0)
-  let roll = rng.next() * total
-  for (let i = 0; i < pool.length; i++) {
-    roll -= weights[i]!
-    if (roll <= 0) return pool[i]!
-  }
-  return pool[pool.length - 1]!
 }
 
 export function recruitVia(dw: DraftedWizard, via: string): DraftedWizard {

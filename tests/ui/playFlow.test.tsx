@@ -1,7 +1,7 @@
 // NOTE: This test was updated when PlayFlow was flipped from the legacy
 // DraftScreen → CampaignRunner flow to the new RunBRunner loop (Task 10).
 // The old draft-to-team interaction test is retired here; the full
-// house → starter → map flow is covered in tests/screens/RunBRunner.test.tsx.
+// draft → pick 2 → map flow is covered in tests/screens/RunBRunner.test.tsx.
 
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
@@ -39,8 +39,8 @@ beforeEach(() => {
 })
 
 describe('PlayFlow', () => {
-  it('delegates to the new run loop — shows house selection on fresh start', () => {
+  it('delegates to the new run loop — shows the draft screen on fresh start', () => {
     render(<PlayFlow seed="flow-seed" />)
-    expect(screen.getByText(/Scegli la tua Casa/i)).toBeInTheDocument()
+    expect(screen.getByTestId('draft-screen')).toBeInTheDocument()
   })
 })

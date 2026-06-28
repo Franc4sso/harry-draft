@@ -72,7 +72,7 @@ export function TeamScreen({
       {/* Roster — horizontal cards, consistent with the draft. */}
       <div className="flex w-full max-w-3xl flex-col gap-3">
         {team.map((m) => (
-          <WizardCardRow key={m.wizard.id} drafted={m} />
+          <WizardCardRow key={m.wizard.id} drafted={m} showLevel />
         ))}
       </div>
 

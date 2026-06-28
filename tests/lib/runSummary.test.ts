@@ -6,7 +6,7 @@ import type { RunState } from '@/types'
 
 describe('runSummary', () => {
   it('summarizes team size, average level and area', () => {
-    const team = offerRecruits(createRng(1), { house: 'Corvonero', exclude: new Set() })
+    const team = offerRecruits(createRng(1), { exclude: new Set() })
       .slice(0, 3).map(d => ({ ...recruitVia(d, 'iniziale'), level: 2 }))
     const s: RunState = { seed: 's', phase: 'area-cleared', team, activeSynergies: [], stage: 0,
       relics: [], area: 1, teamMax: 5 }

@@ -5,7 +5,7 @@ import { BALANCE } from '@/data/constants'
 import { STATUS_BY_ID } from '@/data/statuses'
 import { absorbDamage, applyInlineEffect, applyStatus, canAttack, effectiveStats } from '../status'
 
-export interface EffectCtx { rng: Rng; turn: number; actor: BattleUnit; target: BattleUnit; flags: LogFlag[]; bus?: EventBus }
+export interface EffectCtx { rng: Rng; turn: number; actor: BattleUnit; target: BattleUnit; flags: LogFlag[]; bus?: EventBus; allies?: BattleUnit[] }
 export interface EffectResult { value?: number; dodged?: boolean }
 
 export function computeDamage(rng: Rng, actor: BattleUnit, target: BattleUnit, power: number, flags: LogFlag[]): number {
@@ -91,6 +91,21 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
       if (eff.effect.kind === 'stun') ctx.flags.push('stun')
       if (eff.effect.kind === 'dot') ctx.flags.push('dot')
     }
+    return {}
+  },
+  protego: (ctx, eff) => {
+    if (eff.kind !== 'protego') return {}
+    const count = eff.count ?? 1
+    const pool = (ctx.allies ?? [ctx.actor]).filter(u => u.alive)
+    // most-threatened first: lowest HP fraction, tiebreak higher ATK, then id for determinism
+    const ranked = [...pool].sort((a, b) =>
+      (a.hp / a.maxHp) - (b.hp / b.maxHp) ||
+      b.buffedStats.atk - a.buffedStats.atk ||
+      a.wizard.id.localeCompare(b.wizard.id))
+    for (const u of ranked.slice(0, count)) {
+      applyStatus(u, 'protego', { sourceId: `${ctx.actor.side}:${ctx.actor.wizard.id}` })
+    }
+    ctx.flags.push('block')
     return {}
   },
 }

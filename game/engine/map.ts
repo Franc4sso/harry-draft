@@ -106,23 +106,28 @@ export function generateArea(rng: Rng, area: number, bias: AreaBias): RunNode[] 
     Array.from({ length: w }, (_, i) => ({ id: areaNodeId(area, f, i), type: cats[f]![i]!, next: [] as string[] })),
   )
 
-  // 4. Edges f -> f+1 with full two-way coverage (mirrors generateMap).
+  // 4. Edges f -> f+1: each node links to the (up to) TWO nearest next-floor nodes
+  //    by proportional column position, then guarantee no orphan (every next node
+  //    has an incoming edge). Boss/entry convergence (width 1) yields a single edge.
   for (let f = 0; f < last; f++) {
     const cur = floorNodes[f]!
     const nxt = floorNodes[f + 1]!
-    cur.forEach((node, i) => { node.next.push(nxt[i % nxt.length]!.id) })
+    const want = Math.min(2, nxt.length)
+    cur.forEach((node, i) => {
+      const pos = cur.length > 1 ? (i / (cur.length - 1)) * (nxt.length - 1) : (nxt.length - 1) / 2
+      const nearest = [...nxt.keys()]
+        .sort((a, b) => Math.abs(a - pos) - Math.abs(b - pos) || a - b)
+        .slice(0, want)
+      for (const j of nearest) if (!node.next.includes(nxt[j]!.id)) node.next.push(nxt[j]!.id)
+    })
     const covered = new Set(cur.flatMap(n => n.next))
     nxt.forEach((target, j) => {
       if (covered.has(target.id)) return
-      const src = cur[j % cur.length]!
+      const pos = nxt.length > 1 ? (j / (nxt.length - 1)) * (cur.length - 1) : (cur.length - 1) / 2
+      const src = cur.reduce((best, n, i) =>
+        Math.abs(i - pos) < Math.abs(cur.indexOf(best) - pos) ? n : best, cur[0]!)
       if (!src.next.includes(target.id)) src.next.push(target.id)
     })
-    if (nxt.length > 1) {
-      cur.forEach((node, i) => {
-        const extra = nxt[(i + 1) % nxt.length]!.id
-        if (!node.next.includes(extra) && rng.chance(0.5)) node.next.push(extra)
-      })
-    }
     cur.forEach(node => node.next.sort())
   }
 

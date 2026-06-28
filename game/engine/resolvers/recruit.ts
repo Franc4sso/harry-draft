@@ -10,7 +10,7 @@ import type { NodeResolver, ResolverChoice } from './types'
 export function recruitOffer(state: RunState, node: RunNode, rng: Rng): DraftedWizard[] {
   const { area, floor, idx } = parseAreaNodeId(node.id)
   const r = rng.fork(1000 + area * 100 + floor * 10 + idx)
-  return offerRecruits(r, { house: state.house!, exclude: new Set(state.team.map(t => t.wizard.id)) })
+  return offerRecruits(r, { exclude: new Set(state.team.map(t => t.wizard.id)) })
 }
 
 export function relicOffer(state: RunState, node: RunNode, rng: Rng): Relic[] {

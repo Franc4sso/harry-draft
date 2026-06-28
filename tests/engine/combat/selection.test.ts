@@ -17,13 +17,13 @@ function unit(over: Partial<BattleUnit> & { id: string; role: BattleUnit['wizard
 }
 
 describe('combat selection', () => {
-  it('uses base attack when spell on cooldown', () => {
+  it('returns null (wait) when spell on cooldown', () => {
     const u = unit({ id: 'a', role: 'Attaccante', cooldowns: { expelliarmus: 2 } })
-    expect(selectSpell(u).id).toBe('base_attack')
+    expect(selectSpell(u)).toBeNull()
   })
   it('uses the wizard spell when ready', () => {
     const u = unit({ id: 'a', role: 'Attaccante' })
-    expect(selectSpell(u).id).toBe('expelliarmus')
+    expect(selectSpell(u)?.id).toBe('expelliarmus')
   })
   it('attacker targets enemy tank first', () => {
     const actor = unit({ id: 'atk', role: 'Attaccante' })
@@ -57,6 +57,6 @@ describe('silence fallback', () => {
       statusEffects: [{ kind: 'silence' as const, statusId: 'silence', remaining: 2 }],
     })
     expect(canCastSpell(u)).toBe(false)
-    expect(selectSpell(u).id).toBe('base_attack')
+    expect(selectSpell(u)?.id).toBe('base_attack')
   })
 })

@@ -12,16 +12,25 @@ import { clearRun } from '@/lib/runStore'
 beforeEach(() => { try { clearRun() } catch {} ; localStorage.clear() })
 
 describe('RunBRunner', () => {
-  it('drives house → starter → map', async () => {
+  it('drives draft → pick 2 → map', async () => {
     render(<RunBRunner seed="seed-runner" />)
-    expect(screen.getByText(/Scegli la tua Casa/)).toBeInTheDocument()
-    await userEvent.click(screen.getByRole('button', { name: /Grifondoro/ }))
-    expect(screen.getByText(/Scegli 2 maghi/)).toBeInTheDocument()
-    // pick first two offered cards
-    const picks = screen.getAllByTestId(/^pick-/)
-    await userEvent.click(picks[0]!)
-    await userEvent.click(picks[1]!)
-    await userEvent.click(screen.getByRole('button', { name: /Inizia/ }))
+    expect(screen.getByTestId('draft-screen')).toBeInTheDocument()
+    // pick first card on each of the two starter screens
+    await userEvent.click(screen.getByTestId('draft-pick-0'))
+    await userEvent.click(screen.getByTestId('draft-pick-0'))
     expect(screen.getByText(/Scegli il tuo cammino/)).toBeInTheDocument()
+  })
+
+  it('shows the team+synergy bar on map but not during draft', async () => {
+    render(<RunBRunner seed="seed-runner" />)
+    // draft phase: no persistent bar
+    expect(screen.getByTestId('draft-screen')).toBeInTheDocument()
+    expect(screen.queryByTestId('team-synergy-bar')).not.toBeInTheDocument()
+    // drive to map
+    await userEvent.click(screen.getByTestId('draft-pick-0'))
+    await userEvent.click(screen.getByTestId('draft-pick-0'))
+    expect(screen.getByText(/Scegli il tuo cammino/)).toBeInTheDocument()
+    // map phase: bar is mounted as a persistent strip
+    expect(screen.getByTestId('team-synergy-bar')).toBeInTheDocument()
   })
 })

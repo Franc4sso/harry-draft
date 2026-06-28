@@ -41,13 +41,17 @@ function StatCell({ label, value, max, color }: { label: string; value: number; 
  * escape the card bounds instead of being cut off by `overflow-hidden`.
  */
 export function WizardCardRow({
-  drafted, selected, onClick, className, hotSynergyIds,
+  drafted, selected, onClick, className, hotSynergyIds, testId, showLevel,
 }: {
   drafted: DraftedWizard
   selected?: boolean
   onClick?: () => void
   className?: string
   hotSynergyIds?: ReadonlySet<string>
+  testId?: string
+  /** Show the `Lv. N` chip. Off in the draft/recruit offer (all level 1); on for
+   *  the real roster (team panel, level-up, recruit swap list). */
+  showLevel?: boolean
 }) {
   const { wizard, stats, spell } = drafted
   const clickable = Boolean(onClick)
@@ -70,6 +74,7 @@ export function WizardCardRow({
       tabIndex={clickable ? 0 : undefined}
       onKeyDown={clickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.() } } : undefined}
       data-house={wizard.house}
+      data-testid={testId}
       className={cn(
         'wizard-row relative flex w-full min-h-[8.75rem] select-none rounded-2xl text-white',
         clickable && 'cursor-pointer', className,
@@ -95,7 +100,10 @@ export function WizardCardRow({
           <PortraitImage id={wizard.id} house={wizard.house} alt={wizard.name} variant="card" />
           <div className="absolute inset-0" style={{ background: 'linear-gradient(100deg, transparent 46%, #0c0a16 98%)' }} />
         </div>
-        <div className="absolute left-2 top-2"><TierBadge tier={wizard.tier} /></div>
+        <div className="absolute left-2 top-2 flex items-center gap-1">
+          <TierBadge tier={wizard.tier} />
+          {showLevel && <Chip label={`Lv. ${drafted.level ?? 1}`} color="#F0D98A" />}
+        </div>
         <Tooltip
           className="absolute bottom-2 left-2"
           triggerClassName="grid h-6 w-6 place-items-center rounded-full border border-white/25 bg-black/55 backdrop-blur-sm"

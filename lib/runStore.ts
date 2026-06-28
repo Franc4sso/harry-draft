@@ -1,7 +1,10 @@
 import type { RunState } from '@/types'
 
 export const RUN_KEY = 'harry:run:v1'
-const VERSION = 1
+// v2: Fase 1 Polish changed the run schema (house/starter phases replaced by a
+// `draft` phase; map wiring + level fields). Bumping discards incompatible v1
+// runs so a stale save can't render an empty/broken screen.
+const VERSION = 2
 
 function ls(): Storage | null {
   return typeof localStorage !== 'undefined' ? localStorage : null

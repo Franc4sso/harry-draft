@@ -1,16 +1,15 @@
 'use client'
 import { AnimatePresence, motion } from 'framer-motion'
 import { useRunB } from '@/hooks/useRunB'
-import { HouseSelectScreen } from './HouseSelectScreen'
-import { StarterPickScreen } from './StarterPickScreen'
+import { DraftScreen } from './DraftScreen'
 import { MapScreen } from './MapScreen'
 import { BattleScreen } from './BattleScreen'
 import { VictoryScreen } from './VictoryScreen'
 import { ResultScreen } from './ResultScreen'
-import { LevelUpScreen } from './LevelUpScreen'
 import { RecruitScreen } from './RecruitScreen'
 import { RelicNodeScreen } from './RelicNodeScreen'
 import { AreaClearedScreen } from './AreaClearedScreen'
+import { TeamSynergyBar } from '@/components/run/TeamSynergyBar'
 import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
 import { createRng } from '@/game/engine/rng'
 import { runSummary } from '@/lib/runSummary'
@@ -22,21 +21,15 @@ import { parseAreaNodeId } from '@/game/engine/map'
 export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: () => void }) {
   const c = useRunB(seed)
   const animKey = `${c.view}-${c.run.currentNodeId ?? c.area}`
+  // Persistent team + synergy strip on the between-battle phases. Battle has its
+  // own in-fight synergy display, and the end screens (draft/win/defeat) don't
+  // need it — so it's scoped to map/recruit/relic only.
+  const showTeamBar = c.view === 'map' || c.view === 'recruit' || c.view === 'relic'
 
   const renderView = () => {
     switch (c.view) {
-      case 'house':
-        return <HouseSelectScreen onSelect={c.selectHouse} />
-
-      case 'starter':
-        return (
-          <StarterPickScreen
-            house={c.house!}
-            offer={c.starterOffer}
-            onConfirm={c.confirmStarters}
-            onBack={c.backToHouse}
-          />
-        )
+      case 'draft':
+        return <DraftScreen seed={seed} onComplete={c.completeDraft} />
 
       case 'map':
         return (
@@ -61,6 +54,7 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
             playerRelics={c.run.relics}
             enemy={b.enemy}
             enemySyn={b.enemySyn}
+            enemyLevel={b.enemyLevel}
             title={title}
             onFinish={c.commitBattle}
           />
@@ -88,20 +82,6 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
             bossNext={bossNext}
             fallenNames={c.lastFallen}
             onNext={c.acknowledgeVictory}
-          />
-        )
-      }
-
-      case 'levelup': {
-        const wizard = c.run.team.find(t => t.wizard.id === c.pendingLevelUp!.wizardId)!
-        return (
-          <LevelUpScreen
-            pending={c.pendingLevelUp!}
-            wizard={wizard}
-            team={c.run.team}
-            synergies={c.run.activeSynergies}
-            relics={c.run.relics}
-            onChoose={c.applyGrowth}
           />
         )
       }
@@ -171,6 +151,11 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
         exit={{ opacity: 0 }}
         className="flex-1 flex flex-col"
       >
+        {showTeamBar && (
+          <div className="sticky top-0 z-10 px-3 pt-3">
+            <TeamSynergyBar team={c.run.team} synergies={c.run.activeSynergies} />
+          </div>
+        )}
         {renderView()}
       </motion.div>
     </AnimatePresence>

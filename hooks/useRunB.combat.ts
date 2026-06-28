@@ -14,6 +14,8 @@ export interface ActiveBattleB {
   isFinalBoss: boolean
   playerTeam: DraftedWizard[]
   playerSyn: ActiveSynergy[]
+  /** Level shown on enemy busts, derived from the right-side menace. */
+  enemyLevel: number
 }
 
 const combatChannel = 2
@@ -33,5 +35,6 @@ export function prepareCombat(run: RunState): ActiveBattleB {
   return {
     result: out.result, enemy: out.enemy, enemySyn: out.enemySyn, isBoss: out.isBoss,
     isFinalBoss: out.isFinalBoss, playerTeam: ready, playerSyn: detectSynergies(ready),
+    enemyLevel: out.enemyLevel,
   }
 }

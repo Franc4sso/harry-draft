@@ -23,8 +23,8 @@ describe('normalizeSpell', () => {
     ])
   })
   it('defense buff → applyStatus(self)', () => {
-    expect(normalizeSpell(SPELL_BY_ID['protego']!)).toEqual([
-      { kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'def', amount: 25, duration: 2 } },
+    expect(normalizeSpell(SPELL_BY_ID['fianto']!)).toEqual([
+      { kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'def', amount: 30, duration: 2 } },
     ])
   })
   it('spell.spec is returned verbatim', () => {

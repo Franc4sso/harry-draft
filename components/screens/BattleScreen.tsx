@@ -15,7 +15,7 @@ import { lastRealEntryAt } from '@/lib/initiative'
 import { BattleEndModal } from '@/components/battle/BattleEndModal'
 
 export function BattleScreen({
-  result, playerTeam, playerSyn, playerRelics, enemy, enemySyn, title, rightTitle, onFinish,
+  result, playerTeam, playerSyn, playerRelics, enemy, enemySyn, title, rightTitle, onFinish, enemyLevel = 1,
 }: {
   result: BattleResult
   playerTeam: DraftedWizard[]
@@ -26,6 +26,8 @@ export function BattleScreen({
   title: string
   rightTitle?: string
   onFinish: () => void
+  /** Level shown on enemy busts (derived from menace); players use their own. */
+  enemyLevel?: number
 }) {
   const replay = useMemo(
     () => buildReplay(result, playerTeam, enemy, { leftSyn: playerSyn, rightSyn: enemySyn, leftRelics: playerRelics ?? [] }),
@@ -89,6 +91,7 @@ export function BattleScreen({
           <SynergyRibbon synergies={playerSyn} relics={playerRelics ?? []} align="left" title="Le tue sinergie" tone="ally" />
           <BattleArena
             replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle}
+            enemyLevel={enemyLevel}
             center={<ActionPanel entry={stickyEntry} units={replay.units} />}
           />
           <SynergyRibbon synergies={enemySyn} align="left" title="Sinergie nemiche" tone="enemy" />
