@@ -45,3 +45,24 @@ describe('execute applies to low-HP targets in battle', () => {
     expect(firstHitToRight(withExec)).toBeGreaterThan(firstHitToRight(plain))
   })
 })
+
+import { RELICS } from '@/data/relics'
+
+describe('execute relics', () => {
+  const spada = RELICS.find(r => r.id === 'spada-grifondoro')!
+  const sigillo = RELICS.find(r => r.id === 'sigillo-carnefice')!
+  const attacker = [mk('harry', { hp: 400, atk: 30, def: 10, spd: 30 })]
+  // enemy starts at 12.5% HP (< the 0.30 Spada threshold) so the FIRST hit executes.
+  const woundedEnemy = () => [{ ...mk('greyback', { hp: 400, atk: 1, def: 10, spd: 1 }), currentHp: 50 }]
+
+  it('Spada grants execute (bigger first hit on a wounded enemy than no relic, same seed)', () => {
+    const plain = simulateBattle(attacker, woundedEnemy(), createRng('exec-2'))
+    const withSpada = simulateBattle(attacker, woundedEnemy(), createRng('exec-2'), { leftRelics: [{ relic: spada, stageObtained: 0 }] })
+    expect(firstHitToRight(withSpada)).toBeGreaterThan(firstHitToRight(plain))
+  })
+  it('Sigillo scales Spada (bigger first hit than Spada alone)', () => {
+    const a = simulateBattle(attacker, woundedEnemy(), createRng('exec-3'), { leftRelics: [{ relic: spada, stageObtained: 0 }] })
+    const b = simulateBattle(attacker, woundedEnemy(), createRng('exec-3'), { leftRelics: [{ relic: spada, stageObtained: 0 }, { relic: sigillo, stageObtained: 0 }] })
+    expect(firstHitToRight(b)).toBeGreaterThan(firstHitToRight(a))
+  })
+})
