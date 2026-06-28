@@ -49,6 +49,14 @@ export function addExp(dw: DraftedWizard, amount: number): { dw: DraftedWizard }
   return { dw: { ...dw, exp: newExp, level: newLevel } }
 }
 
+/** Grant `n` whole levels at once (clamped to [1, levelMax]), keeping `exp` coherent
+ *  with the new level. Win-based progression: clearing a fight levels survivors
+ *  directly (normal +1, elite +2, boss +3) instead of accumulating exp. */
+export function gainLevels(dw: DraftedWizard, n: number): { dw: DraftedWizard } {
+  const newLevel = Math.min(L.levelMax, Math.max(1, (dw.level ?? 1) + Math.max(0, Math.floor(n))))
+  return { dw: { ...dw, level: newLevel, exp: expForLevel(newLevel) } }
+}
+
 /** Effective stats: every stat grows EVERY level by a per-wizard share of the total
  *  growth budget. A wizard's strongest stats (vs the roster average) get the larger
  *  share, so each wizard specializes in what it is already good at. With an average

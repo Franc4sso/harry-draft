@@ -61,33 +61,51 @@ export const BALANCE = {
   // numbers the new-loop balance harness (campaignBalanceB.test.ts) calibrates; the
   // legacy `campaign` block and its test are never touched by new-loop tuning.
   campaignB: {
-    // Enemy team SIZE per area (index = area). The player starts with 2 and grows to
-    // 5, so early areas field fewer foes; the roster fills out to 5 by the final area.
-    // Area bosses use the area's count; the final boss is always full (5).
+    // --- Enemy team SIZE ---
+    // Normal fights are small skirmishes (a starting level-1 duo is not swarmed);
+    // Elite / area-boss fields field the area's full count, so they read as the
+    // bigger threat. Index = area (player grows 2→5 across the 3 areas). The final
+    // boss is always a full team of 5 (generateBossTeam).
+    normalEnemyCount: 2,
     enemyCountByArea: [3, 4, 5] as readonly number[],
-    // Enemy budget by global depth d = area*floorsPerArea + floor (0..14):
+    // --- Displayed enemy LEVEL by (area, kind) ---
+    // Honest, area-scaled threat tiers so an Elite/Boss reads as a real level (no
+    // more "Lv.1" elites). level = base + perArea*area, clamped to leveling.levelMax.
+    //   normal → 2,4,6   elite → 4,6,8   area-boss → 6,8,10   final boss → levelMax(10)
+    // The level is NOT cosmetic: enemy menace is DERIVED from it (below), so a higher
+    // level is a genuinely tougher foe. Scaled up to match win-based player levelling
+    // (elite +2 / boss +3 a clear) — elites and bosses must hit harder than before.
+    normalLevelBase: 2, normalLevelPerArea: 2,
+    eliteLevelBase: 4, eliteLevelPerArea: 2,
+    bossLevelBase: 6, bossLevelPerArea: 2,
+    // --- Enemy budget (stat-selection) by global depth d = area*floorsPerArea + floor ---
     //   normal = baseBudget + d*budgetStep, ×eliteBudgetMult on elite, ×bossBudgetMult on area boss.
-    // Budget below campaign.baseBudget already floors enemies at the weakest roster
-    // percentile, so the EARLY curve is driven by `menace` (which can go negative).
     baseBudget: 300,
     budgetStep: 70,
     eliteBudgetMult: 1.15,
     bossBudgetMult: 1.3,
-    // Menace = stat multiplier (1+pct) = menaceBase + menacePerDepth*d, scaled on elite/boss.
-    // menaceBase is NEGATIVE so area-0 fights drop below the roster floor (a level-1
-    // trio can win); the ramp lifts late fights back above 1.0 for the level-5 endgame.
-    // -0.95 (was -0.65): per-wizard stat growth (leveled stats now spread the growth
-    // budget across a wizard's profile instead of stacking 3 milestone choices into one
-    // stat) lowered the near-optimal player's effective power, dropping the 120-seed
-    // harness to 0.125. Easing the area-0 floor restores the calibrated >15% target
-    // (21/120 = 0.175, comfortably inside the [0.15, 0.55] band).
-    menaceBase: -0.95,
-    menacePerDepth: 0.04,
-    menaceEliteMult: 1.1,
-    menaceBossMult: 1.3,
+    // --- Enemy MENACE (stat multiplier 1+pct), DERIVED from the displayed level ---
+    // menace(level) = (level-1)*menacePerLevel + menaceOffset. menaceOffset is NEGATIVE
+    // so an area-0 (level-1) fight drops below the roster floor — a starting level-1
+    // duo can win; the per-level term lifts elites/bosses/late areas into a real
+    // threat. The level↔menace link means the number the player sees tracks real
+    // difficulty. Calibrated by tests/engine/campaignBalanceB.test.ts (120-seed
+    // near-optimal win-rate must stay in [0.15, 0.55]).
+    //
+    // Win-based levelling makes the roster scale fast, so the per-level menace slope is
+    // STEEP (enemies must keep pace as their level climbs) while the offset stays deeply
+    // negative to keep the low-level area-0 opener winnable for a starting duo.
+    // Calibrated on the 120-seed harness → winRate 0.217 (deaths 50/19/25): a starting
+    // duo facing the scaled-up area-0 elite/boss makes the opener the main wall, which
+    // is the intended risk of the fast +1/+2/+3 levelling.
+    menacePerLevel: 0.12,
+    menaceOffset: -1.05,
     // The FINAL area boss is the scripted Voldemort (BOSSES[0], fixed budget); its
-    // menace is this flat value (independent of the depth ramp) so it stays the climax.
-    finalBossMenace: -0.25,
+    // menace is this flat value (independent of the level curve) so it stays the climax.
+    // -0.35 (was -0.25): the level-driven path eased area-0 enough that the unchanged
+    // boss became the sole binding constraint at ~0.175; loosening it lifts the run to
+    // a healthier 0.208 while the boss still claims most area-2 losses.
+    finalBossMenace: -0.35,
     enemyRelicsElite: 0,
     enemyRelicsBoss: 1,
   },
@@ -113,14 +131,17 @@ export const BALANCE = {
     } as Record<RelicRarity, number>,
   },
   leveling: {
-    autoGrowthPct: 0.10,        // yardstick: legacy uniform per-level growth; still used by deriveEnemyLevel
+    autoGrowthPct: 0.10,        // yardstick: legacy uniform per-level growth (reference for menacePerLevel)
     growthBudgetPerLevel: 0.40, // total per-level growth budget, distributed per-wizard by growthWeights
                                 // (0.40 × an average 0.25 weight = the old uniform +10%/level)
     levelMax: 10,
-    expStep: 70,                // exp per salire da L a L+1 = expStep * L
-    expBattle: 80,              // exp da un combattimento normale (team-wide)
-    expElite: 160,              // exp da un Elite
-    expBoss: 120,               // area boss clear → exp per la prossima area (boss finale: irrilevante)
+    expStep: 70,                // exp curve step (cumulative); kept for exp/level coherence
+    // Win-based progression: clearing a fight grants WHOLE levels to the survivors
+    // directly (no exp grind). Elites/bosses are the fast track, so the roster ramps
+    // hard — enemy levels (campaignB) are scaled up to match.
+    levelsPerBattle: 1,         // normal fight → +1 level
+    levelsPerElite: 2,          // elite fight → +2 levels
+    levelsPerBoss: 3,           // area boss clear → +3 levels
   },
   recruit: {
     offerSize: 3,

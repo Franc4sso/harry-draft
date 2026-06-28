@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { DraftedWizard } from '@/types'
-import { WizardCard } from '@/components/cards/WizardCard'
 import { WizardCardRow } from '@/components/cards/WizardCardRow'
 import { Button } from '@/components/ui/Button'
 import { powerOf } from '@/game/engine/combat/teamGen'
@@ -39,10 +38,10 @@ function ActivationRail({ candidate, activating }: { candidate: DraftedWizard | 
             {activating.map(p => (
               <motion.div
                 key={p.synergy.id}
-                initial={{ opacity: 0, x: 12 }}
+                initial={{ opacity: 0, x: 6 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 12 }}
-                transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+                exit={{ opacity: 0, x: 6 }}
+                transition={{ duration: 0.12, ease: 'easeOut' }}
                 className="rounded-xl border p-2.5"
                 style={{ borderColor: 'rgba(124,220,124,0.5)', background: 'rgba(124,220,124,0.10)', boxShadow: '0 0 16px rgba(124,220,124,0.14)' }}
               >
@@ -66,12 +65,14 @@ function ActivationRail({ candidate, activating }: { candidate: DraftedWizard | 
 }
 
 export function RecruitScreen({
-  offer, team, teamMax, onPick,
+  offer, team, teamMax, onPick, onSkip,
 }: {
   offer: DraftedWizard[]
   team: DraftedWizard[]
   teamMax: number
   onPick: (wizardId: string, replaceId?: string) => void
+  /** Leave the node without recruiting (decline the offer / keep the squad as-is). */
+  onSkip?: () => void
 }) {
   const full = team.length >= teamMax
   const weakestId = full
@@ -92,62 +93,70 @@ export function RecruitScreen({
     : undefined
 
   return (
-    <main className="flex-1 flex flex-col items-center gap-5 p-6">
-      <div className="text-center">
-        <h1 className="font-display text-3xl">Reclutamento</h1>
+    // Layout copied verbatim from DraftScreen: a header above, then the exact same
+    // two-column grid (candidates left / synergy rail right) using md:grid-cols-[1fr_280px].
+    <main className="flex-1 w-full">
+      <header className="px-4 pt-5 text-center">
+        <h1 className="font-display text-2xl">Reclutamento</h1>
         <p className="mt-1 text-sm text-white/60">
           {full
             ? 'Squadra al completo: scegli chi reclutare e quale mago sostituire.'
             : 'Scegli un mago da aggiungere alla squadra.'}
         </p>
-      </div>
+      </header>
 
-      <div className="grid w-full max-w-5xl grid-cols-1 items-start gap-6 md:grid-cols-[1fr_300px]">
-        {/* Offer + (when full) the swap roster */}
-        <div className="flex flex-col gap-5">
-          <section
-            className="grid grid-cols-1 justify-items-center gap-4 sm:grid-cols-2"
-            onPointerLeave={() => setConsidered(null)}
-          >
-            {offer.map(d => (
-              <div
-                key={d.wizard.id}
-                data-testid={`recruit-${d.wizard.id}`}
-                role="button"
-                tabIndex={0}
-                aria-pressed={pick === d.wizard.id}
-                onClick={() => setPick(d.wizard.id)}
-                onPointerEnter={() => setConsidered(d)}
-                onFocus={() => setConsidered(d)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    setPick(d.wizard.id)
-                  }
-                }}
-                className="cursor-pointer rounded-xl"
-              >
-                <WizardCard drafted={d} selected={pick === d.wizard.id} />
-              </div>
-            ))}
-          </section>
+      <div className="mx-auto grid max-w-5xl grid-cols-1 items-start gap-6 p-4 md:grid-cols-[1fr_280px]">
+        {/* Candidates (left column) — same WizardCardRow the draft uses, stacked. */}
+        <section
+          className="grid grid-cols-1 content-start gap-4"
+          onPointerLeave={() => setConsidered(null)}
+        >
+          {offer.map(d => (
+            <div
+              key={d.wizard.id}
+              data-testid={`recruit-${d.wizard.id}`}
+              role="button"
+              tabIndex={0}
+              aria-pressed={pick === d.wizard.id}
+              onClick={() => setPick(d.wizard.id)}
+              onPointerEnter={() => setConsidered(d)}
+              onFocus={() => setConsidered(d)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  setPick(d.wizard.id)
+                }
+              }}
+              className="cursor-pointer rounded-2xl"
+            >
+              <WizardCardRow drafted={d} selected={pick === d.wizard.id} />
+            </div>
+          ))}
 
           {full && (
-            <div className="w-full">
+            <div className="mt-1">
               <h2 className="mb-2 text-sm text-white/70">
                 {pickedWizard
                   ? <>Sostituisci con <span className="font-semibold text-[#7cdc7c]">{displayName(pickedWizard)}</span>:</>
                   : 'Squadra piena — scegli chi sostituire:'}
               </h2>
-              <div className="flex flex-col gap-2">
+              <div className="grid grid-cols-1 gap-2">
                 {team.map(t => {
                   const removing = replaceId === t.wizard.id
                   return (
-                    <button
+                    // role=button (not <button>) so the WizardCardRow's tooltip buttons
+                    // aren't nested inside a button (invalid DOM).
+                    <div
                       key={t.wizard.id}
                       data-testid={`replace-${t.wizard.id}`}
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={removing}
                       onClick={() => setReplaceId(t.wizard.id)}
-                      className="relative rounded-2xl text-left transition"
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setReplaceId(t.wizard.id) }
+                      }}
+                      className="relative cursor-pointer rounded-2xl text-left transition"
                       style={{ boxShadow: removing ? '0 0 0 2px #f0727288, 0 0 14px #f0727255' : undefined }}
                     >
                       <span className={removing ? 'block opacity-60 saturate-[0.85]' : 'block'}>
@@ -158,27 +167,36 @@ export function RecruitScreen({
                           Esce
                         </span>
                       )}
-                    </button>
+                    </div>
                   )
                 })}
               </div>
             </div>
           )}
-        </div>
+        </section>
 
-        {/* Activation rail — sticky on desktop. */}
-        <aside className="md:sticky md:top-4">
-          <ActivationRail candidate={focus} activating={activating} />
+        {/* Synergy rail (right column) — same sticky aside position as the draft. */}
+        <aside>
+          <div className="sticky top-28">
+            <ActivationRail candidate={focus} activating={activating} />
+          </div>
         </aside>
       </div>
 
-      <Button
-        variant="primary"
-        disabled={!pick}
-        onClick={() => pick && onPick(pick, full ? replaceId : undefined)}
-      >
-        {pick && full && replacedName ? `Recluta · sostituisci ${replacedName}` : 'Recluta'}
-      </Button>
+      <div className="flex flex-wrap items-center justify-center gap-3 px-4 pb-6">
+        <Button
+          variant="primary"
+          disabled={!pick}
+          onClick={() => pick && onPick(pick, full ? replaceId : undefined)}
+        >
+          {pick && full && replacedName ? `Recluta · sostituisci ${replacedName}` : 'Recluta'}
+        </Button>
+        {onSkip && (
+          <Button variant="ghost" onClick={onSkip}>
+            {full ? 'Non sostituire nessuno' : 'Non reclutare'}
+          </Button>
+        )}
+      </div>
     </main>
   )
 }

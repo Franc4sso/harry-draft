@@ -25,6 +25,7 @@ export interface RunBController {
   commitBattle: () => void
   acknowledgeVictory: () => void
   chooseRecruit: (wizardId: string, replaceId?: string) => void
+  skipRecruit: () => void
   chooseRelic: (relicId: string) => void
   advanceArea: () => void
   restart: () => void
@@ -48,7 +49,13 @@ const viewForPhase = (p: RunState['phase']): RunBView => {
 export function useRunB(seed: string): RunBController {
   const [run, setRunState] = useState<RunState>(() => loadRun() ?? startRunB(seed))
   const [view, setView] = useState<RunBView>(() => viewForPhase((loadRun() ?? startRunB(seed)).phase))
-  const [battle, setBattle] = useState<ActiveBattleB | null>(null)
+  // The battle snapshot is ephemeral (never persisted). On a fresh page load / HMR
+  // remount mid-fight, the run is restored in the 'battle' or 'victory' phase, so the
+  // snapshot must be rebuilt from the current node — otherwise the battle/victory view
+  // dereferences a null `battle`. prepareCombat is deterministic per (seed, node).
+  const [battle, setBattle] = useState<ActiveBattleB | null>(() =>
+    run.phase === 'battle' || run.phase === 'victory' ? prepareCombat(run) : null,
+  )
   const [lastFallen, setLastFallen] = useState<string[]>([])
   const runRef = useRef(run); runRef.current = run
 
@@ -88,6 +95,13 @@ export function useRunB(seed: string): RunBController {
     commit({ ...next, phase: 'map' }, 'map') // non-combat node: straight back to map
   }, [commit])
 
+  // Decline the offer: the resolver leaves the team untouched but the node is still
+  // marked resolved, so we simply return to the map.
+  const skipRecruit = useCallback(() => {
+    const next = resolveCurrent(runRef.current, { kind: 'skip' }, createRng(runRef.current.seed))
+    commit({ ...next, phase: 'map' }, 'map')
+  }, [commit])
+
   const chooseRelic = useCallback((relicId: string) => {
     const next = resolveCurrent(runRef.current, { kind: 'relic-pick', relicId }, createRng(runRef.current.seed))
     commit({ ...next, phase: 'map' }, 'map')
@@ -107,6 +121,6 @@ export function useRunB(seed: string): RunBController {
     run, view, battle, reachable, currentNode,
     area: run.area ?? 0, areasTotal: BALANCE.map.areas, lastFallen,
     completeDraft, chooseNode, commitBattle, acknowledgeVictory,
-    chooseRecruit, chooseRelic, advanceArea, restart,
+    chooseRecruit, skipRecruit, chooseRelic, advanceArea, restart,
   }
 }

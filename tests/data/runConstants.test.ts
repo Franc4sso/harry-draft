@@ -7,8 +7,9 @@ describe('run progression constants', () => {
     expect(l.levelMax).toBeGreaterThan(1)
     expect(l.growthBudgetPerLevel).toBeGreaterThan(0)
     expect(l.autoGrowthPct).toBeGreaterThan(0)
-    expect(l.expBattle).toBeGreaterThan(0)
-    expect(l.expElite).toBeGreaterThan(l.expBattle)
+    expect(l.levelsPerBattle).toBeGreaterThan(0)
+    expect(l.levelsPerElite).toBeGreaterThan(l.levelsPerBattle)
+    expect(l.levelsPerBoss).toBeGreaterThan(l.levelsPerElite)
   })
   it('map area config is coherent', () => {
     const m = BALANCE.map
