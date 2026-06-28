@@ -1,6 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import { teamExecute } from '@/game/engine/execute'
-import type { ActiveRelic, ActiveSynergy, DraftedWizard } from '@/types'
+import { simulateBattle } from '@/game/engine/combat/simulate'
+import { createRng } from '@/game/engine/rng'
+import { WIZARDS } from '@/data/wizards'
+import { SPELL_BY_ID } from '@/data/spells'
+import { RELICS } from '@/data/relics'
+import { detectSynergies } from '@/game/engine/synergy'
+import type { ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard, Stats } from '@/types'
 
 const team = [] as unknown as DraftedWizard[]
 const spadaRelic: ActiveRelic = { relic: { id: 'spada-grifondoro', name: 'Spada', desc: '', rarity: 'rara', grantsExecute: { threshold: 0.3, bonus: 0.4 } }, stageObtained: 0 }
@@ -21,12 +27,6 @@ describe('teamExecute', () => {
   })
 })
 
-import { simulateBattle } from '@/game/engine/combat/simulate'
-import { createRng } from '@/game/engine/rng'
-import { WIZARDS } from '@/data/wizards'
-import { SPELL_BY_ID } from '@/data/spells'
-import type { BattleResult, Stats } from '@/types'
-
 function mk(id: string, stats: Stats): DraftedWizard {
   const wizard = WIZARDS.find(w => w.id === id)!
   return { wizard, stats, maxHp: stats.hp, spell: SPELL_BY_ID['base_attack']! }
@@ -46,8 +46,6 @@ describe('execute applies to low-HP targets in battle', () => {
   })
 })
 
-import { RELICS } from '@/data/relics'
-
 describe('execute relics', () => {
   const spada = RELICS.find(r => r.id === 'spada-grifondoro')!
   const sigillo = RELICS.find(r => r.id === 'sigillo-carnefice')!
@@ -66,8 +64,6 @@ describe('execute relics', () => {
     expect(firstHitToRight(b)).toBeGreaterThan(firstHitToRight(a))
   })
 })
-
-import { detectSynergies } from '@/game/engine/synergy'
 
 describe('Spietatezza synergy', () => {
   it('activates with 3 esecuzione-tagged wizards', () => {
