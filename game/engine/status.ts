@@ -39,6 +39,13 @@ export function applyStatus(
     if (def.stack === 'ignore') return
     if (def.stack === 'refresh') { existing[0]!.remaining = remaining; return }
     if (def.stack === 'extend') { existing[0]!.remaining += remaining; return }
+    if (def.stack === 'accumulate') {
+      const cur = existing[0]!
+      const cap = def.maxStacks ?? Infinity
+      cur.stacks = Math.min(cap, (cur.stacks ?? 1) + 1)
+      cur.remaining = remaining
+      return
+    }
     if (def.stack === 'stack' && def.maxStacks != null && existing.length >= def.maxStacks) return
   }
   unit.statusEffects.push({
