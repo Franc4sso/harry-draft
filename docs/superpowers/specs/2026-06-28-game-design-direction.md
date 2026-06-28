@@ -254,6 +254,14 @@ Un solo boss scriptato (Voldemort, con `forcedSpells` + `exclusiveSynergy`). I b
 ### La soluzione: roster di boss scriptati, ognuno una regola
 Generalizzare il meccanismo di Voldemort (`exclusiveSynergy`, `forcedSpellIds`, `hpMult`) in un **roster di boss con regola unica**, più **fasi** (hook `onHpThreshold` già esiste). Ogni boss è **counter di un archetipo**: la difficoltà è *educativa*. **Telegrafia obbligatoria**: la regola del boss è mostrata *prima* della battaglia, così la scelta build è informata e la sconfitta insegna invece di frustrare.
 
+### Principio fondante: il Web dei Counter (stile Pokémon)
+**Regola di design da tenere sempre presente, vale per TUTTI gli archetipi.** Nessuna build è buona in assoluto: **ogni archetipo ha cose che batte e cose da cui è battuto**, come i tipi nei Pokémon. Questo è ciò che tiene il gioco profondo e rigiocabile: non esiste "la build migliore", esiste *la build giusta per questo incontro*. Perché funzioni servono:
+- **I nemici esprimono archetipi**, non solo budget. Un nemico Scudi, un nemico Rigen, un nemico Burst — riconoscibili. Così i matchup sono *leggibili* e il giocatore impara a contro-draftare (e ad **adattarsi** col loadout pre-battaglia P8 / le reclute).
+- **I counter emergono dalle meccaniche**, non incollati sopra. Es. il VELENO *bypassa gli scudi* (il tick ignora l'absorb) e *divora* gli HP alti → batte Scudi/Tank; ma *è annullato dal Regen* e *non fa in tempo* contro il Burst/Esecuzione → ne è battuto. Queste forze/debolezze vanno **preservate consapevolmente** quando si progetta ogni archetipo.
+- **I boss sono gli "esami" del web**: ognuno è il counter-incarnato di un archetipo (Umbridge vieta una keyword; i Dissennatori puniscono le build lente; ecc.), e ti costringe a non essere mono-build o ad adattarti.
+
+Conseguenza pratica: in ogni spec di archetipo si dichiara esplicitamente la sua **matrice di matchup** (cosa batte / da cosa è battuto), e si aggiunge un test che la verifica. La prima è nella fetta Veleno (vedi quella spec, §7.1).
+
 ### Esempi (lista in Appendice C)
 - **Dolores Umbridge** — *vieta una keyword a caso ogni 3 turni*. Esame per build mono-keyword.
 - **I Dissennatori** — *drenano HP/turno; buff dimezzati*. Esame per build Crescendo/lente; counter = burst o "Patronus".
