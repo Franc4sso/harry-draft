@@ -10,6 +10,16 @@ import { powerOf } from '@/game/engine/combat/teamGen'
 import { BALANCE } from '@/data/constants'
 import type { RunNode, RunState, DraftedWizard } from '@/types'
 
+// DIAGNOSTIC CONCLUSION (2026-06-28). Observed: winRate=0.758 tossicitaRate=0.525
+// dotShare=0.359 medianTurns=2 maxTurns=39. A throwaway 3-policy diagnostic showed:
+//   favorVeleno     winRate=0.758 medianTurns=2
+//   serpeverdePower winRate=0.867 medianTurns=2   (Serpeverde, power-only, no veleno pref)
+//   gryffPower      winRate=0.275 medianTurns=3   (calibrated Grifondoro baseline, in-band)
+// → The veleno KIT is balanced (even slightly UNDER pure power: 0.758 < 0.867 — favoring
+//   veleno costs win rate). The high win rate is a SERPEVERDE house-power imbalance, NOT a
+//   veleno-slice defect, and medianTurns=2 is Serpeverde-specific (Grifondoro=3). Fixing the
+//   Serpeverde imbalance (roster rebalance + recalibration) is a SEPARATE task, out of this
+//   slice's scope. Do not nerf veleno on account of this win rate.
 registerCoreResolvers()
 
 const VELENO_RELICS = new Set(['ampolla-veleno', 'pugnale-bellatrix', 'boccino-doro'])
