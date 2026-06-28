@@ -38,6 +38,10 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
     }
     if (!canAttack(ctx.actor)) return { value: 0 } // disarmed: no damage
     let dmg = computeDamage(ctx.rng, ctx.actor, ctx.target, eff.power, ctx.flags)
+    const ex = ctx.actor.execute
+    if (ex && ctx.target.maxHp > 0 && ctx.target.hp / ctx.target.maxHp < ex.threshold) {
+      dmg = Math.round(dmg * (1 + ex.bonus))
+    }
     // Shatter: a direct hit on a frozen target ends the freeze and amplifies THIS hit.
     const frozen = ctx.target.statusEffects.some(e => e.kind === 'freeze')
     if (frozen) {
