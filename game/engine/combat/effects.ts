@@ -82,7 +82,8 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
     // NOTE: 'ally' currently collapses to ctx.target like 'enemy'; no shipped trait/spell uses 'ally' here. Revisit if one does.
     const unit = eff.target === 'self' ? ctx.actor : ctx.target
     if (eff.statusId) {
-      applyStatus(unit, eff.statusId, { duration: eff.duration, sourceId: sourceId(ctx.actor) })
+      const maxStacks = eff.statusId === 'veleno' && ctx.actor.velenoUncapped ? Infinity : undefined
+      applyStatus(unit, eff.statusId, { duration: eff.duration, sourceId: sourceId(ctx.actor), maxStacks })
       const def = STATUS_BY_ID[eff.statusId]
       if (def?.kind === 'stun' || def?.kind === 'freeze') ctx.flags.push('stun')
       if (def?.kind === 'dot') ctx.flags.push('dot')

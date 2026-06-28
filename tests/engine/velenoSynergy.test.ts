@@ -22,3 +22,23 @@ describe('Tossicità synergy', () => {
     expect(ids).not.toContain('tossicita')
   })
 })
+
+import { applyStatus } from '@/game/engine/status'
+import type { BattleUnit } from '@/types'
+
+function mkUnit(maxHp = 100): BattleUnit {
+  return { wizard: { id: 'd' }, side: 'right', hp: maxHp, maxHp, cooldowns: {}, statusEffects: [], alive: true } as unknown as BattleUnit
+}
+
+describe('veleno cap override', () => {
+  it('caps at maxStacks(8) by default', () => {
+    const u = mkUnit()
+    for (let i = 0; i < 12; i++) applyStatus(u, 'veleno')
+    expect(u.statusEffects.find(e => e.statusId === 'veleno')!.stacks).toBe(8)
+  })
+  it('ignores the cap when maxStacks override is Infinity', () => {
+    const u = mkUnit()
+    for (let i = 0; i < 12; i++) applyStatus(u, 'veleno', { maxStacks: Infinity })
+    expect(u.statusEffects.find(e => e.statusId === 'veleno')!.stacks).toBe(12)
+  })
+})

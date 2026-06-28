@@ -17,6 +17,7 @@ import { mostWounded, selectTarget } from './targeting'
 export function toBattleUnits(
   team: DraftedWizard[], side: Side, synergies: ActiveSynergy[], relics: ActiveRelic[] = [], menacePct = 0,
 ): BattleUnit[] {
+  const velenoUncapped = synergies.some(s => s.synergy.id === 'tossicita')
   return team.map(dw => {
     const synBuffed = applyBonuses(dw.stats, synergies)
     const relicBuffed = applyRelicBonuses(synBuffed, team, relics)
@@ -31,7 +32,7 @@ export function toBattleUnits(
     return {
       ...dw, side, buffedStats: buffed, maxHp: buffed.hp,
       hp: Math.min(buffed.hp, Math.max(0, startHp)),
-      cooldowns: {}, statusEffects: [], alive: true,
+      cooldowns: {}, statusEffects: [], alive: true, velenoUncapped,
     }
   })
 }
