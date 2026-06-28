@@ -3,6 +3,11 @@ import type { BattleUnit } from '@/types'
 import { applyStatus, tickStatuses } from '@/game/engine/status'
 import { keywordDamageMult } from '@/game/engine/relics'
 import type { ActiveRelic, BattleResult, DraftedWizard } from '@/types'
+import { simulateBattle } from '@/game/engine/combat/simulate'
+import { createRng } from '@/game/engine/rng'
+import { RELICS } from '@/data/relics'
+import { WIZARDS } from '@/data/wizards'
+import { SPELL_BY_ID } from '@/data/spells'
 
 /** Minimal BattleUnit with only the fields tickStatuses/applyStatus read. */
 function mkUnit(maxHp = 100): BattleUnit {
@@ -91,12 +96,6 @@ describe('veleno: velenoMult scales the flat component only', () => {
     expect(before - u.hp).toBe(35)
   })
 })
-
-import { simulateBattle } from '@/game/engine/combat/simulate'
-import { createRng } from '@/game/engine/rng'
-import { RELICS } from '@/data/relics'
-import { WIZARDS } from '@/data/wizards'
-import { SPELL_BY_ID } from '@/data/spells'
 
 function draft(id: string, over: Partial<{ hp: number; atk: number; def: number; spd: number }> = {}): DraftedWizard {
   const wizard = WIZARDS.find(w => w.id === id)!
