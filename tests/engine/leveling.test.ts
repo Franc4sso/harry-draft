@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { expForLevel, levelFromExp, addExp, leveledStats, growthWeights } from '@/game/engine/leveling'
+import { expForLevel, levelFromExp, addExp, gainLevels, leveledStats, growthWeights } from '@/game/engine/leveling'
 import { BALANCE } from '@/data/constants'
 import { WIZARDS } from '@/data/wizards'
 import type { DraftedWizard, Stats } from '@/types'
@@ -41,6 +41,15 @@ describe('leveling — exp curve', () => {
     expect(r.dw.level).toBe(3)
     expect(r.dw.exp).toBe(expForLevel(3))
     expect(r).not.toHaveProperty('milestones')
+  })
+
+  it('gainLevels grants whole levels and keeps exp coherent, clamped to levelMax', () => {
+    const a = gainLevels(dw(ROSTER_MEAN, { level: 1, exp: 0 }), 2)
+    expect(a.dw.level).toBe(3)
+    expect(a.dw.exp).toBe(expForLevel(3))
+    // clamps at the cap
+    const capped = gainLevels(dw(ROSTER_MEAN, { level: BALANCE.leveling.levelMax - 1 }), 5)
+    expect(capped.dw.level).toBe(BALANCE.leveling.levelMax)
   })
 })
 

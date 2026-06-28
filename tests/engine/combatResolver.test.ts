@@ -36,14 +36,17 @@ describe('globalDepth', () => {
 })
 
 describe('resolveCombat', () => {
-  it('returns a battle result and awards positive EXP to survivors', () => {
+  it('returns a battle result and grants levels to survivors', () => {
     const s = starterState()
     const node = firstBattleNode(s)
     const out = resolveCombat(s, node, createRng('s').fork(2))
     expect(out.result.winner === 'left' || out.result.winner === 'right').toBe(true)
-    expect(out.expEach).toBeGreaterThan(0)
-    // survivors carry incremented exp
-    for (const dw of out.survivors) expect(dw.exp ?? 0).toBeGreaterThan(0)
+    expect(out.levelsGained).toBeGreaterThan(0)
+    // survivors level up (a normal clear is +1, so level ≥ 2 with coherent exp)
+    for (const dw of out.survivors) {
+      expect(dw.level ?? 1).toBeGreaterThanOrEqual(2)
+      expect(dw.exp ?? 0).toBeGreaterThan(0)
+    }
   })
   it('is deterministic per (seed, node)', () => {
     const s = starterState()

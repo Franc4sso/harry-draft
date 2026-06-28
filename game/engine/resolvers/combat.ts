@@ -6,7 +6,7 @@ import { generateEnemyTeam, generateBossTeam } from '../combat/teamGen'
 import { detectSynergies } from '../synergy'
 import { selectEnemyRelics } from '../relics'
 import { applyBattleToRoster } from '../run'
-import { addExp } from '../leveling'
+import { gainLevels } from '../leveling'
 import { parseAreaNodeId } from '../map'
 import { BALANCE } from '@/data/constants'
 import { BOSSES } from '@/data/bosses'
@@ -19,8 +19,9 @@ export interface CombatResult {
   isBoss: boolean
   isFinalBoss: boolean
   survivors: DraftedWizard[]
-  expEach: number
-  /** Enemy level shown in the UI, derived from the right-side menace. */
+  /** Whole levels granted to each survivor for clearing this fight (1/2/3). */
+  levelsGained: number
+  /** Enemy level shown in the UI — an explicit area+kind threat tier. */
   enemyLevel: number
 }
 
@@ -104,14 +105,14 @@ export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatR
     rightRelics, rightMenace,
   })
 
-  // Persist HP onto the ORIGINAL (unleveled) roster via the existing helper,
-  // then award EXP to survivors.
+  // Persist HP onto the ORIGINAL (unleveled) roster via the existing helper, then grant
+  // whole levels to the survivors for the clear (normal +1, elite +2, boss +3).
   const persisted = applyBattleToRoster(state.team, result.finalSnapshot)
-  const expEach = isBoss ? BALANCE.leveling.expBoss
-    : node.type === 'elite' ? BALANCE.leveling.expElite : BALANCE.leveling.expBattle
-  const survivors = persisted.map(dw => addExp(dw, expEach).dw)
+  const levelsGained = isBoss ? BALANCE.leveling.levelsPerBoss
+    : nodeType === 'elite' ? BALANCE.leveling.levelsPerElite : BALANCE.leveling.levelsPerBattle
+  const survivors = persisted.map(dw => gainLevels(dw, levelsGained).dw)
 
-  return { result, enemy, enemySyn, isBoss, isFinalBoss, survivors, expEach, enemyLevel }
+  return { result, enemy, enemySyn, isBoss, isFinalBoss, survivors, levelsGained, enemyLevel }
 }
 
 export const combatResolver: NodeResolver = {

@@ -71,12 +71,13 @@ export const BALANCE = {
     // --- Displayed enemy LEVEL by (area, kind) ---
     // Honest, area-scaled threat tiers so an Elite/Boss reads as a real level (no
     // more "Lv.1" elites). level = base + perArea*area, clamped to leveling.levelMax.
-    //   normal → 1,3,5   elite → 3,5,7   area-boss → 4,6,8   final boss → levelMax(10)
+    //   normal → 2,4,6   elite → 4,6,8   area-boss → 6,8,10   final boss → levelMax(10)
     // The level is NOT cosmetic: enemy menace is DERIVED from it (below), so a higher
-    // level is a genuinely tougher foe.
-    normalLevelBase: 1, normalLevelPerArea: 2,
-    eliteLevelBase: 3, eliteLevelPerArea: 2,
-    bossLevelBase: 4, bossLevelPerArea: 2,
+    // level is a genuinely tougher foe. Scaled up to match win-based player levelling
+    // (elite +2 / boss +3 a clear) — elites and bosses must hit harder than before.
+    normalLevelBase: 2, normalLevelPerArea: 2,
+    eliteLevelBase: 4, eliteLevelPerArea: 2,
+    bossLevelBase: 6, bossLevelPerArea: 2,
     // --- Enemy budget (stat-selection) by global depth d = area*floorsPerArea + floor ---
     //   normal = baseBudget + d*budgetStep, ×eliteBudgetMult on elite, ×bossBudgetMult on area boss.
     baseBudget: 300,
@@ -91,14 +92,14 @@ export const BALANCE = {
     // difficulty. Calibrated by tests/engine/campaignBalanceB.test.ts (120-seed
     // near-optimal win-rate must stay in [0.15, 0.55]).
     //
-    // Final calibration (120-seed harness → 0.208, deaths split 36/18/41 across areas
-    // so the final boss stays the wall): menacePerLevel 0.07 keeps the area-0 elite
-    // survivable for a starting duo while still ranking it above the area's normals;
-    // menaceOffset -1.02 floors the 2-enemy normal skirmishes near-trivial; the model
-    // replaced the old depth-ramp (menaceBase/menacePerDepth/menaceEliteMult/
-    // menaceBossMult) so level and difficulty move together.
-    menacePerLevel: 0.07,
-    menaceOffset: -1.02,
+    // Win-based levelling makes the roster scale fast, so the per-level menace slope is
+    // STEEP (enemies must keep pace as their level climbs) while the offset stays deeply
+    // negative to keep the low-level area-0 opener winnable for a starting duo.
+    // Calibrated on the 120-seed harness → winRate 0.217 (deaths 50/19/25): a starting
+    // duo facing the scaled-up area-0 elite/boss makes the opener the main wall, which
+    // is the intended risk of the fast +1/+2/+3 levelling.
+    menacePerLevel: 0.12,
+    menaceOffset: -1.05,
     // The FINAL area boss is the scripted Voldemort (BOSSES[0], fixed budget); its
     // menace is this flat value (independent of the level curve) so it stays the climax.
     // -0.35 (was -0.25): the level-driven path eased area-0 enough that the unchanged
@@ -134,10 +135,13 @@ export const BALANCE = {
     growthBudgetPerLevel: 0.40, // total per-level growth budget, distributed per-wizard by growthWeights
                                 // (0.40 × an average 0.25 weight = the old uniform +10%/level)
     levelMax: 10,
-    expStep: 70,                // exp per salire da L a L+1 = expStep * L
-    expBattle: 80,              // exp da un combattimento normale (team-wide)
-    expElite: 160,              // exp da un Elite
-    expBoss: 120,               // area boss clear → exp per la prossima area (boss finale: irrilevante)
+    expStep: 70,                // exp curve step (cumulative); kept for exp/level coherence
+    // Win-based progression: clearing a fight grants WHOLE levels to the survivors
+    // directly (no exp grind). Elites/bosses are the fast track, so the roster ramps
+    // hard — enemy levels (campaignB) are scaled up to match.
+    levelsPerBattle: 1,         // normal fight → +1 level
+    levelsPerElite: 2,          // elite fight → +2 levels
+    levelsPerBoss: 3,           // area boss clear → +3 levels
   },
   recruit: {
     offerSize: 3,

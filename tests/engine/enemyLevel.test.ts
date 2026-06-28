@@ -4,18 +4,18 @@ import { BALANCE } from '@/data/constants'
 
 describe('enemyLevelFor', () => {
   it('scales the displayed level by area and node kind', () => {
-    // normal → 1,3,5 · elite → 3,5,7 · area-boss → 4,6,8
-    expect(enemyLevelFor(0, 'normal', false)).toBe(1)
-    expect(enemyLevelFor(1, 'normal', false)).toBe(3)
-    expect(enemyLevelFor(2, 'normal', false)).toBe(5)
+    // normal → 2,4,6 · elite → 4,6,8 · area-boss → 6,8,10 (clamped to levelMax)
+    expect(enemyLevelFor(0, 'normal', false)).toBe(2)
+    expect(enemyLevelFor(1, 'normal', false)).toBe(4)
+    expect(enemyLevelFor(2, 'normal', false)).toBe(6)
 
-    expect(enemyLevelFor(0, 'elite', false)).toBe(3)
-    expect(enemyLevelFor(1, 'elite', false)).toBe(5)
-    expect(enemyLevelFor(2, 'elite', false)).toBe(7)
+    expect(enemyLevelFor(0, 'elite', false)).toBe(4)
+    expect(enemyLevelFor(1, 'elite', false)).toBe(6)
+    expect(enemyLevelFor(2, 'elite', false)).toBe(8)
 
-    expect(enemyLevelFor(0, 'boss', false)).toBe(4)
-    expect(enemyLevelFor(1, 'boss', false)).toBe(6)
-    expect(enemyLevelFor(2, 'boss', false)).toBe(8)
+    expect(enemyLevelFor(0, 'boss', false)).toBe(6)
+    expect(enemyLevelFor(1, 'boss', false)).toBe(8)
+    expect(enemyLevelFor(2, 'boss', false)).toBe(BALANCE.leveling.levelMax) // 10
   })
 
   it('elites and bosses outrank normals in the same area', () => {
