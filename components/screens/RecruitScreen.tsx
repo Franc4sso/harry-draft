@@ -65,12 +65,14 @@ function ActivationRail({ candidate, activating }: { candidate: DraftedWizard | 
 }
 
 export function RecruitScreen({
-  offer, team, teamMax, onPick,
+  offer, team, teamMax, onPick, onSkip,
 }: {
   offer: DraftedWizard[]
   team: DraftedWizard[]
   teamMax: number
   onPick: (wizardId: string, replaceId?: string) => void
+  /** Leave the node without recruiting (decline the offer / keep the squad as-is). */
+  onSkip?: () => void
 }) {
   const full = team.length >= teamMax
   const weakestId = full
@@ -142,11 +144,19 @@ export function RecruitScreen({
                 {team.map(t => {
                   const removing = replaceId === t.wizard.id
                   return (
-                    <button
+                    // role=button (not <button>) so the WizardCardRow's tooltip buttons
+                    // aren't nested inside a button (invalid DOM).
+                    <div
                       key={t.wizard.id}
                       data-testid={`replace-${t.wizard.id}`}
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={removing}
                       onClick={() => setReplaceId(t.wizard.id)}
-                      className="relative rounded-2xl text-left transition"
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setReplaceId(t.wizard.id) }
+                      }}
+                      className="relative cursor-pointer rounded-2xl text-left transition"
                       style={{ boxShadow: removing ? '0 0 0 2px #f0727288, 0 0 14px #f0727255' : undefined }}
                     >
                       <span className={removing ? 'block opacity-60 saturate-[0.85]' : 'block'}>
@@ -157,7 +167,7 @@ export function RecruitScreen({
                           Esce
                         </span>
                       )}
-                    </button>
+                    </div>
                   )
                 })}
               </div>
@@ -173,7 +183,7 @@ export function RecruitScreen({
         </aside>
       </div>
 
-      <div className="px-4 pb-6 text-center">
+      <div className="flex flex-wrap items-center justify-center gap-3 px-4 pb-6">
         <Button
           variant="primary"
           disabled={!pick}
@@ -181,6 +191,11 @@ export function RecruitScreen({
         >
           {pick && full && replacedName ? `Recluta · sostituisci ${replacedName}` : 'Recluta'}
         </Button>
+        {onSkip && (
+          <Button variant="ghost" onClick={onSkip}>
+            {full ? 'Non sostituire nessuno' : 'Non reclutare'}
+          </Button>
+        )}
       </div>
     </main>
   )

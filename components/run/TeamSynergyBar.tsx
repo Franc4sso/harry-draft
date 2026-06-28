@@ -8,6 +8,7 @@ import { synergyBonusText } from '@/lib/glossary'
 
 function SynergyChip({ s }: { s: ActiveSynergy }) {
   const bonus = s.synergy.bonus ? synergyBonusText(s.synergy.bonus).join(' · ') : ''
+  const count = s.memberIds?.length ?? 0
   return (
     <span
       data-synergy={s.synergy.id}
@@ -16,6 +17,14 @@ function SynergyChip({ s }: { s: ActiveSynergy }) {
     >
       <span aria-hidden style={{ color: '#caa24a' }}>✦</span>
       {s.synergy.name.replace(/^\d+\s+/, '')}
+      {count > 0 && (
+        <span
+          className="rounded-full bg-black/30 px-1.5 text-[#e8dcb6]"
+          title={`${count} maghi in squadra`}
+        >
+          ×{count}
+        </span>
+      )}
       {bonus && <span className="text-[#c9bfa0]">{bonus}</span>}
     </span>
   )

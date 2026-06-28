@@ -25,6 +25,7 @@ export interface RunBController {
   commitBattle: () => void
   acknowledgeVictory: () => void
   chooseRecruit: (wizardId: string, replaceId?: string) => void
+  skipRecruit: () => void
   chooseRelic: (relicId: string) => void
   advanceArea: () => void
   restart: () => void
@@ -94,6 +95,13 @@ export function useRunB(seed: string): RunBController {
     commit({ ...next, phase: 'map' }, 'map') // non-combat node: straight back to map
   }, [commit])
 
+  // Decline the offer: the resolver leaves the team untouched but the node is still
+  // marked resolved, so we simply return to the map.
+  const skipRecruit = useCallback(() => {
+    const next = resolveCurrent(runRef.current, { kind: 'skip' }, createRng(runRef.current.seed))
+    commit({ ...next, phase: 'map' }, 'map')
+  }, [commit])
+
   const chooseRelic = useCallback((relicId: string) => {
     const next = resolveCurrent(runRef.current, { kind: 'relic-pick', relicId }, createRng(runRef.current.seed))
     commit({ ...next, phase: 'map' }, 'map')
@@ -113,6 +121,6 @@ export function useRunB(seed: string): RunBController {
     run, view, battle, reachable, currentNode,
     area: run.area ?? 0, areasTotal: BALANCE.map.areas, lastFallen,
     completeDraft, chooseNode, commitBattle, acknowledgeVictory,
-    chooseRecruit, chooseRelic, advanceArea, restart,
+    chooseRecruit, skipRecruit, chooseRelic, advanceArea, restart,
   }
 }

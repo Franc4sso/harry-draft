@@ -108,6 +108,7 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
             team={c.run.team}
             teamMax={c.run.teamMax ?? 5}
             onPick={c.chooseRecruit}
+            onSkip={c.skipRecruit}
           />,
         )
 

@@ -17,6 +17,29 @@ describe('RecruitScreen', () => {
     expect(onPick).toHaveBeenCalledWith(offer[0]!.wizard.id, undefined)
   })
 
+  it('calls onSkip when declining the offer', async () => {
+    const onPick = vi.fn()
+    const onSkip = vi.fn()
+    render(<RecruitScreen offer={offer} team={team} teamMax={5} onPick={onPick} onSkip={onSkip} />)
+    await userEvent.click(screen.getByRole('button', { name: /Non reclutare/i }))
+    expect(onSkip).toHaveBeenCalled()
+    expect(onPick).not.toHaveBeenCalled()
+  })
+
+  it('when the squad is full, offers a no-replace skip and a swap roster', async () => {
+    const onPick = vi.fn()
+    const onSkip = vi.fn()
+    // teamMax === team length ⇒ full, without needing five members
+    render(<RecruitScreen offer={offer} team={team} teamMax={team.length} onPick={onPick} onSkip={onSkip} />)
+    // every roster member is a tappable replace target (div, not a nested <button>)
+    for (const t of team) {
+      const tile = screen.getByTestId(`replace-${t.wizard.id}`)
+      expect(tile.tagName.toLowerCase()).toBe('div')
+    }
+    await userEvent.click(screen.getByRole('button', { name: /Non sostituire nessuno/i }))
+    expect(onSkip).toHaveBeenCalled()
+  })
+
   it('renders candidates as horizontal (landscape) cards, like the draft', () => {
     const onPick = vi.fn()
     render(<RecruitScreen offer={offer} team={team} teamMax={5} onPick={onPick} />)
