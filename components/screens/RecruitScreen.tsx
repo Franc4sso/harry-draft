@@ -101,9 +101,12 @@ export function RecruitScreen({
         </p>
       </div>
 
-      <div className="grid w-full max-w-5xl grid-cols-1 items-start gap-6 sm:grid-cols-[1fr_300px]">
+      {/* Flex (not arbitrary grid) so the right rail is a guaranteed side column on
+          any viewport ≥ sm, using only standard Tailwind classes (no JIT-dependent
+          arbitrary values that can go missing under dev HMR). */}
+      <div className="flex w-full max-w-5xl flex-col items-stretch gap-6 sm:flex-row sm:items-start">
         {/* Offer + (when full) the swap roster */}
-        <div className="flex flex-col gap-5">
+        <div className="flex min-w-0 flex-1 flex-col gap-5">
           {/* Candidates as a vertical stack of HORIZONTAL (landscape) cards — the
               same WizardCardRow the draft uses, so recruiting reads like the draft. */}
           <section
@@ -167,8 +170,9 @@ export function RecruitScreen({
           )}
         </div>
 
-        {/* Activation rail — always the right-hand column from sm up, sticky there. */}
-        <aside className="sm:sticky sm:top-4">
+        {/* Activation rail — fixed-width right column from sm up (standard w-80),
+            sticky there. Stacks below only on genuine narrow mobile (< sm). */}
+        <aside className="w-full shrink-0 sm:sticky sm:top-4 sm:w-80">
           <ActivationRail candidate={focus} activating={activating} />
         </aside>
       </div>

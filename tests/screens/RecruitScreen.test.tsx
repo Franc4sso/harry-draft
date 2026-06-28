@@ -46,8 +46,11 @@ describe('RecruitScreen', () => {
     const aside = container.querySelector('aside')
     expect(aside).not.toBeNull()
     expect(aside!.textContent).toContain('Sinergie attivate')
-    // The aside engages as a right column from the sm breakpoint, not only md.
+    // The aside is a fixed-width right column from the sm breakpoint (standard
+    // classes only — no JIT-dependent arbitrary grid value), and its shell is a
+    // row from sm up.
+    expect(aside!.className).toContain('sm:w-80')
     const shell = aside!.parentElement!
-    expect(shell.className).toContain('sm:grid-cols-[')
+    expect(shell.className).toContain('sm:flex-row')
   })
 })
