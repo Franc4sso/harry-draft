@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { DraftedWizard } from '@/types'
-import { WizardCard } from '@/components/cards/WizardCard'
 import { WizardCardRow } from '@/components/cards/WizardCardRow'
 import { Button } from '@/components/ui/Button'
 import { powerOf } from '@/game/engine/combat/teamGen'
@@ -105,10 +104,10 @@ export function RecruitScreen({
       <div className="grid w-full max-w-5xl grid-cols-1 items-start gap-6 sm:grid-cols-[1fr_300px]">
         {/* Offer + (when full) the swap roster */}
         <div className="flex flex-col gap-5">
-          {/* Candidates as a single horizontal row (mirrors the draft), wrapping
-              only on genuinely narrow screens. */}
+          {/* Candidates as a vertical stack of HORIZONTAL (landscape) cards — the
+              same WizardCardRow the draft uses, so recruiting reads like the draft. */}
           <section
-            className="flex flex-row flex-wrap content-start justify-center gap-4"
+            className="flex flex-col gap-4"
             onPointerLeave={() => setConsidered(null)}
           >
             {offer.map(d => (
@@ -127,9 +126,9 @@ export function RecruitScreen({
                     setPick(d.wizard.id)
                   }
                 }}
-                className="cursor-pointer rounded-xl"
+                className="cursor-pointer rounded-2xl"
               >
-                <WizardCard drafted={d} selected={pick === d.wizard.id} />
+                <WizardCardRow drafted={d} selected={pick === d.wizard.id} />
               </div>
             ))}
           </section>

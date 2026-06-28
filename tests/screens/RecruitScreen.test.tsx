@@ -17,22 +17,25 @@ describe('RecruitScreen', () => {
     expect(onPick).toHaveBeenCalledWith(offer[0]!.wizard.id, undefined)
   })
 
-  it('lays the candidates out in a single horizontal row', () => {
+  it('renders candidates as horizontal (landscape) cards, like the draft', () => {
     const onPick = vi.fn()
-    const { container } = render(
-      <RecruitScreen offer={offer} team={team} teamMax={5} onPick={onPick} />,
-    )
-    // Every candidate tile shares one common parent (the horizontal row),
-    // and that parent uses a flex-row layout (not a stacked grid).
+    render(<RecruitScreen offer={offer} team={team} teamMax={5} onPick={onPick} />)
+    // Each candidate uses the draft's horizontal WizardCardRow (`.wizard-row`),
+    // NOT the portrait WizardCard — so recruiting reads like the draft.
+    for (const d of offer) {
+      const tile = screen.getByTestId(`recruit-${d.wizard.id}`)
+      expect(tile.querySelector('.wizard-row')).not.toBeNull()
+    }
+  })
+
+  it('stacks the candidates in a single vertical column (not a row of portraits)', () => {
+    const onPick = vi.fn()
+    render(<RecruitScreen offer={offer} team={team} teamMax={5} onPick={onPick} />)
     const tiles = offer.map(d => screen.getByTestId(`recruit-${d.wizard.id}`))
-    const rows = new Set(tiles.map(t => t.parentElement))
-    expect(rows.size).toBe(1)
-    const row = [...rows][0]!
-    expect(row.className).toContain('flex')
-    expect(row.className).toContain('flex-row')
-    expect(row.className).not.toContain('grid-cols')
-    // sanity: the row really contains every candidate
-    expect(container).toContainElement(row)
+    const cols = new Set(tiles.map(t => t.parentElement))
+    expect(cols.size).toBe(1)
+    const col = [...cols][0]!
+    expect(col.className).toContain('flex-col')
   })
 
   it('keeps the synergy rail as a right-hand aside sibling of the candidates', () => {
