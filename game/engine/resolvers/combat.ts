@@ -24,11 +24,29 @@ export interface CombatResult {
   enemyLevel: number
 }
 
-/** Map a right-side menace (stat multiplier pct) onto the player growth curve,
- *  so enemy level badges read on the same scale as player levels. */
-export function deriveEnemyLevel(menace: number): number {
-  const lvl = Math.round(1 + menace / BALANCE.leveling.autoGrowthPct)
-  return Math.max(1, Math.min(BALANCE.leveling.levelMax, lvl))
+export type EnemyKind = 'normal' | 'elite' | 'boss'
+
+/** Displayed enemy level as an explicit, area-scaled threat tier (NOT derived from
+ *  menace). normal → 1,3,5 · elite → 3,5,7 · area-boss → 4,6,8 · final boss → levelMax.
+ *  Clamped to [1, levelMax]. Enemy menace is derived FROM this (see menaceForLevel),
+ *  so the level the player sees genuinely tracks difficulty. */
+export function enemyLevelFor(area: number, kind: EnemyKind, isFinalBoss: boolean): number {
+  const cb = BALANCE.campaignB
+  const max = BALANCE.leveling.levelMax
+  const lvl = isFinalBoss
+    ? max
+    : kind === 'boss' ? cb.bossLevelBase + cb.bossLevelPerArea * area
+    : kind === 'elite' ? cb.eliteLevelBase + cb.eliteLevelPerArea * area
+    : cb.normalLevelBase + cb.normalLevelPerArea * area
+  return Math.max(1, Math.min(max, lvl))
+}
+
+/** Enemy stat menace (1+pct) derived from the displayed level: a higher-level foe is
+ *  a genuinely stronger one. menaceOffset is negative to keep area-0 (level-1) fights
+ *  winnable for a starting level-1 duo. */
+export function menaceForLevel(level: number): number {
+  const cb = BALANCE.campaignB
+  return (level - 1) * cb.menacePerLevel + cb.menaceOffset
 }
 
 /** Monotonic progression depth across areas: areas are spaced by floorsPerArea so
@@ -42,15 +60,6 @@ function budgetB(depth: number): number {
   return BALANCE.campaignB.baseBudget + depth * BALANCE.campaignB.budgetStep
 }
 
-/** New-loop menace (stat multiplier as a pct) at a depth, scaled by node kind. */
-function menaceB(depth: number, kind: 'normal' | 'elite' | 'boss'): number {
-  const cb = BALANCE.campaignB
-  const base = cb.menaceBase + cb.menacePerDepth * depth
-  if (kind === 'elite') return base * cb.menaceEliteMult
-  if (kind === 'boss') return base * cb.menaceBossMult
-  return base
-}
-
 export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatResult {
   const cb = BALANCE.campaignB
   const { area, floor } = parseAreaNodeId(node.id)
@@ -59,15 +68,19 @@ export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatR
   const depth = globalDepth(area, floor)
   const enemyRng = rng.fork(depth + 1)
   const battleRng = rng.fork(depth + 100)
-  const nodeType: 'normal' | 'elite' | 'boss' = isBoss ? 'boss' : (node.type === 'elite' ? 'elite' : 'normal')
+  const nodeType: EnemyKind = isBoss ? 'boss' : (node.type === 'elite' ? 'elite' : 'normal')
+  const enemyLevel = enemyLevelFor(area, nodeType, isFinalBoss)
 
   // Only the FINAL area's boss is the scripted Voldemort (always a full team of 5).
-  // Earlier area bosses are strong-but-scaled enemy teams on the new-loop budget curve,
-  // and every non-final fight is trimmed to the area's enemy count so a growing player
-  // is not perpetually outnumbered. `generateEnemyTeam` returns its 5 sorted by power
-  // desc, so slicing keeps the strongest `count`.
+  // Earlier area bosses are strong-but-scaled enemy teams on the new-loop budget curve.
+  // Normal fights are trimmed to a small skirmish (`normalEnemyCount`) so a growing
+  // player is not swarmed; elite/area-boss field the area's full count, making them the
+  // bigger threat. `generateEnemyTeam` returns its 5 sorted by power desc, so slicing
+  // keeps the strongest `count`.
   const budgetMult = nodeType === 'elite' ? cb.eliteBudgetMult : isBoss ? cb.bossBudgetMult : 1
-  const count = cb.enemyCountByArea[area] ?? cb.enemyCountByArea[cb.enemyCountByArea.length - 1]!
+  const count = nodeType === 'normal'
+    ? cb.normalEnemyCount
+    : (cb.enemyCountByArea[area] ?? cb.enemyCountByArea[cb.enemyCountByArea.length - 1]!)
   const enemy = isFinalBoss
     ? generateBossTeam(enemyRng, BOSSES[0]!)
     : generateEnemyTeam(enemyRng, Math.round(budgetB(depth) * budgetMult)).slice(0, count)
@@ -81,7 +94,7 @@ export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatR
     : nodeType === 'elite' ? cb.enemyRelicsElite : 0
   const rightRelics = relicCount > 0 ? selectEnemyRelics(rng.fork(depth + 200), relicCount) : []
 
-  const rightMenace = isFinalBoss ? cb.finalBossMenace : menaceB(depth, nodeType)
+  const rightMenace = isFinalBoss ? cb.finalBossMenace : menaceForLevel(enemyLevel)
 
   // Levels apply HERE, before combat — engine stays pure.
   const ready = battleReadyTeam(state.team)
@@ -98,7 +111,7 @@ export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatR
     : node.type === 'elite' ? BALANCE.leveling.expElite : BALANCE.leveling.expBattle
   const survivors = persisted.map(dw => addExp(dw, expEach).dw)
 
-  return { result, enemy, enemySyn, isBoss, isFinalBoss, survivors, expEach, enemyLevel: deriveEnemyLevel(rightMenace) }
+  return { result, enemy, enemySyn, isBoss, isFinalBoss, survivors, expEach, enemyLevel }
 }
 
 export const combatResolver: NodeResolver = {

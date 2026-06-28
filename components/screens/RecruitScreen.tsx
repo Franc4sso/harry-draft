@@ -102,11 +102,13 @@ export function RecruitScreen({
         </p>
       </div>
 
-      <div className="grid w-full max-w-5xl grid-cols-1 items-start gap-6 md:grid-cols-[1fr_300px]">
+      <div className="grid w-full max-w-5xl grid-cols-1 items-start gap-6 sm:grid-cols-[1fr_300px]">
         {/* Offer + (when full) the swap roster */}
         <div className="flex flex-col gap-5">
+          {/* Candidates as a single horizontal row (mirrors the draft), wrapping
+              only on genuinely narrow screens. */}
           <section
-            className="grid grid-cols-1 justify-items-center gap-4 sm:grid-cols-2"
+            className="flex flex-row flex-wrap content-start justify-center gap-4"
             onPointerLeave={() => setConsidered(null)}
           >
             {offer.map(d => (
@@ -166,8 +168,8 @@ export function RecruitScreen({
           )}
         </div>
 
-        {/* Activation rail — sticky on desktop. */}
-        <aside className="md:sticky md:top-4">
+        {/* Activation rail — always the right-hand column from sm up, sticky there. */}
+        <aside className="sm:sticky sm:top-4">
           <ActivationRail candidate={focus} activating={activating} />
         </aside>
       </div>
