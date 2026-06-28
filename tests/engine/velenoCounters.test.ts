@@ -19,21 +19,21 @@ function regenSyn(amount: number): ActiveSynergy {
 const pug: ActiveRelic[] = [{ relic: pugnale, stageObtained: 0 }]
 
 describe('Veleno counter-web', () => {
-  // A weak-attack poison applier: physical barely scratches, poison does the work.
-  const velenoTeam = [mk('bellatrix', { hp: 200, atk: 8, def: 15, spd: 30 })]
+  // A weak-attack poison applier: atk 1 → base hits floor at minDamage(1), negligible; equal speed removes chip-win cheese.
+  const velenoTeam = [mk('bellatrix', { hp: 400, atk: 1, def: 50, spd: 20 })]
 
   it('BEATS a Tank/Scudi enemy (poison bypasses huge DEF)', () => {
-    const tank = [mk('greyback', { hp: 260, atk: 5, def: 500, spd: 1 })]
+    const tank = [mk('greyback', { hp: 1000, atk: 1, def: 500, spd: 20 })]
     const r: BattleResult = simulateBattle(velenoTeam, tank, createRng('ctr-tank'), { leftRelics: pug })
     expect(r.winner).toBe('left')
   })
 
   it('LOSES to a Regen enemy (sustain out-heals the poison)', () => {
-    const tank = [mk('greyback', { hp: 260, atk: 5, def: 500, spd: 1 })]
+    const tank = [mk('greyback', { hp: 1000, atk: 1, def: 500, spd: 20 })]
     const win = simulateBattle(velenoTeam, tank, createRng('ctr-regen'), { leftRelics: pug })
-    const withRegen = simulateBattle(velenoTeam, tank, createRng('ctr-regen'), { leftRelics: pug, rightSyn: [regenSyn(60)] })
+    const withRegen = simulateBattle(velenoTeam, tank, createRng('ctr-regen'), { leftRelics: pug, rightSyn: [regenSyn(150)] })
     expect(win.winner).toBe('left')          // baseline: poison wins
-    expect(withRegen.winner).not.toBe('left') // regen flips it
+    expect(withRegen.winner).toBe('right')   // regen flips it
   })
 
   it('LOSES to Burst (applier killed before the ramp)', () => {
