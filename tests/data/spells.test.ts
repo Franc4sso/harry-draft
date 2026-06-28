@@ -14,7 +14,11 @@ describe('spells data', () => {
     for (const s of SPELLS) {
       expect(s.hitChance).toBeGreaterThan(0)
       expect(s.hitChance).toBeLessThanOrEqual(1)
-      if (s.type === 'Attacco') expect(s.power ?? 0).toBeGreaterThan(0)
+      if (s.type === 'Attacco') {
+        const hasPower = (s.power ?? 0) > 0
+        const hasSpecDamage = s.spec?.some(e => e.kind === 'damage' && e.power > 0) ?? false
+        expect(hasPower || hasSpecDamage).toBe(true)
+      }
       if (s.type === 'Cura') expect(s.heal ?? 0).toBeGreaterThan(0)
     }
   })
