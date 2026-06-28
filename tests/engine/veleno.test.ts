@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import type { BattleUnit } from '@/types'
 import { applyStatus, tickStatuses } from '@/game/engine/status'
 import { keywordDamageMult } from '@/game/engine/relics'
-import type { ActiveRelic, DraftedWizard } from '@/types'
+import type { ActiveRelic, BattleResult, DraftedWizard } from '@/types'
 
 /** Minimal BattleUnit with only the fields tickStatuses/applyStatus read. */
 function mkUnit(maxHp = 100): BattleUnit {
@@ -89,5 +89,42 @@ describe('veleno: velenoMult scales the flat component only', () => {
     tickStatuses(1, u, { velenoMult: 1.5 })
     // flat 5*4*1.5=30 ; pct 5*0.005*200=5 ; total 35
     expect(before - u.hp).toBe(35)
+  })
+})
+
+import { simulateBattle } from '@/game/engine/combat/simulate'
+import { createRng } from '@/game/engine/rng'
+import { RELICS } from '@/data/relics'
+import { WIZARDS } from '@/data/wizards'
+import { SPELL_BY_ID } from '@/data/spells'
+
+function draft(id: string, over: Partial<{ hp: number; atk: number; def: number; spd: number }> = {}): DraftedWizard {
+  const wizard = WIZARDS.find(w => w.id === id)!
+  const stats = { hp: over.hp ?? 200, atk: over.atk ?? 40, def: over.def ?? 20, spd: over.spd ?? 30 }
+  return { wizard, stats, maxHp: stats.hp, spell: SPELL_BY_ID['base_attack']! }
+}
+
+function firstDotOnRight(r: BattleResult): number {
+  const e = r.log.find(x => x.flags.includes('dot') && x.targetSide === 'right')
+  return e?.value ?? 0
+}
+
+describe('veleno relics: Ampolla scales the in-battle poison tick', () => {
+  const pugnale = RELICS.find(r => r.id === 'pugnale-bellatrix')!   // 100% onHit → veleno
+  const ampolla = RELICS.find(r => r.id === 'ampolla-veleno')!      // +50% veleno flat
+  const left = [draft('harry', { atk: 40, hp: 500 })]               // attacker, won't die
+  const right = [draft('ron', { hp: 300, def: 20 })]                // soaks several turns
+
+  const run = (leftRelics: ActiveRelic[]): BattleResult =>
+    simulateBattle(left, right, createRng('veleno-int-1'), { leftRelics })
+
+  it('applies poison via the relic onHit trigger', () => {
+    expect(firstDotOnRight(run([{ relic: pugnale, stageObtained: 0 }]))).toBeGreaterThan(0)
+  })
+
+  it('Ampolla makes the first poison tick stronger (flat x1.5), same seed', () => {
+    const without = run([{ relic: pugnale, stageObtained: 0 }])
+    const withAmpolla = run([{ relic: pugnale, stageObtained: 0 }, { relic: ampolla, stageObtained: 0 }])
+    expect(firstDotOnRight(withAmpolla)).toBeGreaterThan(firstDotOnRight(without))
   })
 })

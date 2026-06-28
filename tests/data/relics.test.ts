@@ -17,11 +17,12 @@ describe('relics data', () => {
       expect(r.desc.length).toBeGreaterThan(0)
     }
   })
-  it('every relic has either a bonus or a trigger', () => {
+  it('every relic has either a bonus, a trigger, or a keywordMult', () => {
     for (const r of RELICS) {
       const hasBonus = !!r.bonus
       const hasTrigger = !!(r.triggers?.length)
-      expect(hasBonus || hasTrigger, `relic ${r.id} has nothing`).toBe(true)
+      const hasKeywordMult = !!(r.keywordMult && Object.keys(r.keywordMult).length > 0)
+      expect(hasBonus || hasTrigger || hasKeywordMult, `relic ${r.id} has nothing`).toBe(true)
     }
   })
   it('limits trigger relics to at most 3 (v1)', () => {
@@ -46,10 +47,10 @@ describe('relic trigger migration', () => {
     const t = RELIC_BY_ID['pietra-resurrezione']!.triggers
     expect(t).toEqual([{ hook: 'onBattleStart', effects: [{ kind: 'shield', amount: 30 }] }])
   })
-  it('boccino-doro uses onHit poison trigger', () => {
+  it('boccino-doro uses onHit veleno trigger', () => {
     const t = RELIC_BY_ID['boccino-doro']!.triggers
     expect(t).toEqual([{ hook: 'onHit', effects: [
-      { kind: 'applyStatus', target: 'enemy', chance: 0.15, effect: { kind: 'dot', amount: 6, duration: 2 } },
+      { kind: 'applyStatus', target: 'enemy', chance: 0.25, statusId: 'veleno' },
     ] }])
   })
 })
