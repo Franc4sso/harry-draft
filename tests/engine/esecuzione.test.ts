@@ -66,3 +66,16 @@ describe('execute relics', () => {
     expect(firstHitToRight(b)).toBeGreaterThan(firstHitToRight(a))
   })
 })
+
+import { detectSynergies } from '@/game/engine/synergy'
+
+describe('Spietatezza synergy', () => {
+  it('activates with 3 esecuzione-tagged wizards', () => {
+    const t = ['voldemort', 'lucius', 'harry'].map(id => mk(id, { hp: 100, atk: 30, def: 10, spd: 20 }))
+    expect(detectSynergies(t).map(a => a.synergy.id)).toContain('spietatezza')
+  })
+  it('does not activate with only 2', () => {
+    const t = ['voldemort', 'lucius'].map(id => mk(id, { hp: 100, atk: 30, def: 10, spd: 20 }))
+    expect(detectSynergies(t).map(a => a.synergy.id)).not.toContain('spietatezza')
+  })
+})

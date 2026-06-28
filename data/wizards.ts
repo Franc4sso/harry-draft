@@ -14,14 +14,14 @@ export const WIZARDS: Wizard[] = [
     gender: 'm',
     ranges: { hp: [82, 103], atk: [35, 45], def: [12, 19], spd: [24, 32] },
     spellPool: ['avada', 'sectumsempra', 'fiendfyre', 'serpensortia', 'crucio'],
-    tags: ['deatheater'],
+    tags: ['deatheater', 'esecuzione'],
   },
   {
     id: 'harry', name: 'Harry Potter', house: 'Grifondoro', role: 'Attaccante', tier: 1,
     gender: 'm',
     ranges: { hp: [86, 107], atk: [31, 40], def: [12, 19], spd: [26, 35] },
     spellPool: ['expelliarmus', 'stupeficium', 'reducto', 'sectumsempra', 'confundo'],
-    tags: ['trio', 'da'],
+    tags: ['trio', 'da', 'esecuzione'],
   },
 
   // ===== Tier 2 (strong) =====
@@ -30,13 +30,14 @@ export const WIZARDS: Wizard[] = [
     gender: 'm',
     ranges: { hp: [70, 86], atk: [28, 37], def: [11, 16], spd: [19, 27] },
     spellPool: ['sectumsempra', 'levicorpus', 'confringo', 'reducto', 'stupeficium'],
+    tags: ['esecuzione'],
   },
   {
     id: 'bellatrix', name: 'Bellatrix Lestrange', house: 'Serpeverde', role: 'Controllo', tier: 2,
     gender: 'f',
     ranges: { hp: [76, 95], atk: [20, 27], def: [11, 17], spd: [26, 34] },
     spellPool: ['crucio', 'imperio', 'petrificus', 'confringo'],
-    tags: ['deatheater', 'veleno'],
+    tags: ['deatheater', 'veleno', 'esecuzione'],
   },
   {
     id: 'mcgonagall', name: 'Minerva McGonagall', house: 'Grifondoro', role: 'Tank', tier: 2,
@@ -50,7 +51,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'm',
     ranges: { hp: [72, 89], atk: [27, 35], def: [11, 16], spd: [22, 29] },
     spellPool: ['stupeficium', 'expelliarmus', 'reducto', 'flipendo', 'confundo'],
-    tags: ['order', 'marauder'],
+    tags: ['order', 'marauder', 'esecuzione'],
   },
   {
     id: 'lupin', name: 'Remus Lupin', house: 'Grifondoro', role: 'Supporto', tier: 2,
@@ -71,7 +72,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'm',
     ranges: { hp: [69, 85], atk: [25, 33], def: [12, 16], spd: [19, 27] },
     spellPool: ['serpensortia', 'sectumsempra', 'reducto', 'confringo'],
-    tags: ['deatheater'],
+    tags: ['deatheater', 'esecuzione'],
   },
   {
     id: 'kingsley', name: 'Kingsley Shacklebolt', house: 'Corvonero', role: 'Tank', tier: 2,
@@ -113,6 +114,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'm',
     ranges: { hp: [61, 77], atk: [21, 28], def: [9, 14], spd: [17, 25] },
     spellPool: ['serpensortia', 'sectumsempra', 'flipendo', 'expelliarmus'],
+    tags: ['esecuzione'],
   },
   {
     id: 'ginny', name: 'Ginny Weasley', house: 'Grifondoro', role: 'Attaccante', tier: 3,
@@ -189,7 +191,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'm',
     ranges: { hp: [116, 142], atk: [16, 21], def: [23, 33], spd: [11, 16] },
     spellPool: ['diffindo', 'reducto', 'protego', 'fianto', 'oppugno'],
-    tags: ['deatheater', 'veleno'],
+    tags: ['deatheater', 'veleno', 'esecuzione'],
   },
   {
     id: 'cho', name: 'Cho Chang', house: 'Corvonero', role: 'Controllo', tier: 3,
@@ -282,6 +284,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'm',
     ranges: { hp: [54, 72], atk: [20, 27], def: [9, 12], spd: [14, 21] },
     spellPool: ['oppugno', 'reducto', 'flipendo', 'diffindo'],
+    tags: ['esecuzione'],
   },
   {
     id: 'pettigrew', name: 'Peter Minus', house: 'Serpeverde', role: 'Supporto', tier: 4,
