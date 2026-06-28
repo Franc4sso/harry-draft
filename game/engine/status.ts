@@ -65,7 +65,7 @@ export function applyInlineEffect(
   })
 }
 
-export function tickStatuses(turn: number, unit: BattleUnit): LogEntry[] {
+export function tickStatuses(turn: number, unit: BattleUnit, opts: { velenoMult?: number } = {}): LogEntry[] {
   const logs: LogEntry[] = []
   for (const e of unit.statusEffects) {
     const def = e.statusId ? STATUS_BY_ID[e.statusId] : undefined
@@ -73,7 +73,8 @@ export function tickStatuses(turn: number, unit: BattleUnit): LogEntry[] {
     const tickHeal = def?.tickHeal
     if (baseTick != null) {
       const stacks = e.stacks ?? 1
-      const flat = baseTick * stacks
+      const isVeleno = def?.keywords?.includes('veleno') ?? false
+      const flat = baseTick * stacks * (isVeleno ? (opts.velenoMult ?? 1) : 1)
       const pctStacks = def?.tickStackCapForPct != null ? Math.min(stacks, def.tickStackCapForPct) : stacks
       const pct = def?.tickPctMaxHp ? pctStacks * def.tickPctMaxHp * unit.maxHp : 0
       const total = Math.round(flat + pct)

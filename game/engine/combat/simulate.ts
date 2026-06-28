@@ -4,7 +4,7 @@ import type {
 import type { Rng } from '../rng'
 import { BALANCE } from '@/data/constants'
 import { applyBonuses, totalRegen } from '../synergy'
-import { applyRelicBonuses, registerRelicTriggers, totalRelicRegen } from '../relics'
+import { applyRelicBonuses, keywordDamageMult, registerRelicTriggers, totalRelicRegen } from '../relics'
 import { registerTraitTriggers } from '../traits'
 import { registerSignatures } from '../signatures'
 import { createEventBus } from './eventBus'
@@ -90,6 +90,11 @@ export function simulateBattle(
   registerRelicTriggers(bus, right, rightRelics, 'right')
   registerTraitTriggers(bus, [...L, ...R])
   registerSignatures(bus, [...L, ...R])
+
+  // Poison scaling: each side's veleno multiplier from its own relics. Poison ON a unit
+  // is scaled by the OPPOSING side's mult (the side that applied it).
+  const leftVelenoMult = keywordDamageMult(left, leftRelics, 'veleno')
+  const rightVelenoMult = keywordDamageMult(right, rightRelics, 'veleno')
 
   // Apply a collected reactive hook for `unit`. Guarded by collectReactive().length
   // so a zero-listener hook draws NO rng and emits NO log line — preserving every
@@ -239,7 +244,7 @@ export function simulateBattle(
     // end-of-turn: dot/cooldown tick + regen
     for (const u of [...L, ...R]) {
       if (!u.alive) continue
-      const dots = tickStatuses(turn, u)
+      const dots = tickStatuses(turn, u, { velenoMult: u.side === 'left' ? rightVelenoMult : leftVelenoMult })
       for (const d of dots) pushLog(d)
       sync(u)
       // onDeath / onAllyDeath when a dot tick kills any unit.

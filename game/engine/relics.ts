@@ -1,4 +1,4 @@
-import type { ActiveRelic, DraftedWizard, RelicCondition, Stats, Side } from '@/types'
+import type { ActiveRelic, DraftedWizard, Keyword, RelicCondition, Stats, Side } from '@/types'
 import type { Relic } from '@/types'
 import type { Rng } from './rng'
 import type { EventBus } from './combat/eventBus'
@@ -13,6 +13,18 @@ export function relicMatchesCondition(team: DraftedWizard[], condition?: RelicCo
     (condition.role ? d.wizard.role === condition.role : true),
   )
   return matched.length >= count
+}
+
+/** Team-level damage multiplier for a keyword: 1 + Σ keywordMult[keyword] over
+ *  active (condition-matching) relics. Consumes no RNG. */
+export function keywordDamageMult(team: DraftedWizard[], relics: ActiveRelic[], keyword: Keyword): number {
+  let mult = 1
+  for (const { relic } of relics) {
+    if (!relic.keywordMult) continue
+    if (!relicMatchesCondition(team, relic.condition)) continue
+    mult += relic.keywordMult[keyword] ?? 0
+  }
+  return mult
 }
 
 /**

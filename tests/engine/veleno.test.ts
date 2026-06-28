@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import type { BattleUnit } from '@/types'
 import { applyStatus, tickStatuses } from '@/game/engine/status'
+import { keywordDamageMult } from '@/game/engine/relics'
+import type { ActiveRelic, DraftedWizard } from '@/types'
 
 /** Minimal BattleUnit with only the fields tickStatuses/applyStatus read. */
 function mkUnit(maxHp = 100): BattleUnit {
@@ -63,5 +65,29 @@ describe('veleno: "che divora" tick (no mult yet)', () => {
     // flat 1*4=4 ; pct 1*0.005*100=0.5 ; round(4.5)=5 ; shield untouched
     expect(before - u.hp).toBe(5)
     expect(u.statusEffects.find(e => e.statusId === 'shield')!.absorbLeft).toBe(50)
+  })
+})
+
+describe('keywordDamageMult', () => {
+  const team = [] as unknown as DraftedWizard[]
+  it('returns 1 with no relics', () => {
+    expect(keywordDamageMult(team, [], 'veleno')).toBe(1)
+  })
+  it('sums keywordMult from unconditional relics', () => {
+    const relics: ActiveRelic[] = [
+      { relic: { id: 'a', name: 'A', desc: '', rarity: 'non-comune', keywordMult: { veleno: 0.5 } }, stageObtained: 0 },
+    ]
+    expect(keywordDamageMult(team, relics, 'veleno')).toBeCloseTo(1.5)
+  })
+})
+
+describe('veleno: velenoMult scales the flat component only', () => {
+  it('1.5x mult scales flat but not %maxHp', () => {
+    const u = mkUnit(200)
+    for (let i = 0; i < 5; i++) applyStatus(u, 'veleno')   // 5 stacks
+    const before = u.hp
+    tickStatuses(1, u, { velenoMult: 1.5 })
+    // flat 5*4*1.5=30 ; pct 5*0.005*200=5 ; total 35
+    expect(before - u.hp).toBe(35)
   })
 })
