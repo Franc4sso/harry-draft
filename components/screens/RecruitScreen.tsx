@@ -91,59 +91,54 @@ export function RecruitScreen({
     : undefined
 
   return (
-    <main className="flex-1 flex flex-col items-center gap-5 p-6">
-      <div className="text-center">
-        <h1 className="font-display text-3xl">Reclutamento</h1>
+    // Layout copied verbatim from DraftScreen: a header above, then the exact same
+    // two-column grid (candidates left / synergy rail right) using md:grid-cols-[1fr_280px].
+    <main className="flex-1 w-full">
+      <header className="px-4 pt-5 text-center">
+        <h1 className="font-display text-2xl">Reclutamento</h1>
         <p className="mt-1 text-sm text-white/60">
           {full
             ? 'Squadra al completo: scegli chi reclutare e quale mago sostituire.'
             : 'Scegli un mago da aggiungere alla squadra.'}
         </p>
-      </div>
+      </header>
 
-      {/* Flex (not arbitrary grid) so the right rail is a guaranteed side column on
-          any viewport ≥ sm, using only standard Tailwind classes (no JIT-dependent
-          arbitrary values that can go missing under dev HMR). */}
-      <div className="flex w-full max-w-5xl flex-col items-stretch gap-6 sm:flex-row sm:items-start">
-        {/* Offer + (when full) the swap roster */}
-        <div className="flex min-w-0 flex-1 flex-col gap-5">
-          {/* Candidates as a vertical stack of HORIZONTAL (landscape) cards — the
-              same WizardCardRow the draft uses, so recruiting reads like the draft. */}
-          <section
-            className="flex flex-col gap-4"
-            onPointerLeave={() => setConsidered(null)}
-          >
-            {offer.map(d => (
-              <div
-                key={d.wizard.id}
-                data-testid={`recruit-${d.wizard.id}`}
-                role="button"
-                tabIndex={0}
-                aria-pressed={pick === d.wizard.id}
-                onClick={() => setPick(d.wizard.id)}
-                onPointerEnter={() => setConsidered(d)}
-                onFocus={() => setConsidered(d)}
-                onKeyDown={e => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault()
-                    setPick(d.wizard.id)
-                  }
-                }}
-                className="cursor-pointer rounded-2xl"
-              >
-                <WizardCardRow drafted={d} selected={pick === d.wizard.id} />
-              </div>
-            ))}
-          </section>
+      <div className="mx-auto grid max-w-5xl grid-cols-1 items-start gap-6 p-4 md:grid-cols-[1fr_280px]">
+        {/* Candidates (left column) — same WizardCardRow the draft uses, stacked. */}
+        <section
+          className="grid grid-cols-1 content-start gap-4"
+          onPointerLeave={() => setConsidered(null)}
+        >
+          {offer.map(d => (
+            <div
+              key={d.wizard.id}
+              data-testid={`recruit-${d.wizard.id}`}
+              role="button"
+              tabIndex={0}
+              aria-pressed={pick === d.wizard.id}
+              onClick={() => setPick(d.wizard.id)}
+              onPointerEnter={() => setConsidered(d)}
+              onFocus={() => setConsidered(d)}
+              onKeyDown={e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault()
+                  setPick(d.wizard.id)
+                }
+              }}
+              className="cursor-pointer rounded-2xl"
+            >
+              <WizardCardRow drafted={d} selected={pick === d.wizard.id} />
+            </div>
+          ))}
 
           {full && (
-            <div className="w-full">
+            <div className="mt-1">
               <h2 className="mb-2 text-sm text-white/70">
                 {pickedWizard
                   ? <>Sostituisci con <span className="font-semibold text-[#7cdc7c]">{displayName(pickedWizard)}</span>:</>
                   : 'Squadra piena — scegli chi sostituire:'}
               </h2>
-              <div className="flex flex-col gap-2">
+              <div className="grid grid-cols-1 gap-2">
                 {team.map(t => {
                   const removing = replaceId === t.wizard.id
                   return (
@@ -168,22 +163,25 @@ export function RecruitScreen({
               </div>
             </div>
           )}
-        </div>
+        </section>
 
-        {/* Activation rail — fixed-width right column from sm up (standard w-80),
-            sticky there. Stacks below only on genuine narrow mobile (< sm). */}
-        <aside className="w-full shrink-0 sm:sticky sm:top-4 sm:w-80">
-          <ActivationRail candidate={focus} activating={activating} />
+        {/* Synergy rail (right column) — same sticky aside position as the draft. */}
+        <aside>
+          <div className="sticky top-28">
+            <ActivationRail candidate={focus} activating={activating} />
+          </div>
         </aside>
       </div>
 
-      <Button
-        variant="primary"
-        disabled={!pick}
-        onClick={() => pick && onPick(pick, full ? replaceId : undefined)}
-      >
-        {pick && full && replacedName ? `Recluta · sostituisci ${replacedName}` : 'Recluta'}
-      </Button>
+      <div className="px-4 pb-6 text-center">
+        <Button
+          variant="primary"
+          disabled={!pick}
+          onClick={() => pick && onPick(pick, full ? replaceId : undefined)}
+        >
+          {pick && full && replacedName ? `Recluta · sostituisci ${replacedName}` : 'Recluta'}
+        </Button>
+      </div>
     </main>
   )
 }

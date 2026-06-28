@@ -28,14 +28,15 @@ describe('RecruitScreen', () => {
     }
   })
 
-  it('stacks the candidates in a single vertical column (not a row of portraits)', () => {
+  it('stacks the candidates in a single vertical column (like the draft section)', () => {
     const onPick = vi.fn()
     render(<RecruitScreen offer={offer} team={team} teamMax={5} onPick={onPick} />)
     const tiles = offer.map(d => screen.getByTestId(`recruit-${d.wizard.id}`))
     const cols = new Set(tiles.map(t => t.parentElement))
     expect(cols.size).toBe(1)
     const col = [...cols][0]!
-    expect(col.className).toContain('flex-col')
+    expect(col.tagName.toLowerCase()).toBe('section')
+    expect(col.className).toContain('grid-cols-1')
   })
 
   it('keeps the synergy rail as a right-hand aside sibling of the candidates', () => {
@@ -46,11 +47,10 @@ describe('RecruitScreen', () => {
     const aside = container.querySelector('aside')
     expect(aside).not.toBeNull()
     expect(aside!.textContent).toContain('Sinergie attivate')
-    // The aside is a fixed-width right column from the sm breakpoint (standard
-    // classes only — no JIT-dependent arbitrary grid value), and its shell is a
-    // row from sm up.
-    expect(aside!.className).toContain('sm:w-80')
+    // Layout mirrors the draft exactly: the candidates + rail live in a two-column
+    // grid (md:grid-cols-[1fr_280px]); the aside is its right-hand column.
     const shell = aside!.parentElement!
-    expect(shell.className).toContain('sm:flex-row')
+    expect(shell.className).toContain('md:grid-cols-[1fr_280px]')
+    expect(shell.querySelector('section')).not.toBeNull()
   })
 })
