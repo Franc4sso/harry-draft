@@ -21,10 +21,10 @@ import { parseAreaNodeId } from '@/game/engine/map'
 export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: () => void }) {
   const c = useRunB(seed)
   const animKey = `${c.view}-${c.run.currentNodeId ?? c.area}`
-  // Persistent team + synergy strip on the between-battle phases. Battle has its
-  // own in-fight synergy display, and the end screens (draft/win/defeat) don't
-  // need it — so it's scoped to map/recruit/relic only.
-  const showTeamBar = c.view === 'map' || c.view === 'recruit' || c.view === 'relic'
+  // Persistent team + synergy strip on the between-battle phases. The map view gets
+  // the roster as a larger LEFT sidebar instead (see the 'map' case), so the top
+  // strip is scoped to recruit/relic only.
+  const showTeamBar = c.view === 'recruit' || c.view === 'relic'
 
   const renderView = () => {
     switch (c.view) {
@@ -33,14 +33,23 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
 
       case 'map':
         return (
-          <MapScreen
-            map={c.run.map ?? []}
-            currentNodeId={c.run.currentNodeId ?? ''}
-            reachableIds={c.reachable.map(n => n.id)}
-            onChoose={c.chooseNode}
-            area={c.area}
-            areasTotal={c.areasTotal}
-          />
+          // Roster as a larger LEFT sidebar next to the tree (not the small top strip),
+          // so the player can read their wizards while choosing a path.
+          <div className="flex-1 flex flex-row items-start gap-4 p-3">
+            <aside className="sticky top-3 w-56 shrink-0">
+              <TeamSynergyBar team={c.run.team} synergies={c.run.activeSynergies} orientation="vertical" />
+            </aside>
+            <div className="min-w-0 flex-1">
+              <MapScreen
+                map={c.run.map ?? []}
+                currentNodeId={c.run.currentNodeId ?? ''}
+                reachableIds={c.reachable.map(n => n.id)}
+                onChoose={c.chooseNode}
+                area={c.area}
+                areasTotal={c.areasTotal}
+              />
+            </div>
+          </div>
         )
 
       case 'battle': {

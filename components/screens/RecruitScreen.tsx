@@ -38,10 +38,10 @@ function ActivationRail({ candidate, activating }: { candidate: DraftedWizard | 
             {activating.map(p => (
               <motion.div
                 key={p.synergy.id}
-                initial={{ opacity: 0, x: 12 }}
+                initial={{ opacity: 0, x: 6 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 12 }}
-                transition={{ type: 'spring', stiffness: 320, damping: 28 }}
+                exit={{ opacity: 0, x: 6 }}
+                transition={{ duration: 0.12, ease: 'easeOut' }}
                 className="rounded-xl border p-2.5"
                 style={{ borderColor: 'rgba(124,220,124,0.5)', background: 'rgba(124,220,124,0.10)', boxShadow: '0 0 16px rgba(124,220,124,0.14)' }}
               >
