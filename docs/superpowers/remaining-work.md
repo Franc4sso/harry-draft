@@ -11,6 +11,7 @@
 
 - **Veleno archetype — COMPLETE slice (A+B+C+D):** keyword engine + "che divora" ramp; draftability + Tossicità cap-lift; validation (counter matchups + viability sweep); loadout UI. Mechanically complete, draftable, validated, human-playable.
 - **Esecuzione archetype — Plan A (engine + content) DONE:** team-wide execute (bonus dmg to low-HP targets) via `game/engine/execute.ts` `teamExecute`; `Spada di Grifondoro` (grants execute) + `Sigillo del Carnefice` (scales it) relics; `Spietatezza` synergy; 9 finisher wizards tagged.
+- **Esecuzione archetype — Plan B (validation) DONE:** counter-web tests (`tests/engine/esecuzioneCounters.test.ts`: BEATS a fragile glass-cannon the execute flips; LOSES to a durable Regen wall that never drops under threshold) + favor-Esecuzione viability sweep (`tests/engine/esecuzioneSweep.test.ts`: winRate=0.850 execUptake=0.325 medianTurns=2 — the 0.850 is the same Serpeverde house-power skew Veleno surfaced, not a kit defect). Used winRate + turn-budget + execute-uptake, NOT total damage (execute is a multiplier with no discrete log flag). Mechanically complete + validated.
 
 **Counter web so far (emergent from mechanics):**
 | | Beats | Loses to |
@@ -20,15 +21,12 @@
 
 ---
 
-## 1. NEXT UP — Esecuzione Plan B (validation) · *small, autonomous*
+## 1. NEXT UP — Archetype #3 (replicate the proven pattern) · *medium*
 
-Mirror the Veleno validation slice. Two tasks:
-- **Counter-web matchup tests** (`tests/engine/esecuzioneCounters.test.ts`): Esecuzione BEATS a Fragile/low-HP enemy team; LOSES to a durable wall (high-HP / Regen / Scudi) that never drops under the threshold. Build like `tests/engine/velenoCounters.test.ts`.
-- **Favor-Esecuzione viability sweep** (`tests/engine/esecuzioneSweep.test.ts`): clone `tests/engine/velenoSweep.test.ts`, bias choices to `esecuzione`-tagged wizards + the `spada-grifondoro`/`sigillo-carnefice` relics; print winRate / synergy-uptake / turn-budget.
-
-⚠️ **Reuse the hard-won lesson:** use a **first-hit (or turns-to-kill) metric, NOT total damage** — total damage is confounded by kill speed (a stronger hit kills in fewer log entries). See `firstHitToRight` in `tests/engine/esecuzione.test.ts`.
-
-Expect the sweep to surface the same **Serpeverde house-power skew** as Veleno did (most execute wizards are Serpeverde) — that's item #4, not an Esecuzione defect.
+Both validation slices (Veleno, Esecuzione) are now DONE. Next quick autonomous win is gone; the
+proven tracer-bullet pattern now applies to the next flagship archetype — see item #3 below
+(**Scudi-Rigen** or **Magie Oscure**). Pick one, write a slice spec declaring its counter matrix,
+execute the loop, validate (counters + sweep), merge.
 
 ---
 

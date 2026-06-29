@@ -9,6 +9,8 @@ import type { ActiveRelic } from '@/types'
 const ar = (id: string): ActiveRelic => ({ relic: RELIC_BY_ID[id]!, stageObtained: 0 })
 
 describe('relic balance sanity', () => {
+  // 400 deterministic battles (200 × with/without relics) — legitimately exceeds the 5s default
+  // under a loaded full-suite run, so give it explicit headroom (passes ~7s isolated).
   it('a few common relics help but do not trivialize a fair fight', () => {
     let winsNoRelic = 0, winsRelic = 0
     const N = 200
@@ -23,5 +25,5 @@ describe('relic balance sanity', () => {
     // relics should raise the player's win-rate (a real advantage) but not to a guaranteed 100%
     expect(winsRelic).toBeGreaterThanOrEqual(winsNoRelic)
     expect(winsRelic).toBeLessThan(N)
-  })
+  }, 30000)
 })
