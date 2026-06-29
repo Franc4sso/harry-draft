@@ -90,22 +90,25 @@ export const BALANCE = {
     // duo can win; the per-level term lifts elites/bosses/late areas into a real
     // threat. The level↔menace link means the number the player sees tracks real
     // difficulty. Calibrated by tests/engine/campaignBalanceB.test.ts (120-seed
-    // near-optimal win-rate must stay in [0.15, 0.55]).
+    // near-optimal win-rate must stay in [0.15, 0.45] — "much harder" target).
     //
     // Win-based levelling makes the roster scale fast, so the per-level menace slope is
     // STEEP (enemies must keep pace as their level climbs) while the offset stays deeply
     // negative to keep the low-level area-0 opener winnable for a starting duo.
-    // Calibrated on the 120-seed harness → winRate 0.217 (deaths 50/19/25): a starting
-    // duo facing the scaled-up area-0 elite/boss makes the opener the main wall, which
-    // is the intended risk of the fast +1/+2/+3 levelling.
+    // Calibrated on the 120-seed harness → winRate 0.167 (20/120 wins):
+    //   lv2-normal statMult 0.42 (was 0.07), lv10-boss statMult 1.38 (was 1.03).
+    //   area-0 opener is the main wall; elites/bosses hit at level-coherent strength.
+    //   Competent Grifondoro winRate ~0.17 — solidly in "much harder" [0.15, 0.45] band.
     menacePerLevel: 0.12,
-    menaceOffset: -1.05,
+    menaceOffset: -0.70,
     // The FINAL area boss is the scripted Voldemort (BOSSES[0], fixed budget); its
     // menace is this flat value (independent of the level curve) so it stays the climax.
-    // -0.35 (was -0.25): the level-driven path eased area-0 enough that the unchanged
-    // boss became the sole binding constraint at ~0.175; loosening it lifts the run to
-    // a healthier 0.208 while the boss still claims most area-2 losses.
-    finalBossMenace: -0.35,
+    // -0.50: with menaceOffset -0.70, ALL regular fights are now much harder than before,
+    // meaning player resources are spent throughout the run. Setting finalBossMenace high
+    // (e.g. +0.30) was tested but made the Grifondoro winRate crater to 0.10 (too hard).
+    // -0.50 (→ statMult 0.50) keeps Voldemort as a real final challenge while keeping
+    // the run winnable — confirmed at winRate 0.167 on the 120-seed harness.
+    finalBossMenace: -0.50,
     enemyRelicsElite: 0,
     enemyRelicsBoss: 1,
   },

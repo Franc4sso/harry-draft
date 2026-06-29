@@ -25,6 +25,9 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 // bonus and recoil NOT tuned (data/relics.ts unchanged; marchio-nero bonus=0.5, recoil=0.2).
 // Post-deatheater-nerf (25→12): winRate now 0.950 (was 0.950). Still > 0.05, kit intact.
 //   deatheater synergy fires rarely in tag-biased picks; nerf has negligible effect on win rate.
+// Post-enemy-scaling-fix (menaceOffset -1.05→-0.70, 2026-06-29): winRate=0.942 oscuritaRate=0.183
+//   darkUptakeRate=0.208 recoilDeaths=2 medianTurns=2 maxTurns=36. Kit viable (>> 0.05 floor).
+//   High winRate persists (Serpeverde skew + mageOscure overlap); Slice 2 handles rebalance.
 registerCoreResolvers()
 
 const DARK_RELICS = new Set(['marchio-nero', 'diadema-corrotto'])

@@ -13,6 +13,9 @@ import type { RunNode, RunState } from '@/types'
 // deatheater nerf. Before the nerf (deatheater.atk=25) Serpeverde swept 0.76–0.95; the nerf must
 // bring this into (0.10, 0.60) while campaignBalanceB (Grifondoro, 0.15–0.55) stays green.
 // Same upper-bound fight-for-EXP policy as campaignBalanceB so the two are comparable.
+// Post-enemy-scaling-fix (menaceOffset -1.05→-0.70, 2026-06-29): winRate=0.783 (was 0.867).
+//   Still above desired band — Serpeverde house-power + Voldemort stat cliff remain the root cause.
+//   Band assertion stays DISABLED (Slice 2 handles Serpeverde/Voldemort rebalance).
 registerCoreResolvers()
 
 function pickNode(s: RunState): RunNode {

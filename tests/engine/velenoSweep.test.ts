@@ -23,6 +23,9 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 // Post-deatheater-nerf (25→12): winRate now 0.775 (was 0.758). Still > 0.05, kit intact.
 //   Note: deatheater synergy fires in ~17% of power-greedy runs; nerf has negligible effect on
 //   overall Serpeverde win rate — the imbalance root cause is Voldemort tier-1 stats + house synergy.
+// Post-enemy-scaling-fix (menaceOffset -1.05→-0.70, 2026-06-29): winRate=0.442 tossicitaRate=0.317
+//   dotShare=0.381 medianTurns=3 maxTurns=39. Kit still viable (>> 0.05 floor). Serpeverde
+//   house-power skew partially mitigated by harder enemies; remaining gap handled in Slice 2.
 registerCoreResolvers()
 
 const VELENO_RELICS = new Set(['ampolla-veleno', 'pugnale-bellatrix', 'boccino-doro'])

@@ -11,6 +11,9 @@ import type { RunNode, RunState } from '@/types'
 
 // Register at module scope (idempotent): the greedy runs below are evaluated in
 // the describe body at collection time, BEFORE any beforeAll hook would fire.
+// Calibration (2026-06-29, post enemy-scaling fix — menaceOffset -1.05→-0.70, finalBossMenace -0.35→-0.50):
+//   Observed winRate=0.167 (20/120 wins). Band tightened to [0.15, 0.45] for "much harder" target.
+//   lv2-normal statMult 0.42 (was 0.07), lv10-boss statMult 1.38 (was 1.03) — enemies at level-coherent stats.
 registerCoreResolvers()
 
 // Near-optimal ("upper-bound") player policy. A pure recruit/relic-first greedy is
@@ -72,7 +75,7 @@ describe('campaign balance (new loop)', () => {
 
   it('is winnable but not trivial for a near-optimal player', () => {
     expect(winRate).toBeGreaterThan(0.15)
-    expect(winRate).toBeLessThan(0.55)
+    expect(winRate).toBeLessThan(0.45)
   })
   it('is deterministic (same seeds → same outcomes)', () => {
     const again = Array.from({ length: N }, (_, i) => runOne(`run-${i}`))

@@ -20,6 +20,9 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 // execute-kit defect (the kit is the same multiplier whatever the house). See remaining-work.md #4.
 // Post-deatheater-nerf (25→12): winRate now 0.850 (was 0.850). Still > 0.05, kit intact.
 //   deatheater synergy fires rarely in tag-biased picks; nerf has negligible effect on win rate.
+// Post-enemy-scaling-fix (menaceOffset -1.05→-0.70, 2026-06-29): winRate=0.792 spietatezzaRate=0.308
+//   execUptakeRate=0.350 medianTurns=2 maxTurns=40. Kit viable (>> 0.05 floor). Serpeverde skew
+//   partially reduced; Voldemort rebalance (Slice 2) will further close the gap.
 //
 // Metric choice — IMPORTANT: there is NO total-damage assertion here. Execute is a damage
 // MULTIPLIER on the killing blow, not a discrete channel like poison's `dot` flag, so a
