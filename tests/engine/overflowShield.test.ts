@@ -10,6 +10,14 @@ function fullHpUnit(rate?: number): BattleUnit {
     shieldConvert: rate === undefined ? undefined : { rate },
   } as unknown as BattleUnit
 }
+function partialHpUnit(rate?: number): BattleUnit {
+  return {
+    wizard: { id: 'cedric' }, side: 'left', hp: 95, maxHp: 100, alive: true,
+    cooldowns: {}, buffedStats: { hp: 100, atk: 10, def: 10, spd: 10 },
+    statusEffects: [{ kind: 'regen', statusId: 'regen', remaining: 10, stacks: 1 }],
+    shieldConvert: rate === undefined ? undefined : { rate },
+  } as unknown as BattleUnit
+}
 const shieldOf = (u: BattleUnit) => u.statusEffects.find(e => e.statusId === 'shield')?.absorbLeft ?? 0
 
 describe('regen overflow → shield', () => {
@@ -30,5 +38,11 @@ describe('regen overflow → shield', () => {
     tickStatuses(1, u)
     tickStatuses(2, u)
     expect(shieldOf(u)).toBe(6)      // second tick replaces, not 12
+  })
+  it('partial overflow: heals to cap, overflow converts to shield', () => {
+    const u = partialHpUnit(0.5)     // hp=95, maxHp=100, tickHeal=12
+    tickStatuses(1, u)
+    expect(u.hp).toBe(100)           // healed to cap
+    expect(shieldOf(u)).toBe(4)      // overflow = 95+12-100 = 7; round(7 * 0.5) = 4
   })
 })
