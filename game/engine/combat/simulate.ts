@@ -3,6 +3,7 @@ import type {
 } from '@/types'
 import type { Rng } from '../rng'
 import { BALANCE } from '@/data/constants'
+import { STATUS_BY_ID } from '@/data/statuses'
 import { applyBonuses, totalRegen } from '../synergy'
 import { applyRelicBonuses, keywordDamageMult, registerRelicTriggers, totalRelicRegen } from '../relics'
 import { teamExecute } from '../execute'
@@ -270,7 +271,7 @@ export function simulateBattle(
         if (overflow > 0 && u.shieldConvert) {
           const amount = Math.round(overflow * u.shieldConvert.rate)
           if (amount > 0) {
-            const dur = 3 // matches STATUS_BY_ID['shield'].defaultDuration
+            const dur = STATUS_BY_ID['shield']!.defaultDuration
             u.statusEffects = u.statusEffects.filter(e => !(e.statusId === 'shield' && e.sourceId === 'overflow'))
             u.statusEffects.push({ kind: 'shield', statusId: 'shield', remaining: dur, stacks: 1, sourceId: 'overflow', absorbLeft: amount })
           }
