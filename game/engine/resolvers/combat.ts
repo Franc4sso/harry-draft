@@ -124,7 +124,7 @@ export const combatResolver: NodeResolver = {
     return {
       ...state,
       team: out.survivors,
-      activeSynergies: detectSynergies(out.survivors),
+      activeSynergies: detectSynergies(livingOf(out.survivors)),
       lastBattle: out.result,
     }
   },
