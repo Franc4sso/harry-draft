@@ -47,6 +47,7 @@ export const relicResolver: NodeResolver = {
     if (!relic) return state
     const ev: RunEvent = { area: state.area ?? 0, nodeId: node.id, kind: 'relic',
       summary: `Ottieni la reliquia ${relic.name ?? relic.id}` }
-    return { ...state, relics: [...state.relics, { relic, stageObtained: state.stage }], log: [...(state.log ?? []), ev] }
+    const active = { relic, stageObtained: state.stage, ...(choice.assignedTo ? { assignedTo: choice.assignedTo } : {}) }
+    return { ...state, relics: [...state.relics, active], log: [...(state.log ?? []), ev] }
   },
 }
