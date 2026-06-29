@@ -9,6 +9,7 @@ import { offerRecruits, recruitVia } from './recruit'
 import { detectSynergies } from './synergy'
 import { combatResolver } from './resolvers/combat'
 import { recruitResolver, relicResolver } from './resolvers/recruit'
+import { infirmaryResolver } from './resolvers/infirmary'
 import { registerResolver, resolverFor } from './resolvers'
 import type { ResolverChoice } from './resolvers/types'
 import { BALANCE } from '@/data/constants'
@@ -33,6 +34,7 @@ export function registerCoreResolvers(): void {
   registerResolver({ ...combatResolver, id: 'boss' })
   registerResolver(recruitResolver)                // id 'recruit'
   registerResolver(relicResolver)                  // id 'relic'
+  registerResolver(infirmaryResolver)              // id 'infirmary'
   registered = true
 }
 

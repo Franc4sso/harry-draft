@@ -10,18 +10,18 @@ function floorOf(id: string): number {
 
 const ICON: Record<RunNodeType, string> = {
   battle: '⚔️', elite: '☠️', boss: '👑', relic: '💎', event: '❓', shop: '🛒',
-  recruit: '🧙', commonRoom: '🏠', library: '📚', potions: '🧪', forest: '🌲',
+  recruit: '🧙', commonRoom: '🏠', library: '📚', potions: '🧪', forest: '🌲', infirmary: '🏥',
 }
 const LABEL: Record<RunNodeType, string> = {
   battle: 'Battaglia', elite: 'Elite', boss: 'Boss', relic: 'Reliquia', event: 'Evento',
   shop: 'Negozio', recruit: 'Recluta', commonRoom: 'Sala Comune', library: 'Biblioteca',
-  potions: 'Pozioni', forest: 'Foresta',
+  potions: 'Pozioni', forest: 'Foresta', infirmary: 'Infermeria',
 }
 /** Per-type seal accent (ring + glow + ink tint). */
 const ACCENT: Record<RunNodeType, string> = {
   battle: '#b08d57', elite: '#e0833a', boss: '#f5c451', relic: '#a78bfa',
   event: '#c78bf0', shop: '#e6b450', recruit: '#5fbf8a', commonRoom: '#6fb1c4',
-  library: '#6fb1c4', potions: '#5fbf8a', forest: '#5fbf8a',
+  library: '#6fb1c4', potions: '#5fbf8a', forest: '#5fbf8a', infirmary: '#10b981',
 }
 
 // Layout grid: each floor is a row (entry at the bottom, boss at the top).

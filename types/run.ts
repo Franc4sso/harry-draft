@@ -9,7 +9,7 @@ export type RunPhase =
 
 export type RunNodeType =
   // Fase 1 — generati e risolti
-  | 'battle' | 'elite' | 'boss' | 'recruit' | 'relic'
+  | 'battle' | 'elite' | 'boss' | 'recruit' | 'relic' | 'infirmary'
   // Fasi 2-3 — catalogati ora, generati dopo
   | 'shop' | 'event' | 'commonRoom'
   | 'library' | 'potions' | 'forest'
@@ -27,7 +27,7 @@ export interface RunNode {
 export interface RunEvent {
   area: number
   nodeId: string
-  kind: 'recruit' | 'relic' | 'elite' | 'boss' | 'levelMilestone'
+  kind: 'recruit' | 'relic' | 'elite' | 'boss' | 'levelMilestone' | 'infirmary'
   summary: string
 }
 
