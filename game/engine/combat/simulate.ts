@@ -264,6 +264,17 @@ export function simulateBattle(
         const before = u.hp
         u.hp = Math.min(u.maxHp, u.hp + regen[u.side])
         const healed = u.hp - before
+        // Overflow → shield: when the regen tick exceeds the HP cap and the unit has
+        // shieldConvert (from egida-tassorosso / Bastione), convert excess to a refresh shield.
+        const overflow = (before + regen[u.side]) - u.maxHp
+        if (overflow > 0 && u.shieldConvert) {
+          const amount = Math.round(overflow * u.shieldConvert.rate)
+          if (amount > 0) {
+            const dur = 3 // matches STATUS_BY_ID['shield'].defaultDuration
+            u.statusEffects = u.statusEffects.filter(e => !(e.statusId === 'shield' && e.sourceId === 'overflow'))
+            u.statusEffects.push({ kind: 'shield', statusId: 'shield', remaining: dur, stacks: 1, sourceId: 'overflow', absorbLeft: amount })
+          }
+        }
         // Log the actual healed amount (0 when already at full HP) so buildReplay —
         // which reconstructs HP from log deltas — reflects regen and stays in sync.
         if (healed > 0) {
