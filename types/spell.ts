@@ -1,4 +1,5 @@
 import type { EffectSpec, EffectTarget } from './status'
+import type { Keyword } from './keyword'
 
 export type SpellType = 'Attacco' | 'Difesa' | 'Cura' | 'Controllo'
 export type Stat = 'hp' | 'atk' | 'def' | 'spd'
@@ -23,4 +24,5 @@ export interface Spell {
   spec?: EffectSpec[]
   target?: EffectTarget
   priority?: number
+  keywords?: Keyword[]
 }

@@ -49,9 +49,12 @@ export interface BattleUnit extends DraftedWizard {
   execute?: { threshold: number; bonus: number }
   /** This unit's side shield-conversion (from relics/Bastione): `rate` of regen overflow → shield. */
   shieldConvert?: { rate: number }
+  /** This unit's Magie Oscure effect (from an assigned Marchio Nero / the Oscurità synergy):
+   *  +bonus dmg on dark spells, recoil fraction of damage dealt back to self (lethal). */
+  darkMagic?: { bonus: number; recoil: number }
 }
 
-export type LogFlag = 'crit' | 'dodge' | 'kill' | 'heal' | 'block' | 'stun' | 'dot' | 'pen' | 'shatter' | 'wait'
+export type LogFlag = 'crit' | 'dodge' | 'kill' | 'heal' | 'block' | 'stun' | 'dot' | 'pen' | 'shatter' | 'wait' | 'recoil'
 
 export interface LogEntry {
   turn: number

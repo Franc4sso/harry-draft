@@ -41,9 +41,15 @@ export interface Relic {
   /** Grants the team a regen-overflow → shield conversion (Scudi-Rigen archetype): `rate` of
    *  the regen tick's overflow-above-maxHp becomes shield. Stacked/scaled via teamShieldConvert. */
   grantsShieldConvert?: { rate: number }
+  /** Grants a single ASSIGNED carrier (ActiveRelic.assignedTo) the Magie Oscure amplify + recoil:
+   *  +bonus dmg on dark spells, recoil = that fraction of damage DEALT back to the caster (lethal). */
+  grantsDarkMagic?: { bonus: number; recoil: number }
+  /** When true, this relic is assigned to ONE wizard at draft time (see ActiveRelic.assignedTo). */
+  assignable?: boolean
 }
 
 export interface ActiveRelic {
   relic: Relic
   stageObtained: number
+  assignedTo?: string   // wizardId of the carrier (for `assignable` relics); undefined = unassigned
 }
