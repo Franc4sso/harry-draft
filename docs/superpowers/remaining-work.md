@@ -14,24 +14,32 @@
 - **Esecuzione archetype — Plan B (validation) DONE:** counter-web tests (`tests/engine/esecuzioneCounters.test.ts`: BEATS a fragile glass-cannon the execute flips; LOSES to a durable Regen wall that never drops under threshold) + favor-Esecuzione viability sweep (`tests/engine/esecuzioneSweep.test.ts`: winRate=0.850 execUptake=0.325 medianTurns=2 — the 0.850 is the same Serpeverde house-power skew Veleno surfaced, not a kit defect). Used winRate + turn-budget + execute-uptake, NOT total damage (execute is a multiplier with no discrete log flag). Mechanically complete + validated.
 - **Scudi-Rigen archetype — COMPLETE slice:** regen-overflow→shield (refresh, no accumulation) via `game/engine/shieldConvert.ts` `teamShieldConvert` + the overflow branch in BOTH regen paths (`status.ts` status-tick AND `simulate.ts` team-regen — they are separate, the counter test caught the missing one); `Egida del Tasso` (grants conversion) + `Cuore del Tasso` (scales it) relics; `Bastione` synergy; `scudirigen` tags on 6 Tassorosso wizards. Counter-web validated (beats attrition via the flip, loses to esecuzione + burst) + viability sweep (`winRate=0.250 shieldUptake=0.142 maxTurns=47` — draftable-not-dominant wall; the low winRate is the Tassorosso house-power gap, not a kit defect; `maxTurns<cap` proves refresh holds, no stall). Mechanically complete + validated.
 
+- **Magie Oscure archetype — COMPLETE slice:** dark-spell amplify + lethal recoil-on-damage-dealt via `game/engine/darkMagic.ts` `teamDarkMagic` + the attack handler (`effects.ts`, gated on `ctx.dark` from `resolve.ts`, recoil on `residual` so a shield negates payoff AND risk); a per-unit ASSIGNABLE relic `Marchio Nero` (amplify+recoil to one carrier) + `Diadema Corrotto` (scales bonus only) + `Oscurità` synergy (amplifies all dark casters, no recoil) + `magieOscure` tags on 6 wizards + the 3 dark spells (avada/fiendfyre/sectumsempra). NEW MECHANISM: per-unit relic assignment (resolver `assignedTo` + `RelicNodeScreen` carrier step, full UI→hook→resolver chain). Counter-web validated (beats squishy via the flip, loses to shields + chip/control via lethal recoil; partial-shield → proportional recoil) + viability sweep (`winRate=0.950 darkUptake=0.208 recoilDeaths=2 maxTurns=37`). Design note: recoilDeaths is low because optimal play assigns the Marchio to a high-HP carrier, dodging the recoil — rebalance lever is raising `recoil`, not lowering `bonus` (see memory). Mechanically complete + validated.
+
 **Counter web so far (emergent from mechanics):**
 | | Beats | Loses to |
 |---|---|---|
 | Veleno | Tank / Scudi (bypasses DEF + shields) | Regen / Burst |
 | Esecuzione | Fragile / low-HP (finisher) | Durable walls (Tank/Scudi/Regen) |
 | Scudi-Rigen | Attrito / danno-sostenuto (overflow→scudo out-sustaina) | Esecuzione (finisce sotto soglia) / Burst (sfonda lo scudo) |
+| Magie Oscure | Squishy (nuke amplificato one-shotta) | Scudi (assorbe → niente payoff né recoil) / Chip-Controllo (recoil letale sul nuke pieno) |
 
 ---
 
-## 1. NEXT UP — Archetype #4: Magie Oscure (replicate the proven pattern) · *medium*
+## 1. NEXT UP — pick one: another archetype, or the Serpeverde rebalance, or a non-archetype pillar
 
-Archetypes #1-3 (Veleno, Esecuzione, Scudi-Rigen) are DONE. The remaining flagship from the
-direction doc is **Magie Oscure** (Serpeverde/Mangiamorte): glass-cannon nuke (Avada/Fiendfyre),
-high risk via Corruption. Counter: beats squishy, loses to control/shields. Same loop: slice spec
-declaring its counter matrix → engine keyword + grant/scale relic pair + tag-synergy + draftability
-→ validation (counters + sweep) → merge. Spec/plan for Scudi-Rigen
-(`docs/superpowers/specs/2026-06-29-scudi-rigen-archetype-design.md` +
-`docs/superpowers/plans/2026-06-29-scudi-rigen-archetype.md`) is the freshest template.
+Archetypes #1-4 (Veleno, Esecuzione, Scudi-Rigen, Magie Oscure) are DONE. Open directions, in
+rough priority:
+- **Serpeverde house rebalance (#4 below)** is now MORE pressing: three Serpeverde-leaning archetypes
+  (Esecuzione 0.85, Veleno 0.76, Magie Oscure 0.95) all sweep high vs the calibrated Grifondoro 0.275.
+  The house-power skew is the common thread; tuning the Serpeverde pool would right-size all three at once.
+- **More archetypes** from the direction doc (Velocità/Catena, Controllo, Rigen/Vampiro, Sacrificio,
+  Evocazione, Crescendo, Difensiva). The Magie Oscure slice
+  (`docs/superpowers/specs/2026-06-29-magie-oscure-archetype-design.md` +
+  `docs/superpowers/plans/2026-06-29-magie-oscure-archetype.md`) is the freshest template — and it now
+  proves the per-unit assignable-relic mechanism, reusable for future "equip on one wizard" designs.
+- **A non-archetype pillar** — P3 Eventi narrativi (the empty event/shop/library/forest nodes) is the
+  biggest *memorability* gap and is pure data/text (#5 below).
 
 ---
 
