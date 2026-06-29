@@ -103,11 +103,13 @@ export const BALANCE = {
     menaceOffset: -0.70,
     // The FINAL area boss is the scripted Voldemort (BOSSES[0], fixed budget); its
     // menace is this flat value (independent of the level curve) so it stays the climax.
-    // -0.50: with menaceOffset -0.70, ALL regular fights are now much harder than before,
-    // meaning player resources are spent throughout the run. Setting finalBossMenace high
-    // (e.g. +0.30) was tested but made the Grifondoro winRate crater to 0.10 (too hard).
-    // -0.50 (→ statMult 0.50) keeps Voldemort as a real final challenge while keeping
-    // the run winnable — confirmed at winRate 0.167 on the 120-seed harness.
+    // ⚠️ TEMPORARY -0.50: with menaceOffset -0.70 all regular fights got much harder, so the
+    // player arrives DEPLETED — pushing finalBossMenace high (+0.30) cratered the win rate to
+    // 0.10. -0.50 keeps the run winnable NOW, but it leaves the final boss WEAKER than the
+    // area-2 boss (statMult 0.50 vs 1.38), which is backwards for a climax. This is resolved by
+    // the "death & recovery" slice: once a guaranteed pre-boss HEAL node lets the player arrive
+    // recovered, this gets raised to a real climax value (~+0.30..+0.40). See
+    // docs/superpowers/specs/2026-06-29-death-and-recovery-design.md.
     finalBossMenace: -0.50,
     enemyRelicsElite: 0,
     enemyRelicsBoss: 1,
