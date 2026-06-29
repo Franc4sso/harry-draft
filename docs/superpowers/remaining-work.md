@@ -12,21 +12,26 @@
 - **Veleno archetype — COMPLETE slice (A+B+C+D):** keyword engine + "che divora" ramp; draftability + Tossicità cap-lift; validation (counter matchups + viability sweep); loadout UI. Mechanically complete, draftable, validated, human-playable.
 - **Esecuzione archetype — Plan A (engine + content) DONE:** team-wide execute (bonus dmg to low-HP targets) via `game/engine/execute.ts` `teamExecute`; `Spada di Grifondoro` (grants execute) + `Sigillo del Carnefice` (scales it) relics; `Spietatezza` synergy; 9 finisher wizards tagged.
 - **Esecuzione archetype — Plan B (validation) DONE:** counter-web tests (`tests/engine/esecuzioneCounters.test.ts`: BEATS a fragile glass-cannon the execute flips; LOSES to a durable Regen wall that never drops under threshold) + favor-Esecuzione viability sweep (`tests/engine/esecuzioneSweep.test.ts`: winRate=0.850 execUptake=0.325 medianTurns=2 — the 0.850 is the same Serpeverde house-power skew Veleno surfaced, not a kit defect). Used winRate + turn-budget + execute-uptake, NOT total damage (execute is a multiplier with no discrete log flag). Mechanically complete + validated.
+- **Scudi-Rigen archetype — COMPLETE slice:** regen-overflow→shield (refresh, no accumulation) via `game/engine/shieldConvert.ts` `teamShieldConvert` + the overflow branch in BOTH regen paths (`status.ts` status-tick AND `simulate.ts` team-regen — they are separate, the counter test caught the missing one); `Egida del Tasso` (grants conversion) + `Cuore del Tasso` (scales it) relics; `Bastione` synergy; `scudirigen` tags on 6 Tassorosso wizards. Counter-web validated (beats attrition via the flip, loses to esecuzione + burst) + viability sweep (`winRate=0.250 shieldUptake=0.142 maxTurns=47` — draftable-not-dominant wall; the low winRate is the Tassorosso house-power gap, not a kit defect; `maxTurns<cap` proves refresh holds, no stall). Mechanically complete + validated.
 
 **Counter web so far (emergent from mechanics):**
 | | Beats | Loses to |
 |---|---|---|
 | Veleno | Tank / Scudi (bypasses DEF + shields) | Regen / Burst |
 | Esecuzione | Fragile / low-HP (finisher) | Durable walls (Tank/Scudi/Regen) |
+| Scudi-Rigen | Attrito / danno-sostenuto (overflow→scudo out-sustaina) | Esecuzione (finisce sotto soglia) / Burst (sfonda lo scudo) |
 
 ---
 
-## 1. NEXT UP — Archetype #3 (replicate the proven pattern) · *medium*
+## 1. NEXT UP — Archetype #4: Magie Oscure (replicate the proven pattern) · *medium*
 
-Both validation slices (Veleno, Esecuzione) are now DONE. Next quick autonomous win is gone; the
-proven tracer-bullet pattern now applies to the next flagship archetype — see item #3 below
-(**Scudi-Rigen** or **Magie Oscure**). Pick one, write a slice spec declaring its counter matrix,
-execute the loop, validate (counters + sweep), merge.
+Archetypes #1-3 (Veleno, Esecuzione, Scudi-Rigen) are DONE. The remaining flagship from the
+direction doc is **Magie Oscure** (Serpeverde/Mangiamorte): glass-cannon nuke (Avada/Fiendfyre),
+high risk via Corruption. Counter: beats squishy, loses to control/shields. Same loop: slice spec
+declaring its counter matrix → engine keyword + grant/scale relic pair + tag-synergy + draftability
+→ validation (counters + sweep) → merge. Spec/plan for Scudi-Rigen
+(`docs/superpowers/specs/2026-06-29-scudi-rigen-archetype-design.md` +
+`docs/superpowers/plans/2026-06-29-scudi-rigen-archetype.md`) is the freshest template.
 
 ---
 
