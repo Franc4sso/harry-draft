@@ -27,11 +27,17 @@ export function generateMap(rng: Rng): RunNode[] {
   // 1. Decide each floor's nodes (ids + types).
   const widths: number[] = []
   for (let f = 0; f < floors; f++) {
-    if (f === 0 || f === last) widths.push(1)
+    if (f === 0 || f === last || (last - 1 >= 1 && f === last - 1)) widths.push(1)
     else widths.push(rng.int(minWidth, maxWidth))
   }
   const typeForFloor = (f: number): RunNodeType =>
-    f === last ? 'boss' : eliteFloors.includes(f) ? 'elite' : 'battle'
+    f === last
+      ? 'boss'
+      : last - 1 >= 1 && f === last - 1
+        ? 'infirmary'
+        : eliteFloors.includes(f)
+          ? 'elite'
+          : 'battle'
 
   const floorNodes: RunNode[][] = widths.map((w, f) =>
     Array.from({ length: w }, (_, i) => ({ id: nodeId(f, i), type: typeForFloor(f), next: [] as string[] })),

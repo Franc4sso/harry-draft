@@ -20,8 +20,17 @@ describe('generateMap', () => {
     expect(last[0]!.type).toBe('boss')
   })
   it('middle floors have width in [minWidth,maxWidth] and elite floors are elite', () => {
+    // floor last-1 is now a guaranteed width-1 Infermeria (pre-boss heal); skip it here
     const map = gen('beta')
-    for (let f = 1; f < BALANCE.map.floors - 1; f++) {
+    const last = BALANCE.map.floors - 1
+    for (let f = 1; f < last; f++) {
+      if (f === last - 1) {
+        // pre-boss Infermeria floor: width 1, type infirmary
+        const nodes = map.filter(n => nodeDepth(n.id) === f)
+        expect(nodes).toHaveLength(1)
+        expect(nodes[0]!.type).toBe('infirmary')
+        continue
+      }
       const nodes = map.filter(n => nodeDepth(n.id) === f)
       expect(nodes.length).toBeGreaterThanOrEqual(BALANCE.map.minWidth)
       expect(nodes.length).toBeLessThanOrEqual(BALANCE.map.maxWidth)
@@ -29,8 +38,8 @@ describe('generateMap', () => {
       for (const n of nodes) expect(n.type).toBe(expectType)
     }
   })
-  it('only generates battle/elite/boss types', () => {
-    for (const n of gen('gamma')) expect(['battle', 'elite', 'boss']).toContain(n.type)
+  it('only generates battle/elite/boss/infirmary types', () => {
+    for (const n of gen('gamma')) expect(['battle', 'elite', 'boss', 'infirmary']).toContain(n.type)
   })
   it('every node is reachable from the start and only boss has empty next', () => {
     const map = gen('delta')
