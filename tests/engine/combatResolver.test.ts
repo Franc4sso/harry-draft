@@ -42,8 +42,9 @@ describe('resolveCombat', () => {
     const out = resolveCombat(s, node, createRng('s').fork(2))
     expect(out.result.winner === 'left' || out.result.winner === 'right').toBe(true)
     expect(out.levelsGained).toBeGreaterThan(0)
-    // survivors level up (a normal clear is +1, so level ≥ 2 with coherent exp)
-    for (const dw of out.survivors) {
+    // only the living gain levels (dead wizards are benched at currentHp 0, no level-up)
+    const living = out.survivors.filter(dw => (dw.currentHp ?? dw.maxHp) > 0)
+    for (const dw of living) {
       expect(dw.level ?? 1).toBeGreaterThanOrEqual(2)
       expect(dw.exp ?? 0).toBeGreaterThan(0)
     }

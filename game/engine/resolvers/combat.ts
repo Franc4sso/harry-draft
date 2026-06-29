@@ -7,6 +7,7 @@ import { detectSynergies } from '../synergy'
 import { selectEnemyRelics } from '../relics'
 import { applyBattleToRoster } from '../run'
 import { gainLevels } from '../leveling'
+import { isDead, livingOf } from '../roster'
 import { parseAreaNodeId } from '../map'
 import { BALANCE } from '@/data/constants'
 import { BOSSES } from '@/data/bosses'
@@ -98,7 +99,7 @@ export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatR
   const rightMenace = isFinalBoss ? cb.finalBossMenace : menaceForLevel(enemyLevel)
 
   // Levels apply HERE, before combat — engine stays pure.
-  const ready = battleReadyTeam(state.team)
+  const ready = battleReadyTeam(livingOf(state.team))
   const playerSyn = detectSynergies(ready)
   const result = simulateBattle(ready, enemy, battleRng, {
     leftSyn: playerSyn, rightSyn: enemySyn, leftRelics: state.relics,
@@ -110,7 +111,7 @@ export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatR
   const persisted = applyBattleToRoster(state.team, result.finalSnapshot)
   const levelsGained = isBoss ? BALANCE.leveling.levelsPerBoss
     : nodeType === 'elite' ? BALANCE.leveling.levelsPerElite : BALANCE.leveling.levelsPerBattle
-  const survivors = persisted.map(dw => gainLevels(dw, levelsGained).dw)
+  const survivors = persisted.map(dw => isDead(dw) ? dw : gainLevels(dw, levelsGained).dw)
 
   return { result, enemy, enemySyn, isBoss, isFinalBoss, survivors, levelsGained, enemyLevel }
 }

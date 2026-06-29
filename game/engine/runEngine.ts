@@ -102,7 +102,7 @@ export function resolveCurrent(state: RunState, choice: ResolverChoice, rng: Rng
   const resolver = resolverFor(node.type)
   const resolved = resolver.resolve(state, node, choice, rng)
   const map = markResolved(resolved, node.id)
-  const wiped = resolved.team.length === 0
+  const wiped = resolved.team.length > 0 && resolved.team.every(dw => (dw.currentHp ?? dw.maxHp) <= 0)
   const phase = phaseAfterNode({
     isBoss: node.type === 'boss',
     area: resolved.area ?? 0,
