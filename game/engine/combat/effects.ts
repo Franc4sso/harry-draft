@@ -42,6 +42,8 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
     if (ex && ctx.target.maxHp > 0 && ctx.target.hp / ctx.target.maxHp < ex.threshold) {
       dmg = Math.round(dmg * (1 + ex.bonus))
     }
+    const dm = ctx.actor.darkMagic
+    if (dm && ctx.dark) dmg = Math.round(dmg * (1 + dm.bonus))
     // Shatter: a direct hit on a frozen target ends the freeze and amplifies THIS hit.
     const frozen = ctx.target.statusEffects.some(e => e.kind === 'freeze')
     if (frozen) {
@@ -56,6 +58,11 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
     }
     const residual = absorbDamage(ctx.target, dmg)
     ctx.target.hp -= residual
+    // Recoil: Magie Oscure carrier pays a fraction of damage DEALT (residual), lethal.
+    if (dm && ctx.dark && dm.recoil > 0 && residual > 0) {
+      ctx.actor.hp -= Math.round(residual * dm.recoil)
+      ctx.flags.push('recoil')
+    }
     return { value: dmg }
   },
   heal: (ctx, eff) => {

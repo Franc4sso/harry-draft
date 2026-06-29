@@ -244,6 +244,19 @@ export function simulateBattle(
           if (ally.alive && ally !== realTarget) fireReactive('onAllyDeath', ally, turn)
         }
       }
+      // Recoil can kill the ACTOR via its own dark spell — sync + KO-log + onDeath for the actor too.
+      sync(actor)
+      if (!actor.alive) {
+        pushLog({
+          turn, actorId: actor.wizard.id, actorSide: actor.side, action: 'KO',
+          targetId: actor.wizard.id, targetSide: actor.side, type: 'system', flags: ['kill'],
+        })
+        fireReactive('onDeath', actor, turn)
+        const allyPool = actor.side === 'left' ? L : R
+        for (const ally of allyPool) {
+          if (ally.alive && ally !== actor) fireReactive('onAllyDeath', ally, turn)
+        }
+      }
       // onHpThreshold: HP of the target changed this action.
       checkThreshold(realTarget, turn)
       // onTurnEnd: after an actor finishes acting.

@@ -25,7 +25,8 @@ export function resolveAction(
 
   if (spell.cooldown && spell.cooldown > 0) actor.cooldowns[spell.id] = spell.cooldown
 
-  const ctx = { rng, turn, actor, target, flags, bus, allies }
+  const dark = spell.keywords?.includes('magieOscure') ?? false
+  const ctx = { rng, turn, actor, target, flags, bus, allies, dark }
   for (const eff of normalizeSpell(spell)) {
     const r = EFFECT_HANDLERS[eff.kind](ctx, eff)
     if (r.dodged) { value = 0; break }
