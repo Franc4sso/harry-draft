@@ -23,6 +23,9 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 // Post-enemy-scaling-fix (menaceOffset -1.05→-0.70, 2026-06-29): winRate=0.792 spietatezzaRate=0.308
 //   execUptakeRate=0.350 medianTurns=2 maxTurns=40. Kit viable (>> 0.05 floor). Serpeverde skew
 //   partially reduced; Voldemort rebalance (Slice 2) will further close the gap.
+// Post-boss-buff (finalBossMenace -0.50→-0.45, 2026-06-29): winRate=0.792 spietatezzaRate=0.325
+//   execUptakeRate=0.367 medianTurns=2 maxTurns=40. Kit intact (>> 0.05 floor). No change; boss
+//   buff negligible for Serpeverde-biased runs at this stat level.
 //
 // Metric choice — IMPORTANT: there is NO total-damage assertion here. Execute is a damage
 // MULTIPLIER on the killing blow, not a discrete channel like poison's `dot` flag, so a

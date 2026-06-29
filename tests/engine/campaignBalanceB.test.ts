@@ -14,6 +14,10 @@ import type { RunNode, RunState } from '@/types'
 // Calibration (2026-06-29, post enemy-scaling fix — menaceOffset -1.05→-0.70, finalBossMenace -0.35→-0.50):
 //   Observed winRate=0.167 (20/120 wins). Band tightened to [0.15, 0.45] for "much harder" target.
 //   lv2-normal statMult 0.42 (was 0.07), lv10-boss statMult 1.38 (was 1.03) — enemies at level-coherent stats.
+// Recalibration (2026-06-29, post death&recovery — Tasks 1–4 added death/benching + Infermeria heal):
+//   finalBossMenace raised from -0.50 to -0.45 (statMult 0.50→0.55). Death/benching mechanics reduce
+//   mid-run survivability: winRate plateaus at ~0.150 for finalBossMenace in [-0.20, -0.40]; -0.45 gives
+//   winRate ≈ 0.158 (19/120 wins), in the [0.15, 0.45] band. Band unchanged.
 registerCoreResolvers()
 
 // Near-optimal ("upper-bound") player policy. A pure recruit/relic-first greedy is

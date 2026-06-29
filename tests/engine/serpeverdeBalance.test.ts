@@ -16,6 +16,8 @@ import type { RunNode, RunState } from '@/types'
 // Post-enemy-scaling-fix (menaceOffset -1.05→-0.70, 2026-06-29): winRate=0.783 (was 0.867).
 //   Still above desired band — Serpeverde house-power + Voldemort stat cliff remain the root cause.
 //   Band assertion stays DISABLED (Slice 2 handles Serpeverde/Voldemort rebalance).
+// Post-boss-buff (finalBossMenace -0.50→-0.45, 2026-06-29): winRate=0.767 (was 0.783).
+//   Slight drop as expected; still well above desired band. Root cause unchanged; Slice 2 handles it.
 registerCoreResolvers()
 
 function pickNode(s: RunState): RunNode {

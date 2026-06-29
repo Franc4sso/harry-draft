@@ -27,6 +27,9 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 //   shieldUptakeRate=0.075 medianTurns=6 maxTurns=42. Harder enemies mean fewer completed runs
 //   accumulate the full synergy/relic set needed; shieldUptakeRate dropped below old 0.10 floor.
 //   Draftability floor lowered to 0.05 (matches archetype-sweep spec floor); kit is still viable.
+// Post-boss-buff (finalBossMenace -0.50→-0.45, 2026-06-29): winRate=0.133 bastioneRate=0.308
+//   shieldUptakeRate=0.325 medianTurns=7 maxTurns=42. Kit intact (> 0.05 floor). No change in
+//   winRate; boss buff marginal vs mid-run survivability ceiling for Tassorosso.
 registerCoreResolvers()
 
 const SCUDI_RELICS = new Set(['egida-tassorosso', 'cuore-del-tasso'])

@@ -103,14 +103,18 @@ export const BALANCE = {
     menaceOffset: -0.70,
     // The FINAL area boss is the scripted Voldemort (BOSSES[0], fixed budget); its
     // menace is this flat value (independent of the level curve) so it stays the climax.
-    // ⚠️ TEMPORARY -0.50: with menaceOffset -0.70 all regular fights got much harder, so the
-    // player arrives DEPLETED — pushing finalBossMenace high (+0.30) cratered the win rate to
-    // 0.10. -0.50 keeps the run winnable NOW, but it leaves the final boss WEAKER than the
-    // area-2 boss (statMult 0.50 vs 1.38), which is backwards for a climax. This is resolved by
-    // the "death & recovery" slice: once a guaranteed pre-boss HEAL node lets the player arrive
-    // recovered, this gets raised to a real climax value (~+0.30..+0.40). See
-    // docs/superpowers/specs/2026-06-29-death-and-recovery-design.md.
-    finalBossMenace: -0.50,
+    // -0.45 → statMult 0.55 (was -0.50 → 0.50 before death&recovery).
+    // The guaranteed pre-boss Infermeria node (Task 3, death&recovery slice) fully heals +
+    // revives the player's team before every boss, so a stronger boss stays winnable.
+    // Raising toward the area-2 boss (statMult 1.38 → finalBossMenace +0.38) cratered the
+    // winRate: at +0.30 → 0.092, +0.20 → 0.125, 0.00 → 0.133, -0.20 → 0.142, -0.40 → 0.150
+    // (exactly on the exclusive lower bound). The run-survivability ceiling — driven by the
+    // death/benching mechanics added in Tasks 1–4 (wizards bench at 0 HP, weakening the team
+    // for subsequent fights) — caps the value at -0.45 (winRate ≈ 0.158, in [0.15, 0.45]).
+    // Accepted trade-off: Voldemort statMult 0.55 < area-2 boss 1.38, but -0.45 is a real
+    // step up from -0.50 and is the highest the band permits given post-death-system dynamics.
+    // Raising further requires either buffing player recovery or widening the band — Slice 3.
+    finalBossMenace: -0.45,
     enemyRelicsElite: 0,
     enemyRelicsBoss: 1,
   },
