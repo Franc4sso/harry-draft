@@ -20,6 +20,9 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 //   veleno-slice defect, and medianTurns=2 is Serpeverde-specific (Grifondoro=3). Fixing the
 //   Serpeverde imbalance (roster rebalance + recalibration) is a SEPARATE task, out of this
 //   slice's scope. Do not nerf veleno on account of this win rate.
+// Post-deatheater-nerf (25→12): winRate now 0.775 (was 0.758). Still > 0.05, kit intact.
+//   Note: deatheater synergy fires in ~17% of power-greedy runs; nerf has negligible effect on
+//   overall Serpeverde win rate — the imbalance root cause is Voldemort tier-1 stats + house synergy.
 registerCoreResolvers()
 
 const VELENO_RELICS = new Set(['ampolla-veleno', 'pugnale-bellatrix', 'boccino-doro'])

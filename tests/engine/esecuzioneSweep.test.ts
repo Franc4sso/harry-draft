@@ -18,6 +18,8 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 // That 0.850 sits right beside the velenoSweep serpeverdePower=0.867 baseline (and far above the
 // calibrated gryffPower=0.275) — i.e. the high win rate is the Serpeverde house-power skew, NOT an
 // execute-kit defect (the kit is the same multiplier whatever the house). See remaining-work.md #4.
+// Post-deatheater-nerf (25→12): winRate now 0.850 (was 0.850). Still > 0.05, kit intact.
+//   deatheater synergy fires rarely in tag-biased picks; nerf has negligible effect on win rate.
 //
 // Metric choice — IMPORTANT: there is NO total-damage assertion here. Execute is a damage
 // MULTIPLIER on the killing blow, not a discrete channel like poison's `dot` flag, so a

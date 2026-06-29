@@ -31,7 +31,7 @@ export const SYNERGIES: Synergy[] = [
   { id: 'goldenTrio', name: 'Golden Trio', kind: 'group', requires: { ids: ['harry', 'ron', 'hermione'] }, bonus: { allPct: 0.15 } },
   { id: 'weasley', name: 'Famiglia Weasley', kind: 'group', requires: { tag: 'weasley', count: 3 }, bonus: { regen: 8, def: 10 } },
   { id: 'order', name: 'Ordine della Fenice', kind: 'group', requires: { tag: 'order', count: 3 }, bonus: { allPct: 0.1 } },
-  { id: 'deatheater', name: 'Mangiamorte', kind: 'group', requires: { tag: 'deatheater', count: 3 }, bonus: { atk: 25 } },
+  { id: 'deatheater', name: 'Mangiamorte', kind: 'group', requires: { tag: 'deatheater', count: 3 }, bonus: { atk: 12 } },
   { id: 'tossicita', name: 'Tossicità', kind: 'origin', requires: { tag: 'veleno', count: 3 }, bonus: { atk: 5 } },
   { id: 'spietatezza', name: 'Spietatezza', kind: 'origin', requires: { tag: 'esecuzione', count: 3 }, bonus: { atk: 5 } },
   { id: 'bastione', name: 'Bastione', kind: 'origin', requires: { tag: 'scudirigen', count: 3 }, bonus: { def: 8 } },

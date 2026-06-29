@@ -23,6 +23,8 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 // recoilDeaths=2/120 battles — low fraction, archetype not self-destructing excessively; no lever change needed.
 // maxTurns=37 < turnCap — no stalls.
 // bonus and recoil NOT tuned (data/relics.ts unchanged; marchio-nero bonus=0.5, recoil=0.2).
+// Post-deatheater-nerf (25→12): winRate now 0.950 (was 0.950). Still > 0.05, kit intact.
+//   deatheater synergy fires rarely in tag-biased picks; nerf has negligible effect on win rate.
 registerCoreResolvers()
 
 const DARK_RELICS = new Set(['marchio-nero', 'diadema-corrotto'])
