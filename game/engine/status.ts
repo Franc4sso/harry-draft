@@ -84,7 +84,18 @@ export function tickStatuses(turn: number, unit: BattleUnit, opts: { velenoMult?
     }
     if (tickHeal && unit.alive) {
       // Never regen-heal a dead unit (defense in depth — callers already gate on alive).
-      unit.hp = Math.min(unit.maxHp, unit.hp + tickHeal)
+      const before = unit.hp
+      unit.hp = Math.min(unit.maxHp, before + tickHeal)
+      const overflow = (before + tickHeal) - unit.maxHp   // > 0 only when the tick exceeds the cap
+      if (overflow > 0 && unit.shieldConvert) {
+        const amount = Math.round(overflow * unit.shieldConvert.rate)
+        if (amount > 0) {
+          // Refresh, not accumulate: replace any prior conversion shield (shield status is stack:'refresh').
+          const dur = STATUS_BY_ID['shield']!.defaultDuration
+          unit.statusEffects = unit.statusEffects.filter(e => !(e.statusId === 'shield' && e.sourceId === 'overflow'))
+          unit.statusEffects.push({ kind: 'shield', statusId: 'shield', remaining: dur, stacks: 1, sourceId: 'overflow', absorbLeft: amount })
+        }
+      }
       logs.push({ turn, actorId: unit.wizard.id, actorSide: unit.side, action: def?.name ?? 'Rigenerazione',
         targetId: unit.wizard.id, targetSide: unit.side, type: 'Cura', value: tickHeal, flags: ['heal'] })
     }
