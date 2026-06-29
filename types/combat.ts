@@ -47,6 +47,8 @@ export interface BattleUnit extends DraftedWizard {
   velenoUncapped?: boolean
   /** This unit's side execute (from relics/Spietatezza): +bonus dmg to targets below `threshold` HP fraction. */
   execute?: { threshold: number; bonus: number }
+  /** This unit's side shield-conversion (from relics/Bastione): `rate` of regen overflow → shield. */
+  shieldConvert?: { rate: number }
 }
 
 export type LogFlag = 'crit' | 'dodge' | 'kill' | 'heal' | 'block' | 'stun' | 'dot' | 'pen' | 'shatter' | 'wait'
