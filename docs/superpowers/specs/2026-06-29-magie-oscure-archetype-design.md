@@ -67,6 +67,11 @@ Nota: un mago può ricevere il Marchio anche se NON è `magieOscure`-tagged (la 
 chiunque). In quel caso ha una entry solo-reliquia. La keyword sulla SPELL (non sul mago) è ciò che
 gata l'amplify nell'handler — vedi sotto.
 
+⚠️ **Fatto del codebase (verificato):** il tipo `Spell` NON ha oggi un campo `keywords` (le keyword
+vivono su `Relic` e sui `tags` del wizard, non sulle spell). Quindi questo slice aggiunge
+`keywords?: Keyword[]` al tipo `Spell` e tagga `avada`/`fiendfyre`/`sectumsempra` con `['magieOscure']`.
+È così che l'handler sa che una spell è dark.
+
 ### Stamp per-unità
 
 In `toBattleUnits`: `unit.darkMagic = darkMap[dw.wizard.id]` (o `undefined`). Tipo `BattleUnit` esteso
@@ -74,16 +79,17 @@ con `darkMagic?: { bonus: number; recoil: number }`.
 
 ### Attack handler — `game/engine/combat/effects.ts`
 
-L'amplify e il recoil si agganciano SOLO quando la spell lanciata ha keyword `magieOscure`. La keyword
-vive sulla spell; va resa visibile all'handler. **Decisione di threading (da confermare in plan):** la
-via più pulita è marcare l'effetto-attacco come dark a monte (in `normalizeSpell`/`resolve`, dove la
-spell è nota) con un flag tipo `eff.dark = true`, così l'`EffectCtx` non va riallargato. L'implementer
-sceglie il canale meno invasivo; il comportamento richiesto è:
+L'amplify e il recoil si agganciano SOLO quando la spell lanciata ha keyword `magieOscure`.
+**Threading (deciso, verificato sul codice):** in `game/engine/combat/resolve.ts` (riga ~28) l'`EffectCtx`
+è costruito dove la `spell` intera è nota. Lì si calcola `const dark = spell.keywords?.includes('magieOscure') ?? false`
+e si aggiunge `dark` all'`EffectCtx` (un campo opzionale `dark?: boolean` su `EffectCtx` in
+`effects.ts`). L'attack handler legge `ctx.dark`. UNA riga in resolve + un campo opzionale nel ctx —
+niente threading profondo, `normalizeSpell` resta invariato. Comportamento richiesto:
 
 ```ts
 // dentro l'attack handler, dopo computeDamage e dopo execute/shatter, PRIMA di absorbDamage:
 const dm = ctx.actor.darkMagic
-const isDark = /* la spell corrente ha keyword 'magieOscure' */
+const isDark = ctx.dark   // settato in resolve.ts da spell.keywords?.includes('magieOscure')
 if (dm && isDark) dmg = Math.round(dmg * (1 + dm.bonus))
 // ... modifyOutgoingDamage / modifyIncomingDamage come ora ...
 const residual = absorbDamage(ctx.target, dmg)
@@ -164,8 +170,8 @@ sweep, dato che il sweep non passa per la UI).
 - **Skew casa Serpeverde** atteso (come Veleno/Esecuzione): un alto winRate sarebbe house-power, non
   difetto del kit — rebalance casa è backlog #4, separato. (Nota: Scudi-Rigen ha mostrato che Tassorosso
   NON ha lo skew; Serpeverde sì.)
-- **Threading della keyword dark** all'handler: rischio di sovra-ingegnerizzare. Preferire il flag
-  `eff.dark` settato dove la spell è già nota, NON riallargare `EffectCtx`. Decisione finale in plan.
+- **Threading della keyword dark**: deciso — `EffectCtx.dark` calcolato in `resolve.ts` da
+  `spell.keywords`. Richiede di aggiungere `keywords?: Keyword[]` al tipo `Spell` (oggi assente).
 - ⚠️ Determinismo: l'amplify+recoil deve essere bit-identico quando `unit.darkMagic` è assente O la
   spell non è `magieOscure`. Gate: full suite invariata dopo l'engine, prima del contenuto.
 
@@ -180,7 +186,8 @@ sweep, dato che il sweep non passa per la UI).
 
 ## Ordine di implementazione (per il plan)
 
-1. Tipi: `ActiveRelic.assignedTo`, `Relic.assignable` + `grantsDarkMagic`, `BattleUnit.darkMagic`.
+1. Tipi: `ActiveRelic.assignedTo`, `Relic.assignable` + `grantsDarkMagic`, `BattleUnit.darkMagic`,
+   `Spell.keywords?: Keyword[]`, `EffectCtx.dark?: boolean`.
 2. Engine puro: `darkMagic.ts` (`teamDarkMagic`).
 3. Stamp `unit.darkMagic` in `toBattleUnits`.
 4. Attack handler: amplify + recoil (su residual, letale, flag `recoil`) gated su spell dark + il
