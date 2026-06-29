@@ -56,4 +56,20 @@ describe('dark amplify + recoil', () => {
     resolveAction(createRng('dr1'), 1, caster, target, darkSpell)
     expect(caster.hp).toBeLessThanOrEqual(0)
   })
+  it('partial shield: recoil is proportional to the residual (damage that got through)', () => {
+    // With seed 'dr1', darkMagic bonus 0.5 → dealt = 146.
+    // Shield absorbs 30 → residual = 116, recoil = round(116 * 0.2) = 23.
+    // Without shield: recoil = round(146 * 0.2) = 29. So 23 < 29.
+    const caster = unit('voldemort', 300, { side: 'left', darkMagic: { bonus: 0.5, recoil: 0.2 } })
+    const target = unit('harry', 1000, { side: 'right',
+      statusEffects: [{ kind: 'shield', statusId: 'shield', remaining: 3, stacks: 1, sourceId: 's', absorbLeft: 30 }] })
+    const entry = resolveAction(createRng('dr1'), 1, caster, target, darkSpell)
+    const dealt = entry.value ?? 0
+    expect(dealt).toBeGreaterThan(0)
+    expect(entry.flags).toContain('recoil')
+    // recoil = round(residual * 0.2) where residual = dealt - 30 (absorbed by shield)
+    expect(caster.hp).toBe(300 - Math.round((dealt - 30) * 0.2))
+    // recoil with partial shield is strictly less than without shield
+    expect(300 - caster.hp).toBeLessThan(Math.round(dealt * 0.2))
+  })
 })

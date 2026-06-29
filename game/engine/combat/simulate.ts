@@ -259,6 +259,8 @@ export function simulateBattle(
       }
       // onHpThreshold: HP of the target changed this action.
       checkThreshold(realTarget, turn)
+      // onHpThreshold: recoil may have dropped the actor below a threshold this action.
+      checkThreshold(actor, turn)
       // onTurnEnd: after an actor finishes acting.
       fireReactive('onTurnEnd', actor, turn)
     }
