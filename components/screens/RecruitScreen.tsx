@@ -8,6 +8,7 @@ import { powerOf } from '@/game/engine/combat/teamGen'
 import { previewSynergies, type SynergyPreview } from '@/game/engine/synergy'
 import { synergyBonusText } from '@/lib/glossary'
 import { displayName } from '@/lib/displayName'
+import { isDead } from '@/game/engine/roster'
 
 /** Right rail: the synergies that WOULD ACTIVATE if you recruit the focused
  *  candidate (accounting for the swap when the squad is full). Activation is the
@@ -143,6 +144,7 @@ export function RecruitScreen({
               <div className="grid grid-cols-1 gap-2">
                 {team.map(t => {
                   const removing = replaceId === t.wizard.id
+                  const dead = isDead(t)
                   return (
                     // role=button (not <button>) so the WizardCardRow's tooltip buttons
                     // aren't nested inside a button (invalid DOM).
@@ -159,12 +161,20 @@ export function RecruitScreen({
                       className="relative cursor-pointer rounded-2xl text-left transition"
                       style={{ boxShadow: removing ? '0 0 0 2px #f0727288, 0 0 14px #f0727255' : undefined }}
                     >
-                      <span className={removing ? 'block opacity-60 saturate-[0.85]' : 'block'}>
+                      <span className={removing || dead ? 'block opacity-60 saturate-[0.85]' : 'block'}>
                         <WizardCardRow drafted={t} showLevel />
                       </span>
                       {removing && (
                         <span className="absolute right-3 top-3 rounded-full border border-rose-400/60 bg-rose-500/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-rose-200">
                           Esce
+                        </span>
+                      )}
+                      {dead && !removing && (
+                        <span
+                          data-testid={`dead-badge-${t.wizard.id}`}
+                          className="absolute right-3 top-3 rounded-full border border-slate-400/50 bg-slate-700/60 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-300"
+                        >
+                          Morto
                         </span>
                       )}
                     </div>

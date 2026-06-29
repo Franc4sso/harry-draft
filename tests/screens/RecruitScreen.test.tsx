@@ -76,4 +76,45 @@ describe('RecruitScreen', () => {
     expect(shell.className).toContain('md:grid-cols-[1fr_280px]')
     expect(shell.querySelector('section')).not.toBeNull()
   })
+
+  describe('dead wizard in the replace picker', () => {
+    // Build a full team of 2 wizards where index 0 is dead (currentHp = 0).
+    const deadMember = { ...recruitVia(offerRecruits(createRng(10), { exclude: new Set() })[0]!, 'test'), currentHp: 0 }
+    const livingMember = recruitVia(offerRecruits(createRng(10), { exclude: new Set([deadMember.wizard.id]) })[0]!, 'test')
+    const mixedTeam = [deadMember, livingMember]
+    const mixedOffer = offerRecruits(createRng(20), { exclude: new Set(mixedTeam.map(t => t.wizard.id)) })
+
+    it('dead wizard appears in the replace picker (is NOT filtered out)', () => {
+      const onPick = vi.fn()
+      render(
+        <RecruitScreen offer={mixedOffer} team={mixedTeam} teamMax={mixedTeam.length} onPick={onPick} />,
+      )
+      // Both members must appear as replace tiles
+      expect(screen.getByTestId(`replace-${deadMember.wizard.id}`)).toBeTruthy()
+      expect(screen.getByTestId(`replace-${livingMember.wizard.id}`)).toBeTruthy()
+    })
+
+    it('dead wizard shows a "Morto" badge in the replace picker', () => {
+      const onPick = vi.fn()
+      render(
+        <RecruitScreen offer={mixedOffer} team={mixedTeam} teamMax={mixedTeam.length} onPick={onPick} />,
+      )
+      const badge = screen.getByTestId(`dead-badge-${deadMember.wizard.id}`)
+      expect(badge.textContent?.toLowerCase()).toContain('morto')
+    })
+
+    it('dead wizard is selectable as the replace target and fires onPick with its id', async () => {
+      const onPick = vi.fn()
+      render(
+        <RecruitScreen offer={mixedOffer} team={mixedTeam} teamMax={mixedTeam.length} onPick={onPick} />,
+      )
+      // Select the recruit
+      await userEvent.click(screen.getByTestId(`recruit-${mixedOffer[0]!.wizard.id}`))
+      // Click on the dead wizard's replace tile
+      await userEvent.click(screen.getByTestId(`replace-${deadMember.wizard.id}`))
+      // Confirm the pick
+      await userEvent.click(screen.getByRole('button', { name: /Recluta/i }))
+      expect(onPick).toHaveBeenCalledWith(mixedOffer[0]!.wizard.id, deadMember.wizard.id)
+    })
+  })
 })
