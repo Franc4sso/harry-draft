@@ -27,7 +27,7 @@ export interface RunBController {
   acknowledgeVictory: () => void
   chooseRecruit: (wizardId: string, replaceId?: string) => void
   skipRecruit: () => void
-  chooseRelic: (relicId: string) => void
+  chooseRelic: (relicId: string, assignedTo?: string) => void
   setWizardSpell: (wizardId: string, spellId: string) => void
   advanceArea: () => void
   restart: () => void
@@ -104,8 +104,8 @@ export function useRunB(seed: string): RunBController {
     commit({ ...next, phase: 'map' }, 'map')
   }, [commit])
 
-  const chooseRelic = useCallback((relicId: string) => {
-    const next = resolveCurrent(runRef.current, { kind: 'relic-pick', relicId }, createRng(runRef.current.seed))
+  const chooseRelic = useCallback((relicId: string, assignedTo?: string) => {
+    const next = resolveCurrent(runRef.current, { kind: 'relic-pick', relicId, assignedTo }, createRng(runRef.current.seed))
     commit({ ...next, phase: 'map' }, 'map')
   }, [commit])
 

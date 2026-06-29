@@ -119,7 +119,8 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
           <RelicNodeScreen
             offer={relicOffer(c.run, c.currentNode!, createRng(c.run.seed))}
             owned={c.run.relics}
-            onPick={c.chooseRelic}
+            team={c.run.team}
+            onPick={(relicId, assignedTo) => c.chooseRelic(relicId, assignedTo)}
           />,
         )
 

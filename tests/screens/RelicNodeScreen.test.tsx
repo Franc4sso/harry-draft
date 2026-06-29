@@ -9,9 +9,9 @@ describe('RelicNodeScreen', () => {
   it('reports the picked relic', async () => {
     const offer = offerRelics(createRng('r'), [], 0)
     const onPick = vi.fn()
-    render(<RelicNodeScreen offer={offer} owned={[]} onPick={onPick} />)
+    render(<RelicNodeScreen offer={offer} owned={[]} team={[]} onPick={onPick} />)
     await userEvent.click(screen.getByTestId(`relic-${offer[0]!.id}`))
     await userEvent.click(screen.getByRole('button', { name: /Prendi/ }))
-    expect(onPick).toHaveBeenCalledWith(offer[0]!.id)
+    expect(onPick).toHaveBeenCalledWith(offer[0]!.id, undefined)
   })
 })

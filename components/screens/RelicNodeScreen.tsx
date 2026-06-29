@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { Gem, Sparkles } from 'lucide-react'
-import type { ActiveRelic, Relic } from '@/types'
+import type { ActiveRelic, DraftedWizard, Relic } from '@/types'
 import { Button } from '@/components/ui/Button'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { RELIC_RARITY_COLOR } from '@/lib/relicRarity'
@@ -75,13 +75,19 @@ function Pedestal({ relic, selected, onSelect }: { relic: Relic; selected: boole
 }
 
 export function RelicNodeScreen({
-  offer, owned, onPick,
+  offer, owned, team, onPick,
 }: {
   offer: Relic[]
   owned: ActiveRelic[]
-  onPick: (relicId: string) => void
+  team: DraftedWizard[]
+  onPick: (relicId: string, assignedTo?: string) => void
 }) {
   const [pick, setPick] = useState<string | null>(null)
+  const [carrier, setCarrier] = useState<string | null>(null)
+
+  const pickedRelic = offer.find(r => r.id === pick)
+  const needsCarrier = Boolean(pickedRelic?.assignable)
+
   return (
     <main className="flex-1 flex flex-col items-center gap-6 p-6">
       <h1 className="font-display text-3xl">Scegli una reliquia</h1>
@@ -97,11 +103,31 @@ export function RelicNodeScreen({
 
       <div className="grid max-w-4xl grid-cols-1 gap-6 sm:grid-cols-3">
         {offer.map(r => (
-          <Pedestal key={r.id} relic={r} selected={pick === r.id} onSelect={() => setPick(r.id)} />
+          <Pedestal key={r.id} relic={r} selected={pick === r.id} onSelect={() => { setPick(r.id); setCarrier(null) }} />
         ))}
       </div>
 
-      <Button variant="primary" disabled={!pick} onClick={() => pick && onPick(pick)}>Prendi</Button>
+      {needsCarrier && pick && (
+        <div className="w-full max-w-3xl">
+          <p className="mb-2 text-center text-[10px] uppercase tracking-[0.25em] text-white/45">Assegna il Marchio a…</p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {team.map(dw => (
+              <button
+                key={dw.wizard.id}
+                data-testid={`assign-carrier-${dw.wizard.id}`}
+                onClick={() => setCarrier(dw.wizard.id)}
+                aria-pressed={carrier === dw.wizard.id}
+                className="rounded-lg border px-3 py-2 text-sm transition-colors"
+                style={{ borderColor: carrier === dw.wizard.id ? '#c084fc' : 'rgba(255,255,255,0.18)', background: carrier === dw.wizard.id ? 'rgba(192,132,252,0.15)' : 'transparent' }}
+              >
+                {dw.wizard.name} · {dw.stats.hp} PV
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <Button variant="primary" disabled={!pick || (needsCarrier && !carrier)} onClick={() => pick && onPick(pick, needsCarrier ? carrier ?? undefined : undefined)}>Prendi</Button>
 
       <style>{`
         @keyframes relicAuraPulse { 0%,100% { opacity: 0.55; transform: scale(1); } 50% { opacity: 0.9; transform: scale(1.08); } }
