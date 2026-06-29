@@ -30,6 +30,9 @@ export const RELICS: Relic[] = [
   { id: 'boccino-doro', name: "Boccino d'Oro", desc: 'Ogni colpo ha il 25% di avvelenare il nemico.', rarity: 'epica', keywords: ['veleno'], triggers: [{ hook: 'onHit', effects: [{ kind: 'applyStatus', target: 'enemy', chance: 0.25, statusId: 'veleno' }] }] },
   // Esecuzione set (non-comune + rara)
   { id: 'sigillo-carnefice', name: 'Sigillo del Carnefice', desc: "Il bonus di Esecuzione della squadra è aumentato del 50%.", rarity: 'non-comune', keywords: ['esecuzione'], keywordMult: { esecuzione: 0.5 } },
+  // Magie Oscure set (rara + non-comune)
+  { id: 'marchio-nero', name: 'Marchio Nero', desc: 'Assegna a un mago: i suoi incantesimi oscuri infliggono +50% danni, ma subisce un contraccolpo pari al 20% del danno inflitto (può essere letale).', rarity: 'rara', keywords: ['magieOscure'], assignable: true, grantsDarkMagic: { bonus: 0.5, recoil: 0.2 } },
+  { id: 'diadema-corrotto', name: 'Diadema Corrotto', desc: 'Il bonus delle Magie Oscure della squadra è aumentato del 50%.', rarity: 'non-comune', keywords: ['magieOscure'], keywordMult: { magieOscure: 0.5 } },
   // Scudo set (rara + non-comune)
   { id: 'egida-tassorosso', name: 'Egida del Tasso', desc: 'La rigenerazione in eccesso oltre la vita massima si converte in scudo (50%).', rarity: 'rara', keywords: ['scudo'], grantsShieldConvert: { rate: 0.5 } },
   { id: 'cuore-del-tasso', name: 'Cuore del Tasso', desc: 'La conversione in Scudo della squadra è aumentata del 50%.', rarity: 'non-comune', keywords: ['scudo'], keywordMult: { scudo: 0.5 } },

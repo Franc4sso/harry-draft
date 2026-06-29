@@ -14,7 +14,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'm',
     ranges: { hp: [82, 103], atk: [35, 45], def: [12, 19], spd: [24, 32] },
     spellPool: ['avada', 'sectumsempra', 'fiendfyre', 'serpensortia', 'crucio'],
-    tags: ['deatheater', 'esecuzione'],
+    tags: ['deatheater', 'esecuzione', 'magieOscure'],
   },
   {
     id: 'harry', name: 'Harry Potter', house: 'Grifondoro', role: 'Attaccante', tier: 1,
@@ -30,14 +30,14 @@ export const WIZARDS: Wizard[] = [
     gender: 'm',
     ranges: { hp: [70, 86], atk: [28, 37], def: [11, 16], spd: [19, 27] },
     spellPool: ['sectumsempra', 'levicorpus', 'confringo', 'reducto', 'stupeficium'],
-    tags: ['esecuzione'],
+    tags: ['esecuzione', 'magieOscure'],
   },
   {
     id: 'bellatrix', name: 'Bellatrix Lestrange', house: 'Serpeverde', role: 'Controllo', tier: 2,
     gender: 'f',
     ranges: { hp: [76, 95], atk: [20, 27], def: [11, 17], spd: [26, 34] },
     spellPool: ['crucio', 'imperio', 'petrificus', 'confringo'],
-    tags: ['deatheater', 'veleno', 'esecuzione'],
+    tags: ['deatheater', 'veleno', 'esecuzione', 'magieOscure'],
   },
   {
     id: 'mcgonagall', name: 'Minerva McGonagall', house: 'Grifondoro', role: 'Tank', tier: 2,
@@ -72,7 +72,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'm',
     ranges: { hp: [69, 85], atk: [25, 33], def: [12, 16], spd: [19, 27] },
     spellPool: ['serpensortia', 'sectumsempra', 'reducto', 'confringo'],
-    tags: ['deatheater', 'esecuzione'],
+    tags: ['deatheater', 'esecuzione', 'magieOscure'],
   },
   {
     id: 'kingsley', name: 'Kingsley Shacklebolt', house: 'Corvonero', role: 'Tank', tier: 2,
@@ -114,7 +114,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'm',
     ranges: { hp: [61, 77], atk: [21, 28], def: [9, 14], spd: [17, 25] },
     spellPool: ['serpensortia', 'sectumsempra', 'flipendo', 'expelliarmus'],
-    tags: ['esecuzione'],
+    tags: ['esecuzione', 'magieOscure'],
   },
   {
     id: 'ginny', name: 'Ginny Weasley', house: 'Grifondoro', role: 'Attaccante', tier: 3,
@@ -177,7 +177,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'f',
     ranges: { hp: [87, 108], atk: [12, 18], def: [16, 22], spd: [16, 22] },
     spellPool: ['vulnera', 'episkey', 'protego', 'fianto'],
-    tags: ['deatheater', 'veleno'],
+    tags: ['deatheater', 'veleno', 'magieOscure'],
   },
   {
     id: 'dolohov', name: 'Antonin Dolohov', house: 'Serpeverde', role: 'Attaccante', tier: 3,
