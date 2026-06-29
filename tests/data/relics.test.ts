@@ -17,13 +17,14 @@ describe('relics data', () => {
       expect(r.desc.length).toBeGreaterThan(0)
     }
   })
-  it('every relic has either a bonus, a trigger, a keywordMult, or grantsExecute', () => {
+  it('every relic has either a bonus, a trigger, a keywordMult, grantsExecute, or grantsShieldConvert', () => {
     for (const r of RELICS) {
       const hasBonus = !!r.bonus
       const hasTrigger = !!(r.triggers?.length)
       const hasKeywordMult = !!(r.keywordMult && Object.keys(r.keywordMult).length > 0)
       const hasGrantsExecute = !!r.grantsExecute
-      expect(hasBonus || hasTrigger || hasKeywordMult || hasGrantsExecute, `relic ${r.id} has nothing`).toBe(true)
+      const hasGrantsShieldConvert = !!r.grantsShieldConvert
+      expect(hasBonus || hasTrigger || hasKeywordMult || hasGrantsExecute || hasGrantsShieldConvert, `relic ${r.id} has nothing`).toBe(true)
     }
   })
   it('limits trigger relics to at most 3 (v1)', () => {

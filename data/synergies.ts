@@ -34,6 +34,7 @@ export const SYNERGIES: Synergy[] = [
   { id: 'deatheater', name: 'Mangiamorte', kind: 'group', requires: { tag: 'deatheater', count: 3 }, bonus: { atk: 25 } },
   { id: 'tossicita', name: 'Tossicità', kind: 'origin', requires: { tag: 'veleno', count: 3 }, bonus: { atk: 5 } },
   { id: 'spietatezza', name: 'Spietatezza', kind: 'origin', requires: { tag: 'esecuzione', count: 3 }, bonus: { atk: 5 } },
+  { id: 'bastione', name: 'Bastione', kind: 'origin', requires: { tag: 'scudirigen', count: 3 }, bonus: { def: 8 } },
   { id: 'marauder', name: 'Malandrini', kind: 'group', requires: { tag: 'marauder', count: 2 }, bonus: { spd: 18, atk: 10 } },
   { id: 'da', name: 'Esercito di Silente', kind: 'group', requires: { tag: 'da', count: 4 }, bonus: { allPct: 0.08, def: 8 } },
 ]

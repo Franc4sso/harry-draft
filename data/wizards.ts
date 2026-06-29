@@ -170,7 +170,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'f',
     ranges: { hp: [74, 93], atk: [16, 22], def: [12, 17], spd: [24, 32] },
     spellPool: ['confundo', 'petrificus', 'levicorpus', 'tarantallegra'],
-    tags: ['order'],
+    tags: ['order', 'scudirigen'],
   },
   {
     id: 'narcissa', name: 'Narcissa Malfoy', house: 'Serpeverde', role: 'Supporto', tier: 3,
@@ -205,6 +205,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'm',
     ranges: { hp: [67, 84], atk: [24, 31], def: [11, 16], spd: [19, 27] },
     spellPool: ['stupeficium', 'expelliarmus', 'reducto', 'flipendo'],
+    tags: ['scudirigen'],
   },
   {
     id: 'slughorn', name: 'Horace Lumacorno', house: 'Serpeverde', role: 'Supporto', tier: 3,
@@ -230,7 +231,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'f',
     ranges: { hp: [91, 112], atk: [11, 17], def: [17, 23], spd: [14, 20] },
     spellPool: ['ferula', 'episkey', 'rennervate', 'protego'],
-    tags: ['veleno'],
+    tags: ['veleno', 'scudirigen'],
   },
 
   // ===== Tier 4 (weakest / numerous) =====
@@ -334,18 +335,21 @@ export const WIZARDS: Wizard[] = [
     gender: 'f',
     ranges: { hp: [72, 93], atk: [11, 16], def: [14, 19], spd: [14, 20] },
     spellPool: ['episkey', 'ferula', 'anapneo', 'protego'],
+    tags: ['scudirigen'],
   },
   {
     id: 'susan', name: 'Susan Bones', house: 'Tassorosso', role: 'Supporto', tier: 4,
     gender: 'f',
     ranges: { hp: [72, 93], atk: [11, 17], def: [14, 19], spd: [14, 20] },
     spellPool: ['episkey', 'rennervate', 'protego', 'salvio'],
+    tags: ['scudirigen'],
   },
   {
     id: 'ernie', name: 'Ernie Macmillan', house: 'Tassorosso', role: 'Tank', tier: 4,
     gender: 'm',
     ranges: { hp: [99, 125], atk: [11, 16], def: [22, 30], spd: [9, 14] },
     spellPool: ['protego', 'fianto', 'flipendo', 'reducto'],
+    tags: ['scudirigen'],
   },
   {
     id: 'justin', name: 'Justin Finch-Fletchley', house: 'Tassorosso', role: 'Attaccante', tier: 4,
