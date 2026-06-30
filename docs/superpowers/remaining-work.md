@@ -1,172 +1,108 @@
-# Remaining Work — Harry Potter Roguelite (handoff)
+# Cosa rimane da fare — Harry Potter Roguelite
 
-> Living backlog for "continue tomorrow". Last updated: 2026-06-28.
-> Status snapshot: `master` = `origin/master` = `8e9dd1d` (pushed, clean). Suite **703/703**, tsc clean.
-> Full design north-star: `docs/superpowers/specs/2026-06-28-game-design-direction.md` (the WOW-pillar roadmap + the Pokémon-style **counter-web** principle).
-> Per-task execution history: `.superpowers/sdd/progress.md` (the SDD ledger).
+> Documento di backlog "pulito": solo ciò che RESTA. Aggiornato: 2026-07-01.
+> Stato: i 6 item del backlog precedente sono **tutti fatti, mergiati e pushati** (master `c5d3a38`).
+> Suite **857/857**, tsc pulito.
+> Visione/north-star: `docs/superpowers/specs/2026-06-28-game-design-direction.md` (roadmap WOW-pillar +
+> principio del **counter-web** Pokémon-style). Storia di esecuzione: `git log` + `.superpowers/sdd/progress.md`.
 
 ---
 
-## ✅ Done so far (all merged + pushed)
+## 1. PRIORITÀ #1 — Pass di "potere del giocatore" (sblocca il climax + stringe il bilanciamento)
 
-- **Veleno archetype — COMPLETE slice (A+B+C+D):** keyword engine + "che divora" ramp; draftability + Tossicità cap-lift; validation (counter matchups + viability sweep); loadout UI. Mechanically complete, draftable, validated, human-playable.
-- **Esecuzione archetype — Plan A (engine + content) DONE:** team-wide execute (bonus dmg to low-HP targets) via `game/engine/execute.ts` `teamExecute`; `Spada di Grifondoro` (grants execute) + `Sigillo del Carnefice` (scales it) relics; `Spietatezza` synergy; 9 finisher wizards tagged.
-- **Esecuzione archetype — Plan B (validation) DONE:** counter-web tests (`tests/engine/esecuzioneCounters.test.ts`: BEATS a fragile glass-cannon the execute flips; LOSES to a durable Regen wall that never drops under threshold) + favor-Esecuzione viability sweep (`tests/engine/esecuzioneSweep.test.ts`: winRate=0.850 execUptake=0.325 medianTurns=2 — the 0.850 is the same Serpeverde house-power skew Veleno surfaced, not a kit defect). Used winRate + turn-budget + execute-uptake, NOT total damage (execute is a multiplier with no discrete log flag). Mechanically complete + validated.
-- **Scudi-Rigen archetype — COMPLETE slice:** regen-overflow→shield (refresh, no accumulation) via `game/engine/shieldConvert.ts` `teamShieldConvert` + the overflow branch in BOTH regen paths (`status.ts` status-tick AND `simulate.ts` team-regen — they are separate, the counter test caught the missing one); `Egida del Tasso` (grants conversion) + `Cuore del Tasso` (scales it) relics; `Bastione` synergy; `scudirigen` tags on 6 Tassorosso wizards. Counter-web validated (beats attrition via the flip, loses to esecuzione + burst) + viability sweep (`winRate=0.250 shieldUptake=0.142 maxTurns=47` — draftable-not-dominant wall; the low winRate is the Tassorosso house-power gap, not a kit defect; `maxTurns<cap` proves refresh holds, no stall). Mechanically complete + validated.
+L'item aperto a leva più alta. **Il campaign è incollato al floor di completamento 0.15**
+(`campaignBalanceB` winRate **0.158**), e questo BLOCCA due cose desiderate:
+- un **boss finale forte**: la parità con i boss d'area (statMult 1.33) crolla il completamento a ~2.5%
+  → oggi c'è solo un buff simbolico (`finalBossMenace -0.40→-0.384`, statMult 0.60→0.616);
+- una **forbice tra case più stretta**: Serpeverde 0.658 vs Grifondoro 0.183 (~3.5×), tenuta solo dal
+  gate rilassato `<0.71`.
 
-- **Magie Oscure archetype — COMPLETE slice:** dark-spell amplify + lethal recoil-on-damage-dealt via `game/engine/darkMagic.ts` `teamDarkMagic` + the attack handler (`effects.ts`, gated on `ctx.dark` from `resolve.ts`, recoil on `residual` so a shield negates payoff AND risk); a per-unit ASSIGNABLE relic `Marchio Nero` (amplify+recoil to one carrier) + `Diadema Corrotto` (scales bonus only) + `Oscurità` synergy (amplifies all dark casters, no recoil) + `magieOscure` tags on 6 wizards + the 3 dark spells (avada/fiendfyre/sectumsempra). NEW MECHANISM: per-unit relic assignment (resolver `assignedTo` + `RelicNodeScreen` carrier step, full UI→hook→resolver chain). Counter-web validated (beats squishy via the flip, loses to shields + chip/control via lethal recoil; partial-shield → proportional recoil) + viability sweep (`winRate=0.950 darkUptake=0.208 recoilDeaths=2 maxTurns=37`). Design note: recoilDeaths is low because optimal play assigns the Marchio to a high-HP carrier, dodging the recoil — rebalance lever is raising `recoil`, not lowering `bonus` (see memory). Mechanically complete + validated.
+**Causa radice comune**: lo **snowball del leveling win-based** (`game/engine/leveling.ts`
+`growthBudgetPerLevel` — l'atk di una squadra vincente cresce ~2.5× fino al cap → one-shotta tutto;
+la spell-power diventa irrilevante). I trim di atk base si auto-cancellano (i maghi taggati si
+indeboliscono anche come nemici, pool condiviso).
 
-- **Enemy scaling fix (Slice 1) — DONE:** enemies fought at 7–30% of base stats (`menaceOffset=-1.05`), making the game far too easy and the displayed level meaningless. Fixed `campaignB.menaceOffset` -1.05→-0.70 (data-driven from a sweep) so 'Lv.N' enemies fight at level-coherent stats (lv2 0.42 vs 0.07, lv10-boss 1.38); competent-Grifondoro winRate 0.167, band tightened to [0.15,0.45] ("much harder"). `scudiRigen` shieldUptake floor 0.10→0.05 (justified consequence).
-- **Death & Recovery system (Slice 2) — DONE:** death no longer eliminates — a dead wizard benches at `currentHp=0` (`game/engine/roster.ts` `isDead`/`livingOf`; only the living are fielded, count for synergies, and gain levels; defeat = ALL dead). New **Infermeria** node (🏥, full heal + full revive), forced as a guaranteed Infermeria-only floor immediately before every boss (`map.ts`/`nodeGen.ts` — the LIVE `generateArea` path; the node is fully phase/view/UI-integrated via `InfirmaryScreen`). Dead wizards are swappable at recruit (greyed + "Morto" badge). ⚠️ the death system made the game HARDER (benched 0-HP wizards weaken the team mid-area) — a strong final boss is unreachable above the win floor: `finalBossMenace` capped at the band ceiling, final boss stays weaker than area bosses (documented trade-off). To make the final boss a real climax, add a MID-AREA recovery lever first (see memory `harry-draft-death-system-harder`).
-- **Map: first choice among 3 (Slice 6) — DONE:** the run's first decision offers 3 paths (floor 1 forced to width 3 in `generateArea`); every later branch keeps the 2-nearest cap. `finalBossMenace` retuned for the shifted encounter mix.
-- **Battle pacing — DONE:** battles dragged to ~24 turns (fat tail at the fatigue convergence); `fatigueStart` 30→18 brings the median to ~15 (better feel) and clears most timeout-flakes in heavy tests.
-- **House synergies redesign — DONE:** the four house synergies dropped flat +atk/+def/+spd for characterful per-unit mechanics (`game/engine/houseEffects.ts`, hooked in `effects.ts`): **Grifondoro** extra dodge (courage), **Corvonero** boosted crits (intelligence), **Tassorosso** damage-reduction + regen (loyalty), **Serpeverde** +damage to wounded targets (cunning — replaces the flat +atk, the imbalance root). 3 non-Serpeverde houses tuned to a tight spread (~0.08–0.19); campaignBalanceB in band. ⚠️ Serpeverde still ~0.73 — diagnosed NOT a synergy issue: it's **Voldemort + Sectumsempra** (atk≈40 × power 2.4 one-shots early enemies before cunning's wounded-threshold fires). The Serpeverde/Voldemort balance is a separate wizard-data concern, not the house synergy.
+**Il pass**: (a) alzare la **baseline della squadra competente** / i reward (reliquie migliori, reward
+di livello, uno spike di potere prima dell'area finale) E (b) **tarare lo snowball in modo
+agnostico-per-casa** (abbassare `growthBudgetPerLevel` + ricalibrare l'enemy budget per tenere la band).
+POI:
+- alzare `finalBossMenace` alla parità coi boss d'area (e far scattare il tripwire deferito in
+  `tests/engine/finalBossClimax.test.ts`);
+- ri-tarare la forbice tra case **senza** nerf per-mago.
 
-**Counter web so far (emergent from mechanics):**
-| | Beats | Loses to |
+⚠️ È il gate `campaignBalanceB [0.15,0.45]` il vincolo primario, ed è già fragile: ricalibrare
+con cura.
+
+---
+
+## 2. WATCH — regressioni da ri-controllare (dopo il pass #1)
+
+- **Scudi-Rigen viability**: `scudiRigenSweep` winRate sceso **0.258 → 0.100** (passa ancora il floor
+  `>0.05`) per via del trim atk di Voldemort-nemico nel bilanciamento Serpeverde. Quasi-marginale.
+- **`infirmaryResolver`** OMETTE il ricalcolo di `activeSynergies` dopo full-heal/revive (bug latente;
+  `useConsumableRelic` lo fa correttamente — rendere l'Infermeria coerente).
+
+---
+
+## 3. Dramma & feedback (P8) — *USER-GATED (serve la tua direzione visiva)*
+
+Solo presentazione; il motore emette già i dati. Callout a schermo in battaglia ("VELENO ×N",
+flourish dell'execute-kill, "INFALLIBILE!", flourish del revive) + un recap/MVP di fine battaglia che
+mostra il danno da veleno/execute/oscuro. **Per iniziare**: fornisci una direzione visiva / mockup,
+poi è un piano UI mirato.
+
+---
+
+## 4. Altri archetipi (replicare il pattern tracer-bullet provato)
+
+Il pattern (engine keyword/flag → reliquia grant+scale → tag-synergy → validazione counter-web →
+loadout) è provato **4 volte** (Veleno, Esecuzione, Scudi-Rigen, Magie Oscure) e va veloce. Restano
+dalla roadmap (Appendice D del direction doc): **Velocità/Catena, Controllo, Rigen/Vampiro, Sacrificio,
+Evocazione, Crescendo, Difensiva**.
+**Regola utente**: ogni nuovo archetipo dichiara la sua **matrice counter** (cosa batte / a cosa perde)
++ un test che la verifica. Usare la metrica **first-hit, non total-damage** (il danno totale è
+confuso dalla velocità di kill).
+
+---
+
+## 5. Pillar Onda 2+ (dal direction doc) — grandi, futuri
+
+- **P2 — Reliquie cambia-regole** (ordine di turno, doppio-cast, conversioni).
+- **P3 — Eventi narrativi** (i nodi vuoti `event`/`shop`/`commonRoom`/`library`/`forest` — il più grande
+  gap di *memorabilità*, puro data/testo).
+- **P4 — Boss roster scriptato** (ogni boss è una regola che counter-a un archetipo: Umbridge banna una
+  keyword, Dissennatori drenano, Bellatrix, ecc.). Sinergico col boss finale forte (#1).
+- **P5 — Economia del Sacrificio** (Corruzione, scelte dolorose, reliquie-sacrificio).
+- **P6 — Sorprese & segreti** (recruit rari, boss nascosti, questline Doni della Morte).
+- **P7 — Meta-progressione** (Codex/unlock "a scoperta non a potere", Ascensione, Daily Run).
+
+---
+
+## 6. Minor accumulati (opportunistici, nessuno bloccante)
+
+- Alcuni test saltano un ramo no-op (`setWizardSpell` guardia stesso-spell non testata).
+- Blind spot di un'invariante in `tests/data/spells.test.ts` (uno spell con `power` + uno `spec` senza
+  voce damage passerebbe il check "l'attacco fa danno").
+- `teamKeywords` helper mai costruito (serve solo se una sweep deve contare sorgenti-keyword non-tag).
+
+---
+
+## Counter web attuale (emergente dalle meccaniche)
+
+| | Batte | Perde vs |
 |---|---|---|
-| Veleno | Tank / Scudi (bypasses DEF + shields) | Regen / Burst |
-| Esecuzione | Fragile / low-HP (finisher) | Durable walls (Tank/Scudi/Regen) |
-| Scudi-Rigen | Attrito / danno-sostenuto (overflow→scudo out-sustaina) | Esecuzione (finisce sotto soglia) / Burst (sfonda lo scudo) |
-| Magie Oscure | Squishy (nuke amplificato one-shotta) | Scudi (assorbe → niente payoff né recoil) / Chip-Controllo (recoil letale sul nuke pieno) |
-| Mira Infallibile (counter-ability) | Grifondoro / dodge-stacking (salta il roll di dodge, ogni colpo base atterra) | — (counter-tool a senso unico: irrilevante vs scudi/armatura/regen, nessuna debolezza propria) |
+| Veleno | Tank / Scudi (bypassa DEF + scudi) | Regen / Burst |
+| Esecuzione | Fragile / basso-HP (finisher) | Muri durevoli (Tank/Scudi/Regen) |
+| Scudi-Rigen | Attrito / danno-sostenuto | Esecuzione / Burst |
+| Magie Oscure | Squishy (nuke amplificato) | Scudi / Chip-Controllo (recoil letale) |
+| Mira Infallibile (counter-ability) | Grifondoro / dodge-stacking | — (counter a senso unico) |
 
 ---
 
-## 1. NEXT UP — remaining user-requested slices (2026-06-29/30 session)
+## Come riprendere
 
-Most of the 6-slice user request is DONE (scaling, death&recovery, modal timing, map-3-options, pacing,
-house redesign — all above). Remaining:
-- **Random battle generation with criteria (user bug #3) — ✅ DONE (themed battles + telegraph slice,
-  master 0f36d74):** `themedEnemyTeam` + `themeStrengthFor` nodeMult (normal 0.5 / elite 0.9 / boss 1.0)
-  generate synergy-themed enemy teams scaled by difficulty, weighted picking killed the old identity-
-  repetition, with theme anti-repetition within an area. Battle package pre-generated once at map-build
-  time (`buildBattlePackage` → `RunNode.battle`/`RunNode.preview`), resolver READS it (coherence by
-  construction), and `MapScreen` renders synergy/boss telegraph badges. Balance-validated winRate 0.1583
-  in band [0.15,0.45] (thin margin to floor; `themes.nodeMult.normal` is the first lever). Spec/plan:
-  `docs/superpowers/{specs,plans}/2026-06-30-themed-battles-telegraph-*`.
-- **Guaranteed-hit wizard abilities (user request) — ✅ DONE ("Mira Infallibile" slice):** new
-  `BattleUnit.alwaysHit` flag skips the dodge roll (`effects.ts` gate `!ctx.actor.alwaysHit` before
-  `dodged()`); `teamAlwaysHit` computer grants it to tier-2/3 wizards tagged `infallibile`
-  (snape/lucius/dolohov) and team-wide via the `occhio-magico` relic (`grantsAlwaysHit`). Counter
-  validated (`tests/engine/infallibileCounter.test.ts`: 0 dodge flags with the ability vs 7 without,
-  same wizard/seed). Spec/plan: `docs/superpowers/{specs,plans}/2026-06-30-infallibile-ability*`. NOTE:
-  binary mechanic → no scaling-relic, no synergy (deliberate). Drama callout ("INFALLIBILE!") deferred
-  (user-gated §2).
-- **Resurrection CONSUMABLE relic — ✅ DONE ("Lacrime di Fenice" slice):** one-shot `lacrime-fenice`
-  relic (`Relic.active: 'revive'`, epica) usable on the map (before any node) via a "Usa" button in the
-  sidebar → `useConsumableRelic` (pure, no rng) revives all dead (`currentHp=maxHp`), recomputes
-  synergies, and removes the relic from inventory (first relic-removal in the codebase; persists via
-  `saveRun`). NEW active-use/consumable mechanism (relics were all passive). **Doubles as the MID-AREA
-  recovery lever** that the strong-final-boss item needed. Revive-only by design (heal stays the
-  Infermeria's job). Spec/plan: `docs/superpowers/{specs,plans}/2026-06-30-resurrection-consumable*`.
-- **Strong final boss — ✅ DONE (partial — moderate buff; true climax DEFERRED, user decision):** the
-  final boss was a pushover (`finalBossMenace -0.40` → statMult **0.60**, vs area bosses **1.33**).
-  ⚠️ MEASUREMENT FINDINGS: (1) the recovery lever (Lacrime di Fenice) does NOT create headroom in the
-  sweep — the forced pre-boss Infermeria already fully heals, so modeling the consumable was redundant
-  (dropped). (2) A true climax at parity (1.33) collapses campaign completion to **~2.5%**. (3) The real
-  campaignBalanceB baseline is **0.158** (the old `0.183` comment was stale; the Serpeverde Voldemort-
-  trim ate the headroom) — only ~0.008 above the 0.15 floor. **User decision: moderate buff** —
-  `finalBossMenace -0.40→-0.384` (statMult 0.60→**0.616**), the highest value holding the floor; a
-  regression-guard test (`finalBossClimax.test.ts`, statMult > 0.60) + a deferred-parity tripwire lock
-  it. Spec/plan: `...2026-06-30-strong-final-boss*`.
-- **FOLLOW-UP (new, from #5) — player-power pass is the real climax unlock:** a meaningful final boss
-  (statMult → area-boss parity 1.33) is impossible until the competent-team baseline is stronger — the
-  campaign already sits on the 0.15 floor (winRate 0.158). The path: buff player power / rewards
-  (better relics, level rewards, a power spike before the final area), THEN raise `finalBossMenace` to
-  parity within a healthy band, and flip the deferred `finalBossClimax` parity tripwire. Tightly coupled
-  to the leveling-snowball follow-up (#4) — both are "the player-power & difficulty-curve" pass.
-- **WATCH (from #4 side-effect) — Scudi-Rigen viability dropped:** `scudiRigenSweep` winRate fell
-  **0.258 → 0.100** after the Serpeverde Voldemort-atk trim (weaker dark enemies changed the matchup).
-  Still passes its `> 0.05` floor but the archetype is now near-marginal — re-check when the player-power
-  pass lands.
-- **Serpeverde/Voldemort balance — ✅ DONE (2026-06-30 balance pass):** the live skew was **0.925**
-  (not the stale ~0.73; win-based leveling inflated it). ⚠️ DIAGNOSIS CORRECTED: the driver was NOT
-  Sectumsempra/spell-power (zeroing sectumsempra+deatheater+spietatezza only reached 0.825) — it's the
-  **win-based leveling snowball** (a winning team's atk grows ~2.5× to cap → one-shots). Base-atk trims
-  of shared-pool wizards self-cancel (they weaken as enemies too), so a strict <0.60 would have gutted
-  Voldemort (40→25). **User decision:** keep Voldemort modest (atk 40→34, identity preserved) + trim the
-  other Serpeverde attackers (Snape 32.5→23, Lucius 29→21, Dolohov 27.5→18.5) + relax the gate to the
-  achieved value. Result: serpeverdeBalance winRate **0.925→0.658, gate `< 0.71`** (Serpeverde is a
-  deliberately strong "cunning" house). Side-benefit: Magie Oscure cooled 0.925→0.650. Grifondoro
-  (campaignBalanceB) unchanged at 0.183. Spec/plan: `...2026-06-30-serpeverde-voldemort-balance*`.
-- **FOLLOW-UP (new, from #4's review) — leveling-snowball root cause + wide house spread:** the real
-  driver of the house imbalance is the win-based leveling snowball (`game/engine/leveling.ts`
-  `growthBudgetPerLevel`), which #4 worked AROUND (per-wizard atk trims) rather than fixing at the root.
-  The house spread is still wide (Serpeverde 0.658 vs Grifondoro 0.183 — ~3.5×), and the `< 0.71` gate
-  is now the FRAGILE one: anyone touching enemy scaling should expect it to move. Revisit once the
-  snowball can be tuned house-agnostically (lower growth + global recalibration) so the spread tightens
-  without per-wizard nerfs. Also: `campaignBalanceB` shares the enemy `WIZARDS` pool, so its "unchanged"
-  status is MEASURED, not structural — always re-run it after any wizard-stat change.
-- **Cleanup — ✅ DONE:** `baseAttackMult` was vestigial (single declaration in `data/constants.ts`,
-  zero reads) — removed (worktree branch, merging with #4).
-
-Plus the older backlog:
-- **Serpeverde house-power skew** also shows in the archetype sweeps (Esecuzione/Veleno/Magie Oscure all
-  high) — Slice 3 above addresses the house; re-measure all three after.
-- **More archetypes** from the direction doc (Velocità/Catena, Controllo, Rigen/Vampiro, Sacrificio,
-  Evocazione, Crescendo, Difensiva). The Magie Oscure slice
-  (`docs/superpowers/specs/2026-06-29-magie-oscure-archetype-design.md` +
-  `docs/superpowers/plans/2026-06-29-magie-oscure-archetype.md`) is the freshest template — and it now
-  proves the per-unit assignable-relic mechanism, reusable for future "equip on one wizard" designs.
-- **A non-archetype pillar** — P3 Eventi narrativi (the empty event/shop/library/forest nodes) is the
-  biggest *memorability* gap and is pure data/text (#5 below).
-
----
-
-## 2. Drama & feedback (both archetypes) · *USER-GATED (visual direction needed)*
-
-Presentation-only; the engine already emits what's needed (veleno stacks flow through battle snapshots; `serpensortia` emits a discrete `applyStatus veleno`; execute multiplies a hit). Deferred because the visuals are the user's call.
-- On-screen callouts in `components/screens/BattleScreen.tsx`: "VELENO ×N / −M per turno" at stack thresholds; execute-kill flourish.
-- MVP / end-of-battle recap surfacing poison & execute damage (`VictoryScreen`).
-- **To start:** the user provides a visual direction / mockup, then it's a focused UI plan.
-
----
-
-## 3. Archetypes #3 and #4 (replicate the proven pattern) · *medium each*
-
-The tracer-bullet pattern (engine → draftability/synergy → validation → loadout-already-built; drama deferred) is proven twice and runs fast. Remaining flagship archetypes from the direction doc (Appendix D):
-- **Scudi-Rigen** (Tassorosso): "non potete scalfirmi" — convert excess regen → shield; the wall. Counter target: beats sustained-damage/attrition, loses to burst/execute (irony: Esecuzione should beat it) and to anti-heal.
-- **Magie Oscure** (Serpeverde/Mangiamorte): glass-cannon nuke (Avada/Fiendfyre); high risk via Corruption. Counter: beats squishy, loses to control/shields.
-
-Each needs: keyword content (keywords already declared), a granting/scaling relic pair, a tag-synergy, draftability tags, validation. Then the other backlog archetypes (Velocità/Catena, Controllo, Rigen/Vampiro, Sacrificio, Evocazione[new], Crescendo, Difensiva).
-
-**Design rule (from the user):** every new archetype's spec must declare its **counter matrix** (what it beats / loses to) + a test that verifies it.
-
----
-
-## 4. Serpeverde house rebalance · *SEPARATE balance task, not an archetype*
-
-Diagnostic (committed as a comment in `tests/engine/velenoSweep.test.ts`): a competent **Serpeverde** team wins **~0.76–0.87** vs the calibrated **Grifondoro ~0.275** (band 0.15–0.55). Independent of any archetype. Needs a roster-stat + enemy-scaling recalibration. ⚠️ Coupled to the `campaignBalanceB` Grifondoro test — touching shared enemy scaling can break it; tune Serpeverde's pool, not global scaling.
-
----
-
-## 5. Bigger pillars from the direction doc (Onda 2+) · *large, future*
-
-Beyond archetypes, the WOW-pillar roadmap (`...game-design-direction.md`):
-- **P2 — Reliquie cambia-regole** (rule-breaking relics: turn order, double-cast, conversions).
-- **P3 — Eventi narrativi** (the empty `event`/`shop`/`commonRoom`/`library`/`forest` nodes — the biggest *memorability* gap; pure data/text).
-- **P4 — Boss roster** (scripted bosses, each a rule that counters an archetype: Umbridge bans a keyword, Dissennatori drain, Bellatrix, etc.).
-- **P5 — Economia del Sacrificio** (painful choices, Corruption, sacrifice relics).
-- **P6 — Sorprese & segreti** (rare recruits, hidden bosses, Doni della Morte questline).
-- **P7 — Meta-progressione** (Codex/unlocks "a scoperta non a potere", Ascensione, Daily Run).
-- **P8 — Drama** (item #2 above).
-
----
-
-## 6. Small cleanups / accumulated FINAL-TRIAGE minors
-
-From the ledger (`.superpowers/sdd/progress.md`) — none blocking, fix opportunistically:
-- A few tests skip a "dark" no-op branch (e.g. `setWizardSpell` same-spell guard untested).
-- `keywordDamageMult`/`setWizardSpell` controller commits even on no-op state (harmless; React bails on same ref).
-- A pre-existing data-invariant blind spot in `tests/data/spells.test.ts` (a spell with top-level `power` + a `spec` lacking a damage entry would pass the "attack deals damage" check).
-- `teamKeywords` helper from the Veleno spec was never built (only needed if a sweep must count non-tag keyword sources).
-
----
-
-## How to resume (quick start tomorrow)
-
-1. Read `.superpowers/sdd/progress.md` (the ledger) — it has every task, commit, and decision.
-2. Pick item #1 (Esecuzione Plan B) for a quick autonomous win, or #3 to start archetype #3.
-3. The proven loop: write a slice spec/plan → execute subagent-driven (TDD → spec+quality review → fix-loop → opus whole-branch review) → merge → push.
-4. Reuse the patterns: keyword tagging + tag-synergy + per-unit flag stamped in `toBattleUnits` + a granting/scaling relic pair; **first-hit metric, not total damage**; every archetype declares its counter matrix.
+1. Visione: `…/specs/2026-06-28-game-design-direction.md`. Storia: `git log` + `.superpowers/sdd/progress.md`.
+2. **Prossimo passo consigliato: il pass #1 (potere del giocatore)** — è il collo di bottiglia che
+   sblocca sia il boss finale forte sia la forbice tra case.
+3. Loop provato: spec → piano → esecuzione subagent-driven (TDD → review spec+qualità → review opus
+   whole-branch) → merge → push. Ogni archetipo dichiara la sua matrice counter; metrica first-hit.
