@@ -4,7 +4,7 @@ import {
   formatSpellStats, spellEffectChips, synergyBonusText,
 } from '@/lib/glossary'
 import type { Spell } from '@/types/spell'
-import type { Synergy, SynergyBonus } from '@/types/synergy'
+import { SYNERGIES } from '@/data/synergies'
 
 const atk: Spell = { id: 'x', name: 'X', desc: 'd', type: 'Attacco', power: 1.4, hitChance: 0.9, cooldown: 1 }
 const heal: Spell = { id: 'h', name: 'H', desc: 'd', type: 'Cura', heal: 28, hitChance: 1, cooldown: 1 }
@@ -75,19 +75,24 @@ describe('EFFECT_META control blurbs', () => {
 })
 
 describe('synergyBonusText', () => {
-  const syn = (bonus: SynergyBonus): Synergy => ({
-    id: 't', name: 'Test', kind: 'role', requires: { role: 'Attaccante' }, bonus,
-  })
+  // attackers2: bonus { atk: 8 } — exercises flat-stat formatting
   it('formats flat stats', () => {
-    expect(synergyBonusText(syn({ atk: 10, def: 14 }))).toEqual(['+10 ATK', '+14 DIF'])
+    const s = SYNERGIES.find(x => x.id === 'attackers2')!
+    expect(synergyBonusText(s)).toEqual(['+8 ATK'])
   })
+  // goldenTrio: bonus { allPct: 0.15 } — exercises percent-of-all formatting
   it('formats allPct as a percent of all stats', () => {
-    expect(synergyBonusText(syn({ allPct: 0.15 }))).toEqual(['+15% a tutte le statistiche'])
+    const s = SYNERGIES.find(x => x.id === 'goldenTrio')!
+    expect(synergyBonusText(s)).toEqual(['+15% a tutte le statistiche'])
   })
+  // supports2: bonus { regen: 5 } — exercises regen formatting
   it('formats regen', () => {
-    expect(synergyBonusText(syn({ regen: 5 }))).toEqual(['Rigenera 5/turno'])
+    const s = SYNERGIES.find(x => x.id === 'supports2')!
+    expect(synergyBonusText(s)).toEqual(['Rigenera 5/turno'])
   })
-  it('returns empty array for an empty bonus', () => {
-    expect(synergyBonusText(syn({}))).toEqual([])
+  // gryffindor2: bonus {} but houseEffect gives Schivata +4% — exercises the house-effect path
+  it('derives house-effect text even when bonus is empty', () => {
+    const s = SYNERGIES.find(x => x.id === 'gryffindor2')!
+    expect(synergyBonusText(s)).toEqual(['Schivata +4%'])
   })
 })

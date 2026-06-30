@@ -35,3 +35,4 @@ next-env.d.ts
 
 # internal subagent scaffolding — never commit
 .superpowers/
+.claude/
