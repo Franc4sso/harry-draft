@@ -30,6 +30,9 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 //   spietatezzaRate=0.308 execUptakeRate=0.333 medianTurns=3 maxTurns=38. Kit intact (>> 0.05).
 // Post-floor-1=3 map change (2026-06-30, finalBossMenace -0.31→-0.40): winRate=0.792
 //   spietatezzaRate=0.267 execUptakeRate=0.267 medianTurns=3 maxTurns=39. Kit intact (>> 0.05).
+// Post-Task-6 house tuning (2026-06-30, SLYTH_CUNNING adjusted): winRate=0.750
+//   spietatezzaRate=0.267 execUptakeRate=0.267 medianTurns=3 maxTurns=39. Kit intact (>> 0.05).
+//   Small drop (~0.04) from lower cunning values; Serpeverde dominance unchanged (Voldemort spell kit).
 //
 // Metric choice — IMPORTANT: there is NO total-damage assertion here. Execute is a damage
 // MULTIPLIER on the killing blow, not a discrete channel like poison's `dot` flag, so a

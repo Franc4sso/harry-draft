@@ -35,6 +35,9 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 //   oscuritaRate=0.142 darkUptakeRate=0.142 recoilDeaths=0 medianTurns=2 maxTurns=36. Kit intact (>> 0.05).
 // Post-floor-1=3 map change (2026-06-30, finalBossMenace -0.31→-0.40): winRate=0.917
 //   oscuritaRate=0.117 darkUptakeRate=0.117 recoilDeaths=0 medianTurns=2 maxTurns=36. Kit intact (>> 0.05).
+// Post-Task-6 house tuning (2026-06-30, SLYTH_CUNNING adjusted): winRate=0.925
+//   oscuritaRate=0.117 darkUptakeRate=0.117 recoilDeaths=0 medianTurns=2 maxTurns=36. Kit intact (>> 0.05).
+//   Negligible change (within N=120 variance). Serpeverde/dark-magic overlap drives high winRate.
 registerCoreResolvers()
 
 const DARK_RELICS = new Set(['marchio-nero', 'diadema-corrotto'])

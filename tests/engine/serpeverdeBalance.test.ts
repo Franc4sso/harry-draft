@@ -21,6 +21,10 @@ import type { RunNode, RunState } from '@/types'
 // Post-live-infirmary (2026-06-30, C1 fix — menaceOffset -0.70→-0.75, finalBossMenace -0.45→-0.31): winRate=0.775.
 //   Negligible change; Serpeverde dominance unaffected. Band assertion still disabled (Slice 2).
 // Post-floor-1=3 map change (2026-06-30, finalBossMenace -0.31→-0.40): winRate=0.775. Unchanged.
+// Post-Task-6 house tuning (2026-06-30): winRate=0.742 (srp-0..119). Serpeverde dominance is structural —
+//   Voldemort's Sectumsempra (power=2.4, atk~40) deals ~88 dmg/hit and one-shots early enemies; the cunning
+//   mechanic (conditional bonus vs sub-50% targets) has negligible impact since Voldemort kills before
+//   threshold triggers. Band assertion still DISABLED — winRate 0.742 >> 0.60 ceiling (Slice 2 lever).
 registerCoreResolvers()
 
 function pickNode(s: RunState): RunNode {
@@ -86,13 +90,11 @@ describe('Serpeverde house balance', () => {
     const again = Array.from({ length: N }, (_, i) => runOne(`srp-${i}`))
     expect(again).toEqual(outcomes)
   })
-  // DIAGNOSTIC ONLY (2026-06-29): the band assertions are intentionally DISABLED until the enemy
-  // scaling fix lands. Investigation found enemies fight at 7–30% of base stats (menaceOffset=-1.05),
-  // so EVERY house's winRate is measured against broken enemies — Serpeverde 0.867 here is an artifact
-  // of that, not a pure house-power surplus. Re-enable a band assertion (`winRate < 0.60`) once the
-  // scaling fix recalibrates enemies; the deatheater nerf was proven a no-op (synergy fires ~17% of
-  // greedy runs). The real Serpeverde lever (if still needed post-scaling) is Voldemort's atk cliff.
-  it('runs and is playable (sanity floor — band assertion deferred to post-scaling)', () => {
+  // Band assertion DISABLED: winRate=0.742 >> 0.60 ceiling. Root cause is Voldemort's spell kit
+  // (not the cunning mechanic), which is a Slice-2 / wizard-data concern. The upper-bound assertion
+  // (`winRate < 0.60`) cannot honestly hold at current values; re-enable when Voldemort/Serpeverde
+  // starter power is rebalanced in a future slice.
+  it('runs and is playable (sanity floor — upper-bound assertion deferred to Slice 2)', () => {
     expect(winRate).toBeGreaterThan(0.0)
   })
 })

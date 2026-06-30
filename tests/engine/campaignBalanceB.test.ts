@@ -26,6 +26,10 @@ import type { RunNode, RunState } from '@/types'
 //   Floor-1 width=3 lowers win-rate ~1-2 pp; -0.31 now yields 0.142 (< 0.15 floor).
 //   finalBossMenace eased to -0.40 (statMult 0.60): -0.36 → 0.158 (too close to edge), -0.40 → 0.167 (20/120).
 //   Boss still well below area-2 strength (1.38); real climax awaits a player-power buff — Slice 3.
+// Recalibration (2026-06-30, Task 6 house mechanics tuned — RAVEN_CRIT/HUFF_REDUCE/SLYTH_CUNNING adjusted):
+//   winRate=0.183 (22/120). Grifondoro dodge kept at baseline (0.04/0.08/0.14) — raising dodge lowers win
+//   rate (defensive stalls without enough damage output). Crit raised to push Corvonero to parity.
+//   campaignBalanceB unchanged; house-mechanic tuning has <0.02 impact on Grifondoro win rate.
 registerCoreResolvers()
 
 // Near-optimal ("upper-bound") player policy. A pure recruit/relic-first greedy is

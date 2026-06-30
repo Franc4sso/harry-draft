@@ -34,6 +34,9 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 //   bastioneRate=0.258 shieldUptakeRate=0.258 medianTurns=8 maxTurns=45. Kit intact (> 0.05).
 // Post-floor-1=3 map change (2026-06-30, finalBossMenace -0.31→-0.40): winRate=0.158
 //   bastioneRate=0.333 shieldUptakeRate=0.333 medianTurns=8 maxTurns=45. Kit intact (> 0.05).
+// Post-Task-6 house tuning (2026-06-30, HUFF_REDUCE adjusted 0.08→0.10/0.15→0.16/0.22→0.24): winRate=0.258
+//   bastioneRate=0.358 shieldUptakeRate=0.358 medianTurns=13 maxTurns=45. Kit intact (> 0.05).
+//   Tassorosso damageReduction nudge improved scudi-rigen archetype durability (medianTurns 8→13).
 registerCoreResolvers()
 
 const SCUDI_RELICS = new Set(['egida-tassorosso', 'cuore-del-tasso'])

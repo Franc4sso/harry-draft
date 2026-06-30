@@ -33,6 +33,9 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 //   tossicitaRate=0.567 dotShare=0.390 medianTurns=3 maxTurns=37. Kit intact (>> 0.05).
 // Post-floor-1=3 map change (2026-06-30, finalBossMenace -0.31→-0.40): winRate=0.492
 //   tossicitaRate=0.558 dotShare=0.367 medianTurns=3 maxTurns=38. Kit intact (>> 0.05).
+// Post-Task-6 house tuning (2026-06-30, SLYTH_CUNNING adjusted): winRate=0.392
+//   tossicitaRate=0.567 dotShare=0.386 medianTurns=4 maxTurns=38. Kit intact (>> 0.05).
+//   Drop (~0.10) from lower cunning values; veleno archetype less augmented vs wounded targets.
 registerCoreResolvers()
 
 const VELENO_RELICS = new Set(['ampolla-veleno', 'pugnale-bellatrix', 'boccino-doro'])
