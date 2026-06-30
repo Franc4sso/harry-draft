@@ -14,6 +14,24 @@ export type RunNodeType =
   | 'shop' | 'event' | 'commonRoom'
   | 'library' | 'potions' | 'forest'
 
+export interface NodeBattle {
+  /** The drafted enemy team (stat-rolls already fixed). */
+  enemyTeam: DraftedWizard[]
+  /** Enemy relics for elite/boss nodes (empty otherwise). */
+  enemyRelics: ActiveRelic[]
+  /** Displayed enemy level; menace is derived from it. */
+  enemyLevel: number
+  /** Exclusive synergy carried by the FINAL boss only. */
+  bossSynergy?: ActiveSynergy
+}
+
+export interface NodePreview {
+  /** synergy.id list for the map telegraph badges. */
+  synergyIds: string[]
+  /** Final-boss display name (boss nodes only). */
+  bossName?: string
+}
+
 export interface RunNode {
   id: string
   type: RunNodeType
@@ -21,6 +39,10 @@ export interface RunNode {
   next: string[]
   /** true once the node has been completed (for save/render). */
   resolved?: boolean
+  /** Pre-generated battle package (combat nodes only; absent on legacy saves). */
+  battle?: NodeBattle
+  /** Telegraph data derived from `battle` (combat nodes only). */
+  preview?: NodePreview
 }
 
 /** Narrative log entry — seeds the Fase 4 end-of-run story screen. */
