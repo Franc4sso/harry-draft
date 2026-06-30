@@ -65,10 +65,12 @@ function clamp01(x: number): number {
   return Math.max(0, Math.min(1, x))
 }
 
-/** Continuous theme intensity. No hardcoded area thresholds — scales to N areas. */
+/** Continuous theme intensity. No hardcoded area thresholds — scales to N areas.
+ *  Final clamp01 guards the result if a future balance tune sets a nodeMult > 1
+ *  (nodeMult is the documented primary lever — see BALANCE.themes calibration log). */
 export function themeStrengthFor(area: number, kind: 'normal' | 'elite' | 'boss'): number {
   const t = BALANCE.themes
-  return clamp01(t.areaBase + area * t.areaStep) * t.nodeMult[kind]
+  return clamp01(clamp01(t.areaBase + area * t.areaStep) * t.nodeMult[kind])
 }
 
 /** How many of `teamCount` should realize the theme at this strength.
