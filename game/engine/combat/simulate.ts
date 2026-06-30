@@ -12,6 +12,7 @@ import { teamDarkMagic } from '../darkMagic'
 import { houseEffects } from '../houseEffects'
 import { registerTraitTriggers } from '../traits'
 import { registerSignatures } from '../signatures'
+import { registerSynergyTriggers } from '../synergyTriggers'
 import { createEventBus } from './eventBus'
 import { canAct } from '../status'
 import { EFFECT_HANDLERS } from './effects'
@@ -100,6 +101,8 @@ export function simulateBattle(
   registerRelicTriggers(bus, right, rightRelics, 'right')
   registerTraitTriggers(bus, [...L, ...R])
   registerSignatures(bus, [...L, ...R])
+  registerSynergyTriggers(bus, L, leftSyn, 'left')
+  registerSynergyTriggers(bus, R, rightSyn, 'right')
 
   // Poison scaling: each side's veleno multiplier from its own relics. Poison ON a unit
   // is scaled by the OPPOSING side's mult (the side that applied it).
