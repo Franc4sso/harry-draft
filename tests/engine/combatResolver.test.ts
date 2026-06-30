@@ -73,3 +73,14 @@ describe('resolveCombat', () => {
     expect(outF.isFinalBoss).toBe(true)
   })
 })
+
+describe('resolveCombat reads node.battle', () => {
+  it('fights exactly the pre-generated enemy team', () => {
+    const s = starterState()
+    const battleNode = s.map!.find(n => n.type === 'battle' && n.battle)!
+    const state: RunState = { ...s, currentNodeId: battleNode.id }
+    // The enemy returned by the resolver must be identical to the stored package.
+    const out = resolveCombat(state, battleNode, createRng('s').fork(2))
+    expect(out.enemy.map(d => d.wizard.id)).toEqual(battleNode.battle!.enemyTeam.map(d => d.wizard.id))
+  })
+})

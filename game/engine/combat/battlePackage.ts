@@ -1,7 +1,7 @@
 import type { ActiveSynergy, NodeBattle, NodePreview } from '@/types'
 import { createRng } from '../rng'
 import { themedEnemyTeam, generateBossTeam } from './teamGen'
-import { enemyLevelFor, globalDepth, budgetB } from '../resolvers/combat'
+import { enemyLevelFor, globalDepth, budgetB } from './threat'
 import { detectSynergies } from '../synergy'
 import { selectEnemyRelics } from '../relics'
 import { BALANCE } from '@/data/constants'
