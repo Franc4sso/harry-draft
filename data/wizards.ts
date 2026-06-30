@@ -12,7 +12,7 @@ export const WIZARDS: Wizard[] = [
   {
     id: 'voldemort', name: 'Lord Voldemort', house: 'Serpeverde', role: 'Attaccante', tier: 1,
     gender: 'm',
-    ranges: { hp: [82, 103], atk: [35, 45], def: [12, 19], spd: [24, 32] },
+    ranges: { hp: [82, 103], atk: [30, 38], def: [12, 19], spd: [24, 32] },
     spellPool: ['avada', 'sectumsempra', 'fiendfyre', 'serpensortia', 'crucio'],
     tags: ['deatheater', 'esecuzione', 'magieOscure'],
   },
@@ -28,7 +28,7 @@ export const WIZARDS: Wizard[] = [
   {
     id: 'snape', name: 'Severus Piton', house: 'Serpeverde', role: 'Attaccante', tier: 2,
     gender: 'm',
-    ranges: { hp: [70, 86], atk: [28, 37], def: [11, 16], spd: [19, 27] },
+    ranges: { hp: [70, 86], atk: [19, 27], def: [11, 16], spd: [19, 27] },
     spellPool: ['sectumsempra', 'levicorpus', 'confringo', 'reducto', 'stupeficium'],
     tags: ['esecuzione', 'magieOscure', 'infallibile'],
   },
@@ -70,7 +70,7 @@ export const WIZARDS: Wizard[] = [
   {
     id: 'lucius', name: 'Lucius Malfoy', house: 'Serpeverde', role: 'Attaccante', tier: 2,
     gender: 'm',
-    ranges: { hp: [69, 85], atk: [25, 33], def: [12, 16], spd: [19, 27] },
+    ranges: { hp: [69, 85], atk: [17, 25], def: [12, 16], spd: [19, 27] },
     spellPool: ['serpensortia', 'sectumsempra', 'reducto', 'confringo'],
     tags: ['deatheater', 'esecuzione', 'magieOscure', 'infallibile'],
   },
@@ -182,7 +182,7 @@ export const WIZARDS: Wizard[] = [
   {
     id: 'dolohov', name: 'Antonin Dolohov', house: 'Serpeverde', role: 'Attaccante', tier: 3,
     gender: 'm',
-    ranges: { hp: [66, 82], atk: [24, 31], def: [10, 15], spd: [17, 25] },
+    ranges: { hp: [66, 82], atk: [15, 22], def: [10, 15], spd: [17, 25] },
     spellPool: ['confringo', 'sectumsempra', 'reducto', 'serpensortia'],
     tags: ['deatheater', 'veleno', 'infallibile'],
   },
