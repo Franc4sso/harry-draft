@@ -60,9 +60,26 @@ house redesign — all above). Remaining:
   `saveRun`). NEW active-use/consumable mechanism (relics were all passive). **Doubles as the MID-AREA
   recovery lever** that the strong-final-boss item needed. Revive-only by design (heal stays the
   Infermeria's job). Spec/plan: `docs/superpowers/{specs,plans}/2026-06-30-resurrection-consumable*`.
-- **Strong final boss:** the mid-area recovery lever now EXISTS (Lacrime di Fenice above), so this is
-  unblocked → raise `finalBossMenace` to a real climax (statMult ≥ area-2 boss 1.38) + validate the win
-  floor still holds. Best done AFTER the Serpeverde rebalance (shared enemy-scaling calibration).
+- **Strong final boss — ✅ DONE (partial — moderate buff; true climax DEFERRED, user decision):** the
+  final boss was a pushover (`finalBossMenace -0.40` → statMult **0.60**, vs area bosses **1.33**).
+  ⚠️ MEASUREMENT FINDINGS: (1) the recovery lever (Lacrime di Fenice) does NOT create headroom in the
+  sweep — the forced pre-boss Infermeria already fully heals, so modeling the consumable was redundant
+  (dropped). (2) A true climax at parity (1.33) collapses campaign completion to **~2.5%**. (3) The real
+  campaignBalanceB baseline is **0.158** (the old `0.183` comment was stale; the Serpeverde Voldemort-
+  trim ate the headroom) — only ~0.008 above the 0.15 floor. **User decision: moderate buff** —
+  `finalBossMenace -0.40→-0.384` (statMult 0.60→**0.616**), the highest value holding the floor; a
+  regression-guard test (`finalBossClimax.test.ts`, statMult > 0.60) + a deferred-parity tripwire lock
+  it. Spec/plan: `...2026-06-30-strong-final-boss*`.
+- **FOLLOW-UP (new, from #5) — player-power pass is the real climax unlock:** a meaningful final boss
+  (statMult → area-boss parity 1.33) is impossible until the competent-team baseline is stronger — the
+  campaign already sits on the 0.15 floor (winRate 0.158). The path: buff player power / rewards
+  (better relics, level rewards, a power spike before the final area), THEN raise `finalBossMenace` to
+  parity within a healthy band, and flip the deferred `finalBossClimax` parity tripwire. Tightly coupled
+  to the leveling-snowball follow-up (#4) — both are "the player-power & difficulty-curve" pass.
+- **WATCH (from #4 side-effect) — Scudi-Rigen viability dropped:** `scudiRigenSweep` winRate fell
+  **0.258 → 0.100** after the Serpeverde Voldemort-atk trim (weaker dark enemies changed the matchup).
+  Still passes its `> 0.05` floor but the archetype is now near-marginal — re-check when the player-power
+  pass lands.
 - **Serpeverde/Voldemort balance — ✅ DONE (2026-06-30 balance pass):** the live skew was **0.925**
   (not the stale ~0.73; win-based leveling inflated it). ⚠️ DIAGNOSIS CORRECTED: the driver was NOT
   Sectumsempra/spell-power (zeroing sectumsempra+deatheater+spietatezza only reached 0.825) — it's the

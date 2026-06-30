@@ -26,12 +26,13 @@ describe('final boss climax invariant', () => {
     expect(finalStatMult).toBeGreaterThan(oldPushoverStatMult)
   })
 
-  // Informational: area-boss parity target (NOT asserted — parity is deferred)
-  it('documents area-boss parity target without asserting it (parity deferred)', () => {
+  // The final boss is still BELOW area-boss parity — the deferred climax goal. This asserts the
+  // current (intentional) gap; when a future player-power pass closes it, this test will flip and
+  // signal that the deferred goal is reached and these docs/backlog notes should be updated.
+  it('is still below area-boss parity (the deferred climax goal)', () => {
     const levelMax = BALANCE.leveling.levelMax
     const areaBossStatMult = 1 + menaceForLevel(levelMax)
-    // This gap is intentional and documented — NOT a bug.
-    // Parity requires a player-power pass first (see spec above).
-    expect(finalStatMult).toBeLessThan(areaBossStatMult) // parity not yet reached — by design
+    // Gap is intentional and documented — NOT a bug; parity requires a player-power pass (see spec above).
+    expect(finalStatMult).toBeLessThan(areaBossStatMult)
   })
 })
