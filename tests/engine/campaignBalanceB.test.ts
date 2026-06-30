@@ -30,6 +30,11 @@ import type { RunNode, RunState } from '@/types'
 //   winRate=0.183 (22/120). Grifondoro dodge kept at baseline (0.04/0.08/0.14) — raising dodge lowers win
 //   rate (defensive stalls without enough damage output). Crit raised to push Corvonero to parity.
 //   campaignBalanceB unchanged; house-mechanic tuning has <0.02 impact on Grifondoro win rate.
+// Moderate boss buff (2026-07-01, backlog item #5 — finalBossMenace -0.40→-0.384, statMult 0.60→0.616):
+//   The Serpeverde balance tune (Voldemort atk trim, post-Task6) moved the true winRate at -0.40 to
+//   0.1583 (19/120), leaving only 0.0083 headroom. Empirical ceiling: -0.383→0.1500 (exactly 0.15, fails
+//   strict >); -0.384→0.1583 (passes). -0.384 is the highest holding the floor. winRate=0.1583 (19/120).
+//   Area-boss parity (statMult ≥ 1.33) is DEFERRED — see docs/superpowers/specs/2026-06-30-strong-final-boss-design.md.
 registerCoreResolvers()
 
 // Near-optimal ("upper-bound") player policy. A pure recruit/relic-first greedy is

@@ -33,6 +33,9 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 // Post-Task-6 house tuning (2026-06-30, SLYTH_CUNNING adjusted): winRate=0.750
 //   spietatezzaRate=0.267 execUptakeRate=0.267 medianTurns=3 maxTurns=39. Kit intact (>> 0.05).
 //   Small drop (~0.04) from lower cunning values; Serpeverde dominance unchanged (Voldemort spell kit).
+// Post-boss-buff (2026-07-01, finalBossMenace -0.40→-0.384 + Serpeverde atk trim baked in): winRate=0.775
+//   spietatezzaRate=0.275 execUptakeRate=0.283 medianTurns=3 maxTurns=25. Kit intact (>> 0.05).
+//   Slight uptick: weaker Voldemort mid-area enemies offset the marginal final-boss hardening.
 //
 // Metric choice — IMPORTANT: there is NO total-damage assertion here. Execute is a damage
 // MULTIPLIER on the killing blow, not a discrete channel like poison's `dot` flag, so a
