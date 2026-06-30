@@ -4,6 +4,7 @@ import {
   reachable, moveTo, resolveCurrent,
   registerCoreResolvers, phaseAfterNode,
 } from '@/game/engine/runEngine'
+import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
 import { createRng } from '@/game/engine/rng'
 import { createDraftPool } from '@/game/engine/draft'
 import { draftWizard } from '@/game/engine/statRoll'
@@ -58,6 +59,58 @@ describe('run engine — node resolution', () => {
     expect(['victory', 'defeat']).toContain(s.phase)
     // resolved flag set
     expect(s.map!.find(n => n.id === target.id)!.resolved).toBe(true)
+  })
+})
+
+describe('run engine — infirmary node integration', () => {
+  it('entering an infirmary node sets phase infirmary-node, resolving heals the team and returns phase to map', () => {
+    // Find a seed where an infirmary node is reachable from the start
+    // generateArea always places an infirmary node, so iterate seeds until one appears reachable
+    let found = false
+    for (let i = 0; i < 40 && !found; i++) {
+      const seed = `inf-test-${i}`
+      const offer = starterOffer(seed, 'Grifondoro')
+      let s = chooseStarters(startRunB(seed), 'Grifondoro', offer.slice(0, 2).map(d => d.wizard.id), createRng(seed))
+      // Walk deeper into the map to find an infirmary node
+      let guard = 0
+      while (guard++ < 30) {
+        const opts = reachable(s)
+        const inf = opts.find(n => n.type === 'infirmary')
+        if (inf) {
+          // Wound the team
+          s = { ...s, team: s.team.map(d => ({ ...d, currentHp: 1 })) }
+          s = moveTo(s, inf.id)
+          expect(s.phase).toBe('infirmary-node')
+          s = resolveCurrent(s, { kind: 'combat-ack' }, createRng(seed))
+          // infirmaryResolver sets all to maxHp; resolveCurrent then goes to 'victory'
+          // (non-boss, non-wipeout). We set phase back to 'map' as the controller does.
+          s = { ...s, phase: 'map' }
+          expect(s.phase).toBe('map')
+          expect(s.team.every(d => (d.currentHp ?? d.maxHp) === d.maxHp)).toBe(true)
+          found = true
+          break
+        }
+        // Move to any non-boss node to advance deeper
+        const next = opts.find(n => n.type !== 'boss') ?? opts[0]!
+        s = moveTo(s, next.id)
+        if (s.phase === 'battle') {
+          s = resolveCurrent(s, { kind: 'combat-ack' }, createRng(seed))
+          s = { ...s, phase: 'map' }
+        } else if (s.phase === 'recruit-node') {
+          s = resolveCurrent(s, { kind: 'skip' }, createRng(seed))
+          s = { ...s, phase: 'map' }
+        } else if (s.phase === 'relic-node') {
+          const node = s.map!.find(n => n.id === s.currentNodeId)!
+          const off = relicOffer(s, node, createRng(seed))
+          s = resolveCurrent(s, { kind: 'relic-pick', relicId: off[0]!.id }, createRng(seed))
+          s = { ...s, phase: 'map' }
+        } else if (s.phase === 'infirmary-node') {
+          s = resolveCurrent(s, { kind: 'combat-ack' }, createRng(seed))
+          s = { ...s, phase: 'map' }
+        }
+      }
+    }
+    expect(found).toBe(true)
   })
 })
 

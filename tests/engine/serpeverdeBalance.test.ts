@@ -62,6 +62,10 @@ function runOne(seed: string, battleTurns?: number[]): 'win' | 'defeat' {
       s = resolveCurrent(s, { kind: 'relic-pick', relicId: off[0]!.id }, createRng(seed))
       s = { ...s, phase: 'map' }; continue
     }
+    if (s.phase === 'infirmary-node') {
+      s = resolveCurrent(s, { kind: 'combat-ack' }, createRng(seed))
+      s = { ...s, phase: 'map' }; continue
+    }
     if (s.phase === 'area-cleared') { s = clearAreaAndAdvance(s, createRng(seed)); continue }
     if (s.phase === 'victory') { s = { ...s, phase: 'map' }; continue }
     break

@@ -15,7 +15,7 @@ registerCoreResolvers()
 
 export type RunBView =
   | 'draft' | 'map' | 'battle' | 'victory'
-  | 'recruit' | 'relic' | 'area-cleared' | 'win' | 'defeat'
+  | 'recruit' | 'relic' | 'infirmary' | 'area-cleared' | 'win' | 'defeat'
 
 export interface RunBController {
   run: RunState; view: RunBView
@@ -28,6 +28,7 @@ export interface RunBController {
   chooseRecruit: (wizardId: string, replaceId?: string) => void
   skipRecruit: () => void
   chooseRelic: (relicId: string, assignedTo?: string) => void
+  ackInfirmary: () => void
   setWizardSpell: (wizardId: string, spellId: string) => void
   advanceArea: () => void
   restart: () => void
@@ -41,6 +42,7 @@ const viewForPhase = (p: RunState['phase']): RunBView => {
     case 'victory': return 'victory'
     case 'recruit-node': return 'recruit'
     case 'relic-node': return 'relic'
+    case 'infirmary-node': return 'infirmary'
     case 'area-cleared': return 'area-cleared'
     case 'win': return 'win'
     case 'defeat': return 'defeat'
@@ -109,6 +111,11 @@ export function useRunB(seed: string): RunBController {
     commit({ ...next, phase: 'map' }, 'map')
   }, [commit])
 
+  const ackInfirmary = useCallback(() => {
+    const next = resolveCurrent(runRef.current, { kind: 'combat-ack' }, createRng(runRef.current.seed))
+    commit({ ...next, phase: 'map' }, 'map')
+  }, [commit])
+
   const setWizardSpellCb = useCallback((wizardId: string, spellId: string) => {
     commit(setWizardSpell(runRef.current, wizardId, spellId))
   }, [commit])
@@ -127,7 +134,7 @@ export function useRunB(seed: string): RunBController {
     run, view, battle, reachable, currentNode,
     area: run.area ?? 0, areasTotal: BALANCE.map.areas, lastFallen,
     completeDraft, chooseNode, commitBattle, acknowledgeVictory,
-    chooseRecruit, skipRecruit, chooseRelic, setWizardSpell: setWizardSpellCb,
+    chooseRecruit, skipRecruit, chooseRelic, ackInfirmary, setWizardSpell: setWizardSpellCb,
     advanceArea, restart,
   }
 }

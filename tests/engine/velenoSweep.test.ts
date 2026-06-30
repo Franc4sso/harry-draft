@@ -92,6 +92,10 @@ function favorVelenoRun(seed: string): RunMetrics {
       s = resolveCurrent(s, { kind: 'relic-pick', relicId: pick.id }, createRng(seed))
       s = { ...s, phase: 'map' }; continue
     }
+    if (s.phase === 'infirmary-node') {
+      s = resolveCurrent(s, { kind: 'combat-ack' }, createRng(seed))
+      s = { ...s, phase: 'map' }; continue
+    }
     if (s.phase === 'area-cleared') { s = clearAreaAndAdvance(s, createRng(seed)); continue }
     if (s.phase === 'victory') { s = { ...s, phase: 'map' }; continue }
     break

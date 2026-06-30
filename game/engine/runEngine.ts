@@ -86,7 +86,7 @@ export function reachable(state: RunState): RunNode[] {
 }
 
 const phaseForNode = (t: RunNode['type']): RunState['phase'] =>
-  t === 'recruit' ? 'recruit-node' : t === 'relic' ? 'relic-node' : 'battle'
+  t === 'recruit' ? 'recruit-node' : t === 'relic' ? 'relic-node' : t === 'infirmary' ? 'infirmary-node' : 'battle'
 
 export function moveTo(state: RunState, nodeId: string): RunState {
   const cur = state.map?.find(n => n.id === state.currentNodeId)
