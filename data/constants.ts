@@ -13,9 +13,13 @@ export const BALANCE = {
     dodgeScale: 0.0012,
     // Anti-stall "fatigue": past `fatigueStart`, every unit takes escalating TRUE
     // damage at end of turn (`maxHp * fatiguePctStep * (turn - fatigueStart)`),
-    // ignoring def/shields/heals so defensive stalemates always converge ~turn 40
+    // ignoring def/shields/heals so defensive stalemates always converge ~turn 25
     // instead of grinding to turnCap. Normal fights end long before fatigueStart.
-    fatigueStart: 30,
+    // Lowered 30→18 (2026-06-30): campaign median was 11 turns but p75=33/p90=36 due
+    // to a fat tail of stall battles converging via fatigue at ~35-39 turns. At 18 the
+    // tail collapses (p90 ≈ 18-20), mean/median land ~12-13 (target ≈ 15) and the
+    // heavy sweep/UI tests no longer time out under full-suite parallel load.
+    fatigueStart: 18,
     fatiguePctStep: 0.05,
     // A direct damage hit on a frozen unit shatters the freeze: it ends and the
     // breaking hit deals this multiplier. DoT ticks do NOT shatter.

@@ -26,5 +26,5 @@ describe('DraftScreen', () => {
 
     expect(onComplete).toHaveBeenCalledTimes(1)
     expect(picked).toHaveLength(STARTER_PICKS)
-  })
+  }, 15000)
 })

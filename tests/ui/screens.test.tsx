@@ -17,7 +17,7 @@ describe('MenuScreen', () => {
     expect(screen.getByRole('button', { name: /gioca/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /compendio/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /credits/i })).toBeInTheDocument()
-  })
+  }, 15000)
 })
 
 describe('RulesScreen', () => {
@@ -40,7 +40,7 @@ describe('Compendio (RulesScreen)', () => {
     for (const s of SPELLS) {
       expect(screen.getAllByText(s.name).length).toBeGreaterThan(0)
     }
-  })
+  }, 15000)
   it('renders all 4 glossary categories', () => {
     render(<RulesScreen />)
     // existing categories

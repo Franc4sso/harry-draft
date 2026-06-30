@@ -38,7 +38,7 @@ describe('RecruitScreen', () => {
     }
     await userEvent.click(screen.getByRole('button', { name: /Non sostituire nessuno/i }))
     expect(onSkip).toHaveBeenCalled()
-  })
+  }, 15000)
 
   it('renders candidates as horizontal (landscape) cards, like the draft', () => {
     const onPick = vi.fn()

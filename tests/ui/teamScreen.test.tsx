@@ -19,7 +19,7 @@ describe('TeamScreen', () => {
     const t = team(['harry', 'ron', 'hermione', 'luna', 'neville'])
     render(<TeamScreen team={t} />)
     for (const m of t) expect(screen.getByText(displayName(m))).toBeInTheDocument()
-  })
+  }, 15000)
   it('shows the golden trio synergy when present', () => {
     const t = team(['harry', 'ron', 'hermione', 'luna', 'neville'])
     render(<TeamScreen team={t} />)

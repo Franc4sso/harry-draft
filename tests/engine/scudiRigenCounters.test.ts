@@ -18,13 +18,18 @@ const convert: ActiveRelic[] = [{ relic: egida, stageObtained: 0 }, { relic: cuo
 const execRelics: ActiveRelic[] = [{ relic: spada, stageObtained: 0 }, { relic: sigillo, stageObtained: 0 }]
 
 describe('Scudi-Rigen counter-web', () => {
-  // The wall: moderate HP + low def so chip outpaces regen without shields,
+  // The wall: low HP + low def so chip outpaces regen without shields,
   // but overflow→shield (rate 0.75 with egida+cuore) absorbs the net chip.
-  // Tuned stats: wallHp=200, wallDef=12, attrAtk=65, regen=60, seed='seed4'.
-  const wall = () => [mk('ernie', { hp: 200, atk: 16, def: 12, spd: 14 })]
+  // Tuned stats: wallHp=100, wallDef=12, attrAtk=60, regen=60, seed='seed4'.
+  // (wallHp lowered 200→100 when fatigueStart was lowered 30→18 on 2026-06-30:
+  //  with the new earlier fatigue the old 200-HP wall would persist past the stall
+  //  threshold and the winner was decided by HP% rather than natural kill;
+  //  wallHp=100 ensures fatigue kills the non-shielded wall while the shielded wall
+  //  maintains HP% via regen and wins the HP% tiebreak at fatigue convergence.)
+  const wall = () => [mk('ernie', { hp: 100, atk: 16, def: 12, spd: 14 })]
 
   it('BEATS an attrition enemy (overflow→shield out-sustains chip damage)', () => {
-    const attrition = [mk('cedric', { hp: 300, atk: 65, def: 16, spd: 16 })]
+    const attrition = [mk('cedric', { hp: 300, atk: 60, def: 16, spd: 16 })]
     const plain = simulateBattle(wall(), attrition, createRng('seed4'), { leftSyn: [regenSyn(60)] })
     const withConvert = simulateBattle(wall(), attrition, createRng('seed4'), { leftSyn: [regenSyn(60)], leftRelics: convert })
     expect(plain.winner).toBe('right')        // baseline: chip out-damages a non-converting wall
