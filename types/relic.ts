@@ -48,6 +48,8 @@ export interface Relic {
   grantsDarkMagic?: { bonus: number; recoil: number }
   /** When true, this relic is assigned to ONE wizard at draft time (see ActiveRelic.assignedTo). */
   assignable?: boolean
+  /** Consumable active-use relic (not a passive combat descriptor). 'revive' = Lacrime di Fenice. */
+  active?: 'revive'
 }
 
 export interface ActiveRelic {
