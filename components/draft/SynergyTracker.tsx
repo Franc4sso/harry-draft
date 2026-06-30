@@ -47,7 +47,7 @@ export function SynergyTracker({
           const isSuperseded = superseded(r)
           const shown = preview ? r.nextCount : r.count
           const ratio = Math.min(1, shown / r.threshold)
-          const bonus = synergyBonusText(r.synergy.bonus).join(' · ')
+          const bonus = synergyBonusText(r.synergy).join(' · ')
           return (
             <div
               key={r.synergy.id}

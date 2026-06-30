@@ -81,7 +81,7 @@ export function SynergyGraph() {
             <h3 className="font-display text-xl" style={{ color: KIND_COLOR[active.kind] }}>{active.name}</h3>
             <p className="mt-1 text-sm text-white/60">{requirementText(active)}</p>
             <div className="mt-3 flex flex-wrap gap-1.5">
-              {synergyBonusText(active.bonus).map((t) => (
+              {synergyBonusText(active).map((t) => (
                 <span key={t} className="px-2.5 py-0.5 rounded-full text-xs border border-white/15 bg-white/5 text-white/85">{t}</span>
               ))}
             </div>

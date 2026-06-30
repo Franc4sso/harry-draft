@@ -37,7 +37,7 @@ export function SynergyRibbon({
           >
             <span aria-hidden style={{ color: '#caa24a' }}>✦</span>
             {s.synergy.name}
-            <span className="text-[#c9bfa0]">{synergyBonusText(s.synergy.bonus).join(' · ')}</span>
+            <span className="text-[#c9bfa0]">{synergyBonusText(s.synergy).join(' · ')}</span>
           </span>
         ))}
         {relics.map((r) => (

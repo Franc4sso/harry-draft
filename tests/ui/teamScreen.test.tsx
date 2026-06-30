@@ -33,7 +33,7 @@ describe('TeamScreen', () => {
     const active = detectSynergies(t)
     expect(active.length).toBeGreaterThan(0)
     const first = active[0]!
-    for (const txt of synergyBonusText(first.synergy.bonus)) {
+    for (const txt of synergyBonusText(first.synergy)) {
       expect(screen.getByText(txt)).toBeInTheDocument()
     }
     const memberName = t.find((d) => first.memberIds.includes(d.wizard.id))!.wizard.name

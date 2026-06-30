@@ -7,7 +7,7 @@ import { displayName } from '@/lib/displayName'
 import { synergyBonusText } from '@/lib/glossary'
 
 function SynergyChip({ s }: { s: ActiveSynergy }) {
-  const bonus = s.synergy.bonus ? synergyBonusText(s.synergy.bonus).join(' · ') : ''
+  const bonus = s.synergy.bonus ? synergyBonusText(s.synergy).join(' · ') : ''
   const count = s.memberIds?.length ?? 0
   return (
     <span

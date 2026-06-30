@@ -14,9 +14,9 @@ describe('SynergyGraph', () => {
   })
   it('reveals bonus text when a synergy is selected', async () => {
     render(<SynergyGraph />)
-    const withBonus = SYNERGIES.find(s => synergyBonusText(s.bonus).length > 0)!
+    const withBonus = SYNERGIES.find(s => synergyBonusText(s).length > 0)!
     await userEvent.click(screen.getAllByText(withBonus.name)[0]!)
-    const bonus = synergyBonusText(withBonus.bonus)[0]!
+    const bonus = synergyBonusText(withBonus)[0]!
     expect(screen.getByText(bonus)).toBeInTheDocument()
   })
 })

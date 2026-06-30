@@ -4,6 +4,7 @@ import {
   formatSpellStats, spellEffectChips, synergyBonusText,
 } from '@/lib/glossary'
 import type { Spell } from '@/types/spell'
+import type { Synergy, SynergyBonus } from '@/types/synergy'
 
 const atk: Spell = { id: 'x', name: 'X', desc: 'd', type: 'Attacco', power: 1.4, hitChance: 0.9, cooldown: 1 }
 const heal: Spell = { id: 'h', name: 'H', desc: 'd', type: 'Cura', heal: 28, hitChance: 1, cooldown: 1 }
@@ -74,16 +75,19 @@ describe('EFFECT_META control blurbs', () => {
 })
 
 describe('synergyBonusText', () => {
+  const syn = (bonus: SynergyBonus): Synergy => ({
+    id: 't', name: 'Test', kind: 'role', requires: { role: 'Attaccante' }, bonus,
+  })
   it('formats flat stats', () => {
-    expect(synergyBonusText({ atk: 10, def: 14 })).toEqual(['+10 ATK', '+14 DIF'])
+    expect(synergyBonusText(syn({ atk: 10, def: 14 }))).toEqual(['+10 ATK', '+14 DIF'])
   })
   it('formats allPct as a percent of all stats', () => {
-    expect(synergyBonusText({ allPct: 0.15 })).toEqual(['+15% a tutte le statistiche'])
+    expect(synergyBonusText(syn({ allPct: 0.15 }))).toEqual(['+15% a tutte le statistiche'])
   })
   it('formats regen', () => {
-    expect(synergyBonusText({ regen: 5 })).toEqual(['Rigenera 5/turno'])
+    expect(synergyBonusText(syn({ regen: 5 }))).toEqual(['Rigenera 5/turno'])
   })
   it('returns empty array for an empty bonus', () => {
-    expect(synergyBonusText({})).toEqual([])
+    expect(synergyBonusText(syn({}))).toEqual([])
   })
 })

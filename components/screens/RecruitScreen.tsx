@@ -55,7 +55,7 @@ function ActivationRail({ candidate, activating }: { candidate: DraftedWizard | 
                     si attiva
                   </span>
                 </div>
-                <p className="mt-1 text-[11px] leading-snug text-[#cfeccf]">{synergyBonusText(p.synergy.bonus).join(' · ')}</p>
+                <p className="mt-1 text-[11px] leading-snug text-[#cfeccf]">{synergyBonusText(p.synergy).join(' · ')}</p>
               </motion.div>
             ))}
           </AnimatePresence>

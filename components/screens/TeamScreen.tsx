@@ -46,7 +46,7 @@ export function TeamScreen({
                   <div className="flex min-w-0 flex-col gap-1">
                     <span className="font-display text-sm leading-tight">{s.synergy.name.replace(/^\d+\s+/, '')}</span>
                     <div className="flex flex-wrap gap-1">
-                      {synergyBonusText(s.synergy.bonus).map((t) => (
+                      {synergyBonusText(s.synergy).map((t) => (
                         <span
                           key={t}
                           className="rounded-full bg-emerald-300/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-200"
