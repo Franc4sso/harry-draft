@@ -1,6 +1,6 @@
 import type { DraftedWizard, Spell, Stats, Wizard } from '@/types'
 import type { Rng } from './rng'
-import { SPELL_BY_ID } from '@/data/spells'
+import { SPELL_BY_ID, SPELL_IS_VENOM } from '@/data/spells'
 import { BALANCE } from '@/data/constants'
 import { SHINY_TRAIT_IDS } from '@/data/traits'
 
@@ -19,7 +19,15 @@ export function fixedStats(wizard: Wizard): Stats {
 }
 
 export function pickSpell(rng: Rng, wizard: Wizard): Spell {
-  const id = rng.pick(wizard.spellPool)
+  // Venom-tagged mages always enter battle with a venom spell equipped. Restrict the
+  // candidate set BEFORE the single rng.pick — one draw, restricted outcome (keeps the
+  // rng-draw count identical for every caller). Defensive fallback to the full pool if a
+  // venom mage's pool somehow has no venom spell (a data test guards against this).
+  const venom = (wizard.tags ?? []).includes('veleno')
+    ? wizard.spellPool.filter(id => SPELL_IS_VENOM.has(id))
+    : null
+  const candidates = venom && venom.length > 0 ? venom : wizard.spellPool
+  const id = rng.pick(candidates)
   const spell = SPELL_BY_ID[id]
   if (!spell) throw new Error(`unknown spell ${id} for ${wizard.id}`)
   return spell
