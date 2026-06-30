@@ -4,8 +4,7 @@ import { createRng } from '@/game/engine/rng'
 import { BALANCE } from '@/data/constants'
 
 // This test exercises the LIVE path: generateArea → assignAreaCategories.
-// generateMap is dead code (not used at runtime). Every assertion here proves
-// the Infermeria funnel exists in the actual game.
+// Every assertion here proves the Infermeria funnel exists in the actual game.
 describe('map: guaranteed Infermeria before the boss (live path: generateArea)', () => {
   it('the floor before the boss is Infermeria-only (width 1) and leads to the boss', () => {
     for (const seed of ['m0', 'm1', 'm2', 'm3', 'm4']) {
