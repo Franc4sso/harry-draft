@@ -138,6 +138,22 @@ SEED DRIFT della modifica draft (§3) va assorbito PRIMA di misurare il balance 
 - Reliquie veleno nuove (il motore keywordMult c'è; il contenuto è un altro slice).
 - Migrare i save vecchi con shiny-veleno (inerte, accettato).
 
+## Stato finale (implementato)
+
+**Slice completo** — tutte le 6 task implementate e committate (commit 4ad0128 → e685ca4 su master).
+
+**Trait veleno rimosso**: eliminato da `data/traits.ts`, automaticamente assente da `SHINY_TRAIT_IDS`. Save legacy con `shiny.traitId='veleno'` rimane inerte (`registerTraitTriggers` salta la trait non trovata, nessun crash). Alcuni test che lo referenziavano sono stati migrati al trait 'furia' e i conteggi aggiornati.
+
+**3 nuove spell-veleno**: `morsobasilisco` (Attaccante, power 1.6), `nubetossica` (Controllo/Supporto, power 0.9), `maledizioneputrida` (Tank, power 1.1). Ogni mago-veleno (10 in totale) ha ≥1 spell-veleno nel pool. Set `SPELL_IS_VENOM` derivato dai dati, accertato. Pomona id reale='sprout', Nott='theodore'.
+
+**Draft garantito**: `pickSpell` per un mago-veleno equipaggia sempre una spell-veleno (1 sola `rng.pick`, set ristretto → seed-shifting ma draw-count invariato). Vale anche per i nemici (`draftWizard` condiviso).
+
+**Tossicità ridisegnata**: NON dà più `bonus{atk:5}`. Ora (a) **GENERA veleno** — ogni membro del lato attivo ha chance `TOSSICITA_HIT_CHANCE=0.35` su colpi normali di applicare veleno via nuovo `registerSynergyTriggers` (stessa architettura del bus `onHit` delle signature), gated per lato; (b) **AMPLIFICA** — `bonus{keywordMult:{veleno:0.5}}` (+50% danno veleno, sommato in `keywordDamageMult` che ora legge synergies attive) + mantiene `velenoUncapped` (cap stack rimosso).
+
+**Balance verificato**: curva iniziale tenuta — `campaignBalanceB` winRate Grifondoro 0.2083 (25/120), in banda `[0.15,0.45]` alla PRIMA misura, NESSUNA leva abbassata. Rimuovere `atk:5` ha compensato il potere-veleno aggiunto. Suite piena 828/828 pass + tsc clean.
+
+**Veleno resta "stacca-e-aspetti"** — profondità tattica (detonazione, danno-condizionale) è esplicitamente slice FUTURO, YAGNI accettato in questo design.
+
 ## Ordine di implementazione (per il plan)
 
 1. `data/traits.ts`: rimuovere trait `veleno` (+ costanti orfane). Test: assente da TRAIT_BY_ID/SHINY_TRAIT_IDS, shiny legacy inerte.
