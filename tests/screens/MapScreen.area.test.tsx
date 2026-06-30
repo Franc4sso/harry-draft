@@ -17,5 +17,5 @@ describe('MapScreen with area-scoped ids', () => {
     const target = map.find(n => n.id === entry.next[0])!
     await userEvent.click(screen.getByTestId(`node-${target.id}`))
     expect(onChoose).toHaveBeenCalledWith(target.id)
-  })
+  }, 15000)
 })

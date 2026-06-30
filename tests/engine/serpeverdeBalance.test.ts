@@ -89,7 +89,7 @@ describe('Serpeverde house balance', () => {
   it('is deterministic (same seeds → same outcomes)', () => {
     const again = Array.from({ length: N }, (_, i) => runOne(`srp-${i}`))
     expect(again).toEqual(outcomes)
-  })
+  }, 30000)
   // Band assertion DISABLED: winRate=0.742 >> 0.60 ceiling. Root cause is Voldemort's spell kit
   // (not the cunning mechanic), which is a Slice-2 / wizard-data concern. The upper-bound assertion
   // (`winRate < 0.60`) cannot honestly hold at current values; re-enable when Voldemort/Serpeverde

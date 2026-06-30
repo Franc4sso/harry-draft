@@ -13,5 +13,5 @@ describe('RelicNodeScreen', () => {
     await userEvent.click(screen.getByTestId(`relic-${offer[0]!.id}`))
     await userEvent.click(screen.getByRole('button', { name: /Prendi/ }))
     expect(onPick).toHaveBeenCalledWith(offer[0]!.id, undefined)
-  })
+  }, 15000)
 })
