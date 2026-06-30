@@ -31,32 +31,40 @@ against an objective gate, plus snapshot re-baselining.
 
 ---
 
-### Task 1: The tune — sectumsempra power (+ deatheater if needed), re-enable the gate
+### Task 1: The tune — modest Voldemort + Bellatrix base-atk trim, re-enable the gate
+
+> ⚠️ REVISED LEVER (post-diagnosis, user decision): the root cause is the **win-based leveling
+> snowball** amplifying Serpeverde's strong starters' BASE atk into one-shots — NOT spell power
+> (zeroing sectumsempra+deatheater+spietatezza only reached 0.825). Spell-power levers are OFF the
+> table. The lever is a modest **base-atk trim of Voldemort (40→~34) + Bellatrix (~38→~32)** in
+> `data/wizards.ts`, sparing global leveling and enemy budget so Grifondoro stays put.
 
 **Files:**
-- Modify: `data/spells.ts` (`sectumsempra.power`)
-- Modify (only if needed): `data/synergies.ts` (`deatheater` `bonus.atk` 25 → ~12)
-- Modify: `tests/engine/serpeverdeBalance.test.ts` (re-enable `winRate < 0.60`; refresh stale comment)
+- Modify: `data/wizards.ts` (Voldemort `ranges.atk` and Bellatrix `ranges.atk`; + other top Serpeverde
+  attackers ONLY if the gate won't close with these two)
+- Modify: `tests/engine/serpeverdeBalance.test.ts` (re-enable `winRate < 0.60` — ALREADY done in the
+  working tree by the prior attempt; fix its stale comment that says "tuning sectumsempra.power" → the
+  real lever is the base-atk trim)
 - Refresh comments: `tests/engine/{velenoSweep,esecuzioneSweep,magieOscureSweep}.test.ts` (win-rate
-  comments only, if their printed numbers moved)
+  comments only, if their printed numbers moved) + `houseEffects.ts` stale 0.742 comment
 - Regen as needed: `tests/engine/combat/__snapshots__/*`, `replay.test.ts`/`replayRelics.test.ts` fixtures
 
-- [ ] **Step 1 — Baseline.** Run `npx vitest run tests/engine/serpeverdeBalance.test.ts` and record the
-  printed winRate (expect ~0.925). Confirm the `winRate < 0.60` assertion is currently commented out.
+- [ ] **Step 1 — Baseline & confirm gate.** Run `npx vitest run tests/engine/serpeverdeBalance.test.ts`;
+  record the printed winRate (~0.925). The `winRate < 0.60` assertion is ALREADY re-enabled in the
+  working tree (RED). Read the current Voldemort + Bellatrix `ranges.atk` in `data/wizards.ts` and
+  record them. (Voldemort is documented ~[35,45] midpoint 40; find Bellatrix's actual range.)
 
-- [ ] **Step 2 — Re-enable the gate FIRST (RED).** Uncomment the `expect(winRate).toBeLessThan(0.60)`
-  assertion in `serpeverdeBalance.test.ts`. Run it → it FAILS at ~0.925. This is the gate you're tuning
-  to satisfy (TDD-style: the failing band assertion is the spec).
+- [ ] **Step 2 — Trim Voldemort + Bellatrix base atk.** In `data/wizards.ts`, lower Voldemort's
+  `ranges.atk` so its midpoint is ~34 (e.g. [30,38]) and Bellatrix's so its midpoint is ~32. Keep
+  Voldemort still among the highest attackers (NOT gutted). Re-run the sweep. Iterate the two ranges
+  down until `winRate < 0.60`, aiming for a ~0.50-0.55 margin (noise guard). Do NOT crater the house
+  below ~0.40 (a competent Serpeverde must stay viable) — if you're heading there, you've over-trimmed,
+  back off.
 
-- [ ] **Step 3 — Lower `sectumsempra.power`.** In `data/spells.ts`, drop `power: 2.4` toward ~1.8.
-  Re-run the sweep. Iterate the value (e.g. 1.8 → 1.7 → 1.6) until `winRate < 0.60`. Keep a small
-  margin under 0.60 (aim ~0.50-0.55) so noise doesn't reflake it — but do NOT crater it (a competent
-  house should still be viable; if you find yourself below ~0.40 you've over-nerfed — back off).
-
-- [ ] **Step 4 — Secondary lever ONLY if needed.** If a *reasonable* `sectumsempra.power` (≥ ~1.5)
-  can't pull winRate under 0.60 alone, ALSO lower `deatheater` synergy `bonus.atk` (`data/synergies.ts`)
-  from 25 toward ~12, and re-tune. Prefer the smallest combined change that clears the gate. Record the
-  final pair of numbers.
+- [ ] **Step 3 — Extra Serpeverde attackers ONLY if needed.** If Voldemort+Bellatrix at sane values
+  (Voldemort midpoint ≥ ~32) can't pull winRate under 0.60, identify the next top-power Serpeverde
+  attacker the sweep drafts (e.g. via `powerOf`) and trim its `ranges.atk` modestly too. Prefer the
+  smallest combined change. Record every wizard + old→new range.
 
 - [ ] **Step 5 — Guardrails.** Run, and confirm all pass / hold:
   - `npx vitest run tests/engine/campaignBalanceB.test.ts` (Grifondoro still in [0.15,0.45]).
@@ -77,8 +85,8 @@ against an objective gate, plus snapshot re-baselining.
 
 - [ ] **Step 8 — Commit.**
   ```bash
-  git add data/spells.ts data/synergies.ts tests/
-  git commit -m "balance(serpeverde): lower sectumsempra power to clear the 0.60 gate (+deatheater if used)"
+  git add data/wizards.ts tests/ game/engine/houseEffects.ts
+  git commit -m "balance(serpeverde): trim Voldemort+Bellatrix base atk to clear the 0.60 gate"
   ```
 
 ---

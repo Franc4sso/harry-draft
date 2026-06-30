@@ -16,7 +16,27 @@ gira solo `> 0.0` (sanity). Quindi il test "passa" ma non sorveglia niente.
 - `campaignBalanceB` (Grifondoro competente) = **0.183** in banda **[0.15, 0.45]**. È accoppiato a
   Serpeverde SOLO via scaling/menace globale — che NON tocchiamo, quindi resta fermo.
 
-## Causa radice
+## ⚠️ REVISIONE (post-diagnosi sperimentale, 2026-06-30)
+
+La premessa "Sectumsempra" qui sotto è **superata**: misurazioni sperimentali (report del tentativo
+bloccato) mostrano che azzerare sectumsempra+deatheater+spietatezza porta 0.925 solo a **0.825** —
+il gate 0.60 è irraggiungibile via spell-power. **La vera causa è lo snowball del leveling win-based**
+(`game/engine/leveling.ts`): `1 + growthBudgetPerLevel(0.40) × weight × (lvl-1)` porta l'atk di
+Voldemort da 40 a **~98** al cap → ogni colpo è un one-shot (≈310 dmg vs ~22 HP), la spell-power
+diventa irrilevante. Serpeverde ha gli starter migliori (Voldemort+Bellatrix) → vince le early fight,
+livella più in fretta, raggiunge il cap prima → vantaggio composto. Grifondoro (0.183) non fa snowball
+così perché i suoi starter hanno atk base più basso.
+
+**Leva scelta (decisione utente): trim modesto dell'atk BASE di Voldemort + Bellatrix.**
+- `Voldemort` atk range midpoint **40 → ~34** (resta il/tra i più alti — NON sventrato, identità intatta).
+- `Bellatrix` atk range **~38 → ~32**.
+- Eventuali altri forti Attaccanti Serpeverde draftati dallo sweep se il gate non si chiude con questi due.
+- Isola Serpeverde: NON tocca `growthBudgetPerLevel` né l'enemy budget globale → Grifondoro/campaignBalanceB
+  restano fermi. Tarare i range empiricamente finché `serpeverdeBalance` winRate < 0.60 (margine ~0.50-0.55).
+
+La sezione "Causa radice / leva Sectumsempra" qui sotto è conservata per storia ma NON è più il piano.
+
+## Causa radice (SUPERATA — vedi revisione sopra)
 
 **Voldemort + Sectumsempra one-shotta i nemici early.** `sectumsempra.power = 2.4`
 (`data/spells.ts:9`), portata da 7 forti Attaccanti Serpeverde; con atk≈40 (Voldemort, il più alto del
