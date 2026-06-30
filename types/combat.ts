@@ -52,6 +52,14 @@ export interface BattleUnit extends DraftedWizard {
   /** This unit's Magie Oscure effect (from an assigned Marchio Nero / the Oscurità synergy):
    *  +bonus dmg on dark spells, recoil fraction of damage dealt back to self (lethal). */
   darkMagic?: { bonus: number; recoil: number }
+  /** Grifondoro house (courage): extra dodge chance added in `dodged()` when this unit is attacked. */
+  dodgeBonus?: number
+  /** Corvonero house (intelligence): added crit chance + added crit multiplier in `computeDamage`. */
+  critBonus?: { chance: number; mult: number }
+  /** Tassorosso house (loyalty): fraction of incoming damage reduced when this unit is the target. */
+  damageReduction?: number
+  /** Serpeverde house (cunning): +`bonus` damage dealt to a target below `threshold` HP fraction. */
+  cunning?: { threshold: number; bonus: number }
 }
 
 export type LogFlag = 'crit' | 'dodge' | 'kill' | 'heal' | 'block' | 'stun' | 'dot' | 'pen' | 'shatter' | 'wait' | 'recoil'
