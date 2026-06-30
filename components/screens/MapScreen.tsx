@@ -145,7 +145,7 @@ export function MapScreen({
               <span className="pointer-events-none absolute top-full mt-1 whitespace-nowrap rounded-md border border-white/15 bg-[#15121f]/95 px-2 py-0.5 text-[10px] text-white/85 opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">
                 {LABEL[n.type]}
               </span>
-              {n.preview && n.preview.synergyIds.length > 0 && (
+              {n.preview && (n.preview.synergyIds.length > 0 || n.preview.bossName) && (
                 <span
                   data-testid={`telegraph-${n.id}`}
                   className="pointer-events-none absolute bottom-full mb-1 flex max-w-[120px] flex-wrap justify-center gap-0.5"

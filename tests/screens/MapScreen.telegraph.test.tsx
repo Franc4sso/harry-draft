@@ -27,4 +27,23 @@ describe('MapScreen telegraph', () => {
     render(<MapScreen map={map} {...base} />)
     expect(screen.queryByTestId('telegraph-a0f1n0')).toBeNull()
   })
+
+  it('renders telegraph with boss name even when synergyIds is empty', () => {
+    const map: RunNode[] = [
+      node({ id: 'a0f0n0', type: 'battle', next: ['a0f1n0'] }),
+      node({ id: 'a0f1n0', type: 'boss', next: [], preview: { synergyIds: [], bossName: 'Lord Voldemort' } }),
+    ]
+    render(<MapScreen map={map} {...base} />)
+    expect(screen.getByTestId('telegraph-a0f1n0')).toBeInTheDocument()
+    expect(screen.getByTestId('telegraph-a0f1n0').textContent).toContain('Lord Voldemort')
+  })
+
+  it('renders NO telegraph for a combat node with no preview at all', () => {
+    const map: RunNode[] = [
+      node({ id: 'a0f0n0', type: 'battle', next: ['a0f1n0'] }),
+      node({ id: 'a0f1n0', type: 'battle', next: [] }),
+    ]
+    render(<MapScreen map={map} {...base} />)
+    expect(screen.queryByTestId('telegraph-a0f1n0')).toBeNull()
+  })
 })
