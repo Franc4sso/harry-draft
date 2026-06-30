@@ -43,6 +43,9 @@ export const SPELLS: Spell[] = [
   { id: 'oppugno', name: 'Oppugno', desc: 'Scaglia oggetti contro il nemico.', type: 'Attacco', power: 1.5, hitChance: 0.87, cooldown: 1 },
   { id: 'fiendfyre', name: 'Ardemonio', desc: 'Fuoco maledetto devastante.', type: 'Attacco', power: 2.8, hitChance: 0.7, cooldown: 2, effects: [{ kind: 'dot', amount: 12, duration: 2 }], keywords: ['magieOscure'] },
   { id: 'serpensortia', name: 'Serpensortia', desc: 'Evoca un serpente velenoso che morde.', type: 'Attacco', hitChance: 0.85, cooldown: 1, spec: [{ kind: 'damage', power: 1.4, canCrit: true, canDodge: true }, { kind: 'applyStatus', target: 'enemy', statusId: 'veleno', duration: 2 }] },
+  { id: 'morsobasilisco', name: 'Morso del Basilisco', desc: 'Zanne che iniettano un veleno corrosivo.', type: 'Attacco', hitChance: 0.85, cooldown: 1, spec: [{ kind: 'damage', power: 1.6, canCrit: true, canDodge: true }, { kind: 'applyStatus', target: 'enemy', statusId: 'veleno', duration: 2 }] },
+  { id: 'nubetossica', name: 'Nube Tossica', desc: 'Una nebbia velenosa che avvolge il bersaglio.', type: 'Attacco', hitChance: 0.9, cooldown: 1, spec: [{ kind: 'damage', power: 0.9, canCrit: true, canDodge: true }, { kind: 'applyStatus', target: 'enemy', statusId: 'veleno', duration: 2 }] },
+  { id: 'maledizioneputrida', name: 'Maledizione Putrefacente', desc: 'Una maledizione che marcisce la carne.', type: 'Attacco', hitChance: 0.9, cooldown: 0, spec: [{ kind: 'damage', power: 1.1, canCrit: true, canDodge: true }, { kind: 'applyStatus', target: 'enemy', statusId: 'veleno', duration: 2 }] },
 
   // demo: data-driven statuses (Status & Effect engine)
   { id: 'glacius', name: 'Glacius', desc: 'Congela il bersaglio.', type: 'Controllo', hitChance: 0.85, cooldown: 1,
@@ -55,4 +58,8 @@ export const SPELLS: Spell[] = [
 
 export const SPELL_BY_ID: Record<string, Spell> = Object.fromEntries(
   SPELLS.map(s => [s.id, s]),
+)
+
+export const SPELL_IS_VENOM: ReadonlySet<string> = new Set(
+  SPELLS.filter(s => (s.spec ?? []).some(e => e.kind === 'applyStatus' && e.statusId === 'veleno')).map(s => s.id),
 )

@@ -36,7 +36,7 @@ export const WIZARDS: Wizard[] = [
     id: 'bellatrix', name: 'Bellatrix Lestrange', house: 'Serpeverde', role: 'Controllo', tier: 2,
     gender: 'f',
     ranges: { hp: [76, 95], atk: [20, 27], def: [11, 17], spd: [26, 34] },
-    spellPool: ['crucio', 'imperio', 'petrificus', 'confringo'],
+    spellPool: ['crucio', 'imperio', 'petrificus', 'confringo', 'nubetossica'],
     tags: ['deatheater', 'veleno', 'esecuzione', 'magieOscure'],
   },
   {
@@ -176,7 +176,7 @@ export const WIZARDS: Wizard[] = [
     id: 'narcissa', name: 'Narcissa Malfoy', house: 'Serpeverde', role: 'Supporto', tier: 3,
     gender: 'f',
     ranges: { hp: [87, 108], atk: [12, 18], def: [16, 22], spd: [16, 22] },
-    spellPool: ['vulnera', 'episkey', 'protego', 'fianto'],
+    spellPool: ['vulnera', 'episkey', 'protego', 'fianto', 'nubetossica'],
     tags: ['deatheater', 'veleno', 'magieOscure'],
   },
   {
@@ -190,7 +190,7 @@ export const WIZARDS: Wizard[] = [
     id: 'greyback', name: 'Fenrir Greyback', house: 'Serpeverde', role: 'Tank', tier: 3,
     gender: 'm',
     ranges: { hp: [116, 142], atk: [16, 21], def: [23, 33], spd: [11, 16] },
-    spellPool: ['diffindo', 'reducto', 'protego', 'fianto', 'oppugno'],
+    spellPool: ['diffindo', 'reducto', 'protego', 'fianto', 'oppugno', 'maledizioneputrida'],
     tags: ['deatheater', 'veleno', 'esecuzione'],
   },
   {
@@ -211,7 +211,7 @@ export const WIZARDS: Wizard[] = [
     id: 'slughorn', name: 'Horace Lumacorno', house: 'Serpeverde', role: 'Supporto', tier: 3,
     gender: 'm',
     ranges: { hp: [93, 114], atk: [12, 18], def: [17, 23], spd: [13, 19] },
-    spellPool: ['vulnera', 'episkey', 'anapneo', 'protego', 'fianto'],
+    spellPool: ['vulnera', 'episkey', 'anapneo', 'protego', 'fianto', 'nubetossica'],
     tags: ['veleno'],
   },
   {
@@ -230,7 +230,7 @@ export const WIZARDS: Wizard[] = [
     id: 'sprout', name: 'Pomona Sprite', house: 'Tassorosso', role: 'Supporto', tier: 3,
     gender: 'f',
     ranges: { hp: [91, 112], atk: [11, 17], def: [17, 23], spd: [14, 20] },
-    spellPool: ['ferula', 'episkey', 'rennervate', 'protego'],
+    spellPool: ['ferula', 'episkey', 'rennervate', 'protego', 'nubetossica'],
     tags: ['veleno', 'scudirigen'],
   },
 
@@ -265,7 +265,7 @@ export const WIZARDS: Wizard[] = [
     id: 'pansy', name: 'Pansy Parkinson', house: 'Serpeverde', role: 'Controllo', tier: 4,
     gender: 'f',
     ranges: { hp: [57, 78], atk: [13, 19], def: [9, 14], spd: [19, 26] },
-    spellPool: ['confundo', 'langlock', 'tarantallegra', 'levicorpus'],
+    spellPool: ['confundo', 'langlock', 'tarantallegra', 'levicorpus', 'nubetossica'],
     tags: ['veleno'],
   },
   {
@@ -379,21 +379,21 @@ export const WIZARDS: Wizard[] = [
     id: 'theodore', name: 'Theodore Nott', house: 'Serpeverde', role: 'Controllo', tier: 4,
     gender: 'm',
     ranges: { hp: [57, 78], atk: [14, 20], def: [9, 14], spd: [19, 26] },
-    spellPool: ['confundo', 'levicorpus', 'langlock', 'petrificus'],
+    spellPool: ['confundo', 'levicorpus', 'langlock', 'petrificus', 'nubetossica'],
     tags: ['veleno'],
   },
   {
     id: 'blaise', name: 'Blaise Zabini', house: 'Serpeverde', role: 'Attaccante', tier: 4,
     gender: 'm',
     ranges: { hp: [52, 71], atk: [19, 26], def: [9, 12], spd: [16, 23] },
-    spellPool: ['sectumsempra', 'reducto', 'flipendo', 'diffindo'],
+    spellPool: ['sectumsempra', 'reducto', 'flipendo', 'diffindo', 'morsobasilisco'],
     tags: ['veleno'],
   },
   {
     id: 'astoria', name: 'Astoria Greengrass', house: 'Serpeverde', role: 'Supporto', tier: 4,
     gender: 'f',
     ranges: { hp: [70, 91], atk: [11, 16], def: [12, 18], spd: [15, 21] },
-    spellPool: ['episkey', 'anapneo', 'ferula', 'protego'],
+    spellPool: ['episkey', 'anapneo', 'ferula', 'protego', 'nubetossica'],
     tags: ['veleno'],
   },
   {

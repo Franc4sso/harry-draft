@@ -9,9 +9,9 @@ describe('shiny data integrity', () => {
       expect(t.epithet?.f, `${t.id} epithet.f`).toBeTruthy()
     }
   })
-  it('SHINY_TRAIT_IDS lists all 17 trait ids', () => {
-    expect(SHINY_TRAIT_IDS).toHaveLength(17)
-    expect(new Set(SHINY_TRAIT_IDS).size).toBe(17)
+  it('SHINY_TRAIT_IDS lists all 16 trait ids', () => {
+    expect(SHINY_TRAIT_IDS).toHaveLength(16)
+    expect(new Set(SHINY_TRAIT_IDS).size).toBe(16)
   })
   it('every wizard has a gender', () => {
     for (const w of WIZARDS) expect(w.gender, `${w.id} gender`).toMatch(/^[mf]$/)
