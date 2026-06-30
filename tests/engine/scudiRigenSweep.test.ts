@@ -30,6 +30,8 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 // Post-boss-buff (finalBossMenace -0.50→-0.45, 2026-06-29): winRate=0.133 bastioneRate=0.308
 //   shieldUptakeRate=0.325 medianTurns=7 maxTurns=42. Kit intact (> 0.05 floor). No change in
 //   winRate; boss buff marginal vs mid-run survivability ceiling for Tassorosso.
+// Post-live-infirmary (2026-06-30, C1 fix — menaceOffset -0.70→-0.75, finalBossMenace -0.45→-0.31): winRate=0.092
+//   bastioneRate=0.258 shieldUptakeRate=0.258 medianTurns=8 maxTurns=45. Kit intact (> 0.05).
 registerCoreResolvers()
 
 const SCUDI_RELICS = new Set(['egida-tassorosso', 'cuore-del-tasso'])

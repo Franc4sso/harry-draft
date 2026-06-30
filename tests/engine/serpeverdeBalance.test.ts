@@ -18,6 +18,8 @@ import type { RunNode, RunState } from '@/types'
 //   Band assertion stays DISABLED (Slice 2 handles Serpeverde/Voldemort rebalance).
 // Post-boss-buff (finalBossMenace -0.50→-0.45, 2026-06-29): winRate=0.767 (was 0.783).
 //   Slight drop as expected; still well above desired band. Root cause unchanged; Slice 2 handles it.
+// Post-live-infirmary (2026-06-30, C1 fix — menaceOffset -0.70→-0.75, finalBossMenace -0.45→-0.31): winRate=0.775.
+//   Negligible change; Serpeverde dominance unaffected. Band assertion still disabled (Slice 2).
 registerCoreResolvers()
 
 function pickNode(s: RunState): RunNode {

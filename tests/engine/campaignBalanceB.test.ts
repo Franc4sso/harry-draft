@@ -15,9 +15,13 @@ import type { RunNode, RunState } from '@/types'
 //   Observed winRate=0.167 (20/120 wins). Band tightened to [0.15, 0.45] for "much harder" target.
 //   lv2-normal statMult 0.42 (was 0.07), lv10-boss statMult 1.38 (was 1.03) — enemies at level-coherent stats.
 // Recalibration (2026-06-29, post death&recovery — Tasks 1–4 added death/benching + Infermeria heal):
-//   finalBossMenace raised from -0.50 to -0.45 (statMult 0.50→0.55). Death/benching mechanics reduce
-//   mid-run survivability: winRate plateaus at ~0.150 for finalBossMenace in [-0.20, -0.40]; -0.45 gives
-//   winRate ≈ 0.158 (19/120 wins), in the [0.15, 0.45] band. Band unchanged.
+//   finalBossMenace raised from -0.50 to -0.45 (statMult 0.50→0.55). Measured WITHOUT live Infermeria
+//   (the Infermeria was dead code — generateMap not used at runtime). Numbers in this comment were wrong.
+// Recalibration (2026-06-30, C1 fix — Infermeria now on LIVE path via generateArea):
+//   Live Infermeria removes one combat floor per area (floor last-1 → infirmary instead of battle/recruit/relic).
+//   Net effect: less XP/power-building per area; menaceOffset eased -0.70→-0.75 to compensate.
+//   finalBossMenace raised to -0.31 (statMult 0.69, was 0.55). -0.31 is the highest value in the [0.15, 0.45]
+//   band (winRate ≈ 0.158); -0.30 drops to 0.142. Does not reach area-2 boss statMult 1.38 (+0.38) — Slice 3.
 registerCoreResolvers()
 
 // Near-optimal ("upper-bound") player policy. A pure recruit/relic-first greedy is

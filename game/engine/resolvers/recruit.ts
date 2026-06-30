@@ -3,6 +3,7 @@ import type { Rng } from '../rng'
 import { offerRecruits, recruitVia, replaceMember } from '../recruit'
 import { offerRelics } from '../relics'
 import { detectSynergies } from '../synergy'
+import { livingOf } from '../roster'
 import { parseAreaNodeId } from '../map'
 import type { NodeResolver, ResolverChoice } from './types'
 
@@ -33,7 +34,7 @@ export const recruitResolver: NodeResolver = {
       : [...state.team, recruit]
     const ev: RunEvent = { area: state.area ?? 0, nodeId: node.id, kind: 'recruit',
       summary: `Recluti ${recruit.wizard.name} (${recruit.wizard.house})` }
-    return { ...state, team, activeSynergies: detectSynergies(team), log: [...(state.log ?? []), ev] }
+    return { ...state, team, activeSynergies: detectSynergies(livingOf(team)), log: [...(state.log ?? []), ev] }
   },
 }
 

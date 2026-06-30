@@ -4,8 +4,9 @@ import { createRng } from '@/game/engine/rng'
 import { BALANCE } from '@/data/constants'
 
 const widths = () => {
-  // 5 floors: [1, 2, 3, 2, 1] (ingresso, medi, boss)
-  return [1, 2, 3, 2, 1]
+  // 5 floors: [1, 2, 3, 1, 1] (ingresso, medi, infermeria pre-boss, boss).
+  // Floor last-1 is forced to width 1 by generateArea (guaranteed Infermeria funnel).
+  return [1, 2, 3, 1, 1]
 }
 const flat = (cats: string[][]) => cats.flat()
 const bias = { teamSize: 5, teamMax: 5 }
@@ -44,7 +45,7 @@ describe('assignAreaCategories', () => {
     expect(a).toEqual(b)
   })
   it('only emits Fase-1 categories', () => {
-    const allowed = new Set(['battle', 'elite', 'boss', 'recruit', 'relic'])
+    const allowed = new Set(['battle', 'elite', 'boss', 'recruit', 'relic', 'infirmary'])
     const cats = flat(assignAreaCategories(createRng(4), widths(), bias))
     expect(cats.every(c => allowed.has(c))).toBe(true)
   })

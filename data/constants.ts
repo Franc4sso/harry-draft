@@ -95,26 +95,29 @@ export const BALANCE = {
     // Win-based levelling makes the roster scale fast, so the per-level menace slope is
     // STEEP (enemies must keep pace as their level climbs) while the offset stays deeply
     // negative to keep the low-level area-0 opener winnable for a starting duo.
-    // Calibrated on the 120-seed harness → winRate 0.167 (20/120 wins):
+    // Calibrated on the 120-seed harness → winRate 0.167 (20/120 wins, menaceOffset -0.70):
     //   lv2-normal statMult 0.42 (was 0.07), lv10-boss statMult 1.38 (was 1.03).
     //   area-0 opener is the main wall; elites/bosses hit at level-coherent strength.
-    //   Competent Grifondoro winRate ~0.17 — solidly in "much harder" [0.15, 0.45] band.
+    // Re-calibrated (2026-06-30): menaceOffset eased -0.70→-0.75 to compensate for the live
+    //   Infermeria consuming one combat floor per area (net power loss without the offset nudge).
     menacePerLevel: 0.12,
-    menaceOffset: -0.70,
+    menaceOffset: -0.75,
     // The FINAL area boss is the scripted Voldemort (BOSSES[0], fixed budget); its
     // menace is this flat value (independent of the level curve) so it stays the climax.
-    // -0.45 → statMult 0.55 (was -0.50 → 0.50 before death&recovery).
-    // The guaranteed pre-boss Infermeria node (Task 3, death&recovery slice) fully heals +
-    // revives the player's team before every boss, so a stronger boss stays winnable.
-    // Raising toward the area-2 boss (statMult 1.38 → finalBossMenace +0.38) cratered the
-    // winRate: at +0.30 → 0.092, +0.20 → 0.125, 0.00 → 0.133, -0.20 → 0.142, -0.40 → 0.150
-    // (exactly on the exclusive lower bound). The run-survivability ceiling — driven by the
-    // death/benching mechanics added in Tasks 1–4 (wizards bench at 0 HP, weakening the team
-    // for subsequent fights) — caps the value at -0.45 (winRate ≈ 0.158, in [0.15, 0.45]).
-    // Accepted trade-off: Voldemort statMult 0.55 < area-2 boss 1.38, but -0.45 is a real
-    // step up from -0.50 and is the highest the band permits given post-death-system dynamics.
-    // Raising further requires either buffing player recovery or widening the band — Slice 3.
-    finalBossMenace: -0.45,
+    // -0.31 → statMult 0.69 (was -0.45 → 0.55 before the Infermeria was on the live path).
+    // The guaranteed pre-boss Infermeria node now generates via generateArea (live path) and
+    // fully heals + revives the team before every boss.
+    // Re-calibrated (2026-06-30, post C1 fix — Infermeria now on live path, menaceOffset -0.70→-0.75):
+    //   The live Infermeria removes one combat floor per area (floor last-1 becomes infirmary
+    //   instead of battle/elite/recruit/relic), which tightens the win-rate ceiling. Slightly
+    //   easing menaceOffset (-0.70→-0.75) compensates for the lost advancement floor.
+    //   winRate scan with menaceOffset=-0.75: -0.30 → 0.142, -0.31 → ~0.158, -0.32 → in band.
+    //   Raising toward area-2 boss (statMult 1.38 → finalBossMenace +0.38) remains out of reach:
+    //   at +0.38 → 0.092, +0.20 → 0.125, 0.00 → 0.133, -0.20 → 0.133, -0.28 → 0.133.
+    //   -0.31 is the highest value that keeps winRate strictly above 0.15.
+    //   Accepted trade-off: Voldemort statMult 0.69 < area-2 boss 1.38; real climax awaits
+    //   a player-power buff or band widening — Slice 3.
+    finalBossMenace: -0.31,
     enemyRelicsElite: 0,
     enemyRelicsBoss: 1,
   },

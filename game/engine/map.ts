@@ -101,7 +101,8 @@ export function generateArea(rng: Rng, area: number, bias: AreaBias): RunNode[] 
   // 1. Floor widths.
   const widths: number[] = []
   for (let f = 0; f < floorsPerArea; f++) {
-    widths.push(f === 0 || f === last ? 1 : rng.int(minWidth, maxWidth))
+    // Floor 0 = entry battle, last = boss, last-1 = guaranteed Infermeria funnel → all width 1.
+    widths.push(f === 0 || f === last || (last - 1 >= 1 && f === last - 1) ? 1 : rng.int(minWidth, maxWidth))
   }
 
   // 2. Categories (hard guarantees live in nodeGen).
