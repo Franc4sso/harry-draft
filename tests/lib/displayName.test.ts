@@ -15,9 +15,9 @@ describe('displayName', () => {
     expect(displayName(dw('harry'))).toBe('Harry Potter')
   })
   it('appends the masculine epithet for a male wizard', () => {
-    expect(displayName(dw('harry', { traitId: 'veleno' }))).toBe('Harry Potter, il Velenoso')
+    expect(displayName(dw('harry', { traitId: 'furia' }))).toBe('Harry Potter, il Furioso')
   })
   it('appends the feminine epithet for a female wizard', () => {
-    expect(displayName(dw('hermione', { traitId: 'veleno' }))).toBe('Hermione Granger, la Velenosa')
+    expect(displayName(dw('hermione', { traitId: 'furia' }))).toBe('Hermione Granger, la Furiosa')
   })
 })

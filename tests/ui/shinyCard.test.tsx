@@ -14,13 +14,13 @@ function dw(id: string, shiny?: { traitId: string }) {
 
 describe('WizardCardRow shiny', () => {
   it('shows the epithet name and the trait chip when shiny', () => {
-    render(<WizardCardRow drafted={dw('harry', { traitId: 'veleno' })} />)
-    expect(screen.getByText('Harry Potter, il Velenoso')).toBeInTheDocument()
-    expect(screen.getByText(TRAIT_BY_ID['veleno']!.name)).toBeInTheDocument()
+    render(<WizardCardRow drafted={dw('harry', { traitId: 'furia' })} />)
+    expect(screen.getByText('Harry Potter, il Furioso')).toBeInTheDocument()
+    expect(screen.getByText(TRAIT_BY_ID['furia']!.name)).toBeInTheDocument()
   })
   it('shows the plain name and no trait chip when not shiny', () => {
     render(<WizardCardRow drafted={dw('harry')} />)
     expect(screen.getByText('Harry Potter')).toBeInTheDocument()
-    expect(screen.queryByText(TRAIT_BY_ID['veleno']!.name)).not.toBeInTheDocument()
+    expect(screen.queryByText(TRAIT_BY_ID['furia']!.name)).not.toBeInTheDocument()
   })
 })

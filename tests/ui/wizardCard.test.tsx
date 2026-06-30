@@ -107,9 +107,9 @@ describe('WizardCard compact', () => {
 
   it('shows a trait chip when the wizard is shiny', () => {
     const base = harry()
-    const shiny = { ...base, shiny: { traitId: 'veleno' } }
+    const shiny = { ...base, shiny: { traitId: 'furia' } }
     render(<WizardCard drafted={shiny} />)
-    expect(screen.getByText(TRAIT_BY_ID['veleno']!.name)).toBeInTheDocument()
+    expect(screen.getByText(TRAIT_BY_ID['furia']!.name)).toBeInTheDocument()
   })
 
   it('shows no trait chip when the wizard is not shiny', () => {
