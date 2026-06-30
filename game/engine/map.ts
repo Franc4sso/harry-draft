@@ -40,7 +40,13 @@ export function generateArea(rng: Rng, area: number, bias: AreaBias): RunNode[] 
   const widths: number[] = []
   for (let f = 0; f < floorsPerArea; f++) {
     // Floor 0 = entry battle, last = boss, last-1 = guaranteed Infermeria funnel → all width 1.
-    widths.push(f === 0 || f === last || (last - 1 >= 1 && f === last - 1) ? 1 : rng.int(minWidth, maxWidth))
+    // Floor 1 is forced to width 3 so the run's FIRST choice is always among 3 paths (the
+    // entry node's coverage pass wires all 3 into its next[]); every later branch keeps the
+    // edge-wiring cap of 2 nearest. Guard f !== last-1 so a tiny area can't collide with the
+    // Infermeria funnel.
+    const forcedOne = f === 0 || f === last || (last - 1 >= 1 && f === last - 1)
+    const firstChoice = f === 1 && f !== last && !(last - 1 >= 1 && f === last - 1)
+    widths.push(forcedOne ? 1 : firstChoice ? 3 : rng.int(minWidth, maxWidth))
   }
 
   // 2. Categories (hard guarantees live in nodeGen).
