@@ -58,7 +58,7 @@ export function globalDepth(area: number, floor: number): number {
 }
 
 /** New-loop enemy budget at a global depth (decoupled from the legacy `campaign`). */
-function budgetB(depth: number): number {
+export function budgetB(depth: number): number {
   return BALANCE.campaignB.baseBudget + depth * BALANCE.campaignB.budgetStep
 }
 
