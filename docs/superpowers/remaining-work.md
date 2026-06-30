@@ -17,7 +17,10 @@
 - **Magie Oscure archetype — COMPLETE slice:** dark-spell amplify + lethal recoil-on-damage-dealt via `game/engine/darkMagic.ts` `teamDarkMagic` + the attack handler (`effects.ts`, gated on `ctx.dark` from `resolve.ts`, recoil on `residual` so a shield negates payoff AND risk); a per-unit ASSIGNABLE relic `Marchio Nero` (amplify+recoil to one carrier) + `Diadema Corrotto` (scales bonus only) + `Oscurità` synergy (amplifies all dark casters, no recoil) + `magieOscure` tags on 6 wizards + the 3 dark spells (avada/fiendfyre/sectumsempra). NEW MECHANISM: per-unit relic assignment (resolver `assignedTo` + `RelicNodeScreen` carrier step, full UI→hook→resolver chain). Counter-web validated (beats squishy via the flip, loses to shields + chip/control via lethal recoil; partial-shield → proportional recoil) + viability sweep (`winRate=0.950 darkUptake=0.208 recoilDeaths=2 maxTurns=37`). Design note: recoilDeaths is low because optimal play assigns the Marchio to a high-HP carrier, dodging the recoil — rebalance lever is raising `recoil`, not lowering `bonus` (see memory). Mechanically complete + validated.
 
 - **Enemy scaling fix (Slice 1) — DONE:** enemies fought at 7–30% of base stats (`menaceOffset=-1.05`), making the game far too easy and the displayed level meaningless. Fixed `campaignB.menaceOffset` -1.05→-0.70 (data-driven from a sweep) so 'Lv.N' enemies fight at level-coherent stats (lv2 0.42 vs 0.07, lv10-boss 1.38); competent-Grifondoro winRate 0.167, band tightened to [0.15,0.45] ("much harder"). `scudiRigen` shieldUptake floor 0.10→0.05 (justified consequence).
-- **Death & Recovery system (Slice 2) — DONE:** death no longer eliminates — a dead wizard benches at `currentHp=0` (`game/engine/roster.ts` `isDead`/`livingOf`; only the living are fielded, count for synergies, and gain levels; defeat = ALL dead). New **Infermeria** node (🏥, full heal + full revive), forced as a guaranteed Infermeria-only floor immediately before every boss (`map.ts`). Dead wizards are swappable at recruit (greyed + "Morto" badge). ⚠️ DISCOVERY: the death system made the game HARDER (benched 0-HP wizards weaken the team mid-area, and the Infermeria only heals pre-boss) — so a strong final boss is unreachable: even statMult 1.0 → winRate 0.133 (below floor). `finalBossMenace` raised -0.50→-0.45 (the band ceiling); the final boss stays weaker than area bosses (documented trade-off). To make the final boss a real climax later, add a MID-AREA recovery lever (Infermerie within areas / softer death penalty), THEN raise the boss (see memory `harry-draft-death-system-harder`).
+- **Death & Recovery system (Slice 2) — DONE:** death no longer eliminates — a dead wizard benches at `currentHp=0` (`game/engine/roster.ts` `isDead`/`livingOf`; only the living are fielded, count for synergies, and gain levels; defeat = ALL dead). New **Infermeria** node (🏥, full heal + full revive), forced as a guaranteed Infermeria-only floor immediately before every boss (`map.ts`/`nodeGen.ts` — the LIVE `generateArea` path; the node is fully phase/view/UI-integrated via `InfirmaryScreen`). Dead wizards are swappable at recruit (greyed + "Morto" badge). ⚠️ the death system made the game HARDER (benched 0-HP wizards weaken the team mid-area) — a strong final boss is unreachable above the win floor: `finalBossMenace` capped at the band ceiling, final boss stays weaker than area bosses (documented trade-off). To make the final boss a real climax, add a MID-AREA recovery lever first (see memory `harry-draft-death-system-harder`).
+- **Map: first choice among 3 (Slice 6) — DONE:** the run's first decision offers 3 paths (floor 1 forced to width 3 in `generateArea`); every later branch keeps the 2-nearest cap. `finalBossMenace` retuned for the shifted encounter mix.
+- **Battle pacing — DONE:** battles dragged to ~24 turns (fat tail at the fatigue convergence); `fatigueStart` 30→18 brings the median to ~15 (better feel) and clears most timeout-flakes in heavy tests.
+- **House synergies redesign — DONE:** the four house synergies dropped flat +atk/+def/+spd for characterful per-unit mechanics (`game/engine/houseEffects.ts`, hooked in `effects.ts`): **Grifondoro** extra dodge (courage), **Corvonero** boosted crits (intelligence), **Tassorosso** damage-reduction + regen (loyalty), **Serpeverde** +damage to wounded targets (cunning — replaces the flat +atk, the imbalance root). 3 non-Serpeverde houses tuned to a tight spread (~0.08–0.19); campaignBalanceB in band. ⚠️ Serpeverde still ~0.73 — diagnosed NOT a synergy issue: it's **Voldemort + Sectumsempra** (atk≈40 × power 2.4 one-shots early enemies before cunning's wounded-threshold fires). The Serpeverde/Voldemort balance is a separate wizard-data concern, not the house synergy.
 
 **Counter web so far (emergent from mechanics):**
 | | Beats | Loses to |
@@ -31,18 +34,27 @@
 
 ## 1. NEXT UP — remaining user-requested slices (2026-06-29/30 session)
 
-A 6-slice user request is mid-flight. Slices 1 (enemy scaling) and 2 (death & recovery) are DONE.
-Remaining, in order:
-- **Slice 3 — Serpeverde rebalance:** RE-MEASURE post-death-system (was 0.783 post-scaling). Driver is
-  the Voldemort starter atk-cliff (atk[35,45] always drafted; only atk_mid≤23 lets Goyle displace him →
-  in-band). deatheater nerf proven a no-op. Re-enable `serpeverdeBalance` band assertion once tuned.
-- **Slice 4 — Victory/defeat modal premature (#1):** DIAGNOSED. `BattleScreen.tsx:119` gates the modal
-  on `r.done` (index>=total-1), which flips true the SAME render hp=0 appears → zero post-death delay.
-  Fix: `POST_DEATH_DELAY_MS` (~700ms) timer in `hooks/useBattleReplay.ts` gating a new `modalReady`;
-  consume it in `BattleScreen.tsx:119`; the skip button sets `modalReady` immediately.
-- **Slice 5 — Random battle generation with criteria (#3):** battles are repetitive → per-node seeding +
-  synergy density by difficulty (fewer in easy) + telegraph the enemy synergies/boss in the map tree.
-- **Slice 6 — Map tree 3 options (#4):** first choice among 3; thereafter the 2 nearest.
+Most of the 6-slice user request is DONE (scaling, death&recovery, modal timing, map-3-options, pacing,
+house redesign — all above). Remaining:
+- **Random battle generation with criteria (user bug #3) — NOT STARTED, biggest open item:** battles are
+  repetitive because `pickTowardBudget` draws enemies from a FIXED budget-bound wizard window (~15
+  candidates per node type/position) — the seed varies stat-rolls but not character identity. Wanted:
+  randomized-with-criteria (fewer synergies in easy, more in elite/boss) + TELEGRAPH the enemy
+  synergies/boss in the map tree. Feasible: enemy teams are deterministic & computable at map-build time
+  → pre-generate a `RunNode.preview` and render badges. Needs: `RunNode.preview` field, a synergy-aware/
+  wider picker in `teamGen.ts`, pre-gen in `generateArea`, `synergyBias` by nodeType, `MapScreen` badges.
+  BIG — needs a brainstorm (synergy counts per difficulty + telegraph visual).
+- **Guaranteed-hit wizard abilities (user request):** tier-2/3 abilities on some wizards that make their
+  hits ALWAYS land (ignore dodge) — a counter to Grifondoro's dodge. A NEW per-wizard ability system
+  (wizards have no abilities today). Separate slice, needs design.
+- **Resurrection CONSUMABLE relic (split-out):** one-shot relic usable before any node, consumed on use
+  (removable inventory + active-use UI — a new mechanism, relics today are permanent/passive).
+- **Strong final boss:** needs a MID-AREA recovery lever first (see death-system note above), THEN raise
+  `finalBossMenace` to a real climax (statMult ≥ area-2 boss 1.38).
+- **Serpeverde/Voldemort balance:** Serpeverde still ~0.73 — it's Voldemort+Sectumsempra, not the house
+  synergy. A wizard-data tune (nerf Voldemort's atk or Sectumsempra power) is the lever; user prefers NOT
+  to gut Voldemort, so consider lowering Sectumsempra's power or adding a counter instead.
+- **Cleanup:** `baseAttackMult` in constants is vestigial (never read by the engine) — remove or wire it.
 - **Split-out — Resurrection CONSUMABLE relic:** one-shot relic usable before any node, consumed on use
   (removable inventory + active-use UI — a new mechanism, relics today are permanent/passive).
 - **Future — strong final boss:** needs a mid-area recovery lever first (see death-system note above).
