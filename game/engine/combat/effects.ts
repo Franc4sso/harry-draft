@@ -16,15 +16,16 @@ export function computeDamage(rng: Rng, actor: BattleUnit, target: BattleUnit, p
   const def = effectiveStats(target).def * (1 - pen)
   let dmg = atk * power - def * c.defenseK
   dmg = Math.max(c.minDamage, dmg)
-  const critChance = c.critBase + effectiveStats(actor).spd * c.critSpdScale
-  if (rng.chance(critChance)) { dmg *= c.critMult; flags.push('crit') }
+  const cb = actor.critBonus
+  const critChance = c.critBase + effectiveStats(actor).spd * c.critSpdScale + (cb?.chance ?? 0)
+  if (rng.chance(critChance)) { dmg *= c.critMult + (cb?.mult ?? 0); flags.push('crit') }
   return Math.round(dmg)
 }
 
 export function dodged(rng: Rng, actor: BattleUnit, target: BattleUnit): boolean {
   const c = BALANCE.combat
   const gap = effectiveStats(target).spd - effectiveStats(actor).spd
-  const chance = Math.max(0, c.dodgeBase + gap * c.dodgeScale)
+  const chance = Math.max(0, c.dodgeBase + gap * c.dodgeScale + (target.dodgeBonus ?? 0))
   return rng.chance(chance)
 }
 
@@ -44,6 +45,10 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
     }
     const dm = ctx.actor.darkMagic
     if (dm && ctx.dark) dmg = Math.round(dmg * (1 + dm.bonus))
+    const cun = ctx.actor.cunning
+    if (cun && ctx.target.maxHp > 0 && ctx.target.hp / ctx.target.maxHp < cun.threshold) {
+      dmg = Math.round(dmg * (1 + cun.bonus))
+    }
     // Shatter: a direct hit on a frozen target ends the freeze and amplifies THIS hit.
     const frozen = ctx.target.statusEffects.some(e => e.kind === 'freeze')
     if (frozen) {
@@ -56,6 +61,8 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
       dmg = ctx.bus.emitModifier('modifyOutgoingDamage', dmg, hc)
       dmg = Math.round(ctx.bus.emitModifier('modifyIncomingDamage', dmg, { ...hc, side: ctx.target.side }))
     }
+    const dr = ctx.target.damageReduction
+    if (dr && dr > 0) dmg = Math.round(dmg * (1 - dr))
     const residual = absorbDamage(ctx.target, dmg)
     ctx.target.hp -= residual
     // Recoil: Magie Oscure carrier pays a fraction of damage DEALT (residual), lethal.
