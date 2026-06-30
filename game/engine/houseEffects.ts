@@ -22,6 +22,20 @@ const RAVEN_CRIT    = [{ chance: 0.18, mult: 0.70 }, { chance: 0.26, mult: 1.00 
 const HUFF_REDUCE   = [0.10, 0.16, 0.24]
 const SLYTH_CUNNING = [{ threshold: 0.5, bonus: 0.10 }, { threshold: 0.5, bonus: 0.18 }, { threshold: 0.5, bonus: 0.28 }]
 
+/** Human-readable effect text for a house synergy at a tier (0/1/2 = 2/3/4 members).
+ *  Derived from the real mechanic constants above, so UI copy tracks balance. */
+export function houseEffectText(house: House, tier: 0 | 1 | 2): string {
+  switch (house) {
+    case 'Grifondoro': return `Schivata +${Math.round(GRYFF_DODGE[tier]! * 100)}%`
+    case 'Corvonero': {
+      const c = RAVEN_CRIT[tier]!
+      return `Critico ${Math.round(c.chance * 100)}% (×${(1 + c.mult).toFixed(1)})`
+    }
+    case 'Tassorosso': return `Riduzione danno ${Math.round(HUFF_REDUCE[tier]! * 100)}%`
+    case 'Serpeverde': return `+${Math.round(SLYTH_CUNNING[tier]!.bonus * 100)}% danno a feriti`
+  }
+}
+
 /** Per-wizard house mechanic. Each wizard receives its OWN house's effect iff that house's
  *  synergy is active, at the active tier (2/3/4 members). Pure; no RNG. */
 export function houseEffects(team: DraftedWizard[], synergies: ActiveSynergy[]): Record<string, Effect> {
