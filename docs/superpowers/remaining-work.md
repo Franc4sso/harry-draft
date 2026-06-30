@@ -29,6 +29,7 @@
 | Esecuzione | Fragile / low-HP (finisher) | Durable walls (Tank/Scudi/Regen) |
 | Scudi-Rigen | Attrito / danno-sostenuto (overflow→scudo out-sustaina) | Esecuzione (finisce sotto soglia) / Burst (sfonda lo scudo) |
 | Magie Oscure | Squishy (nuke amplificato one-shotta) | Scudi (assorbe → niente payoff né recoil) / Chip-Controllo (recoil letale sul nuke pieno) |
+| Mira Infallibile (counter-ability) | Grifondoro / dodge-stacking (salta il roll di dodge, ogni colpo base atterra) | — (counter-tool a senso unico: irrilevante vs scudi/armatura/regen, nessuna debolezza propria) |
 
 ---
 
@@ -44,9 +45,14 @@ house redesign — all above). Remaining:
   construction), and `MapScreen` renders synergy/boss telegraph badges. Balance-validated winRate 0.1583
   in band [0.15,0.45] (thin margin to floor; `themes.nodeMult.normal` is the first lever). Spec/plan:
   `docs/superpowers/{specs,plans}/2026-06-30-themed-battles-telegraph-*`.
-- **Guaranteed-hit wizard abilities (user request):** tier-2/3 abilities on some wizards that make their
-  hits ALWAYS land (ignore dodge) — a counter to Grifondoro's dodge. A NEW per-wizard ability system
-  (wizards have no abilities today). Separate slice, needs design.
+- **Guaranteed-hit wizard abilities (user request) — ✅ DONE ("Mira Infallibile" slice):** new
+  `BattleUnit.alwaysHit` flag skips the dodge roll (`effects.ts` gate `!ctx.actor.alwaysHit` before
+  `dodged()`); `teamAlwaysHit` computer grants it to tier-2/3 wizards tagged `infallibile`
+  (snape/lucius/dolohov) and team-wide via the `occhio-magico` relic (`grantsAlwaysHit`). Counter
+  validated (`tests/engine/infallibileCounter.test.ts`: 0 dodge flags with the ability vs 7 without,
+  same wizard/seed). Spec/plan: `docs/superpowers/{specs,plans}/2026-06-30-infallibile-ability*`. NOTE:
+  binary mechanic → no scaling-relic, no synergy (deliberate). Drama callout ("INFALLIBILE!") deferred
+  (user-gated §2).
 - **Resurrection CONSUMABLE relic (split-out):** one-shot relic usable before any node, consumed on use
   (removable inventory + active-use UI — a new mechanism, relics today are permanent/passive).
 - **Strong final boss:** needs a MID-AREA recovery lever first (see death-system note above), THEN raise
