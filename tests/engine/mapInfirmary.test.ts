@@ -11,7 +11,7 @@ describe('map: guaranteed Infermeria before the boss (live path: generateArea)',
       const rng = createRng(seed).fork(mapRngChannel)
       // Use area 0, bias: full team so no recruit-boost distortion.
       const bias = { teamSize: 5, teamMax: 5 }
-      const nodes = generateArea(rng.fork(0), 0, bias)
+      const nodes = generateArea(rng.fork(0), 'test', 0, bias)
 
       const last = BALANCE.map.floorsPerArea - 1
       const boss = nodes.find(n => n.type === 'boss')!

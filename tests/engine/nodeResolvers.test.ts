@@ -8,7 +8,7 @@ import type { RunState } from '@/types'
 function baseState(): RunState {
   const team = offerRecruits(createRng(1), { exclude: new Set() })
     .slice(0, 2).map(d => recruitVia(d, 'iniziale'))
-  const map = generateArea(createRng(2).fork(4).fork(0), 0, { teamSize: 2, teamMax: 5 })
+  const map = generateArea(createRng(2).fork(4).fork(0), 'test', 0, { teamSize: 2, teamMax: 5 })
   const recruitNode = map.find(n => n.type === 'recruit')!
   return { seed: 's', phase: 'recruit-node', team, activeSynergies: [], stage: 0, relics: [],
     map, currentNodeId: recruitNode.id, house: 'Tassorosso', area: 0, teamMax: 5, log: [], pendingLevelUps: [] }

@@ -7,7 +7,7 @@ import { createRng } from '@/game/engine/rng'
 
 describe('MapScreen with area-scoped ids', () => {
   it('renders area floors and reports the chosen node', async () => {
-    const map = generateArea(createRng('m').fork(4).fork(0), 0, { teamSize: 2, teamMax: 5 })
+    const map = generateArea(createRng('m').fork(4).fork(0), 'm', 0, { teamSize: 2, teamMax: 5 })
     const entry = map.find(n => n.id.includes('f0n'))!
     const onChoose = vi.fn()
     render(

@@ -49,7 +49,7 @@ export function startRunB(seed: string): RunState {
 /** Seed the run from the player's drafted starters: build the team, roll area 0, enter the map. */
 export function confirmDraftPicks(state: RunState, picked: DraftedWizard[], _rng: Rng): RunState {
   const starters = picked.slice(0, STARTER_PICKS).map(d => recruitVia(d, 'iniziale'))
-  const map = generateArea(areaRng(state.seed, 0), 0, { teamSize: starters.length, teamMax: state.teamMax ?? 5 })
+  const map = generateArea(areaRng(state.seed, 0), state.seed, 0, { teamSize: starters.length, teamMax: state.teamMax ?? 5 })
   const entry = map.find(n => parseAreaNodeId(n.id).floor === 0)!
   return { ...state, area: 0, team: starters, activeSynergies: detectSynergies(starters),
     map, currentNodeId: entry.id, phase: 'map' }
@@ -73,7 +73,7 @@ export function chooseStarters(state: RunState, house: House, starterIds: string
     .map(id => offer.find(d => d.wizard.id === id))
     .filter((d): d is DraftedWizard => !!d)
     .map(d => recruitVia(d, 'iniziale'))
-  const map = generateArea(areaRng(state.seed, 0), 0, { teamSize: starters.length, teamMax: state.teamMax ?? 5 })
+  const map = generateArea(areaRng(state.seed, 0), state.seed, 0, { teamSize: starters.length, teamMax: state.teamMax ?? 5 })
   const entry = map.find(n => parseAreaNodeId(n.id).floor === 0)!
   return { ...state, house, area: 0, team: starters, activeSynergies: detectSynergies(starters),
     map, currentNodeId: entry.id, phase: 'map' }
@@ -132,7 +132,7 @@ export function clearAreaAndAdvance(state: RunState, _rng: Rng): RunState {
   const cur = state.area ?? 0
   if (cur >= lastArea) return { ...state, phase: 'win' }
   const nextArea = cur + 1
-  const map = generateArea(areaRng(state.seed, nextArea), nextArea,
+  const map = generateArea(areaRng(state.seed, nextArea), state.seed, nextArea,
     { teamSize: state.team.length, teamMax: state.teamMax ?? 5 })
   const entry = map.find(n => parseAreaNodeId(n.id).floor === 0)!
   return { ...state, area: nextArea, map, currentNodeId: entry.id, phase: 'map' }

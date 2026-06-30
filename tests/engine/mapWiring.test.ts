@@ -6,7 +6,7 @@ import { BALANCE } from '@/data/constants'
 describe('area map wiring', () => {
   it('every non-entry node has at least one incoming edge (no orphans)', () => {
     for (let area = 0; area < BALANCE.map.areas; area++) {
-      const map = generateArea(createRng(`w${area}`).fork(4).fork(area), area, { teamSize: 2, teamMax: 5 })
+      const map = generateArea(createRng(`w${area}`).fork(4).fork(area), 'test', area, { teamSize: 2, teamMax: 5 })
       const incoming = new Set(map.flatMap(n => n.next))
       const entryId = map.find(n => n.id.includes('f0n'))!.id
       for (const n of map) {
@@ -16,14 +16,14 @@ describe('area map wiring', () => {
     }
   })
   it('no dead ends before the last floor (every non-boss node has an outgoing edge)', () => {
-    const map = generateArea(createRng('w').fork(4).fork(0), 0, { teamSize: 2, teamMax: 5 })
+    const map = generateArea(createRng('w').fork(4).fork(0), 'test', 0, { teamSize: 2, teamMax: 5 })
     const bossId = map.find(n => n.type === 'boss')!.id
     for (const n of map) if (n.id !== bossId) expect(n.next.length).toBeGreaterThan(0)
   })
   it('interior nodes offer two nearby options where the next floor allows', () => {
     let twoEdgeNodes = 0, candidates = 0
     for (let s = 0; s < 40; s++) {
-      const map = generateArea(createRng(`m${s}`).fork(4).fork(0), 0, { teamSize: 2, teamMax: 5 })
+      const map = generateArea(createRng(`m${s}`).fork(4).fork(0), 'test', 0, { teamSize: 2, teamMax: 5 })
       const byFloor = new Map<number, typeof map>()
       for (const n of map) {
         const f = parseAreaNodeId(n.id).floor

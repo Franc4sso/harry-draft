@@ -2,6 +2,7 @@ import type { RunNode } from '@/types'
 import type { Rng } from './rng'
 import { BALANCE } from '@/data/constants'
 import { assignAreaCategories, type AreaBias } from './nodeGen'
+import { buildBattlePackage } from './combat/battlePackage'
 
 export const mapRngChannel = 4
 
@@ -32,7 +33,7 @@ export function parseAreaNodeId(id: string): { area: number; floor: number; idx:
  * `mapRng.fork(area)`) so two areas with equal widths don't generate identical
  * categories/layouts. (Spec §6.4: fork per (seed, mapChannel, area).)
  */
-export function generateArea(rng: Rng, area: number, bias: AreaBias): RunNode[] {
+export function generateArea(rng: Rng, seed: string, area: number, bias: AreaBias): RunNode[] {
   const { floorsPerArea, minWidth, maxWidth } = BALANCE.map
   const last = floorsPerArea - 1
 
@@ -82,5 +83,20 @@ export function generateArea(rng: Rng, area: number, bias: AreaBias): RunNode[] 
     cur.forEach(node => node.next.sort())
   }
 
-  return floorNodes.flat()
+  // Pre-generate each combat node's full battle package (single source of truth);
+  // walk in id order so anti-repetition (excludeThemes) is deterministic.
+  const flat = floorNodes.flat().sort((a, b) => a.id.localeCompare(b.id))
+  const usedThemes: string[] = []
+  for (const node of flat) {
+    if (node.type !== 'battle' && node.type !== 'elite' && node.type !== 'boss') continue
+    const { floor } = parseAreaNodeId(node.id)
+    // Exclude the last-2 themes used in this area (recent-neighbor anti-repetition).
+    const { battle, preview, themeId } = buildBattlePackage(
+      seed, area, floor, node.type, usedThemes.slice(-2),
+    )
+    node.battle = battle
+    node.preview = preview
+    if (themeId) usedThemes.push(themeId)
+  }
+  return flat
 }

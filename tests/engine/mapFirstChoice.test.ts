@@ -9,7 +9,7 @@ import { createRng } from '@/game/engine/rng'
 describe('map: first choice is among 3, later branches at most 2', () => {
   it('the entry node (floor 0) offers exactly 3 next nodes', () => {
     for (const seed of ['fc0', 'fc1', 'fc2', 'fc3', 'fc4']) {
-      const nodes = generateArea(createRng(seed).fork(mapRngChannel), 0, { teamSize: 2, teamMax: 5 })
+      const nodes = generateArea(createRng(seed).fork(mapRngChannel), 'test', 0, { teamSize: 2, teamMax: 5 })
       const entry = nodes.find(n => n.id.endsWith('f0n0'))!
       expect(entry.next).toHaveLength(3)
     }
@@ -17,7 +17,7 @@ describe('map: first choice is among 3, later branches at most 2', () => {
 
   it('non-entry nodes offer at most 2 next nodes (2-nearest rule preserved)', () => {
     for (const seed of ['fc0', 'fc1', 'fc2', 'fc3', 'fc4']) {
-      const nodes = generateArea(createRng(seed).fork(mapRngChannel), 0, { teamSize: 2, teamMax: 5 })
+      const nodes = generateArea(createRng(seed).fork(mapRngChannel), 'test', 0, { teamSize: 2, teamMax: 5 })
       const entry = nodes.find(n => n.id.endsWith('f0n0'))!
       for (const n of nodes) {
         if (n.id === entry.id) continue
