@@ -31,7 +31,17 @@ it model `useConsumableRelic` mid-area. Add an invariant test. Then tune the con
 
 ---
 
-### Task 1: Model the recovery lever in the sweep + climax invariant + tune
+### ⚠️ REVISION (post-measurement, user decision): MODERATE buff, not parity
+
+Measurement proved two things: (1) modeling the consumable in the sweep is **redundant** — the forced
+pre-boss Infermeria already fully heals before every boss, so the Lacrime di Fenice barely fires and
+only perturbs the band (0.183→0.158). DROP the consumable-modeling change. (2) A parity boss (statMult
+1.33) collapses completion to ~2.5%. **User chose MODERATE buff:** raise `finalBossMenace` to the
+highest value that keeps `campaignBalanceB` ≥ 0.15 (with margin) — a clearly-tougher boss, still
+beatable — and DEFER the strict "final ≥ area boss" invariant (document as a known gap pending a
+player-power pass). Tasks below are superseded by this revision where they conflict.
+
+### Task 1: Tune finalBossMenace to the moderate ceiling + regression-guard invariant
 
 **Files:**
 - Modify: `tests/engine/campaignBalanceB.test.ts` (`runOne`: give the team a `lacrime-fenice` and call
