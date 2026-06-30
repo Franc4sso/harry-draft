@@ -30,7 +30,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'm',
     ranges: { hp: [70, 86], atk: [28, 37], def: [11, 16], spd: [19, 27] },
     spellPool: ['sectumsempra', 'levicorpus', 'confringo', 'reducto', 'stupeficium'],
-    tags: ['esecuzione', 'magieOscure'],
+    tags: ['esecuzione', 'magieOscure', 'infallibile'],
   },
   {
     id: 'bellatrix', name: 'Bellatrix Lestrange', house: 'Serpeverde', role: 'Controllo', tier: 2,
@@ -72,7 +72,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'm',
     ranges: { hp: [69, 85], atk: [25, 33], def: [12, 16], spd: [19, 27] },
     spellPool: ['serpensortia', 'sectumsempra', 'reducto', 'confringo'],
-    tags: ['deatheater', 'esecuzione', 'magieOscure'],
+    tags: ['deatheater', 'esecuzione', 'magieOscure', 'infallibile'],
   },
   {
     id: 'kingsley', name: 'Kingsley Shacklebolt', house: 'Corvonero', role: 'Tank', tier: 2,
@@ -184,7 +184,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'm',
     ranges: { hp: [66, 82], atk: [24, 31], def: [10, 15], spd: [17, 25] },
     spellPool: ['confringo', 'sectumsempra', 'reducto', 'serpensortia'],
-    tags: ['deatheater', 'veleno'],
+    tags: ['deatheater', 'veleno', 'infallibile'],
   },
   {
     id: 'greyback', name: 'Fenrir Greyback', house: 'Serpeverde', role: 'Tank', tier: 3,

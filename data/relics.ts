@@ -33,6 +33,8 @@ export const RELICS: Relic[] = [
   // Magie Oscure set (rara + non-comune)
   { id: 'marchio-nero', name: 'Marchio Nero', desc: 'Assegna a un mago: i suoi incantesimi oscuri infliggono +50% danni, ma subisce un contraccolpo pari al 20% del danno inflitto (può essere letale).', rarity: 'rara', keywords: ['magieOscure'], assignable: true, grantsDarkMagic: { bonus: 0.5, recoil: 0.2 } },
   { id: 'diadema-corrotto', name: 'Diadema Corrotto', desc: 'Il bonus delle Magie Oscure della squadra è aumentato del 50%.', rarity: 'non-comune', keywords: ['magieOscure'], keywordMult: { magieOscure: 0.5 } },
+  // Infallibile — guaranteed-hit grant
+  { id: 'occhio-magico', name: 'Occhio Magico di Malocchio', desc: "L'occhio che vede attraverso ogni inganno: la squadra non manca mai il bersaglio.", rarity: 'rara', grantsAlwaysHit: true },
   // Scudo set (rara + non-comune)
   { id: 'egida-tassorosso', name: 'Egida del Tasso', desc: 'La rigenerazione in eccesso oltre la vita massima si converte in scudo (50%).', rarity: 'rara', keywords: ['scudo'], grantsShieldConvert: { rate: 0.5 } },
   { id: 'cuore-del-tasso', name: 'Cuore del Tasso', desc: 'La conversione in Scudo della squadra è aumentata del 50%.', rarity: 'non-comune', keywords: ['scudo'], keywordMult: { scudo: 0.5 } },
