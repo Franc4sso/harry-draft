@@ -18,10 +18,13 @@ if (eff.canDodge && dodged(ctx.rng, ctx.actor, ctx.target)) {
 `GRYFF_DODGE = [0.04,0.08,0.14]` per tier 2/3/4 membri). Una squadra Grifondoro impilata diventa
 evasiva e gli attacchi base mancano.
 
-**Mira Infallibile** è la risposta: un mago con l'abilità **salta il roll di dodge** — i suoi colpi
-base vanno sempre a segno. Conta solo sugli effetti `canDodge: true` (gli attacchi base via
-`normalizeSpell`); gli effetti senza `canDodge` già non mancano mai, quindi il flag è **puramente
-anti-`dodgeBonus`** — esattamente il counter voluto, e ignora il termine `target.dodgeBonus`.
+**Mira Infallibile** è la risposta: un mago con l'abilità **salta interamente il roll di dodge** — i
+suoi colpi base vanno sempre a segno. Conta solo sugli effetti `canDodge: true` (gli attacchi base via
+`normalizeSpell`); gli effetti senza `canDodge` già non mancano mai. ⚠️ Il flag salta **tutto** il
+roll di `dodged()`, non solo il termine `target.dodgeBonus`: annulla anche il `dodgeBase` (0.02
+universale) e il dodge da speed-gap. È **dominato da** — ma non limitato a — il `dodgeBonus` di
+Grifondoro (l'unica fonte alta di dodge nel gioco), quindi nella pratica è il counter al dodge-stack
+Grifondoro, ma toglie comunque ai bersagli normali il loro piccolo dodge di base/velocità.
 
 ## Matrice counter (regola utente: dichiarata + testata)
 
@@ -77,7 +80,7 @@ Calcola `const alwaysHitIds = teamAlwaysHit(team, relics)` una volta per lato (d
 | Pezzo | id | Forma | Note |
 |---|---|---|---|
 | **Tag** wizard (innato) | `'infallibile'` | su 3-4 maghi **tier 2-3** a tema precisione/mira spietata | candidati da confermare in `data/wizards.ts` per id+tier reali: Alastor "Malocchio" Moody (l'occhio magico — perfetto), Bellatrix (duellante implacabile), Antonin Dolohov / Snape (maledizioni precise). Scegliere quelli realmente tier 2-3. |
-| Reliquia **grant** | `occhio-magico` | `grantsAlwaysHit: true`, rarità `rara` | "Occhio Magico di Malocchio": vede attraverso tutto → la squadra non manca mai. Mirror strutturale di `spada-grifondoro` (`grantsExecute`). Team-wide è bilanciato: l'always-hit conta solo vs dodge (statistica difensiva di nicchia), nessun vantaggio vs il 99% dei nemici. |
+| Reliquia **grant** | `occhio-magico` | `grantsAlwaysHit: true`, rarità `rara` | "Occhio Magico di Malocchio": vede attraverso tutto → la squadra non manca mai. Mirror strutturale di `spada-grifondoro` (`grantsExecute`). Team-wide è quasi-bilanciato: l'always-hit conta in proporzione al dodge del bersaglio — pieno valore vs uno stack Grifondoro, marginale (~2% base + speed-gap) vs nemici normali. ⚠️ I 3 maghi taggati sono Serpeverde: c'è un piccolo uplift universale di accuratezza che spinge *un filo* il già-alto win-rate Serpeverde (backlog #4) — da ri-misurare quando parte il rebalance, non un bloccante. |
 
 Nuovo campo type `Relic.grantsAlwaysHit?: boolean` (accanto a `grantsExecute`). NESSUNA scaling-relic
 (non si scala un colpo garantito) e NESSUNA tag-synergy (binario, non somma). Il tag `'infallibile'`

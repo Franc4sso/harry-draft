@@ -55,7 +55,7 @@ describe('teamAlwaysHit', () => {
   it('grantsAlwaysHit relic → ALL team ids in set', () => {
     const team = [mkDw('a', 1), mkDw('b', 2)]
     const relic: ActiveRelic = {
-      relic: { id: 'occhio-magico', name: 'Occhio Magico', desc: '', rarity: 'epica', grantsAlwaysHit: true },
+      relic: { id: 'occhio-magico', name: 'Occhio Magico', desc: '', rarity: 'rara', grantsAlwaysHit: true },
       stageObtained: 0,
     }
     const ids = teamAlwaysHit(team, [relic])
@@ -77,7 +77,7 @@ describe('teamAlwaysHit', () => {
     const tagged = mkDw('mira', 2, ['infallibile'])
     const plain = mkDw('plain', 1)
     const relic: ActiveRelic = {
-      relic: { id: 'occhio-magico', name: 'Occhio Magico', desc: '', rarity: 'epica', grantsAlwaysHit: true },
+      relic: { id: 'occhio-magico', name: 'Occhio Magico', desc: '', rarity: 'rara', grantsAlwaysHit: true },
       stageObtained: 0,
     }
     const ids = teamAlwaysHit([tagged, plain], [relic])

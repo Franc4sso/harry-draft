@@ -33,6 +33,8 @@ describe('Mira Infallibile counter-web', () => {
     const dodges = r.log.filter(e => e.actorSide === 'left' && e.flags.includes('dodge')).length
     expect(dodges).toBe(0)
     expect(r.winner).toBe('left')
+    // Every hit landing → the kill is well inside the pre-fatigue window (no stall to the cap).
+    expect(r.turns).toBeLessThanOrEqual(30)
   })
 
   it('CONTROL — same stats/seed but no alwaysHit yields > 0 dodge flags (relic is the lever)', () => {
