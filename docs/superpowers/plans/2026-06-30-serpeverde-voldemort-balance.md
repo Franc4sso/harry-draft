@@ -33,11 +33,14 @@ against an objective gate, plus snapshot re-baselining.
 
 ### Task 1: The tune — modest Voldemort + Bellatrix base-atk trim, re-enable the gate
 
-> ⚠️ REVISED LEVER (post-diagnosis, user decision): the root cause is the **win-based leveling
-> snowball** amplifying Serpeverde's strong starters' BASE atk into one-shots — NOT spell power
-> (zeroing sectumsempra+deatheater+spietatezza only reached 0.825). Spell-power levers are OFF the
-> table. The lever is a modest **base-atk trim of Voldemort (40→~34) + Bellatrix (~38→~32)** in
-> `data/wizards.ts`, sparing global leveling and enemy budget so Grifondoro stays put.
+> ⚠️ REVISION 2 (user decision after measurement): a strict `<0.60` gate forced Voldemort to atk 25
+> (gutted) because trimmed wizards weaken as ENEMIES too (shared pool → self-cancelling). The user
+> chose to **honor "Voldemort not gutted" over the strict 0.60**: hold Voldemort at midpoint **~34**
+> (e.g. [30,38]), trim the OTHER top Serpeverde attackers (Snape, Lucius, +others the sweep drafts) as
+> far as sensible, and **set the gate to the ACHIEVED value + a small margin** (likely ~0.62-0.70),
+> documented as Serpeverde being a deliberately strong "cunning" house. Spell-power and global-leveling
+> levers remain OFF the table. The objective is no longer a fixed number — it's *minimize Serpeverde
+> winRate subject to Voldemort midpoint ≥ ~34*, then gate at that minimum + margin.
 
 **Files:**
 - Modify: `data/wizards.ts` (Voldemort `ranges.atk` and Bellatrix `ranges.atk`; + other top Serpeverde
@@ -49,22 +52,27 @@ against an objective gate, plus snapshot re-baselining.
   comments only, if their printed numbers moved) + `houseEffects.ts` stale 0.742 comment
 - Regen as needed: `tests/engine/combat/__snapshots__/*`, `replay.test.ts`/`replayRelics.test.ts` fixtures
 
-- [ ] **Step 1 — Baseline & confirm gate.** Run `npx vitest run tests/engine/serpeverdeBalance.test.ts`;
-  record the printed winRate (~0.925). The `winRate < 0.60` assertion is ALREADY re-enabled in the
-  working tree (RED). Read the current Voldemort + Bellatrix `ranges.atk` in `data/wizards.ts` and
-  record them. (Voldemort is documented ~[35,45] midpoint 40; find Bellatrix's actual range.)
+- [ ] **Step 1 — Baseline.** Run `npx vitest run tests/engine/serpeverdeBalance.test.ts`; record the
+  printed winRate (~0.925). The gate is currently DISABLED (working tree reset). Read the current
+  `ranges.atk` of Voldemort and the top Serpeverde attackers the sweep drafts (Voldemort, Snape, Lucius,
+  Bellatrix, Dolohov — check `powerOf` ranking) and record them. (Note: Bellatrix is already ~[?,?]
+  midpoint ~23.5 — already low; the heavy hitters are Voldemort + Snape + Lucius.)
 
-- [ ] **Step 2 — Trim Voldemort + Bellatrix base atk.** In `data/wizards.ts`, lower Voldemort's
-  `ranges.atk` so its midpoint is ~34 (e.g. [30,38]) and Bellatrix's so its midpoint is ~32. Keep
-  Voldemort still among the highest attackers (NOT gutted). Re-run the sweep. Iterate the two ranges
-  down until `winRate < 0.60`, aiming for a ~0.50-0.55 margin (noise guard). Do NOT crater the house
-  below ~0.40 (a competent Serpeverde must stay viable) — if you're heading there, you've over-trimmed,
-  back off.
+- [ ] **Step 2 — Fix Voldemort at ~34, trim the OTHERS.** In `data/wizards.ts`, set Voldemort's
+  `ranges.atk` to midpoint **~34** (e.g. [30,38]) and DO NOT go lower (user constraint — he stays
+  top-tier). Then trim the OTHER top Serpeverde attackers (Snape, Lucius, +Dolohov/others as needed)
+  down as far as is sensible WITHOUT making them useless (don't push a tier-2/3 attacker's atk below,
+  say, ~18). Re-run the sweep after each change, pushing winRate as LOW as you reasonably can with
+  Voldemort pinned at 34.
 
-- [ ] **Step 3 — Extra Serpeverde attackers ONLY if needed.** If Voldemort+Bellatrix at sane values
-  (Voldemort midpoint ≥ ~32) can't pull winRate under 0.60, identify the next top-power Serpeverde
-  attacker the sweep drafts (e.g. via `powerOf`) and trim its `ranges.atk` modestly too. Prefer the
-  smallest combined change. Record every wizard + old→new range.
+- [ ] **Step 3 — Record the achieved floor.** Note the LOWEST winRate you can reach with Voldemort at
+  ~34 and the others trimmed sensibly (likely ~0.62-0.70). This is your achieved value.
+
+- [ ] **Step 2b — Set the gate to achieved + margin.** In `serpeverdeBalance.test.ts`, RE-ENABLE the
+  upper-bound assertion but at the achieved value + ~0.05 margin (e.g. if you land 0.65, assert
+  `winRate < 0.70`). Add a comment explaining: Serpeverde is a deliberately strong "cunning" house;
+  Voldemort's identity is preserved (atk 34) at the cost of a higher band than other houses; the strict
+  0.60 was unreachable without gutting Voldemort (40→25). The gate must PASS at the final numbers.
 
 - [ ] **Step 5 — Guardrails.** Run, and confirm all pass / hold:
   - `npx vitest run tests/engine/campaignBalanceB.test.ts` (Grifondoro still in [0.15,0.45]).
