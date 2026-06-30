@@ -3,8 +3,7 @@ import type { Tier, RelicRarity } from '@/types'
 export const BALANCE = {
   combat: {
     turnCap: 100,
-    baseAttackMult: 0.45,
-    defenseK: 0.5,
+defenseK: 0.5,
     minDamage: 1,
     critBase: 0.05,
     critSpdScale: 0.0015,
