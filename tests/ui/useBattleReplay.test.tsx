@@ -50,6 +50,45 @@ describe('useBattleReplay', () => {
     expect(result.current.playing).toBe(false)
   })
 
+  it('modalReady is false immediately when done becomes true (before delay)', () => {
+    const replay = makeReplay()
+    const { result } = renderHook(() => useBattleReplay(replay, { autoPlay: false }))
+    // Drive to the last frame using step() calls (no timers involved) so we can
+    // isolate the 700ms post-death delay check independently.
+    act(() => {
+      const total = result.current.total
+      for (let i = 0; i < total - 1; i++) result.current.step()
+    })
+    expect(result.current.done).toBe(true)
+    // Modal NOT ready yet — the 700ms delay hasn't started being consumed
+    expect(result.current.modalReady).toBe(false)
+  })
+
+  it('modalReady becomes true after POST_DEATH_DELAY_MS (700ms)', () => {
+    const replay = makeReplay()
+    const { result } = renderHook(() => useBattleReplay(replay, { autoPlay: false }))
+    act(() => {
+      const total = result.current.total
+      for (let i = 0; i < total - 1; i++) result.current.step()
+    })
+    expect(result.current.done).toBe(true)
+    expect(result.current.modalReady).toBe(false)
+    // Advance past the post-death delay
+    act(() => { vi.advanceTimersByTime(700) })
+    expect(result.current.modalReady).toBe(true)
+  })
+
+  it('skip sets modalReady immediately without waiting for the delay', () => {
+    const replay = makeReplay()
+    const { result } = renderHook(() => useBattleReplay(replay, { autoPlay: false }))
+    expect(result.current.modalReady).toBe(false)
+    act(() => { result.current.skip() })
+    expect(result.current.done).toBe(true)
+    expect(result.current.modalReady).toBe(true)
+    // Timer should NOT be needed — verify it stays true even without advancing time
+    expect(result.current.modalReady).toBe(true)
+  })
+
   it('honours speed multiplier', () => {
     const replay = makeReplay()
     const { result } = renderHook(() => useBattleReplay(replay, { autoPlay: true, stepMs: 100 }))

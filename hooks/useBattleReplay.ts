@@ -6,6 +6,8 @@ import type { Replay, ReplayFrame } from '@/game/engine/combat/replay'
 export const REPLAY_SPEEDS = [1, 2, 4] as const
 export type ReplaySpeed = (typeof REPLAY_SPEEDS)[number]
 
+const POST_DEATH_DELAY_MS = 700
+
 export interface BattleReplayController {
   frame: ReplayFrame
   index: number
@@ -14,6 +16,7 @@ export interface BattleReplayController {
   entry: LogEntry | null
   playing: boolean
   done: boolean
+  modalReady: boolean
   speed: ReplaySpeed
   play: () => void
   pause: () => void
@@ -40,6 +43,7 @@ export function useBattleReplay(
   const [index, setIndex] = useState(0)
   const [playing, setPlaying] = useState(autoPlay)
   const [speed, setSpeed] = useState<ReplaySpeed>(1)
+  const [modalReady, setModalReady] = useState(false)
   const replayRef = useRef(replay)
 
   // New battle → rewind to the start.
@@ -62,10 +66,16 @@ export function useBattleReplay(
 
   useEffect(() => { if (done) setPlaying(false) }, [done])
 
+  useEffect(() => {
+    if (!done) { setModalReady(false); return }
+    const t = setTimeout(() => setModalReady(true), POST_DEATH_DELAY_MS)
+    return () => clearTimeout(t)
+  }, [done])
+
   const play = useCallback(() => setPlaying(true), [])
   const pause = useCallback(() => setPlaying(false), [])
   const toggle = useCallback(() => setPlaying(p => !p), [])
-  const skip = useCallback(() => { setIndex(total - 1); setPlaying(false) }, [total])
+  const skip = useCallback(() => { setIndex(total - 1); setPlaying(false); setModalReady(true) }, [total])
   const step = useCallback(() => {
     setPlaying(false)
     setIndex(i => Math.min(total - 1, i + 1))
@@ -84,6 +94,7 @@ export function useBattleReplay(
     entry: frame.entry,
     playing,
     done,
+    modalReady,
     speed,
     play,
     pause,

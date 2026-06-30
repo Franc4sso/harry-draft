@@ -116,7 +116,7 @@ export function BattleScreen({
         controlAt={controlAt}
       />
 
-      {r.done && (
+      {r.modalReady && (
         <BattleEndModal outcome={result.winner === 'left' ? 'win' : 'loss'} onConfirm={onFinish} />
       )}
     </main>
