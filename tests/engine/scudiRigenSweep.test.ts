@@ -37,6 +37,11 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 // Post-Task-6 house tuning (2026-06-30, HUFF_REDUCE adjusted 0.08→0.10/0.15→0.16/0.22→0.24): winRate=0.258
 //   bastioneRate=0.358 shieldUptakeRate=0.358 medianTurns=13 maxTurns=45. Kit intact (> 0.05).
 //   Tassorosso damageReduction nudge improved scudi-rigen archetype durability (medianTurns 8→13).
+// Post-boss-buff (2026-07-01, finalBossMenace -0.40→-0.384 + Serpeverde atk trim baked in): winRate=0.100
+//   bastioneRate=0.400 shieldUptakeRate=0.400 medianTurns=6 maxTurns=30. Kit intact (> 0.05 floor).
+//   Drop from ~0.258: Tassorosso shield archetype is sensitive to the Voldemort stat trim interaction
+//   (weaker enemy Voldemort mid-area combined with slightly harder final boss shifts the balance point).
+//   0.100 >> 0.05 draftability floor; expected per backlog item #5 notes. No lever change warranted.
 registerCoreResolvers()
 
 const SCUDI_RELICS = new Set(['egida-tassorosso', 'cuore-del-tasso'])

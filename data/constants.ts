@@ -124,7 +124,14 @@ defenseK: 0.5,
     //   compensates: -0.36 → 0.158 (too close to edge), -0.40 → 0.167 (20/120, comfortable).
     //   Accepted trade-off: Voldemort statMult 0.60 < area-2 boss 1.38; real climax awaits
     //   a player-power buff — Slice 3.
-    finalBossMenace: -0.40,
+    // Moderate buff (2026-07-01, backlog item #5 — moderate-buff REVISED approach):
+    //   Raised -0.40→-0.384 (statMult 0.60→0.616). The Serpeverde balance tune (Voldemort atk trim,
+    //   post-Task6) moved the true winRate at -0.40 to 0.1583 (19/120), leaving only 0.0083 of headroom.
+    //   Full scan: -0.383 → 0.1500 (exactly 0.15, fails strict >); -0.384 → 0.1583 (19/120, passes).
+    //   -0.384 is the empirically highest value that keeps winRate strictly > 0.15. statMult 0.616.
+    //   Area-boss parity (1 + menaceForLevel(levelMax) ≈ 1.33) is DEFERRED pending a player-power
+    //   pass — see docs/superpowers/specs/2026-06-30-strong-final-boss-design.md and remaining-work.md.
+    finalBossMenace: -0.384,
     enemyRelicsElite: 0,
     enemyRelicsBoss: 1,
   },

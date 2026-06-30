@@ -36,6 +36,9 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 // Post-Task-6 house tuning (2026-06-30, SLYTH_CUNNING adjusted): winRate=0.392
 //   tossicitaRate=0.567 dotShare=0.386 medianTurns=4 maxTurns=38. Kit intact (>> 0.05).
 //   Drop (~0.10) from lower cunning values; veleno archetype less augmented vs wounded targets.
+// Post-boss-buff (2026-07-01, finalBossMenace -0.40→-0.384 + Serpeverde atk trim baked in): winRate=0.450
+//   tossicitaRate=0.650 dotShare=0.834 medianTurns=3 maxTurns=24. Kit intact (>> 0.05).
+//   Rise from weaker Voldemort/Serpeverde mid-area enemies (atk trim) offsetting the marginal boss hardening.
 registerCoreResolvers()
 
 const VELENO_RELICS = new Set(['ampolla-veleno', 'pugnale-bellatrix', 'boccino-doro'])
