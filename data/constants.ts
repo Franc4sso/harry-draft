@@ -115,9 +115,13 @@ export const BALANCE = {
     //   Raising toward area-2 boss (statMult 1.38 → finalBossMenace +0.38) remains out of reach:
     //   at +0.38 → 0.092, +0.20 → 0.125, 0.00 → 0.133, -0.20 → 0.133, -0.28 → 0.133.
     //   -0.31 is the highest value that keeps winRate strictly above 0.15.
-    //   Accepted trade-off: Voldemort statMult 0.69 < area-2 boss 1.38; real climax awaits
-    //   a player-power buff or band widening — Slice 3.
-    finalBossMenace: -0.31,
+    // Re-calibrated (2026-06-30, floor-1=3 map change — first floor forced to 3 nodes for "first choice among 3"):
+    //   The floor-1 width=3 structural change lowers average win-rate by ~1-2 pp; -0.31 now yields 0.142
+    //   (below the [0.15, 0.45] band floor). Easing finalBossMenace -0.31→-0.40 (statMult 0.60, was 0.69)
+    //   compensates: -0.36 → 0.158 (too close to edge), -0.40 → 0.167 (20/120, comfortable).
+    //   Accepted trade-off: Voldemort statMult 0.60 < area-2 boss 1.38; real climax awaits
+    //   a player-power buff — Slice 3.
+    finalBossMenace: -0.40,
     enemyRelicsElite: 0,
     enemyRelicsBoss: 1,
   },

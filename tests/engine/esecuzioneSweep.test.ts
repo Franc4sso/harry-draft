@@ -28,6 +28,8 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 //   buff negligible for Serpeverde-biased runs at this stat level.
 // Post-live-infirmary (2026-06-30, C1 fix — menaceOffset -0.70→-0.75, finalBossMenace -0.45→-0.31): winRate=0.808
 //   spietatezzaRate=0.308 execUptakeRate=0.333 medianTurns=3 maxTurns=38. Kit intact (>> 0.05).
+// Post-floor-1=3 map change (2026-06-30, finalBossMenace -0.31→-0.40): winRate=0.792
+//   spietatezzaRate=0.267 execUptakeRate=0.267 medianTurns=3 maxTurns=39. Kit intact (>> 0.05).
 //
 // Metric choice — IMPORTANT: there is NO total-damage assertion here. Execute is a damage
 // MULTIPLIER on the killing blow, not a discrete channel like poison's `dot` flag, so a

@@ -31,6 +31,8 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 //   (harder final boss); Serpeverde house-power skew remains the main driver.
 // Post-live-infirmary (2026-06-30, C1 fix — menaceOffset -0.70→-0.75, finalBossMenace -0.45→-0.31): winRate=0.483
 //   tossicitaRate=0.567 dotShare=0.390 medianTurns=3 maxTurns=37. Kit intact (>> 0.05).
+// Post-floor-1=3 map change (2026-06-30, finalBossMenace -0.31→-0.40): winRate=0.492
+//   tossicitaRate=0.558 dotShare=0.367 medianTurns=3 maxTurns=38. Kit intact (>> 0.05).
 registerCoreResolvers()
 
 const VELENO_RELICS = new Set(['ampolla-veleno', 'pugnale-bellatrix', 'boccino-doro'])

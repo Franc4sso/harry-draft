@@ -33,6 +33,8 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 //   dominance absorbs the marginal boss buff.
 // Post-live-infirmary (2026-06-30, C1 fix — menaceOffset -0.70→-0.75, finalBossMenace -0.45→-0.31): winRate=0.925
 //   oscuritaRate=0.142 darkUptakeRate=0.142 recoilDeaths=0 medianTurns=2 maxTurns=36. Kit intact (>> 0.05).
+// Post-floor-1=3 map change (2026-06-30, finalBossMenace -0.31→-0.40): winRate=0.917
+//   oscuritaRate=0.117 darkUptakeRate=0.117 recoilDeaths=0 medianTurns=2 maxTurns=36. Kit intact (>> 0.05).
 registerCoreResolvers()
 
 const DARK_RELICS = new Set(['marchio-nero', 'diadema-corrotto'])

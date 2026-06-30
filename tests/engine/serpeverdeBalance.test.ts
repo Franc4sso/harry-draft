@@ -20,6 +20,7 @@ import type { RunNode, RunState } from '@/types'
 //   Slight drop as expected; still well above desired band. Root cause unchanged; Slice 2 handles it.
 // Post-live-infirmary (2026-06-30, C1 fix — menaceOffset -0.70→-0.75, finalBossMenace -0.45→-0.31): winRate=0.775.
 //   Negligible change; Serpeverde dominance unaffected. Band assertion still disabled (Slice 2).
+// Post-floor-1=3 map change (2026-06-30, finalBossMenace -0.31→-0.40): winRate=0.775. Unchanged.
 registerCoreResolvers()
 
 function pickNode(s: RunState): RunNode {

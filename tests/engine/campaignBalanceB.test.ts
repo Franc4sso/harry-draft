@@ -22,6 +22,10 @@ import type { RunNode, RunState } from '@/types'
 //   Net effect: less XP/power-building per area; menaceOffset eased -0.70→-0.75 to compensate.
 //   finalBossMenace raised to -0.31 (statMult 0.69, was 0.55). -0.31 is the highest value in the [0.15, 0.45]
 //   band (winRate ≈ 0.158); -0.30 drops to 0.142. Does not reach area-2 boss statMult 1.38 (+0.38) — Slice 3.
+// Recalibration (2026-06-30, floor-1=3 map change — first floor forced to 3 nodes for "first choice among 3"):
+//   Floor-1 width=3 lowers win-rate ~1-2 pp; -0.31 now yields 0.142 (< 0.15 floor).
+//   finalBossMenace eased to -0.40 (statMult 0.60): -0.36 → 0.158 (too close to edge), -0.40 → 0.167 (20/120).
+//   Boss still well below area-2 strength (1.38); real climax awaits a player-power buff — Slice 3.
 registerCoreResolvers()
 
 // Near-optimal ("upper-bound") player policy. A pure recruit/relic-first greedy is
