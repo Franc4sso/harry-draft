@@ -1,5 +1,6 @@
 import type { House, Role } from './wizard'
 import type { Stat } from './spell'
+import type { Keyword } from './keyword'
 
 export interface SynergyRequirement {
   house?: House
@@ -12,6 +13,7 @@ export interface SynergyRequirement {
 export type SynergyBonus = Partial<Record<Stat, number>> & {
   allPct?: number
   regen?: number
+  keywordMult?: Partial<Record<Keyword, number>>
 }
 
 export interface Synergy {

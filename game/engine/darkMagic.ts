@@ -26,7 +26,7 @@ export function teamDarkMagic(
     map[ar.assignedTo] = { bonus: cur.bonus + g.bonus, recoil: Math.max(cur.recoil, g.recoil) }
   }
   // 3. scale bonus only (recoil unchanged) by the magieOscure keyword mult
-  const mult = keywordDamageMult(team, relics, 'magieOscure')
+  const mult = keywordDamageMult(team, relics, synergies, 'magieOscure')
   for (const id of Object.keys(map)) {
     map[id] = { bonus: map[id]!.bonus * mult, recoil: map[id]!.recoil }
   }

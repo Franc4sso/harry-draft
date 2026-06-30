@@ -76,13 +76,13 @@ describe('veleno: "che divora" tick (no mult yet)', () => {
 describe('keywordDamageMult', () => {
   const team = [] as unknown as DraftedWizard[]
   it('returns 1 with no relics', () => {
-    expect(keywordDamageMult(team, [], 'veleno')).toBe(1)
+    expect(keywordDamageMult(team, [], [], 'veleno')).toBe(1)
   })
   it('sums keywordMult from unconditional relics', () => {
     const relics: ActiveRelic[] = [
       { relic: { id: 'a', name: 'A', desc: '', rarity: 'non-comune', keywordMult: { veleno: 0.5 } }, stageObtained: 0 },
     ]
-    expect(keywordDamageMult(team, relics, 'veleno')).toBeCloseTo(1.5)
+    expect(keywordDamageMult(team, relics, [], 'veleno')).toBeCloseTo(1.5)
   })
 })
 

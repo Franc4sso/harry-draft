@@ -17,6 +17,6 @@ export function teamShieldConvert(
     rate += 0.35
   }
   if (rate <= 0) return undefined
-  rate *= keywordDamageMult(team, relics, 'scudo')
+  rate *= keywordDamageMult(team, relics, synergies, 'scudo')
   return { rate: Math.min(1, rate) }
 }

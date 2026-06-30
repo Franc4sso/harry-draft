@@ -19,6 +19,6 @@ export function teamExecute(
     bonus += 0.25
   }
   if (bonus <= 0) return undefined
-  bonus *= keywordDamageMult(team, relics, 'esecuzione')
+  bonus *= keywordDamageMult(team, relics, synergies, 'esecuzione')
   return { threshold, bonus }
 }

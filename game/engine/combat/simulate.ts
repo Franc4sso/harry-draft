@@ -103,8 +103,8 @@ export function simulateBattle(
 
   // Poison scaling: each side's veleno multiplier from its own relics. Poison ON a unit
   // is scaled by the OPPOSING side's mult (the side that applied it).
-  const leftVelenoMult = keywordDamageMult(left, leftRelics, 'veleno')
-  const rightVelenoMult = keywordDamageMult(right, rightRelics, 'veleno')
+  const leftVelenoMult = keywordDamageMult(left, leftRelics, leftSyn, 'veleno')
+  const rightVelenoMult = keywordDamageMult(right, rightRelics, rightSyn, 'veleno')
 
   // Apply a collected reactive hook for `unit`. Guarded by collectReactive().length
   // so a zero-listener hook draws NO rng and emits NO log line — preserving every
