@@ -63,11 +63,26 @@ house redesign — all above). Remaining:
 - **Strong final boss:** the mid-area recovery lever now EXISTS (Lacrime di Fenice above), so this is
   unblocked → raise `finalBossMenace` to a real climax (statMult ≥ area-2 boss 1.38) + validate the win
   floor still holds. Best done AFTER the Serpeverde rebalance (shared enemy-scaling calibration).
-- **Serpeverde/Voldemort balance:** Serpeverde still ~0.73 — it's Voldemort+Sectumsempra, not the house
-  synergy. A wizard-data tune (nerf Voldemort's atk or Sectumsempra power) is the lever; user prefers NOT
-  to gut Voldemort, so consider lowering Sectumsempra's power or adding a counter instead. ⚠️ Re-measure
-  with the 3 new `infallibile` Serpeverde tags (snape/lucius/dolohov), a small accuracy uplift.
-- **Cleanup:** `baseAttackMult` in constants is vestigial (never read by the engine) — remove or wire it.
+- **Serpeverde/Voldemort balance — ✅ DONE (2026-06-30 balance pass):** the live skew was **0.925**
+  (not the stale ~0.73; win-based leveling inflated it). ⚠️ DIAGNOSIS CORRECTED: the driver was NOT
+  Sectumsempra/spell-power (zeroing sectumsempra+deatheater+spietatezza only reached 0.825) — it's the
+  **win-based leveling snowball** (a winning team's atk grows ~2.5× to cap → one-shots). Base-atk trims
+  of shared-pool wizards self-cancel (they weaken as enemies too), so a strict <0.60 would have gutted
+  Voldemort (40→25). **User decision:** keep Voldemort modest (atk 40→34, identity preserved) + trim the
+  other Serpeverde attackers (Snape 32.5→23, Lucius 29→21, Dolohov 27.5→18.5) + relax the gate to the
+  achieved value. Result: serpeverdeBalance winRate **0.925→0.658, gate `< 0.71`** (Serpeverde is a
+  deliberately strong "cunning" house). Side-benefit: Magie Oscure cooled 0.925→0.650. Grifondoro
+  (campaignBalanceB) unchanged at 0.183. Spec/plan: `...2026-06-30-serpeverde-voldemort-balance*`.
+- **FOLLOW-UP (new, from #4's review) — leveling-snowball root cause + wide house spread:** the real
+  driver of the house imbalance is the win-based leveling snowball (`game/engine/leveling.ts`
+  `growthBudgetPerLevel`), which #4 worked AROUND (per-wizard atk trims) rather than fixing at the root.
+  The house spread is still wide (Serpeverde 0.658 vs Grifondoro 0.183 — ~3.5×), and the `< 0.71` gate
+  is now the FRAGILE one: anyone touching enemy scaling should expect it to move. Revisit once the
+  snowball can be tuned house-agnostically (lower growth + global recalibration) so the spread tightens
+  without per-wizard nerfs. Also: `campaignBalanceB` shares the enemy `WIZARDS` pool, so its "unchanged"
+  status is MEASURED, not structural — always re-run it after any wizard-stat change.
+- **Cleanup — ✅ DONE:** `baseAttackMult` was vestigial (single declaration in `data/constants.ts`,
+  zero reads) — removed (worktree branch, merging with #4).
 
 Plus the older backlog:
 - **Serpeverde house-power skew** also shows in the archetype sweeps (Esecuzione/Veleno/Magie Oscure all

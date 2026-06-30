@@ -38,6 +38,9 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 // Post-Task-6 house tuning (2026-06-30, SLYTH_CUNNING adjusted): winRate=0.925
 //   oscuritaRate=0.117 darkUptakeRate=0.117 recoilDeaths=0 medianTurns=2 maxTurns=36. Kit intact (>> 0.05).
 //   Negligible change (within N=120 variance). Serpeverde/dark-magic overlap drives high winRate.
+// Balance tune (2026-06-30): Serpeverde attacker atk trimmed — Voldemort [35,45]→[30,38], Snape [28,37]→[19,27],
+//   Lucius [25,33]→[17,25], Dolohov [24,31]→[15,22]. winRate=0.650 oscuritaRate=0.125 darkUptakeRate=0.142
+//   recoilDeaths=1 medianTurns=3 maxTurns=24. Kit still viable (above draftability floor). No lever change needed.
 registerCoreResolvers()
 
 const DARK_RELICS = new Set(['marchio-nero', 'diadema-corrotto'])

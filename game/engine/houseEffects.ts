@@ -10,9 +10,12 @@ const TIER = (familyId: string): 0 | 1 | 2 | -1 =>
 //   Grifondoro=0.183, Corvonero=0.192, Tassorosso=0.083, Serpeverde=0.733
 //   Grifondoro + Corvonero within 0.01 of each other; Tassorosso 0.10 below (structural: low-atk
 //   starter pool + support spells cannot leverage damageReduction into kills).
-//   Serpeverde is a structural outlier at 0.73-0.75 — driven by Voldemort's high-power dark spells
-//   (Sectumsempra power=2.4 → ~88 dmg/hit), not by the cunning mechanic. Cunning fires only when
-//   target is below 50% HP; Voldemort already one-shots most enemies before the threshold is relevant.
+//   Serpeverde was a structural outlier — re-measured at 0.925 once win-based leveling shipped (the
+//   real driver: a winning team's atk snowballs ~2.5x to cap → one-shots, NOT spell power). 2026-06-30
+//   balance pass trimmed Serpeverde attackers' base atk (Voldemort 40→34 held; Snape/Lucius/Dolohov
+//   lowered) → serpeverdeBalance winRate 0.925→0.658, gated <0.71 (deliberately-strong cunning house;
+//   Voldemort identity preserved at the cost of a higher band than the other houses). See
+//   docs/superpowers/specs/2026-06-30-serpeverde-voldemort-balance-design.md.
 //   The spread among the 3 non-Serpeverde houses is 0.11 (Tassorosso to Corvonero), within ~0.15 goal.
 //   campaignBalanceB (Grifondoro, seeds run-0..119): winRate=0.183 ∈ [0.15, 0.45]. ✓
 //   Note: increasing GRYFF_DODGE above baseline LOWERS Grifondoro win rate (defensive battles go long
