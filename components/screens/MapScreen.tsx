@@ -2,6 +2,7 @@
 import type { RunNode, RunNodeType } from '@/types'
 import { parseAreaNodeId, nodeDepth } from '@/game/engine/map'
 import { cn } from '@/lib/theme'
+import { synergyName } from '@/lib/synergyBadge'
 
 /** Floor index for any node id (area-scoped `a#f#n#` or legacy `f#n#`). */
 function floorOf(id: string): number {
@@ -144,6 +145,26 @@ export function MapScreen({
               <span className="pointer-events-none absolute top-full mt-1 whitespace-nowrap rounded-md border border-white/15 bg-[#15121f]/95 px-2 py-0.5 text-[10px] text-white/85 opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">
                 {LABEL[n.type]}
               </span>
+              {n.preview && n.preview.synergyIds.length > 0 && (
+                <span
+                  data-testid={`telegraph-${n.id}`}
+                  className="pointer-events-none absolute bottom-full mb-1 flex max-w-[120px] flex-wrap justify-center gap-0.5"
+                >
+                  {n.preview.bossName && (
+                    <span className="rounded-full border px-1.5 py-0.5 text-[8px] font-bold"
+                      style={{ color: '#f5c451', borderColor: 'rgba(245,196,81,0.6)', background: 'rgba(245,196,81,0.16)' }}>
+                      {n.preview.bossName}
+                    </span>
+                  )}
+                  {n.preview.synergyIds.map(sid => (
+                    <span key={sid} data-synergy={sid}
+                      className="rounded-full border px-1.5 py-0.5 text-[8px] font-semibold"
+                      style={{ color: '#f3e6c4', borderColor: 'rgba(202,162,74,0.6)', background: 'rgba(176,141,87,0.16)' }}>
+                      {synergyName(sid)}
+                    </span>
+                  ))}
+                </span>
+              )}
             </button>
           )
         })}
