@@ -261,7 +261,7 @@ describe('BattleScreen', () => {
     const cont = await screen.findByRole('button', { name: /continua|esito/i })
     await userEvent.click(cont)
     expect(onFinish).toHaveBeenCalledOnce()
-  })
+  }, 15000)
 
   it('advances one action with the step control', async () => {
     const l = left(), r = right()

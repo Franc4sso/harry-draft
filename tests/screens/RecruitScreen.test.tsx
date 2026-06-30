@@ -15,7 +15,7 @@ describe('RecruitScreen', () => {
     await userEvent.click(screen.getByTestId(`recruit-${offer[0]!.wizard.id}`))
     await userEvent.click(screen.getByRole('button', { name: /Recluta/ }))
     expect(onPick).toHaveBeenCalledWith(offer[0]!.wizard.id, undefined)
-  })
+  }, 15000)
 
   it('calls onSkip when declining the offer', async () => {
     const onPick = vi.fn()

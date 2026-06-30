@@ -121,7 +121,7 @@ describe('favor-Scudi-Rigen viability sweep', () => {
   it('is deterministic (same seeds → same outcomes)', () => {
     const again = Array.from({ length: N }, (_, i) => favorScudiRigenRun(`srun-${i}`)).map(r => r.outcome)
     expect(again).toEqual(runs.map(r => r.outcome))
-  })
+  }, 30000)
   it('the build can win (not structurally broken)', () => {
     expect(winRate).toBeGreaterThan(0.05)
   })

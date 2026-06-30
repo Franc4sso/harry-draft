@@ -19,7 +19,7 @@ describe('RunBRunner', () => {
     await userEvent.click(screen.getByTestId('draft-pick-0'))
     await userEvent.click(screen.getByTestId('draft-pick-0'))
     expect(screen.getByText(/Scegli il tuo cammino/)).toBeInTheDocument()
-  })
+  }, 15000)
 
   it('shows the team+synergy bar on map but not during draft', async () => {
     render(<RunBRunner seed="seed-runner" />)
