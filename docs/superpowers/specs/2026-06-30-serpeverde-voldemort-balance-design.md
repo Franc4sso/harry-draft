@@ -27,12 +27,18 @@ diventa irrilevante. Serpeverde ha gli starter migliori (Voldemort+Bellatrix) �
 livella più in fretta, raggiunge il cap prima → vantaggio composto. Grifondoro (0.183) non fa snowball
 così perché i suoi starter hanno atk base più basso.
 
-**Leva scelta (decisione utente): trim modesto dell'atk BASE di Voldemort + Bellatrix.**
-- `Voldemort` atk range midpoint **40 → ~34** (resta il/tra i più alti — NON sventrato, identità intatta).
-- `Bellatrix` atk range **~38 → ~32**.
-- Eventuali altri forti Attaccanti Serpeverde draftati dallo sweep se il gate non si chiude con questi due.
-- Isola Serpeverde: NON tocca `growthBudgetPerLevel` né l'enemy budget globale → Grifondoro/campaignBalanceB
-  restano fermi. Tarare i range empiricamente finché `serpeverdeBalance` winRate < 0.60 (margine ~0.50-0.55).
+**Leva scelta (decisione utente): trim dell'atk BASE degli Attaccanti Serpeverde.** ESITO FINALE
+(vedi REVISION 2 nel piano — questa lista iniziale puntava a Voldemort+Bellatrix ma Bellatrix era già
+bassa, mid 23.5, e NON è stata toccata):
+- `Voldemort` atk `[35,45] → [30,38]` (mid **40 → 34** — resta il/tra i più alti, NON sventrato).
+- `Snape` `[28,37] → [19,27]` (mid 32.5 → 23); `Lucius` `[25,33] → [17,25]` (mid 29 → 21);
+  `Dolohov` `[24,31] → [15,22]` (mid 27.5 → 18.5, floor).
+- Gate finale: `serpeverdeBalance` winRate **0.925 → 0.658**, assert `< 0.71` (NON 0.60 — quello
+  avrebbe sventrato Voldemort a 25; decisione utente: identità Voldemort > parità stretta).
+- ⚠️ NON "isolato per costruzione": i nemici sono pescati dal pool condiviso `WIZARDS` ordinato per
+  `expectedPower` (atk-weighted, `teamGen.ts`), quindi trimmare questi maghi **ri-ordina** anche le
+  finestre nemiche di Grifondoro. campaignBalanceB resta a 0.183 **per misura empirica** (banda regge,
+  suite verde), non per garanzia strutturale — ri-eseguirlo è doveroso, non saltabile.
 
 La sezione "Causa radice / leva Sectumsempra" qui sotto è conservata per storia ma NON è più il piano.
 
