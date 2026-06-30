@@ -9,6 +9,7 @@ import { applyRelicBonuses, keywordDamageMult, registerRelicTriggers, totalRelic
 import { teamExecute } from '../execute'
 import { teamShieldConvert } from '../shieldConvert'
 import { teamDarkMagic } from '../darkMagic'
+import { teamAlwaysHit } from '../alwaysHit'
 import { houseEffects } from '../houseEffects'
 import { registerTraitTriggers } from '../traits'
 import { registerSignatures } from '../signatures'
@@ -27,6 +28,7 @@ export function toBattleUnits(
   const execute = teamExecute(team, relics, synergies)
   const shieldConvert = teamShieldConvert(team, relics, synergies)
   const darkMap = teamDarkMagic(team, relics, synergies)
+  const alwaysHitIds = teamAlwaysHit(team, relics)
   const houseMap = houseEffects(team, synergies)
   return team.map(dw => {
     const synBuffed = applyBonuses(dw.stats, synergies)
@@ -42,7 +44,7 @@ export function toBattleUnits(
     return {
       ...dw, side, buffedStats: buffed, maxHp: buffed.hp,
       hp: Math.min(buffed.hp, Math.max(0, startHp)),
-      cooldowns: {}, statusEffects: [], alive: true, velenoUncapped, execute, shieldConvert, darkMagic: darkMap[dw.wizard.id], ...houseMap[dw.wizard.id],
+      cooldowns: {}, statusEffects: [], alive: true, velenoUncapped, execute, shieldConvert, darkMagic: darkMap[dw.wizard.id], alwaysHit: alwaysHitIds.has(dw.wizard.id), ...houseMap[dw.wizard.id],
     }
   })
 }

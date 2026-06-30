@@ -34,7 +34,7 @@ function sourceId(u: BattleUnit): string { return `${u.side}:${u.wizard.id}` }
 export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: EffectSpec) => EffectResult> = {
   damage: (ctx, eff) => {
     if (eff.kind !== 'damage') return {}
-    if (eff.canDodge && dodged(ctx.rng, ctx.actor, ctx.target)) {
+    if (eff.canDodge && !ctx.actor.alwaysHit && dodged(ctx.rng, ctx.actor, ctx.target)) {
       ctx.flags.push('dodge'); return { value: 0, dodged: true }
     }
     if (!canAttack(ctx.actor)) return { value: 0 } // disarmed: no damage

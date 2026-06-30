@@ -38,6 +38,8 @@ export interface Relic {
   keywordMult?: Partial<Record<Keyword, number>>
   /** Grants the whole team an execute: +bonus damage to targets below `threshold` HP fraction. */
   grantsExecute?: { threshold: number; bonus: number }
+  /** Grants the whole team guaranteed-hit (ignores dodge) — Occhio Magico relic. */
+  grantsAlwaysHit?: boolean
   /** Grants the team a regen-overflow → shield conversion (Scudi-Rigen archetype): `rate` of
    *  the regen tick's overflow-above-maxHp becomes shield. Stacked/scaled via teamShieldConvert. */
   grantsShieldConvert?: { rate: number }
