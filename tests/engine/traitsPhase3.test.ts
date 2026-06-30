@@ -64,11 +64,9 @@ describe('Phase 3 control-on-hit traits', () => {
 })
 
 describe('Phase 3 dot + slow traits', () => {
-  it('Veleno applies a burn (dot) to the enemy on hit', () => {
-    const eff = firstApplyStatus('veleno')
-    expect(eff).toMatchObject({ kind: 'applyStatus', target: 'enemy', statusId: 'burn' })
-    expect(eff.chance).toBeGreaterThan(0.18)
-  })
+  // The 'veleno' trait was removed in the "Veleno from attacks" slice (poison now
+  // comes from venom spells + the Tossicità synergy's on-hit chance, not a trait);
+  // its on-hit-burn test case was deleted with it. See game/engine/synergyTriggers.ts.
 
   it('Logoramento applies weaken2 (atk debuff) to the enemy on hit', () => {
     const eff = firstApplyStatus('logoramento')
