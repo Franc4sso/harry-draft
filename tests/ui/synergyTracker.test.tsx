@@ -21,12 +21,11 @@ describe('SynergyTracker', () => {
     const grifRows = screen.getAllByText('Grifondoro')
     expect(grifRows).toHaveLength(3)
     expect(screen.queryByText('3 Grifondoro')).toBeNull()
-    // gryffindor2 is active (count=2, threshold=2) → shows "2 / 2" and "+10 DIF"
+    // gryffindor2 is active (count=2, threshold=2) → shows "2 / 2"
     expect(screen.getByText(/2\s*\/\s*2/)).toBeInTheDocument()
-    expect(screen.getByText(/\+10 DIF/)).toBeInTheDocument()
-    // gryffindor3 is visible and in-progress (count=2, threshold=3) → shows "2 / 3" and "+22 DIF"
+    // gryffindor3 is visible and in-progress (count=2, threshold=3) → shows "2 / 3"
+    // (no bonus text: gryffindor mechanic moved to houseEffects, bonus: {})
     expect(screen.getByText(/2\s*\/\s*3/)).toBeInTheDocument()
-    expect(screen.getByText(/\+22 DIF/)).toBeInTheDocument()
   })
   it('marks lower active tiers as superseded when a higher tier of the same family is active', () => {
     // 4 Grifondoro → tier-4 active; tiers 2 and 3 are active-by-count but superseded

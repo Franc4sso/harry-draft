@@ -1,16 +1,16 @@
 import type { Synergy } from '@/types'
 
 export const SYNERGIES: Synergy[] = [
-  // Houses (2/3/4) — flavour stat preserved; family keeps only the highest active tier.
-  { id: 'gryffindor2', name: '2 Grifondoro', kind: 'house', family: 'house:Grifondoro', requires: { house: 'Grifondoro', count: 2 }, bonus: { def: 10 } },
-  { id: 'gryffindor3', name: '3 Grifondoro', kind: 'house', family: 'house:Grifondoro', requires: { house: 'Grifondoro', count: 3 }, bonus: { def: 22 } },
-  { id: 'gryffindor4', name: '4 Grifondoro', kind: 'house', family: 'house:Grifondoro', requires: { house: 'Grifondoro', count: 4 }, bonus: { def: 40 } },
-  { id: 'slytherin2', name: '2 Serpeverde', kind: 'house', family: 'house:Serpeverde', requires: { house: 'Serpeverde', count: 2 }, bonus: { atk: 10 } },
-  { id: 'slytherin3', name: '3 Serpeverde', kind: 'house', family: 'house:Serpeverde', requires: { house: 'Serpeverde', count: 3 }, bonus: { atk: 22 } },
-  { id: 'slytherin4', name: '4 Serpeverde', kind: 'house', family: 'house:Serpeverde', requires: { house: 'Serpeverde', count: 4 }, bonus: { atk: 40 } },
-  { id: 'ravenclaw2', name: '2 Corvonero', kind: 'house', family: 'house:Corvonero', requires: { house: 'Corvonero', count: 2 }, bonus: { spd: 10 } },
-  { id: 'ravenclaw3', name: '3 Corvonero', kind: 'house', family: 'house:Corvonero', requires: { house: 'Corvonero', count: 3 }, bonus: { spd: 22 } },
-  { id: 'ravenclaw4', name: '4 Corvonero', kind: 'house', family: 'house:Corvonero', requires: { house: 'Corvonero', count: 4 }, bonus: { spd: 40 } },
+  // Houses (2/3/4) — mechanic lives in houseEffects; bonus is minimal (hufflepuff keeps regen).
+  { id: 'gryffindor2', name: '2 Grifondoro', kind: 'house', family: 'house:Grifondoro', requires: { house: 'Grifondoro', count: 2 }, bonus: {} },
+  { id: 'gryffindor3', name: '3 Grifondoro', kind: 'house', family: 'house:Grifondoro', requires: { house: 'Grifondoro', count: 3 }, bonus: {} },
+  { id: 'gryffindor4', name: '4 Grifondoro', kind: 'house', family: 'house:Grifondoro', requires: { house: 'Grifondoro', count: 4 }, bonus: {} },
+  { id: 'slytherin2', name: '2 Serpeverde', kind: 'house', family: 'house:Serpeverde', requires: { house: 'Serpeverde', count: 2 }, bonus: {} },
+  { id: 'slytherin3', name: '3 Serpeverde', kind: 'house', family: 'house:Serpeverde', requires: { house: 'Serpeverde', count: 3 }, bonus: {} },
+  { id: 'slytherin4', name: '4 Serpeverde', kind: 'house', family: 'house:Serpeverde', requires: { house: 'Serpeverde', count: 4 }, bonus: {} },
+  { id: 'ravenclaw2', name: '2 Corvonero', kind: 'house', family: 'house:Corvonero', requires: { house: 'Corvonero', count: 2 }, bonus: {} },
+  { id: 'ravenclaw3', name: '3 Corvonero', kind: 'house', family: 'house:Corvonero', requires: { house: 'Corvonero', count: 3 }, bonus: {} },
+  { id: 'ravenclaw4', name: '4 Corvonero', kind: 'house', family: 'house:Corvonero', requires: { house: 'Corvonero', count: 4 }, bonus: {} },
   { id: 'hufflepuff2', name: '2 Tassorosso', kind: 'house', family: 'house:Tassorosso', requires: { house: 'Tassorosso', count: 2 }, bonus: { regen: 6 } },
   { id: 'hufflepuff3', name: '3 Tassorosso', kind: 'house', family: 'house:Tassorosso', requires: { house: 'Tassorosso', count: 3 }, bonus: { regen: 12 } },
   { id: 'hufflepuff4', name: '4 Tassorosso', kind: 'house', family: 'house:Tassorosso', requires: { house: 'Tassorosso', count: 4 }, bonus: { regen: 22 } },
