@@ -148,3 +148,13 @@ In `generateArea` (map-build), per ogni nodo `battle`/`elite`/`boss`:
 6. Balance (RISCHIO PRIMARIO): ri-tara `themeStrength`; se non in banda, fallback "normali senza tema".
    campaignBalanceB in [0.15,0.45]. Full suite + tsc.
 7. Backlog doc.
+
+## Stato finale (implementato)
+
+**Slice completata** — tutti gli 8 task di implementazione shipped (commit 61d06dc → 0f36d74 su master).
+
+**Regime di balance spedito:** le normali SONO a tema (non il fallback `nodeMult.normal=0`). La curva di themeStrength iniziale ha retto: `areaBase 0.25, areaStep 0.20, nodeMult {normal 0.5, elite 0.9, boss 1.0}`. Win-rate misurato **0.1583 (19/120)**, entro [0.15, 0.45]. Le normali di area-0 sono di fatto miste (i membri round→0 sono a tema); elite/boss e le normali di aree più avanzate portano temi reali. ⚠️ Margine sottile rispetto al floor 0.15 — la prima leva per aumentare il margine è abbassare `themes.nodeMult.normal`.
+
+**Architettura così costruita:** ogni nodo di combattimento memorizza il suo pacchetto-battaglia completo (`node.battle = { enemyTeam, enemyRelics, enemyLevel, bossSynergy? }`) pre-generato al tempo di `generateArea` via `buildBattlePackage` usando il fork RNG canonico `createRng(seed).fork(2).fork(area).fork(floor)`; `resolveCombat` lo LEGGE (zero nuovi draw di rng), il preview è derivato dalla stessa fonte → coerenza preview↔realtà è strutturale. Il ciclo di import (combat.ts↔battlePackage.ts) è spezzato via un nuovo foglia `game/engine/combat/threat.ts`.
+
+**Transizione save legacy (ROAST-FIX #4, come disegnato):** un save fatto a metà-run PRIMA di questa feature ha i nodi futuri senza `battle`/`preview` → in QUELLA run i combattimenti non mostrano telegrafo e il resolver rigenera via il fallback legacy (nessun crash, no telegrafo). I nuovi run sono pienamente coerenti. Accettata una transizione una-tantum — non vale la complessità di migrare i save vecchi.
