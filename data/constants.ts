@@ -172,9 +172,27 @@ export const BALANCE = {
   },
   // Themed-battle synergy intensity. themeStrength(area,kind) =
   //   clamp01(areaBase + area*areaStep) * nodeMult[kind].
+  // members realizing the theme = round(strength * teamCount) (targetThemeMembers).
   // Higher strength → more of the enemy team realizes the chosen theme → more/higher
   // synergies. normal < elite < boss. Calibrated in campaignBalanceB (Task 8); the
   // primary balance lever. normalMult may be driven to 0 (fallback: normals untheme).
+  //
+  // Calibration log (2026-06-30, Task 8 — themes now LIVE on the balance harness):
+  //   Themed teams are stronger than mixed at equal budget (synergies = free power),
+  //   so the RISK was a drastic win-rate drop below the 0.15 floor. MEASURED FIRST:
+  //   the initial curve (areaBase 0.25, areaStep 0.20, nodeMult {normal 0.5, elite 0.9,
+  //   boss 1.0}) yields winRate = 0.1583 (19/120) — already INSIDE [0.15, 0.45].
+  //   Per the brief's nuance, do NOT tune away from a passing state, so NO levers were
+  //   lowered. SHIPPED REGIME: normals ARE THEMED (not the nodeMult.normal=0 fallback).
+  //   Realized themed members per (area,kind) under the shipped curve:
+  //     normal: area0 strength 0.125→0/2 (mixed), area1 0.225→1/4, area2 0.325→2/5
+  //     elite:  area0 0.225→1/3,  area1 0.405→2/4,  area2 0.585→3/5
+  //     boss:   area0 0.250→1/3,  area1 0.450→2/4,  area2 0.650→3/5
+  //   So area-0 normals are de-facto mixed (round→0) while elites/bosses and later-area
+  //   normals carry real themes — exactly where readability matters most. The initial
+  //   curve held; margin to the 0.15 floor is thin (19 wins; 18 would fail). Lowering
+  //   nodeMult.normal would RAISE win-rate (looser normals) and add margin if a future
+  //   regression pushes it below floor — that is the first lever to reach for.
   themes: {
     areaBase: 0.25,
     areaStep: 0.20,
