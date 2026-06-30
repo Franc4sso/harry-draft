@@ -47,6 +47,8 @@ export interface BattleUnit extends DraftedWizard {
   velenoUncapped?: boolean
   /** This unit's side execute (from relics/Spietatezza): +bonus dmg to targets below `threshold` HP fraction. */
   execute?: { threshold: number; bonus: number }
+  /** This unit ignores the target's dodge roll on canDodge effects (Mira Infallibile — anti-Grifondoro). */
+  alwaysHit?: boolean
   /** This unit's side shield-conversion (from relics/Bastione): `rate` of regen overflow → shield. */
   shieldConvert?: { rate: number }
   /** This unit's Magie Oscure effect (from an assigned Marchio Nero / the Oscurità synergy):

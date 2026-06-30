@@ -17,7 +17,7 @@ describe('relics data', () => {
       expect(r.desc.length).toBeGreaterThan(0)
     }
   })
-  it('every relic has either a bonus, a trigger, a keywordMult, grantsExecute, grantsShieldConvert, or grantsDarkMagic', () => {
+  it('every relic has either a bonus, a trigger, a keywordMult, grantsExecute, grantsShieldConvert, grantsDarkMagic, or grantsAlwaysHit', () => {
     for (const r of RELICS) {
       const hasBonus = !!r.bonus
       const hasTrigger = !!(r.triggers?.length)
@@ -25,7 +25,8 @@ describe('relics data', () => {
       const hasGrantsExecute = !!r.grantsExecute
       const hasGrantsShieldConvert = !!r.grantsShieldConvert
       const hasGrantsDarkMagic = !!r.grantsDarkMagic
-      expect(hasBonus || hasTrigger || hasKeywordMult || hasGrantsExecute || hasGrantsShieldConvert || hasGrantsDarkMagic, `relic ${r.id} has nothing`).toBe(true)
+      const hasGrantsAlwaysHit = !!r.grantsAlwaysHit
+      expect(hasBonus || hasTrigger || hasKeywordMult || hasGrantsExecute || hasGrantsShieldConvert || hasGrantsDarkMagic || hasGrantsAlwaysHit, `relic ${r.id} has nothing`).toBe(true)
     }
   })
   it('limits trigger relics to at most 3 (v1)', () => {
