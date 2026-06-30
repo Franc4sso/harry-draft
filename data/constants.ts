@@ -170,4 +170,14 @@ export const BALANCE = {
     tauntBonus: 1000,       // additive threat that makes a live Tank the focus
     attackerArmorPen: 0.4,  // fraction of target DEF an Attaccante ignores
   },
+  // Themed-battle synergy intensity. themeStrength(area,kind) =
+  //   clamp01(areaBase + area*areaStep) * nodeMult[kind].
+  // Higher strength → more of the enemy team realizes the chosen theme → more/higher
+  // synergies. normal < elite < boss. Calibrated in campaignBalanceB (Task 8); the
+  // primary balance lever. normalMult may be driven to 0 (fallback: normals untheme).
+  themes: {
+    areaBase: 0.25,
+    areaStep: 0.20,
+    nodeMult: { normal: 0.5, elite: 0.9, boss: 1.0 },
+  },
 } as const
