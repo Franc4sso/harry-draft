@@ -16,6 +16,9 @@
 
 - **Magie Oscure archetype — COMPLETE slice:** dark-spell amplify + lethal recoil-on-damage-dealt via `game/engine/darkMagic.ts` `teamDarkMagic` + the attack handler (`effects.ts`, gated on `ctx.dark` from `resolve.ts`, recoil on `residual` so a shield negates payoff AND risk); a per-unit ASSIGNABLE relic `Marchio Nero` (amplify+recoil to one carrier) + `Diadema Corrotto` (scales bonus only) + `Oscurità` synergy (amplifies all dark casters, no recoil) + `magieOscure` tags on 6 wizards + the 3 dark spells (avada/fiendfyre/sectumsempra). NEW MECHANISM: per-unit relic assignment (resolver `assignedTo` + `RelicNodeScreen` carrier step, full UI→hook→resolver chain). Counter-web validated (beats squishy via the flip, loses to shields + chip/control via lethal recoil; partial-shield → proportional recoil) + viability sweep (`winRate=0.950 darkUptake=0.208 recoilDeaths=2 maxTurns=37`). Design note: recoilDeaths is low because optimal play assigns the Marchio to a high-HP carrier, dodging the recoil — rebalance lever is raising `recoil`, not lowering `bonus` (see memory). Mechanically complete + validated.
 
+- **Enemy scaling fix (Slice 1) — DONE:** enemies fought at 7–30% of base stats (`menaceOffset=-1.05`), making the game far too easy and the displayed level meaningless. Fixed `campaignB.menaceOffset` -1.05→-0.70 (data-driven from a sweep) so 'Lv.N' enemies fight at level-coherent stats (lv2 0.42 vs 0.07, lv10-boss 1.38); competent-Grifondoro winRate 0.167, band tightened to [0.15,0.45] ("much harder"). `scudiRigen` shieldUptake floor 0.10→0.05 (justified consequence).
+- **Death & Recovery system (Slice 2) — DONE:** death no longer eliminates — a dead wizard benches at `currentHp=0` (`game/engine/roster.ts` `isDead`/`livingOf`; only the living are fielded, count for synergies, and gain levels; defeat = ALL dead). New **Infermeria** node (🏥, full heal + full revive), forced as a guaranteed Infermeria-only floor immediately before every boss (`map.ts`). Dead wizards are swappable at recruit (greyed + "Morto" badge). ⚠️ DISCOVERY: the death system made the game HARDER (benched 0-HP wizards weaken the team mid-area, and the Infermeria only heals pre-boss) — so a strong final boss is unreachable: even statMult 1.0 → winRate 0.133 (below floor). `finalBossMenace` raised -0.50→-0.45 (the band ceiling); the final boss stays weaker than area bosses (documented trade-off). To make the final boss a real climax later, add a MID-AREA recovery lever (Infermerie within areas / softer death penalty), THEN raise the boss (see memory `harry-draft-death-system-harder`).
+
 **Counter web so far (emergent from mechanics):**
 | | Beats | Loses to |
 |---|---|---|
@@ -26,13 +29,27 @@
 
 ---
 
-## 1. NEXT UP — pick one: another archetype, or the Serpeverde rebalance, or a non-archetype pillar
+## 1. NEXT UP — remaining user-requested slices (2026-06-29/30 session)
 
-Archetypes #1-4 (Veleno, Esecuzione, Scudi-Rigen, Magie Oscure) are DONE. Open directions, in
-rough priority:
-- **Serpeverde house rebalance (#4 below)** is now MORE pressing: three Serpeverde-leaning archetypes
-  (Esecuzione 0.85, Veleno 0.76, Magie Oscure 0.95) all sweep high vs the calibrated Grifondoro 0.275.
-  The house-power skew is the common thread; tuning the Serpeverde pool would right-size all three at once.
+A 6-slice user request is mid-flight. Slices 1 (enemy scaling) and 2 (death & recovery) are DONE.
+Remaining, in order:
+- **Slice 3 — Serpeverde rebalance:** RE-MEASURE post-death-system (was 0.783 post-scaling). Driver is
+  the Voldemort starter atk-cliff (atk[35,45] always drafted; only atk_mid≤23 lets Goyle displace him →
+  in-band). deatheater nerf proven a no-op. Re-enable `serpeverdeBalance` band assertion once tuned.
+- **Slice 4 — Victory/defeat modal premature (#1):** DIAGNOSED. `BattleScreen.tsx:119` gates the modal
+  on `r.done` (index>=total-1), which flips true the SAME render hp=0 appears → zero post-death delay.
+  Fix: `POST_DEATH_DELAY_MS` (~700ms) timer in `hooks/useBattleReplay.ts` gating a new `modalReady`;
+  consume it in `BattleScreen.tsx:119`; the skip button sets `modalReady` immediately.
+- **Slice 5 — Random battle generation with criteria (#3):** battles are repetitive → per-node seeding +
+  synergy density by difficulty (fewer in easy) + telegraph the enemy synergies/boss in the map tree.
+- **Slice 6 — Map tree 3 options (#4):** first choice among 3; thereafter the 2 nearest.
+- **Split-out — Resurrection CONSUMABLE relic:** one-shot relic usable before any node, consumed on use
+  (removable inventory + active-use UI — a new mechanism, relics today are permanent/passive).
+- **Future — strong final boss:** needs a mid-area recovery lever first (see death-system note above).
+
+Plus the older backlog:
+- **Serpeverde house-power skew** also shows in the archetype sweeps (Esecuzione/Veleno/Magie Oscure all
+  high) — Slice 3 above addresses the house; re-measure all three after.
 - **More archetypes** from the direction doc (Velocità/Catena, Controllo, Rigen/Vampiro, Sacrificio,
   Evocazione, Crescendo, Difensiva). The Magie Oscure slice
   (`docs/superpowers/specs/2026-06-29-magie-oscure-archetype-design.md` +
