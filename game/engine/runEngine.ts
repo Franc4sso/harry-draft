@@ -7,6 +7,7 @@ import { createDraftPool } from './draft'
 import { draftWizard } from './statRoll'
 import { offerRecruits, recruitVia } from './recruit'
 import { detectSynergies } from './synergy'
+import { isDead, livingOf } from './roster'
 import { combatResolver } from './resolvers/combat'
 import { recruitResolver, relicResolver } from './resolvers/recruit'
 import { infirmaryResolver } from './resolvers/infirmary'
@@ -112,6 +113,25 @@ export function resolveCurrent(state: RunState, choice: ResolverChoice, rng: Rng
     wiped,
   })
   return { ...resolved, map, phase }
+}
+
+/** Use a consumable relic identified by `relicId`.
+ *  Pure; no RNG. Returns the same state object on any no-op:
+ *   - relicId not owned
+ *   - the relic is not active:'revive'
+ *   - no dead wizard on the team
+ *  On success: revives every dead wizard to full HP (wounded-but-alive untouched),
+ *  removes the relic from state.relics, and recomputes activeSynergies. */
+export function useConsumableRelic(state: RunState, relicId: string): RunState {
+  const activeRelic = state.relics.find(a => a.relic.id === relicId)
+  if (!activeRelic) return state
+  if (activeRelic.relic.active !== 'revive') return state
+  const hasDead = state.team.some(dw => isDead(dw))
+  if (!hasDead) return state
+  const team = state.team.map(dw => isDead(dw) ? { ...dw, currentHp: dw.maxHp } : dw)
+  const relics = state.relics.filter(a => a.relic.id !== relicId)
+  const activeSynergies = detectSynergies(livingOf(team))
+  return { ...state, team, relics, activeSynergies }
 }
 
 /** Equip `spellId` as the active spell for team member `wizardId`, iff it is in that

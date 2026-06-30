@@ -36,7 +36,7 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
         <TeamSynergyBar team={c.run.team} synergies={c.run.activeSynergies} orientation="vertical" />
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
           <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Reliquie</span>
-          <RelicBar relics={c.run.relics} className="mt-2" />
+          <RelicBar relics={c.run.relics} className="mt-2" onUse={c.useConsumableRelic} team={c.run.team} />
         </div>
         <LoadoutPanel team={c.run.team} onSetSpell={c.setWizardSpell} />
       </aside>

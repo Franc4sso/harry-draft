@@ -53,17 +53,21 @@ house redesign — all above). Remaining:
   same wizard/seed). Spec/plan: `docs/superpowers/{specs,plans}/2026-06-30-infallibile-ability*`. NOTE:
   binary mechanic → no scaling-relic, no synergy (deliberate). Drama callout ("INFALLIBILE!") deferred
   (user-gated §2).
-- **Resurrection CONSUMABLE relic (split-out):** one-shot relic usable before any node, consumed on use
-  (removable inventory + active-use UI — a new mechanism, relics today are permanent/passive).
-- **Strong final boss:** needs a MID-AREA recovery lever first (see death-system note above), THEN raise
-  `finalBossMenace` to a real climax (statMult ≥ area-2 boss 1.38).
+- **Resurrection CONSUMABLE relic — ✅ DONE ("Lacrime di Fenice" slice):** one-shot `lacrime-fenice`
+  relic (`Relic.active: 'revive'`, epica) usable on the map (before any node) via a "Usa" button in the
+  sidebar → `useConsumableRelic` (pure, no rng) revives all dead (`currentHp=maxHp`), recomputes
+  synergies, and removes the relic from inventory (first relic-removal in the codebase; persists via
+  `saveRun`). NEW active-use/consumable mechanism (relics were all passive). **Doubles as the MID-AREA
+  recovery lever** that the strong-final-boss item needed. Revive-only by design (heal stays the
+  Infermeria's job). Spec/plan: `docs/superpowers/{specs,plans}/2026-06-30-resurrection-consumable*`.
+- **Strong final boss:** the mid-area recovery lever now EXISTS (Lacrime di Fenice above), so this is
+  unblocked → raise `finalBossMenace` to a real climax (statMult ≥ area-2 boss 1.38) + validate the win
+  floor still holds. Best done AFTER the Serpeverde rebalance (shared enemy-scaling calibration).
 - **Serpeverde/Voldemort balance:** Serpeverde still ~0.73 — it's Voldemort+Sectumsempra, not the house
   synergy. A wizard-data tune (nerf Voldemort's atk or Sectumsempra power) is the lever; user prefers NOT
-  to gut Voldemort, so consider lowering Sectumsempra's power or adding a counter instead.
+  to gut Voldemort, so consider lowering Sectumsempra's power or adding a counter instead. ⚠️ Re-measure
+  with the 3 new `infallibile` Serpeverde tags (snape/lucius/dolohov), a small accuracy uplift.
 - **Cleanup:** `baseAttackMult` in constants is vestigial (never read by the engine) — remove or wire it.
-- **Split-out — Resurrection CONSUMABLE relic:** one-shot relic usable before any node, consumed on use
-  (removable inventory + active-use UI — a new mechanism, relics today are permanent/passive).
-- **Future — strong final boss:** needs a mid-area recovery lever first (see death-system note above).
 
 Plus the older backlog:
 - **Serpeverde house-power skew** also shows in the archetype sweeps (Esecuzione/Veleno/Magie Oscure all

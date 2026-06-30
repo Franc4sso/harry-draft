@@ -38,6 +38,8 @@ export const RELICS: Relic[] = [
   // Scudo set (rara + non-comune)
   { id: 'egida-tassorosso', name: 'Egida del Tasso', desc: 'La rigenerazione in eccesso oltre la vita massima si converte in scudo (50%).', rarity: 'rara', keywords: ['scudo'], grantsShieldConvert: { rate: 0.5 } },
   { id: 'cuore-del-tasso', name: 'Cuore del Tasso', desc: 'La conversione in Scudo della squadra è aumentata del 50%.', rarity: 'non-comune', keywords: ['scudo'], keywordMult: { scudo: 0.5 } },
+  // Consumabili attivi
+  { id: 'lacrime-fenice', name: 'Lacrime di Fenice', desc: 'Usa una volta: riporta in vita tutti i maghi caduti con la vita piena.', rarity: 'epica', active: 'revive' },
 ]
 
 export const RELIC_BY_ID: Record<string, Relic> = Object.fromEntries(
