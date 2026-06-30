@@ -36,14 +36,14 @@
 
 Most of the 6-slice user request is DONE (scaling, death&recovery, modal timing, map-3-options, pacing,
 house redesign — all above). Remaining:
-- **Random battle generation with criteria (user bug #3) — NOT STARTED, biggest open item:** battles are
-  repetitive because `pickTowardBudget` draws enemies from a FIXED budget-bound wizard window (~15
-  candidates per node type/position) — the seed varies stat-rolls but not character identity. Wanted:
-  randomized-with-criteria (fewer synergies in easy, more in elite/boss) + TELEGRAPH the enemy
-  synergies/boss in the map tree. Feasible: enemy teams are deterministic & computable at map-build time
-  → pre-generate a `RunNode.preview` and render badges. Needs: `RunNode.preview` field, a synergy-aware/
-  wider picker in `teamGen.ts`, pre-gen in `generateArea`, `synergyBias` by nodeType, `MapScreen` badges.
-  BIG — needs a brainstorm (synergy counts per difficulty + telegraph visual).
+- **Random battle generation with criteria (user bug #3) — ✅ DONE (themed battles + telegraph slice,
+  master 0f36d74):** `themedEnemyTeam` + `themeStrengthFor` nodeMult (normal 0.5 / elite 0.9 / boss 1.0)
+  generate synergy-themed enemy teams scaled by difficulty, weighted picking killed the old identity-
+  repetition, with theme anti-repetition within an area. Battle package pre-generated once at map-build
+  time (`buildBattlePackage` → `RunNode.battle`/`RunNode.preview`), resolver READS it (coherence by
+  construction), and `MapScreen` renders synergy/boss telegraph badges. Balance-validated winRate 0.1583
+  in band [0.15,0.45] (thin margin to floor; `themes.nodeMult.normal` is the first lever). Spec/plan:
+  `docs/superpowers/{specs,plans}/2026-06-30-themed-battles-telegraph-*`.
 - **Guaranteed-hit wizard abilities (user request):** tier-2/3 abilities on some wizards that make their
   hits ALWAYS land (ignore dodge) — a counter to Grifondoro's dodge. A NEW per-wizard ability system
   (wizards have no abilities today). Separate slice, needs design.
