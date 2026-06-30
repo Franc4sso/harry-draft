@@ -8,7 +8,7 @@ const lacrime = {
     id: 'lacrime-fenice',
     name: 'Lacrime di Fenice',
     desc: 'Riporta in vita i maghi caduti.',
-    rarity: 'raro',
+    rarity: 'epica',
     active: 'revive',
   },
 } as unknown as ActiveRelic
