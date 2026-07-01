@@ -134,7 +134,15 @@ defenseK: 0.5,
     //   -0.384 is the empirically highest value that keeps winRate strictly > 0.15. statMult 0.616.
     //   Area-boss parity (1 + menaceForLevel(levelMax) ≈ 1.33) is DEFERRED pending a player-power
     //   pass — see docs/superpowers/specs/2026-06-30-strong-final-boss-design.md and remaining-work.md.
-    finalBossMenace: -0.384,
+    // Re-calibrated (2026-07-01, Task 1 — raise finalBossMenace to max holding 0.15 floor):
+    //   Baseline after snowball-flatten: -0.384 → winRate 0.2000 (24/120), headroom 0.05.
+    //   Sweep: -0.30 → 0.1167 (14/120), -0.33 → 0.1500 (18/120, fails strict >),
+    //          -0.32 → 0.1083 (13/120), -0.334 → passes, -0.331 → passes, -0.3305 → passes,
+    //          -0.3302 → 0.1583 (19/120, passes), -0.3301 → 0.1500 (18/120, fails strict >).
+    //   Locked: -0.3302 → statMult 0.6698, winRate 0.1583 (19/120), headroom 0.0083 above floor.
+    //   Area-boss parity (statMult 1.08 → finalBossMenace +0.08) not reached: at +0.08 → ~0.117.
+    //   Parity DEFERRED — real climax awaits a player-power buff.
+    finalBossMenace: -0.3302,
     enemyRelicsElite: 0,
     enemyRelicsBoss: 1,
   },

@@ -40,6 +40,14 @@ import type { RunNode, RunState } from '@/types'
 //   Sweep: -0.75→0.0667 (8/120), -0.60→0.0417 (5/120, wrong dir — less neg = harder early), -0.90→0.1417 (17/120),
 //   -0.93→0.1583 (19/120, only 0.0083 headroom), -1.00→0.2000 (24/120, headroom 0.05 ✓).
 //   Final: menaceOffset -0.75→-1.00. winRate=0.2000 (24/120), headroom=0.05 above 0.15 floor.
+// Recalibration (2026-07-01, Task 1 — raise finalBossMenace to max holding 0.15 floor):
+//   Baseline (post snowball-flatten, menaceOffset=-1.00): finalBossMenace -0.384 → winRate 0.2000 (24/120).
+//   Sweep (finalBossMenace → winRate): -0.30→0.1167 (14/120), -0.33→0.1500 (18/120, fails strict >),
+//     -0.32→0.1083 (13/120), -0.334→pass, -0.331→pass, -0.3305→pass,
+//     -0.3302→0.1583 (19/120, pass), -0.3301→0.1500 (18/120, fails strict >).
+//   Locked: finalBossMenace -0.3302, statMult 0.6698, winRate 0.1583 (19/120), headroom 0.0083.
+//   Parity (finalBossMenace 0.08, statMult 1.08) NOT reached — winRate would drop to ~0.117.
+//   Parity DEFERRED pending player-power buff (Slice 3).
 registerCoreResolvers()
 
 // Near-optimal ("upper-bound") player policy. A pure recruit/relic-first greedy is
