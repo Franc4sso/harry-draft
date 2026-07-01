@@ -344,6 +344,7 @@ export function simulateBattle(
   if (leftAlive && !rightAlive) winner = 'left'
   else if (rightAlive && !leftAlive) winner = 'right'
   else winner = totalHpPct(L) >= totalHpPct(R) ? 'left' : 'right'
+  const timedOut = leftAlive > 0 && rightAlive > 0 // both sides survived to turnCap
 
   const snapshot: UnitSnapshot[] = [...L, ...R].map(u => ({
     id: u.wizard.id, side: u.side, hp: Math.max(0, u.hp), maxHp: u.maxHp, alive: u.alive,
@@ -354,5 +355,5 @@ export function simulateBattle(
     ? mvpScoreKey.split(':').slice(1).join(':')
     : (winner === 'left' ? L[0]!.wizard.id : R[0]!.wizard.id)
 
-  return { winner, turns: turn, log, mvpId, finalSnapshot: snapshot, snapshots }
+  return { winner, turns: turn, log, mvpId, finalSnapshot: snapshot, snapshots, timedOut }
 }

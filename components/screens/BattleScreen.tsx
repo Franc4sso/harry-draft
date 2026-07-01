@@ -117,7 +117,11 @@ export function BattleScreen({
       />
 
       {r.modalReady && (
-        <BattleEndModal outcome={result.winner === 'left' ? 'win' : 'loss'} onConfirm={onFinish} />
+        <BattleEndModal
+          outcome={result.winner === 'left' ? 'win' : 'loss'}
+          timedOut={result.timedOut}
+          onConfirm={onFinish}
+        />
       )}
     </main>
   )

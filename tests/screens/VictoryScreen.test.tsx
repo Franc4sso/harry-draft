@@ -4,7 +4,7 @@ import { VictoryScreen } from '@/components/screens/VictoryScreen'
 import type { BattleResult } from '@/types'
 
 const baseResult = (snap: BattleResult['finalSnapshot']): BattleResult => ({
-  winner: 'left', turns: 3, log: [], mvpId: 'a', finalSnapshot: snap, snapshots: [],
+  winner: 'left', turns: 3, log: [], mvpId: 'a', finalSnapshot: snap, snapshots: [], timedOut: false,
 })
 
 describe('VictoryScreen attrition', () => {

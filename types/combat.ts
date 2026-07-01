@@ -101,4 +101,6 @@ export interface BattleResult {
   finalSnapshot: UnitSnapshot[]
   /** 1:1 with `log`: snapshots[i] is the deep-copied state captured when log[i] was pushed. */
   snapshots: StepSnapshot[]
+  /** True when the sim hit turnCap with both sides still having living units — a "win on points", not a clean wipe. */
+  timedOut: boolean
 }

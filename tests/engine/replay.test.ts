@@ -24,6 +24,7 @@ const emptyResult: BattleResult = {
   mvpId: 'harry',
   finalSnapshot: [],
   snapshots: [],
+  timedOut: false,
 }
 
 describe('buildReplay frame 0 seeds from wound-aware HP', () => {
