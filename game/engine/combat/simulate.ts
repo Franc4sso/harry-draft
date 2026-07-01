@@ -33,7 +33,7 @@ export function toBattleUnits(
   return team.map(dw => {
     const synBuffed = applyBonuses(dw.stats, synergies)
     const relicBuffed = applyRelicBonuses(synBuffed, team, relics)
-    const m = 1 + menacePct
+    const m = Math.max(0, 1 + menacePct)
     const buffed = menacePct === 0 ? relicBuffed : {
       hp: Math.round(relicBuffed.hp * m),
       atk: Math.round(relicBuffed.atk * m),

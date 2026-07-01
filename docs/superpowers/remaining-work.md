@@ -18,7 +18,7 @@
 
 L'item aperto a leva più alta. **Il campaign era incollato al floor di completamento 0.15**
 (`campaignBalanceB` winRate **0.158** pre-pass → **0.200** post-pass), e questo BLOCCA due cose desiderate:
-- un **boss finale forte**: la parità con i boss d'area (statMult 1.33) crolla il completamento a ~2.5%
+- un **boss finale forte**: la parità con i boss d'area (statMult ~1.08 dopo il snowball pass; era ~1.33 prima che menaceOffset -0.75→-1.00 abbassasse menaceForLevel(10) da 0.33 a 0.08) crolla il completamento a ~2.5%
   → oggi c'è solo un buff simbolico (`finalBossMenace -0.40→-0.384`, statMult 0.60→0.616);
 - una **forbice tra case più stretta**: Serpeverde 0.658 vs Grifondoro 0.183 (~3.5×), tenuta solo dal
   gate rilassato `<0.71`.

@@ -19,7 +19,10 @@ import { menaceForLevel } from '@/game/engine/resolvers/combat'
 //   scudiRigen=0.142, magieOscure=0.742 (floor 0.05 each).
 //
 // Full area-boss PARITY (1 + finalBossMenace >= 1 + menaceForLevel(levelMax)) is DEFERRED:
-//   parity would require statMult ~1.33, collapsing campaign completion to ~2.5%.
+//   NOTE (2026-07-01 snowball pass): menaceOffset -0.75→-1.00 lowered menaceForLevel(10) from 0.33 to 0.08,
+//   so the area-boss parity target dropped from statMult ~1.33 to ~1.08. A future final-boss-raise
+//   slice should calibrate against ~1.08, NOT 1.33 — the old figure is obsolete after this pass.
+//   parity would require statMult ~1.08, collapsing campaign completion to ~2.5%.
 //   Parity is pending a player-power pass — see:
 //     docs/superpowers/specs/2026-06-30-strong-final-boss-design.md
 //     docs/superpowers/remaining-work.md (backlog item #5)

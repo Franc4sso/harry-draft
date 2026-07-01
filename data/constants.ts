@@ -99,7 +99,7 @@ defenseK: 0.5,
     // STEEP (enemies must keep pace as their level climbs) while the offset stays deeply
     // negative to keep the low-level area-0 opener winnable for a starting duo.
     // Calibrated on the 120-seed harness → winRate 0.167 (20/120 wins, menaceOffset -0.70):
-    //   lv2-normal statMult 0.42 (was 0.07), lv10-boss statMult 1.38 (was 1.03).
+    //   (Historic -0.70-era figures removed.) Current -1.00: lv2-normal statMult 0.12, lv10-boss statMult 1.08.
     //   area-0 opener is the main wall; elites/bosses hit at level-coherent strength.
     // Re-calibrated (2026-06-30): menaceOffset eased -0.70→-0.75 to compensate for the live
     //   Infermeria consuming one combat floor per area (net power loss without the offset nudge).
