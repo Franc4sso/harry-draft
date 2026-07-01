@@ -8,7 +8,7 @@ import { CARD_STAT_MAX } from './WizardCard'
 import { Chip } from '@/components/ui/Chip'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { affiliationChips } from '@/lib/affiliationChips'
-import { spellTypeChip, spellEffectChips, formatSpellStats } from '@/lib/glossary'
+import { spellTypeChip, spellEffectChips, spellEffectDetails, formatSpellStats } from '@/lib/glossary'
 import { roleTooltip } from '@/lib/roleInfo'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { TRAIT_BY_ID } from '@/data/traits'
@@ -58,6 +58,7 @@ export function WizardCardRow({
   const theme = houseTheme(wizard.house)
   const typeChip = spellTypeChip(spell.type)
   const effectChips = spellEffectChips(spell)
+  const effectDetails = spellEffectDetails(spell)
   const spellStats = formatSpellStats(spell)
   const specialChips = affiliationChips(wizard).filter((c) => c.kind === 'special')
   const shinyTrait = drafted.shiny ? TRAIT_BY_ID[drafted.shiny.traitId] : undefined
@@ -199,7 +200,13 @@ export function WizardCardRow({
                 </span>
               ))}
             </div>
-            {effectChips.length > 0 && (
+            {spell.type === 'Controllo' && effectDetails.length > 0 ? (
+              <div className="mt-auto flex flex-col gap-0.5 pt-1.5 text-[10px] leading-snug text-white/80">
+                {effectDetails.map((line) => (
+                  <span key={line}>{line}</span>
+                ))}
+              </div>
+            ) : effectChips.length > 0 && (
               <div className="mt-auto flex flex-wrap gap-1 pt-1.5">
                 {effectChips.map((e) => (
                   <Chip key={e.label} label={e.label} color={e.color} icon={e.icon} />
