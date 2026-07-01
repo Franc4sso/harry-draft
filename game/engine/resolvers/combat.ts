@@ -39,7 +39,6 @@ export interface CombatResult {
 }
 
 export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatResult {
-  const cb = BALANCE.campaignB
   const { area, floor } = parseAreaNodeId(node.id)
   const isBoss = node.type === 'boss'
   const isFinalBoss = isBoss && area >= BALANCE.map.areas - 1
@@ -47,7 +46,7 @@ export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatR
   const battleRng = rng.fork(depth + 100)
   const nodeType: EnemyKind = isBoss ? 'boss' : (node.type === 'elite' ? 'elite' : 'normal')
   // Displayed level is still the explicit area+kind threat tier (identical to the value
-  // the package stored — see menace below).
+  // the package stored).
   const enemyLevel = enemyLevelFor(area, nodeType, isFinalBoss)
 
   // Single source of truth: read the pre-generated package from the node. Legacy
@@ -75,7 +74,12 @@ export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatR
     ? [...detectSynergies(enemy), { synergy: bossSyn, memberIds: enemy.map(d => d.wizard.id) }]
     : detectSynergies(enemy)
 
-  const rightMenace = isFinalBoss ? cb.finalBossMenace : menaceForLevel(pkg.enemyLevel)
+  // Menace removed (2026-07-01): enemy difficulty comes only from level (grown stats,
+  // stamped in buildBattlePackage) + draft budget. menaceForLevel always returns 0;
+  // the rightMenace plumbing is kept as a no-op so toBattleUnits/replay.ts don't need
+  // reshaping (their menace param is a generic, independently-tested primitive — see
+  // tests/engine/menace.test.ts).
+  const rightMenace = menaceForLevel(pkg.enemyLevel)
 
   // Levels apply HERE, before combat — engine stays pure.
   const ready = battleReadyTeam(livingOf(state.team))

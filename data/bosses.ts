@@ -40,9 +40,17 @@ export const BOSSES: BossDef[] = [
 export const MURO: BossDef = {
   id: 'muro_boss',
   name: 'Il Muro',
-  budget: 1000,
-  hpMult: 1.3,
-  unitDamageReduction: 0.4, // calibrated 2026-07-01 (Task 6b): passing plateau {0.40,0.45}; 0.35/0.50 flip overall to 0.1500 (< floor). See campaignBalanceB.test.ts.
+  // Re-tuned 2026-07-01 (menace removal, urgent balance fix): budget/hpMult 1000/1.3
+  // was calibrated against menace-crushed (~0.05-0.13x) enemy stats everywhere else in
+  // the campaign; with menace gone (enemies now at full leveled stats), those values
+  // were part of a campaignBalanceB crash to 0.0000. Softened as far as the sweep
+  // found useful (250/0.5, part of a combined sweep with campaignB.baseBudget/
+  // eliteBudgetMult/bossBudgetMult — see tests/engine/campaignBalanceB.test.ts header)
+  // — this alone does not restore the 0.15 floor; see that file's header for the honest
+  // sweep table and the structural (non-budget) blocker.
+  budget: 250,
+  hpMult: 0.5,
+  unitDamageReduction: 0.4, // unchanged: wall-archetype mechanic, not a budget/power lever.
   pinnedArea: 0,
   unitCount: 3,
 }

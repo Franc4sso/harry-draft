@@ -2,10 +2,11 @@ import { BALANCE } from '@/data/constants'
 
 export type EnemyKind = 'normal' | 'elite' | 'boss'
 
-/** Displayed enemy level as an explicit, area-scaled threat tier (NOT derived from
- *  menace). normal → 2,4,6 · elite → 4,6,8 · area-boss → 6,8,10 · final boss → levelMax.
- *  Clamped to [1, levelMax]. Enemy menace is derived FROM this (see menaceForLevel),
- *  so the level the player sees genuinely tracks difficulty. */
+/** Displayed enemy level as an explicit, area-scaled threat tier. normal → 2,4,6 ·
+ *  elite → 4,6,8 · area-boss → 6,8,10 · final boss → levelMax. Clamped to [1, levelMax].
+ *  This level drives REAL stat growth (via `leveledStats`/`battleReadyTeam`), so the
+ *  level the player sees genuinely tracks difficulty — no menace multiplier involved
+ *  (menace was removed 2026-07-01; see `menaceForLevel` below). */
 export function enemyLevelFor(area: number, kind: EnemyKind, isFinalBoss: boolean): number {
   const cb = BALANCE.campaignB
   const max = BALANCE.leveling.levelMax
@@ -17,12 +18,17 @@ export function enemyLevelFor(area: number, kind: EnemyKind, isFinalBoss: boolea
   return Math.max(1, Math.min(max, lvl))
 }
 
-/** Enemy stat menace (1+pct) derived from the displayed level: a higher-level foe is
- *  a genuinely stronger one. menaceOffset is negative to keep area-0 (level-1) fights
- *  winnable for a starting level-1 duo. */
-export function menaceForLevel(level: number): number {
-  const cb = BALANCE.campaignB
-  return (level - 1) * cb.menacePerLevel + cb.menaceOffset
+/** REMOVED (2026-07-01): menace used to apply a SECOND stat multiplier on top of
+ *  the enemy's already-leveled stats (see `leveledStats` / `battleReadyTeam`). Once
+ *  enemies gained real per-level stat growth (commit f67fe4e), the old negative
+ *  menaceOffset/menacePerLevel curve became a double nerf: `Math.max(0, 1 + menacePct)`
+ *  crushed every real enemy level (2/4/6/8/10) down to a 0.05-0.13 stat multiplier —
+ *  wizards showing "2 attack, 1 defense" in area 0. Enemy difficulty now comes ONLY
+ *  from level (grown stats) + draft budget (`budgetB`), so this always returns 0 —
+ *  kept as a function (not deleted outright) so `toBattleUnits`'s menace parameter
+ *  and its callers/tests didn't need to change shape. */
+export function menaceForLevel(_level: number): number {
+  return 0
 }
 
 /** Monotonic progression depth across areas: areas are spaced by floorsPerArea so

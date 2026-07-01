@@ -11,6 +11,47 @@ import type { RunNode, RunState } from '@/types'
 
 // Register at module scope (idempotent): the greedy runs below are evaluated in
 // the describe body at collection time, BEFORE any beforeAll hook would fire.
+//
+// *** KNOWN FAILING (2026-07-01, menace removal — urgent balance fix; UNRESOLVED) ***
+// Enemy "menace" (a stat multiplier layered on top of leveled stats) is REMOVED — see
+// data/constants.ts campaignB for the full rationale (it was a double nerf crushing
+// every real enemy level to a 0.05-0.13x stat multiplier: enemies showing "2 attack,
+// 1 defense" in area 0 despite having grown much higher leveled stats). Enemies now
+// fight at their FULL leveled stats (multiplier 1.0). This makes them dramatically
+// stronger, and campaignBalanceB winRate CRASHED from 0.1667 to 0.0000.
+//
+// Budget (`campaignB.baseBudget`/`budgetStep`/`eliteBudgetMult`/`bossBudgetMult`, plus
+// Il Muro's own `budget`/`hpMult` in data/bosses.ts) was swept as the ONLY remaining
+// difficulty lever (menace must not be reintroduced). Sweep highlights (120 seeds):
+//   [300,70,1.15,1.3,muro(1000,1.3)] (baseline, unchanged since menace removal): 0.0000
+//   [150,40,0.90,1.0,muro(600,0.9)]:  0.0000
+//   [ 80,20,0.70,0.8,muro(400,0.7)]:  0.0167 (2/120)
+//   [ 40,10,0.50,0.6,muro(250,0.5)]:  0.0167 (2/120)  <- SHIPPED (best found)
+//   Even DEGENERATE values (baseBudget=0, budgetStep=0, eliteBudgetMult=0.05,
+//   bossBudgetMult=0.05, enemyCountByArea=[2,2,3], Muro budget=10/hpMult=0.1/
+//   unitDamageReduction=0.1/unitCount=2 — i.e. enemies at their absolute floor stats
+//   and area-0 boss reduced to 2 units) only reached 0.0167 (2/120), NOT 0.15.
+// Root cause: this is NOT a budget problem. `budgetWindow`'s percentile mapping floors
+// out at the roster's weakest wizards regardless of how low the target budget goes —
+// a diagnostic confirmed budget=0 produces IDENTICAL enemy stats to budget=300 (an
+// area-0 elite squad measured lv4 atk=19/hp=78 in both cases). Loss-location tracing
+// showed losses concentrated at area0-elite (37/120) and area0-boss (20-60/120)
+// REGARDLESS of how far Muro/eliteBudgetMult were pushed down — an isolated matchup
+// test (full HP, level-3 player trio vs area-0 elite trio, near-zero enemy budget)
+// still only won 80% 1-on-1, but the SEQUENTIAL campaign (HP persistence across
+// normal+elite+boss, plus the near-optimal test policy not always visiting the
+// guaranteed pre-boss Infermeria) compounds those losses well below the floor.
+// The real bottleneck is structural (area-0 enemy unit count 3 vs the player's
+// starting 2, stacked with HP attrition across sequential fights), OUTSIDE the
+// budget lever this task is scoped to change.
+// CONCLUSION: campaignBalanceB's winnability assertion is EXPECTED TO FAIL (0.0167 <
+// 0.15) after this menace-removal change. This was reported rather than masked with a
+// fake-passing budget value or a reintroduced menace multiplier (explicitly forbidden).
+// Recommendation for a follow-up slice: either (a) raise `normalEnemyCount`/starting
+// roster size so area-0 unit counts match, (b) add an early forced-heal or reduce
+// HP-persistence bleed between area-0 fights, or (c) revisit the near-optimal test
+// policy's infirmary-skipping behavior — budget/boss-stat tuning alone cannot fix this.
+//
 // Calibration (2026-06-29, post enemy-scaling fix — menaceOffset -1.05→-0.70, finalBossMenace -0.35→-0.50):
 //   Observed winRate=0.167 (20/120 wins). Band tightened to [0.15, 0.45] for "much harder" target.
 //   lv2-normal statMult 0.42 (was 0.07), lv10-boss statMult 1.38 (was 1.03) — enemies at level-coherent stats.

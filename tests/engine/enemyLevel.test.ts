@@ -36,9 +36,15 @@ describe('enemyLevelFor', () => {
 })
 
 describe('menaceForLevel', () => {
-  it('derives menace from level so a higher level is a tougher foe', () => {
-    expect(menaceForLevel(1)).toBeCloseTo(BALANCE.campaignB.menaceOffset)
-    expect(menaceForLevel(3)).toBeCloseTo(BALANCE.campaignB.menaceOffset + 2 * BALANCE.campaignB.menacePerLevel)
-    expect(menaceForLevel(5)).toBeGreaterThan(menaceForLevel(3))
+  // Menace removed (2026-07-01): enemy difficulty now comes only from level (real
+  // per-level stat growth via leveledStats) + draft budget, not a stat-crushing
+  // menace multiplier. menaceForLevel is kept as a no-op (always 0) so toBattleUnits'
+  // generic menace parameter didn't need reshaping — see data/constants.ts campaignB
+  // for the full removal rationale.
+  it('always returns 0, regardless of level', () => {
+    expect(menaceForLevel(1)).toBe(0)
+    expect(menaceForLevel(3)).toBe(0)
+    expect(menaceForLevel(5)).toBe(0)
+    expect(menaceForLevel(10)).toBe(0)
   })
 })

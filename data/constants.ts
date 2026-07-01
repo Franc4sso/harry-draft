@@ -75,123 +75,56 @@ defenseK: 0.5,
     // Honest, area-scaled threat tiers so an Elite/Boss reads as a real level (no
     // more "Lv.1" elites). level = base + perArea*area, clamped to leveling.levelMax.
     //   normal → 2,4,6   elite → 4,6,8   area-boss → 6,8,10   final boss → levelMax(10)
-    // The level is NOT cosmetic: enemy menace is DERIVED from it (below), so a higher
-    // level is a genuinely tougher foe. Scaled up to match win-based player levelling
-    // (elite +2 / boss +3 a clear) — elites and bosses must hit harder than before.
+    // The level is NOT cosmetic: it drives REAL per-level stat growth (`leveledStats`),
+    // so a higher level is a genuinely tougher foe (no menace multiplier — see below).
+    // Scaled up to match win-based player levelling (elite +2 / boss +3 a clear) —
+    // elites and bosses must hit harder than before.
     normalLevelBase: 2, normalLevelPerArea: 2,
     eliteLevelBase: 4, eliteLevelPerArea: 2,
     bossLevelBase: 6, bossLevelPerArea: 2,
     // --- Enemy budget (stat-selection) by global depth d = area*floorsPerArea + floor ---
     //   normal = baseBudget + d*budgetStep, ×eliteBudgetMult on elite, ×bossBudgetMult on area boss.
-    baseBudget: 300,
-    budgetStep: 70,
-    eliteBudgetMult: 1.15,
-    bossBudgetMult: 1.3,
-    // --- Enemy MENACE (stat multiplier 1+pct), DERIVED from the displayed level ---
-    // menace(level) = (level-1)*menacePerLevel + menaceOffset. menaceOffset is NEGATIVE
-    // so an area-0 (level-1) fight drops below the roster floor — a starting level-1
-    // duo can win; the per-level term lifts elites/bosses/late areas into a real
-    // threat. The level↔menace link means the number the player sees tracks real
-    // difficulty. Calibrated by tests/engine/campaignBalanceB.test.ts (120-seed
-    // near-optimal win-rate must stay in [0.15, 0.45] — "much harder" target).
+    // Re-tuned 2026-07-01 (menace removal, urgent balance fix): 300/70/1.15/1.3 was
+    // calibrated for a ~0.05-0.13 menace-crushed enemy stat multiplier. With menace
+    // removed (enemies now at FULL leveled stats, multiplier 1.0), those values
+    // crashed campaignBalanceB to winRate 0.0000. Budget was swept down aggressively
+    // (see tests/engine/campaignBalanceB.test.ts header for the sweep table): even at
+    // near-zero/degenerate values combined with a heavily softened Il Muro, the ceiling
+    // found was only ~0.0167 (2/120) — nowhere near the 0.15 floor. This is NOT a
+    // budget problem: `budgetWindow`'s percentile mapping floors out at the roster's
+    // weakest wizards regardless of how low the target budget goes, so budget stops
+    // mattering well before enemy stats become weak enough. The real bottleneck is
+    // structural (area-0 enemy team size 3 vs the player's starting 2, stacked with
+    // sequential HP-persistence across normal+elite+boss and an infirmary node the
+    // near-optimal test policy doesn't always prioritize) — outside the budget lever
+    // this task is scoped to. These values are the best found in the sweep; shipped
+    // as an honest partial mitigation, NOT a claim that the 0.15 floor is met.
+    baseBudget: 40,
+    budgetStep: 10,
+    eliteBudgetMult: 0.5,
+    bossBudgetMult: 0.6,
+    // --- MENACE REMOVED (2026-07-01, urgent balance fix) ---
+    // Historically every enemy team's stats were ALSO multiplied by (1 + menacePct),
+    // where menacePct = (level-1)*menacePerLevel + menaceOffset (normal/elite/area-boss)
+    // or a flat `finalBossMenace` (final boss). menaceOffset was calibrated NEGATIVE
+    // back when enemies had flat level-1 base stats, to keep the area-0 opener winnable.
+    // Once enemies gained REAL per-level stat growth (commit f67fe4e, `leveledStats` /
+    // `battleReadyTeam`), that negative offset became a DOUBLE nerf: `toBattleUnits`
+    // clamps the multiplier at `Math.max(0, 1 + menacePct)`, and at the last-tuned values
+    // (menaceOffset=-0.96, menacePerLevel=0.01, finalBossMenace=-0.43) every real enemy
+    // level (2/4/6/8/10, never 1) landed a stat multiplier of only 0.05-0.13 — enemies
+    // showing "2 attack, 1 defense" in area 0 despite their grown leveled stats being much
+    // higher. This is the bug fixed here: menace is REMOVED entirely (`menaceForLevel` in
+    // game/engine/combat/threat.ts now always returns 0 — kept as a function, not deleted,
+    // so `toBattleUnits`'s generic menace parameter didn't need reshaping). Enemy difficulty
+    // now comes ONLY from level (grown stats) + draft budget (above). The
+    // `menacePerLevel` / `menaceOffset` / `finalBossMenace` constants that used to live
+    // here are DELETED — they no longer do anything, and keeping them would mislead.
     //
-    // Win-based levelling makes the roster scale fast, so the per-level menace slope is
-    // STEEP (enemies must keep pace as their level climbs) while the offset stays deeply
-    // negative to keep the low-level area-0 opener winnable for a starting duo.
-    // Calibrated on the 120-seed harness → winRate 0.167 (20/120 wins, menaceOffset -0.70):
-    //   (Historic -0.70-era figures removed.) Current -1.00: lv2-normal statMult 0.12, lv10-boss statMult 1.08.
-    //   area-0 opener is the main wall; elites/bosses hit at level-coherent strength.
-    // Re-calibrated (2026-06-30): menaceOffset eased -0.70→-0.75 to compensate for the live
-    //   Infermeria consuming one combat floor per area (net power loss without the offset nudge).
-    // Re-calibrated (2026-07-01, snowball-flatten — growthBudgetPerLevel 0.40→0.28):
-    //   Player nerf dropped winRate to 0.0667. Eased menaceOffset -0.75→-1.00 to compensate.
-    //   Scan: -0.90→0.1417, -0.93→0.1583 (only 0.0083 headroom), -1.00→0.2000 (headroom 0.05 ✓).
-    // Re-calibrated (2026-07-01, Task 7 — REAL enemy per-level stat growth added):
-    //   Enemies now run through the SAME leveledStats path as the player (a level-N enemy
-    //   shows level-N stats via battleReadyTeam), instead of flat level-1 base stats propped
-    //   up entirely by menace. This is a double-count fix, not a pure buff.
-    //   IMPORTANT CONSTRAINT: toBattleUnits clamps the menace multiplier at
-    //   Math.max(0, 1 + menacePct) — if menacePct <= -1 at ANY level that actually occurs
-    //   (real enemy levels are 2/4/6/8/10, never 1: normalLevelBase=2), that enemy's stats
-    //   are multiplied by ZERO (not just "weak" — an literal walkover with 0 HP/ATK/DEF/SPD).
-    //   A first sweep pushed menaceOffset to -2.00 to compensate for growth and DID clear the
-    //   0.15 floor (winRate 0.1583) — but a diagnostic (per-node stat dump) revealed EVERY
-    //   normal/elite/area-boss fight below level 10 was hitting this zero-clamp: the "difficulty"
-    //   was fake (enemies with literally zero stats), not real balance. That result was discarded.
-    //   Correct approach: keep 1 + (level-1)*menacePerLevel + menaceOffset > 0 for every real
-    //   level (2,4,6,8,10) with a safety margin, so growth is REDUCING menace's job (its old
-    //   per-level slope is now redundant with leveledStats), not eliminating enemies outright.
-    //   Baseline (growth ON, old campaignB values unchanged: menaceOffset=-1.00, menacePerLevel=0.12,
-    //   finalBossMenace=-0.34 — all non-degenerate): winRate CRASHED to 0.0417 (5/120). Diagnostic
-    //   trace showed losses concentrated at area0-boss (Il Muro, 49/115 losses) and area0-elite
-    //   (18/115) — the scripted early wall, not the final boss — because Muro units gain real
-    //   growth (level 6: +60-70% HP/ATK) on top of the unchanged menace.
-    //   menaceOffset sweep (non-degenerate range only, menacePerLevel=0.12, finalBossMenace=-0.34):
-    //     -1.00→0.0417 (baseline), -0.90→0.0333, -0.70→0.0083 (wrong direction — softer offset is
-    //     WORSE now that growth stacks on top), -1.05→0.0417, -1.08/-1.10/-1.11→0.0500 (near the
-    //     -1.12 clamp boundary for menacePerLevel=0.12, ceiling ~0.05, far below floor).
-    //   menacePerLevel sweep (menaceOffset=-1.00 held): 0.12→0.0417, 0.10→0.0583, 0.08→0.0667,
-    //     0.06→0.1000, 0.04→0.1000, 0.02→0.1167, 0.00→0.1417 (but 0.00 exactly zero-clamps level 2 —
-    //     degenerate, discarded). Flattening the slope helps (growth now supplies the per-level
-    //     ramp that menacePerLevel used to), but menaceOffset must retreat in lockstep to avoid
-    //     zero-clamping the now much-flatter curve at level 2.
-    //   Final joint sweep, keeping level-2 statMult >= 0.05 (safety margin above the zero-clamp):
-    //     off=-0.96/per=0.01 → statMult per level [0.05, 0.07, 0.09, 0.11, 0.13] (all non-degenerate).
-    //     At this curve, finalBossMenace became the binding lever for the overall floor (see below).
-    //   Chosen: menacePerLevel 0.12→0.01, menaceOffset -1.00→-0.96. Combined with finalBossMenace
-    //   (below), winRate 0.1667 (20/120), all 5 campaignBalanceB sub-tests pass, no zero-clamping.
-    menacePerLevel: 0.01,
-    menaceOffset: -0.96,
-    // The FINAL area boss is the scripted Voldemort (BOSSES[0], fixed budget); its
-    // menace is this flat value (independent of the level curve) so it stays the climax.
-    // -0.31 → statMult 0.69 (was -0.45 → 0.55 before the Infermeria was on the live path).
-    // The guaranteed pre-boss Infermeria node now generates via generateArea (live path) and
-    // fully heals + revives the team before every boss.
-    // Re-calibrated (2026-06-30, post C1 fix — Infermeria now on live path, menaceOffset -0.70→-0.75):
-    //   The live Infermeria removes one combat floor per area (floor last-1 becomes infirmary
-    //   instead of battle/elite/recruit/relic), which tightens the win-rate ceiling. Slightly
-    //   easing menaceOffset (-0.70→-0.75) compensates for the lost advancement floor.
-    //   winRate scan with menaceOffset=-0.75: -0.30 → 0.142, -0.31 → ~0.158, -0.32 → in band.
-    //   Raising toward area-2 boss (statMult 1.38 → finalBossMenace +0.38) remains out of reach:
-    //   at +0.38 → 0.092, +0.20 → 0.125, 0.00 → 0.133, -0.20 → 0.133, -0.28 → 0.133.
-    //   -0.31 is the highest value that keeps winRate strictly above 0.15.
-    // Re-calibrated (2026-06-30, floor-1=3 map change — first floor forced to 3 nodes for "first choice among 3"):
-    //   The floor-1 width=3 structural change lowers average win-rate by ~1-2 pp; -0.31 now yields 0.142
-    //   (below the [0.15, 0.45] band floor). Easing finalBossMenace -0.31→-0.40 (statMult 0.60, was 0.69)
-    //   compensates: -0.36 → 0.158 (too close to edge), -0.40 → 0.167 (20/120, comfortable).
-    //   Accepted trade-off: Voldemort statMult 0.60 < area-2 boss 1.38; real climax awaits
-    //   a player-power buff — Slice 3.
-    // Moderate buff (2026-07-01, backlog item #5 — moderate-buff REVISED approach):
-    //   Raised -0.40→-0.384 (statMult 0.60→0.616). The Serpeverde balance tune (Voldemort atk trim,
-    //   post-Task6) moved the true winRate at -0.40 to 0.1583 (19/120), leaving only 0.0083 of headroom.
-    //   Full scan: -0.383 → 0.1500 (exactly 0.15, fails strict >); -0.384 → 0.1583 (19/120, passes).
-    //   -0.384 is the empirically highest value that keeps winRate strictly > 0.15. statMult 0.616.
-    //   Area-boss parity (1 + menaceForLevel(levelMax) ≈ 1.33) is DEFERRED pending a player-power
-    //   pass — see docs/superpowers/specs/2026-06-30-strong-final-boss-design.md and remaining-work.md.
-    // Re-calibrated (2026-07-01, Task 1 — raise finalBossMenace, then robustness fix):
-    //   Baseline after snowball-flatten: -0.384 → winRate 0.2000 (24/120), headroom 0.05.
-    //   Sweep: -0.30 → 0.1167 (14/120), -0.33 → 0.1500 (18/120, fails strict >),
-    //          -0.32 → 0.1083 (13/120), -0.334 → passes, -0.331 → passes, -0.3305 → passes,
-    //          -0.3302 → 0.1583 (19/120, passes), -0.3301 → 0.1500 (18/120, fails strict >).
-    //   The 4-decimal value -0.3302 was a fragile 1-seed noise-fit (headroom 0.0083, 1 seed above floor).
-    //   Robustness fix: use -0.34 (statMult 0.66) — hair weaker than absolute max, robust margin.
-    //   Area-boss parity (statMult 1.08 → finalBossMenace +0.08) not reached: raising boss alone
-    //   is a very winRate-expensive lever (at +0.08 → ~0.042 (5/120), far below floor). Parity DEFERRED
-    //   pending a player-power buff or scripted-boss slice (Slice 3).
-    // Re-calibrated (2026-07-01, Task 7 — enemy per-level growth added; see menaceOffset/menacePerLevel
-    //   note above for the full context). With the new non-degenerate curve (menaceOffset=-0.96,
-    //   menacePerLevel=0.01), few runs even reach the final boss, so finalBossMenace became the
-    //   binding lever for the OVERALL campaignBalanceB floor (not just the final-boss fight alone).
-    //   Sweep (menaceOffset=-0.96, menacePerLevel=0.01 held): -0.34→0.1167, -0.40→0.1417 (fail),
-    //     -0.41→0.1500 (fail, exactly floor), -0.42→0.1583 (fails the veleno-gap sub-test: withVeleno
-    //     0.150 < noVeleno 0.158), -0.43→0.1667 (all 5 pass), -0.435→0.1667, -0.44→0.1583, -0.445→0.1750,
-    //     -0.45→0.1667, -0.455→0.1750, -0.46→0.1667 (stable passing plateau from -0.43 to -0.46),
-    //     -0.50→0.1917, -0.60→0.2833 (comfortably in-band, not chosen — user wants the LOW edge).
-    //   Chosen: -0.43 (statMult 0.57) — the value closest to the 0.15 floor that still sits on a
-    //   stable plateau (NOT a 1-seed fragile edge like -0.42, which flips the veleno-gap sub-test).
-    //   Final: campaignBalanceB overall winRate 0.1667 (20/120, headroom 2 seeds above 0.15),
-    //   withVeleno 0.183 > noVeleno 0.167 (wall-teaches gap holds), all 5 sub-tests pass.
-    finalBossMenace: -0.43,
+    // Removing the crushing multiplier makes enemies dramatically stronger (statMult
+    // 0.05-0.13 → 1.0), so tests/engine/campaignBalanceB.test.ts was RE-MEASURED and
+    // `baseBudget`/`budgetStep` re-tuned to hold the [0.15, 0.45] near-optimal win-rate
+    // band — see that test file's header comment for the current sweep/measurement.
     enemyRelicsElite: 0,
     enemyRelicsBoss: 1,
   },
@@ -221,7 +154,8 @@ defenseK: 0.5,
                                 // MUST track growthBudgetPerLevel×0.25: 0.28×0.25=0.07. Update together.
     // Re-calibrated (2026-07-01, snowball-flatten — growthBudgetPerLevel 0.40→0.28, user-approved):
     //   Reduces the per-level stat-growth budget to flatten late-game snowball. Players weaker at high levels;
-    //   menaceOffset eased (less negative) in campaignB to compensate and re-hold the [0.15, 0.45] floor.
+    //   the (now-removed) menaceOffset was eased in campaignB at the time to compensate and re-hold the
+    //   [0.15, 0.45] floor — see campaignB's menace-removal note above for why menace no longer exists.
     growthBudgetPerLevel: 0.28, // total per-level growth budget, distributed per-wizard by growthWeights
                                 // (0.28 × an average 0.25 weight = +7%/level, down from +10%)
     levelMax: 10,
