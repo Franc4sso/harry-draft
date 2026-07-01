@@ -40,10 +40,12 @@ export function generateArea(rng: Rng, seed: string, area: number, bias: AreaBia
   // 1. Floor widths.
   const widths: number[] = []
   for (let f = 0; f < floorsPerArea; f++) {
-    // Floor 0 = entry battle, last = boss, last-1 = guaranteed Infermeria funnel → all width 1.
-    // Every other middle floor is always 3 wide (design: every non-funnel step offers 3 nodes;
-    // first-step-among-3 + 2-nearest cap still hold via the edge-wiring below).
-    const forcedOne = f === 0 || f === last || (last - 1 >= 1 && f === last - 1)
+    // Floor 0 = entry battle, last = boss → both width 1 (single entrance / single boss).
+    // Every other floor, INCLUDING the pre-boss floor (last-1), is always 3 wide (design:
+    // every non-entry/non-boss step always offers 3 nodes). The pre-boss floor guarantees
+    // exactly one Infermeria among its 3 nodes (see assignAreaCategories); the other 2 slots
+    // are ordinary battle/recruit/relic fillers, same dedup rules as any other middle floor.
+    const forcedOne = f === 0 || f === last
     widths.push(forcedOne ? 1 : 3)
   }
 

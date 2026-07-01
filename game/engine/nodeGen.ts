@@ -14,11 +14,13 @@ interface Slot { floor: number; idx: number }
 
 /**
  * Assign a category to every node of an area.
- * Hard guarantees: floor 0 = battle; last floor = boss; floor last-1 = infirmary
- * (pre-boss heal funnel, width 1); exactly one elite in a mid floor within
- * [eliteMinFloor, last-2]; at least one recruit and one relic among the remaining
- * middle nodes. Remaining middle nodes are weighted fillers, with a recruit bias
- * when the team is incomplete.
+ * Hard guarantees: floor 0 = battle; last floor = boss; floor last-1 (pre-boss floor,
+ * width 3) has exactly one 'infirmary' node among its 3 slots (heals the team before
+ * every boss) plus 2 other filler nodes (battle/recruit/relic) — infirmary never
+ * appears on any other floor; exactly one elite in a mid floor within
+ * [eliteMinFloor, last-2] (never on the pre-boss floor); at least one recruit and
+ * one relic among the remaining middle nodes. Remaining middle nodes are weighted
+ * fillers, with a recruit bias when the team is incomplete.
  */
 export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias): RunNodeType[][] {
   if (widths.length < 3) throw new Error(`area needs >=3 floors, got ${widths.length}`)
@@ -31,17 +33,25 @@ export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias)
 
   cats[0] = ['battle']
   cats[last] = ['boss']
-  // Pre-boss floor: guaranteed single Infermeria node (heals the team before every boss).
-  if (last - 1 >= 1) cats[last - 1] = ['infirmary']
 
-  // Collect middle slots — EXCLUDING floor last-1 (infirmary, already assigned).
+  // Collect middle slots — INCLUDING floor last-1 (pre-boss floor is now width 3 too).
   const slots: Slot[] = []
   for (let f = 1; f < last; f++) {
-    if (f === last - 1) continue
     for (let i = 0; i < widths[f]!; i++) slots.push({ floor: f, idx: i })
   }
 
-  // 1. Place the single elite within the allowed floor band (must not land on the infirmary floor).
+  const used = new Set<string>()
+
+  // 1. Guarantee exactly one Infermeria on the pre-boss floor (last-1), picking one of
+  //    its slots at random. Infirmary is ONLY ever placed here — never elsewhere.
+  if (last - 1 >= 1 && widths[last - 1]! > 0) {
+    const infirmaryIdx = rng.int(0, widths[last - 1]! - 1)
+    setCat(cats, last - 1, infirmaryIdx, 'infirmary')
+    used.add(key(last - 1, infirmaryIdx))
+  }
+
+  // 2. Place the single elite within the allowed floor band (excludes last-1, so it can
+  //    never land on the infirmary's floor).
   const eliteFloors: number[] = []
   for (let f = Math.max(1, BALANCE.map.eliteMinFloor); f <= last - 2; f++) {
     if (widths[f]! > 0) eliteFloors.push(f)
@@ -49,9 +59,9 @@ export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias)
   const eliteFloor = rng.pick(eliteFloors)
   const eliteIdx = rng.int(0, widths[eliteFloor]! - 1)
   setCat(cats, eliteFloor, eliteIdx, 'elite')
-  const used = new Set<string>([key(eliteFloor, eliteIdx)])
+  used.add(key(eliteFloor, eliteIdx))
 
-  // 2. Guarantee >=1 recruit and >=1 relic among the remaining middle slots.
+  // 3. Guarantee >=1 recruit and >=1 relic among the remaining middle slots.
   const free = () => slots.filter(s => !used.has(key(s.floor, s.idx)))
   for (const must of ['recruit', 'relic'] as Filler[]) {
     const pool = free()
@@ -61,7 +71,7 @@ export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias)
     used.add(key(s.floor, s.idx))
   }
 
-  // 3. Fill the rest with weighted fillers (recruit-biased when team incomplete).
+  // 4. Fill the rest with weighted fillers (recruit-biased when team incomplete).
   //    Dedup: never leave a floor entirely one node type when it has >1 node and an
   //    alternative filler exists. Guaranteed nodes (elite/recruit/relic) count toward
   //    the floor's type set, so most floors are already mixed; this only catches the

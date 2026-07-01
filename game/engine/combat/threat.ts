@@ -3,7 +3,7 @@ import { BALANCE } from '@/data/constants'
 export type EnemyKind = 'normal' | 'elite' | 'boss'
 
 /** Displayed enemy level as an explicit, area-scaled threat tier (NOT derived from
- *  menace). normal → 1,3,5 · elite → 3,5,7 · area-boss → 4,6,8 · final boss → levelMax.
+ *  menace). normal → 2,4,6 · elite → 4,6,8 · area-boss → 6,8,10 · final boss → levelMax.
  *  Clamped to [1, levelMax]. Enemy menace is derived FROM this (see menaceForLevel),
  *  so the level the player sees genuinely tracks difficulty. */
 export function enemyLevelFor(area: number, kind: EnemyKind, isFinalBoss: boolean): number {
