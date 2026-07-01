@@ -22,7 +22,7 @@ import { selectSpell } from './selectSpell'
 import { mostWounded, selectTarget } from './targeting'
 
 export function toBattleUnits(
-  team: DraftedWizard[], side: Side, synergies: ActiveSynergy[], relics: ActiveRelic[] = [], menacePct = 0,
+  team: DraftedWizard[], side: Side, synergies: ActiveSynergy[], relics: ActiveRelic[] = [], menacePct = 0, damageReduction = 0,
 ): BattleUnit[] {
   const velenoUncapped = synergies.some(s => s.synergy.id === 'tossicita')
   const execute = teamExecute(team, relics, synergies)
@@ -41,11 +41,15 @@ export function toBattleUnits(
       spd: Math.round(relicBuffed.spd * m),
     }
     const startHp = dw.currentHp ?? buffed.hp
-    return {
+    const base: BattleUnit = {
       ...dw, side, buffedStats: buffed, maxHp: buffed.hp,
       hp: Math.min(buffed.hp, Math.max(0, startHp)),
       cooldowns: {}, statusEffects: [], alive: true, velenoUncapped, execute, shieldConvert, darkMagic: darkMap[dw.wizard.id], alwaysHit: alwaysHitIds.has(dw.wizard.id), ...houseMap[dw.wizard.id],
     }
+    if (damageReduction > 0) {
+      base.damageReduction = Math.max(base.damageReduction ?? 0, damageReduction)
+    }
+    return base
   })
 }
 
@@ -59,14 +63,14 @@ export function simulateBattle(
   left: DraftedWizard[],
   right: DraftedWizard[],
   rng: Rng,
-  opts: { leftSyn?: ActiveSynergy[]; rightSyn?: ActiveSynergy[]; leftRelics?: ActiveRelic[]; rightRelics?: ActiveRelic[]; rightMenace?: number } = {},
+  opts: { leftSyn?: ActiveSynergy[]; rightSyn?: ActiveSynergy[]; leftRelics?: ActiveRelic[]; rightRelics?: ActiveRelic[]; rightMenace?: number; rightDamageReduction?: number } = {},
 ): BattleResult {
   const leftSyn = opts.leftSyn ?? []
   const rightSyn = opts.rightSyn ?? []
   const leftRelics = opts.leftRelics ?? []
   const rightRelics = opts.rightRelics ?? []
   const L = toBattleUnits(left, 'left', leftSyn, leftRelics)
-  const R = toBattleUnits(right, 'right', rightSyn, rightRelics, opts.rightMenace ?? 0)
+  const R = toBattleUnits(right, 'right', rightSyn, rightRelics, opts.rightMenace ?? 0, opts.rightDamageReduction ?? 0)
   const regen: Record<Side, number> = {
     left: totalRegen(leftSyn) + totalRelicRegen(left, leftRelics),
     right: totalRegen(rightSyn) + totalRelicRegen(right, rightRelics),
