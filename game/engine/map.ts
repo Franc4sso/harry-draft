@@ -34,20 +34,17 @@ export function parseAreaNodeId(id: string): { area: number; floor: number; idx:
  * categories/layouts. (Spec §6.4: fork per (seed, mapChannel, area).)
  */
 export function generateArea(rng: Rng, seed: string, area: number, bias: AreaBias): RunNode[] {
-  const { floorsPerArea, minWidth, maxWidth } = BALANCE.map
+  const { floorsPerArea } = BALANCE.map
   const last = floorsPerArea - 1
 
   // 1. Floor widths.
   const widths: number[] = []
   for (let f = 0; f < floorsPerArea; f++) {
     // Floor 0 = entry battle, last = boss, last-1 = guaranteed Infermeria funnel → all width 1.
-    // Floor 1 is forced to width 3 so the run's FIRST choice is always among 3 paths (the
-    // entry node's coverage pass wires all 3 into its next[]); every later branch keeps the
-    // edge-wiring cap of 2 nearest. Guard f !== last-1 so a tiny area can't collide with the
-    // Infermeria funnel.
+    // Every other middle floor is always 3 wide (design: every non-funnel step offers 3 nodes;
+    // first-step-among-3 + 2-nearest cap still hold via the edge-wiring below).
     const forcedOne = f === 0 || f === last || (last - 1 >= 1 && f === last - 1)
-    const firstChoice = f === 1 && f !== last && !(last - 1 >= 1 && f === last - 1)
-    widths.push(forcedOne ? 1 : firstChoice ? 3 : rng.int(minWidth, maxWidth))
+    widths.push(forcedOne ? 1 : 3)
   }
 
   // 2. Categories (hard guarantees live in nodeGen).

@@ -62,9 +62,29 @@ export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias)
   }
 
   // 3. Fill the rest with weighted fillers (recruit-biased when team incomplete).
-  for (const s of free()) {
-    setCat(cats, s.floor, s.idx, pickFiller(rng, bias))
-    used.add(key(s.floor, s.idx))
+  //    Dedup: never leave a floor entirely one node type when it has >1 node and an
+  //    alternative filler exists. Guaranteed nodes (elite/recruit/relic) count toward
+  //    the floor's type set, so most floors are already mixed; this only catches the
+  //    all-filler-same case (e.g. 3-wide floor rolling battle/battle/battle).
+  const freeByFloor = new Map<number, Slot[]>()
+  for (const s of free()) freeByFloor.set(s.floor, [...(freeByFloor.get(s.floor) ?? []), s])
+  for (const [floor, floorSlots] of freeByFloor) {
+    for (const s of floorSlots) {
+      setCat(cats, s.floor, s.idx, pickFiller(rng, bias))
+      used.add(key(s.floor, s.idx))
+    }
+    // If the whole floor collapsed to one type, re-roll the last slot until it differs.
+    const types = cats[floor]!
+    const width = types.length
+    if (width > 1 && types.every(t => t === types[0])) {
+      const last = floorSlots[floorSlots.length - 1]
+      if (last) {
+        for (let tries = 0; tries < 8; tries++) {
+          const alt = pickFiller(rng, bias)
+          if (alt !== types[0]) { setCat(cats, last.floor, last.idx, alt); break }
+        }
+      }
+    }
   }
 
   return cats
