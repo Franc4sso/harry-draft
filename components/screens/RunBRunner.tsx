@@ -12,7 +12,6 @@ import { RelicNodeScreen } from './RelicNodeScreen'
 import { InfirmaryScreen } from './InfirmaryScreen'
 import { AreaClearedScreen } from './AreaClearedScreen'
 import { TeamSynergyBar } from '@/components/run/TeamSynergyBar'
-import { LoadoutPanel } from '@/components/run/LoadoutPanel'
 import { RelicBar } from '@/components/relics/RelicBar'
 import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
 import { createRng } from '@/game/engine/rng'
@@ -33,12 +32,16 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
   const withTeamSidebar = (content: ReactNode) => (
     <div className="flex-1 flex flex-row items-start gap-4 p-3">
       <aside className="sticky top-3 flex w-56 shrink-0 flex-col gap-3">
-        <TeamSynergyBar team={c.run.team} synergies={c.run.activeSynergies} orientation="vertical" />
+        <TeamSynergyBar
+          team={c.run.team}
+          synergies={c.run.activeSynergies}
+          orientation="vertical"
+          onSetSpell={c.setWizardSpell}
+        />
         <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
           <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Reliquie</span>
           <RelicBar relics={c.run.relics} className="mt-2" onUse={c.useConsumableRelic} team={c.run.team} />
         </div>
-        <LoadoutPanel team={c.run.team} onSetSpell={c.setWizardSpell} />
       </aside>
       <div className="min-w-0 flex-1">{content}</div>
     </div>
