@@ -59,7 +59,21 @@ export function generateBossTeam(rng: Rng, boss: BossDef): DraftedWizard[] {
   const size = boss.unitCount ?? BALANCE.draft.teamSize
   const perUnit = boss.budget / size
   const team = pickTowardBudget(rng, perUnit, size)
-  const leader = team.reduce((best, d) => (powerOf(d) > powerOf(best) ? d : best), team[0]!)
+  let leader: DraftedWizard
+  if (boss.bossWizardId) {
+    const named = WIZARDS.find(w => w.id === boss.bossWizardId)
+    if (!named) throw new Error(`boss.bossWizardId not found: ${boss.bossWizardId}`)
+    let idx = team.findIndex(d => d.wizard.id === boss.bossWizardId)
+    if (idx < 0) {
+      // replace the weakest unit with the guaranteed boss
+      const weakest = team.reduce((w, d, i) => (powerOf(d) < powerOf(team[w]!) ? i : w), 0)
+      team[weakest] = draftWizard(rng, named as Wizard)
+      idx = weakest
+    }
+    leader = team[idx]!
+  } else {
+    leader = team.reduce((best, d) => (powerOf(d) > powerOf(best) ? d : best), team[0]!)
+  }
   leader.stats = { ...leader.stats, hp: Math.round(leader.stats.hp * boss.hpMult) }
   leader.maxHp = leader.stats.hp
   const forced = boss.forcedSpellIds?.[0]

@@ -25,6 +25,8 @@ export interface NodeBattle {
   bossSynergy?: ActiveSynergy
   /** Wall archetype: per-unit direct-damage reduction for the enemy boss team (boss nodes only). */
   unitDamageReduction?: number
+  /** Bellatrix signature: enemy boss side ignores the player Tank's taunt (boss nodes only). */
+  ignoresTaunt?: boolean
 }
 
 export interface NodePreview {

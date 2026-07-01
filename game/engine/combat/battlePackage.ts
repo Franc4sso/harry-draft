@@ -5,7 +5,7 @@ import { enemyLevelFor, globalDepth, budgetB } from './threat'
 import { detectSynergies } from '../synergy'
 import { selectEnemyRelics } from '../relics'
 import { BALANCE } from '@/data/constants'
-import { BOSSES, MURO } from '@/data/bosses'
+import { BOSSES, MURO, BELLATRIX } from '@/data/bosses'
 
 type Kind = 'battle' | 'elite' | 'boss'
 const enemyKind = (k: Kind): 'normal' | 'elite' | 'boss' => (k === 'battle' ? 'normal' : k)
@@ -20,6 +20,7 @@ export function buildBattlePackage(
   const isBoss = kind === 'boss'
   const isFinalBoss = isBoss && area >= BALANCE.map.areas - 1
   const isFirstBoss = isBoss && area === MURO.pinnedArea
+  const isBellatrixBoss = isBoss && !isFinalBoss && area === BELLATRIX.pinnedArea
   const ek = enemyKind(kind)
   const depth = globalDepth(area, floor)
   const enemyLevel = enemyLevelFor(area, ek, isFinalBoss)
@@ -36,6 +37,7 @@ export function buildBattlePackage(
 
   let enemyTeam, themeId: string | null = null, bossSynergy: ActiveSynergy | undefined
   let unitDamageReduction: number | undefined
+  let ignoresTaunt: boolean | undefined
   if (isFinalBoss) {
     enemyTeam = generateBossTeam(enemyRng, BOSSES[0]!)
     bossSynergy = BOSSES[0]!.exclusiveSynergy
@@ -47,6 +49,12 @@ export function buildBattlePackage(
       ? { synergy: MURO.exclusiveSynergy, memberIds: enemyTeam.map(d => d.wizard.id) }
       : undefined
     unitDamageReduction = MURO.unitDamageReduction
+  } else if (isBellatrixBoss) {
+    enemyTeam = generateBossTeam(enemyRng, BELLATRIX)
+    bossSynergy = BELLATRIX.exclusiveSynergy
+      ? { synergy: BELLATRIX.exclusiveSynergy, memberIds: enemyTeam.map(d => d.wizard.id) }
+      : undefined
+    ignoresTaunt = BELLATRIX.ignoresTaunt
   } else {
     const out = themedEnemyTeam(enemyRng, {
       area, kind: ek, budget: Math.round(budgetB(depth) * budgetMult), count, excludeThemes,
@@ -69,11 +77,15 @@ export function buildBattlePackage(
     ? [...detected.map(s => s.synergy.id), bossSynergy.synergy.id]
     : detected.map(s => s.synergy.id)
 
-  const battle: NodeBattle = { enemyTeam, enemyRelics, enemyLevel, bossSynergy, unitDamageReduction }
+  const battle: NodeBattle = { enemyTeam, enemyRelics, enemyLevel, bossSynergy, unitDamageReduction, ignoresTaunt }
   const preview: NodePreview = {
     synergyIds,
-    bossName: isFinalBoss ? BOSSES[0]!.name : isFirstBoss ? MURO.name : undefined,
-    bossHint: isFirstBoss ? 'Incassa i colpi diretti — il veleno lo ignora.' : undefined,
+    bossName: isFinalBoss ? BOSSES[0]!.name : isFirstBoss ? MURO.name : isBellatrixBoss ? BELLATRIX.name : undefined,
+    bossHint: isFirstBoss
+      ? 'Incassa i colpi diretti — il veleno lo ignora.'
+      : isBellatrixBoss
+        ? 'Ignora la provocazione — colpisce le retrovie.'
+        : undefined,
   }
   return { battle, preview, themeId }
 }

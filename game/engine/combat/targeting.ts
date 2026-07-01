@@ -36,14 +36,15 @@ export function mostWounded(units: BattleUnit[]): BattleUnit | undefined {
   )[0]
 }
 
-export function threatScore(u: BattleUnit): number {
+export function threatScore(u: BattleUnit, ignoresTaunt = false): number {
   const s = effectiveStats(u)
-  return s.atk + s.spd + (u.wizard.role === 'Tank' ? BALANCE.roles.tauntBonus : 0)
+  const taunt = !ignoresTaunt && u.wizard.role === 'Tank' ? BALANCE.roles.tauntBonus : 0
+  return s.atk + s.spd + taunt
 }
 
-function highestThreat(units: BattleUnit[]): BattleUnit | undefined {
+function highestThreat(units: BattleUnit[], ignoresTaunt = false): BattleUnit | undefined {
   return units.slice().sort((a, b) =>
-    threatScore(b) - threatScore(a) || a.wizard.id.localeCompare(b.wizard.id),
+    threatScore(b, ignoresTaunt) - threatScore(a, ignoresTaunt) || a.wizard.id.localeCompare(b.wizard.id),
   )[0]
 }
 
@@ -87,6 +88,6 @@ export function selectTarget(
       return lowestHp(enemyPool)
     case 'Attaccante':
     default:
-      return highestThreat(enemyPool)
+      return highestThreat(enemyPool, actor.ignoresTaunt ?? false)
   }
 }

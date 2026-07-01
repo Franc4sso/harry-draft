@@ -23,6 +23,7 @@ import { mostWounded, selectTarget } from './targeting'
 
 export function toBattleUnits(
   team: DraftedWizard[], side: Side, synergies: ActiveSynergy[], relics: ActiveRelic[] = [], menacePct = 0, damageReduction = 0,
+  ignoresTaunt = false,
 ): BattleUnit[] {
   const velenoUncapped = synergies.some(s => s.synergy.id === 'tossicita')
   const execute = teamExecute(team, relics, synergies)
@@ -49,6 +50,7 @@ export function toBattleUnits(
     if (damageReduction > 0) {
       base.damageReduction = Math.max(base.damageReduction ?? 0, damageReduction)
     }
+    if (ignoresTaunt) base.ignoresTaunt = true
     return base
   })
 }
@@ -63,14 +65,14 @@ export function simulateBattle(
   left: DraftedWizard[],
   right: DraftedWizard[],
   rng: Rng,
-  opts: { leftSyn?: ActiveSynergy[]; rightSyn?: ActiveSynergy[]; leftRelics?: ActiveRelic[]; rightRelics?: ActiveRelic[]; rightMenace?: number; rightDamageReduction?: number } = {},
+  opts: { leftSyn?: ActiveSynergy[]; rightSyn?: ActiveSynergy[]; leftRelics?: ActiveRelic[]; rightRelics?: ActiveRelic[]; rightMenace?: number; rightDamageReduction?: number; rightIgnoresTaunt?: boolean } = {},
 ): BattleResult {
   const leftSyn = opts.leftSyn ?? []
   const rightSyn = opts.rightSyn ?? []
   const leftRelics = opts.leftRelics ?? []
   const rightRelics = opts.rightRelics ?? []
   const L = toBattleUnits(left, 'left', leftSyn, leftRelics)
-  const R = toBattleUnits(right, 'right', rightSyn, rightRelics, opts.rightMenace ?? 0, opts.rightDamageReduction ?? 0)
+  const R = toBattleUnits(right, 'right', rightSyn, rightRelics, opts.rightMenace ?? 0, opts.rightDamageReduction ?? 0, opts.rightIgnoresTaunt ?? false)
   const regen: Record<Side, number> = {
     left: totalRegen(leftSyn) + totalRelicRegen(left, leftRelics),
     right: totalRegen(rightSyn) + totalRelicRegen(right, rightRelics),

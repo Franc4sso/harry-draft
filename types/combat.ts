@@ -62,6 +62,8 @@ export interface BattleUnit extends DraftedWizard {
   damageReduction?: number
   /** Serpeverde house (cunning): +`bonus` damage dealt to a target below `threshold` HP fraction. */
   cunning?: { threshold: number; bonus: number }
+  /** Bellatrix signature: this unit ignores the enemy Tank's taunt bonus in threat scoring (targets backline). */
+  ignoresTaunt?: boolean
 }
 
 export type LogFlag = 'crit' | 'dodge' | 'kill' | 'heal' | 'block' | 'stun' | 'dot' | 'pen' | 'shatter' | 'wait' | 'recoil'

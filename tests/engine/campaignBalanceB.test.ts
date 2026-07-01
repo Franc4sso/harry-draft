@@ -72,6 +72,21 @@ import type { RunNode, RunState } from '@/types'
 //   noVeleno 0.158 > 0 (soft wall ✓). All four targets hold.
 //   Area-0 boss power (MURO budget/hpMult/unitCount/wall) is now a floor-sensitive lever: any change to
 //   it, or to Area-0 enemy scaling, must re-measure the campaignBalanceB floor (headroom is only ~1 seed).
+// Calibration (2026-07-01, Task 8 — Bellatrix area-1 boss, ignoresTaunt signature):
+//   Routed area 1's boss node to BELLATRIX (bossWizardId:'bellatrix', ignoresTaunt:true — whole boss
+//   side skips the player Tank's tauntBonus in threat scoring, so it hits the real backline). This
+//   alone dropped the floor: baseline (budget 900, hpMult 1.25, unitCount 5) measured 0.1417 (< 0.15).
+//   ignoresTaunt is the dominant lever, not budget/hpMult: at unitCount 5, winRate stayed flat at
+//   0.1417/0.1333 across budget 350→900 and hpMult 1.0→1.25 (with the flag on); toggling the flag OFF
+//   at the same budget/hpMult recovered 0.1417–0.1500 (still short). unitCount 3 (matching Muro's
+//   pattern) moved the needle more than budget: at hpMult 1.0, winRate sat flat at 0.1500 (fails
+//   strict >) across budget 200→900 — a hard plateau independent of budget. hpMult had to drop
+//   below 1.0 to flip the deciding seed: hpMult 0.85 passes at 0.1583 across budget∈[200,450]
+//   (stable plateau, chosen budget 300 = mid); the exact boundary is hpMult 0.875 (pass, 0.1583) vs
+//   0.88 (fail, 0.1500) — a 1-seed margin, consistent with every other floor-adjacent lever in this
+//   file. Final: BELLATRIX budget 300, hpMult 0.85, unitCount 3, ignoresTaunt true.
+//   winRate=0.1583 (19/120, headroom 0.0083 above the 0.15 floor). Area-1 boss power is now a
+//   floor-sensitive lever: any future change to BELLATRIX or Area-1 enemy scaling must re-measure.
 registerCoreResolvers()
 
 // Near-optimal ("upper-bound") player policy. A pure recruit/relic-first greedy is
