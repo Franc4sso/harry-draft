@@ -1,4 +1,4 @@
-import type { ActiveSynergy, BattleResult, DraftedWizard, RunState } from '@/types'
+import type { ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard, RunState } from '@/types'
 import type { Rng } from '@/game/engine/rng'
 import { createRng } from '@/game/engine/rng'
 import { resolveCombat } from '@/game/engine/resolvers/combat'
@@ -16,6 +16,12 @@ export interface ActiveBattleB {
   playerSyn: ActiveSynergy[]
   /** Level shown on enemy busts, derived from the right-side menace. */
   enemyLevel: number
+  /** Right-side menace/relics/damageReduction/ignoresTaunt fed to simulateBattle — threaded
+   *  into buildReplay so the InitiativeBar's displayed spd matches the sim's actual order. */
+  rightMenace: number
+  rightRelics: ActiveRelic[]
+  rightDamageReduction: number
+  rightIgnoresTaunt: boolean
 }
 
 const combatChannel = 2
@@ -36,5 +42,7 @@ export function prepareCombat(run: RunState): ActiveBattleB {
     result: out.result, enemy: out.enemy, enemySyn: out.enemySyn, isBoss: out.isBoss,
     isFinalBoss: out.isFinalBoss, playerTeam: ready, playerSyn: detectSynergies(ready),
     enemyLevel: out.enemyLevel,
+    rightMenace: out.rightMenace, rightRelics: out.rightRelics,
+    rightDamageReduction: out.rightDamageReduction, rightIgnoresTaunt: out.rightIgnoresTaunt,
   }
 }

@@ -18,6 +18,7 @@ import { BattleEndModal } from '@/components/battle/BattleEndModal'
 
 export function BattleScreen({
   result, playerTeam, playerSyn, playerRelics, enemy, enemySyn, title, rightTitle, onFinish, enemyLevel = 1,
+  rightMenace = 0, rightRelics, rightDamageReduction = 0, rightIgnoresTaunt = false,
 }: {
   result: BattleResult
   playerTeam: DraftedWizard[]
@@ -30,10 +31,19 @@ export function BattleScreen({
   onFinish: () => void
   /** Level shown on enemy busts (derived from menace); players use their own. */
   enemyLevel?: number
+  /** Same values simulateBattle used for the enemy side — threaded into buildReplay so
+   *  the InitiativeBar's displayed spd matches the sim's actual turn order. */
+  rightMenace?: number
+  rightRelics?: ActiveRelic[]
+  rightDamageReduction?: number
+  rightIgnoresTaunt?: boolean
 }) {
   const replay = useMemo(
-    () => buildReplay(result, playerTeam, enemy, { leftSyn: playerSyn, rightSyn: enemySyn, leftRelics: playerRelics ?? [] }),
-    [result, playerTeam, enemy, playerSyn, enemySyn, playerRelics],
+    () => buildReplay(result, playerTeam, enemy, {
+      leftSyn: playerSyn, rightSyn: enemySyn, leftRelics: playerRelics ?? [],
+      rightRelics: rightRelics ?? [], rightMenace, rightDamageReduction, rightIgnoresTaunt,
+    }),
+    [result, playerTeam, enemy, playerSyn, enemySyn, playerRelics, rightRelics, rightMenace, rightDamageReduction, rightIgnoresTaunt],
   )
   const r = useBattleReplay(replay)
   // Sticky entry for the ActionPanel: hold the last REAL action across system

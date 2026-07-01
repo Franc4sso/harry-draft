@@ -1,4 +1,4 @@
-import type { ActiveSynergy, BattleResult, DraftedWizard, RunNode, RunState } from '@/types'
+import type { ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard, RunNode, RunState } from '@/types'
 import type { Rng } from '../rng'
 import { battleReadyTeam } from '../battlePrep'
 import { simulateBattle } from '../combat/simulate'
@@ -29,6 +29,13 @@ export interface CombatResult {
   levelsGained: number
   /** Enemy level shown in the UI — an explicit area+kind threat tier. */
   enemyLevel: number
+  /** Right-side menace/relics/damageReduction/ignoresTaunt actually fed to simulateBattle —
+   *  exposed so buildReplay can mirror them and the InitiativeBar's displayed spd matches
+   *  the order the sim actually used (see replay.ts buildReplay opts). */
+  rightMenace: number
+  rightRelics: ActiveRelic[]
+  rightDamageReduction: number
+  rightIgnoresTaunt: boolean
 }
 
 export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatResult {
@@ -85,7 +92,10 @@ export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatR
     : nodeType === 'elite' ? BALANCE.leveling.levelsPerElite : BALANCE.leveling.levelsPerBattle
   const survivors = persisted.map(dw => isDead(dw) ? dw : gainLevels(dw, levelsGained).dw)
 
-  return { result, enemy, enemySyn, isBoss, isFinalBoss, survivors, levelsGained, enemyLevel }
+  return {
+    result, enemy, enemySyn, isBoss, isFinalBoss, survivors, levelsGained, enemyLevel,
+    rightMenace, rightRelics, rightDamageReduction, rightIgnoresTaunt,
+  }
 }
 
 export const combatResolver: NodeResolver = {

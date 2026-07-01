@@ -66,10 +66,20 @@ export function buildReplay(
   result: BattleResult,
   left: DraftedWizard[],
   right: DraftedWizard[],
-  opts: { leftSyn?: ActiveSynergy[]; rightSyn?: ActiveSynergy[]; leftRelics?: ActiveRelic[] } = {},
+  opts: {
+    leftSyn?: ActiveSynergy[]; rightSyn?: ActiveSynergy[]; leftRelics?: ActiveRelic[]
+    rightRelics?: ActiveRelic[]; rightMenace?: number; rightDamageReduction?: number; rightIgnoresTaunt?: boolean
+  } = {},
 ): Replay {
+  // Mirrors simulateBattle's toBattleUnits calls exactly (see simulate.ts) so the replay's
+  // buffedStats — what InitiativeBar sorts by — match what the sim actually used to order
+  // turns. Without this, an un-menaced right side can display a lower spd than the sim's
+  // menaced spd, making the real (correct) turn order look like a bug.
   const L = toBattleUnits(left, 'left', opts.leftSyn ?? [], opts.leftRelics ?? [])
-  const R = toBattleUnits(right, 'right', opts.rightSyn ?? [])
+  const R = toBattleUnits(
+    right, 'right', opts.rightSyn ?? [], opts.rightRelics ?? [],
+    opts.rightMenace ?? 0, opts.rightDamageReduction ?? 0, opts.rightIgnoresTaunt ?? false,
+  )
 
   const units: ReplayUnit[] = [...L, ...R].map(u => ({
     key: unitKey(u.side, u.wizard.id),
