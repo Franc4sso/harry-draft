@@ -23,8 +23,14 @@ describe('normalizeSpell', () => {
     ])
   })
   it('defense buff → applyStatus(self)', () => {
+    expect(normalizeSpell(SPELL_BY_ID['riddikulus']!)).toEqual([
+      { kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'atk', amount: 20, duration: 2 } },
+    ])
+  })
+  it('fianto (shield spec) → shield + applyStatus(self), returned verbatim', () => {
     expect(normalizeSpell(SPELL_BY_ID['fianto']!)).toEqual([
-      { kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'def', amount: 30, duration: 2 } },
+      { kind: 'shield', amount: 40, duration: 2 },
+      { kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'def', amount: 10, duration: 2 } },
     ])
   })
   it('spell.spec is returned verbatim', () => {

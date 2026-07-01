@@ -21,7 +21,7 @@ export const SPELLS: Spell[] = [
   { id: 'levicorpus', name: 'Levicorpus', desc: 'Solleva e indebolisce la difesa.', type: 'Controllo', hitChance: 0.9, cooldown: 1, effects: [{ kind: 'debuff', stat: 'def', amount: 20, duration: 2 }] },
   { id: 'confundo', name: 'Confundo', desc: 'Confonde, riduce la velocità.', type: 'Controllo', hitChance: 0.9, cooldown: 1, effects: [{ kind: 'debuff', stat: 'spd', amount: 15, duration: 2 }] },
   { id: 'langlock', name: 'Langlock', desc: "Riduce l'attacco nemico.", type: 'Controllo', hitChance: 0.92, cooldown: 1, effects: [{ kind: 'debuff', stat: 'atk', amount: 18, duration: 2 }] },
-  { id: 'tarantallegra', name: 'Tarantallegra', desc: 'Gambe fuori controllo.', type: 'Controllo', hitChance: 0.88, cooldown: 1, effects: [{ kind: 'debuff', stat: 'spd', amount: 20, duration: 2 }] },
+  { id: 'tarantallegra', name: 'Tarantallegra', desc: 'Gambe fuori controllo: rallenta e può inciampare il bersaglio.', type: 'Controllo', hitChance: 0.88, cooldown: 1, effects: [{ kind: 'debuff', stat: 'spd', amount: 30, duration: 2 }, { kind: 'stun', duration: 1 }] },
 
   // Cura
   { id: 'episkey', name: 'Episkey', desc: 'Cura ferite minori.', type: 'Cura', heal: 28, hitChance: 1, cooldown: 1 },
@@ -33,7 +33,8 @@ export const SPELLS: Spell[] = [
   // Difesa
   { id: 'protego', name: 'Protego', desc: 'Annulla la prossima magia sul bersaglio.', type: 'Difesa', hitChance: 1, cooldown: 1, spec: [{ kind: 'protego', count: 1 }] },
   { id: 'protego_maxima', name: 'Protego Maxima', desc: 'Annulla la prossima magia su due alleati.', type: 'Difesa', hitChance: 1, cooldown: 2, spec: [{ kind: 'protego', count: 2 }] },
-  { id: 'fianto', name: 'Fianto Duri', desc: 'Rinforza le barriere.', type: 'Difesa', hitChance: 1, cooldown: 1, effects: [{ kind: 'buff', stat: 'def', amount: 30, duration: 2 }] },
+  { id: 'fianto', name: 'Fianto Duri', desc: 'Erige una barriera che assorbe il danno.', type: 'Difesa', hitChance: 1, cooldown: 1,
+    spec: [{ kind: 'shield', amount: 40, duration: 2 }, { kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'def', amount: 10, duration: 2 } }] },
   { id: 'salvio', name: 'Salvio Hexia', desc: 'Devia gli incantesimi, +velocità.', type: 'Difesa', hitChance: 1, cooldown: 1, effects: [{ kind: 'buff', stat: 'spd', amount: 20, duration: 2 }] },
   { id: 'riddikulus', name: 'Riddikulus', desc: 'Rinforza il morale, +attacco.', type: 'Difesa', hitChance: 1, cooldown: 1, effects: [{ kind: 'buff', stat: 'atk', amount: 20, duration: 2 }] },
   { id: 'expecto', name: 'Expecto Patronum', desc: 'Protezione luminosa, +tutte le difese.', type: 'Difesa', hitChance: 1, cooldown: 2, effects: [{ kind: 'buff', stat: 'def', amount: 25, duration: 3 }, { kind: 'buff', stat: 'spd', amount: 15, duration: 3 }] },
