@@ -49,7 +49,7 @@ import type { RunNode, RunState } from '@/types'
 //   FRAGILE: -0.3302 is a 1-seed noise-fit (1 seed above the floor — flips on rng changes).
 //   Robustness fix: use -0.34 (statMult 0.66), winRate=0.1667 (20/120), headroom=0.0167 (2 seeds).
 //   Raising the final boss alone is a very winRate-expensive lever: parity (finalBossMenace +0.08,
-//   statMult 1.08) → winRate ~0.117, far below the 0.15 floor. Full area-boss parity requires a
+//   statMult 1.08) → winRate ~0.042 (5/120), far below the 0.15 floor. Full area-boss parity requires a
 //   future player-power spike or a scripted-boss slice — flat final-boss menace alone cannot reach it.
 //   Parity DEFERRED pending player-power buff (Slice 3).
 registerCoreResolvers()

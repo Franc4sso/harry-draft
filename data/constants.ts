@@ -142,7 +142,7 @@ defenseK: 0.5,
     //   The 4-decimal value -0.3302 was a fragile 1-seed noise-fit (headroom 0.0083, 1 seed above floor).
     //   Robustness fix: use -0.34 (statMult 0.66) — hair weaker than absolute max, robust margin.
     //   Area-boss parity (statMult 1.08 → finalBossMenace +0.08) not reached: raising boss alone
-    //   is a very winRate-expensive lever (at +0.08 → ~0.117, far below floor). Parity DEFERRED
+    //   is a very winRate-expensive lever (at +0.08 → ~0.042 (5/120), far below floor). Parity DEFERRED
     //   pending a player-power buff or scripted-boss slice (Slice 3).
     finalBossMenace: -0.34,
     enemyRelicsElite: 0,

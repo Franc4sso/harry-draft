@@ -33,7 +33,7 @@ import { menaceForLevel } from '@/game/engine/resolvers/combat'
 //   NOTE (2026-07-01 snowball pass): menaceOffset -0.75→-1.00 lowered menaceForLevel(10) from 0.33 to 0.08,
 //   so the area-boss parity target dropped from statMult ~1.33 to ~1.08. A future final-boss-raise
 //   slice should calibrate against ~1.08, NOT 1.33 — the old figure is obsolete after this pass.
-//   parity would require statMult ~1.08, collapsing campaign completion to ~2.5%.
+//   parity would require statMult ~1.08, collapsing campaign completion to ~0.042 (5/120), measured 2026-07-01.
 //   Parity is pending a player-power pass — see:
 //     docs/superpowers/specs/2026-06-30-strong-final-boss-design.md
 //     docs/superpowers/remaining-work.md (backlog item #1)

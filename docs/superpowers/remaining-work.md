@@ -14,7 +14,7 @@
 > snowball ratio 1.447→1.365. campaignBalanceB winRate **0.2000** (headroom **0.05** sopra il floor
 > 0.15). Tutti e 4 gli archetype-sweep in band (veleno=0.608, esecuzione=0.800,
 > scudiRigen=0.142, magieOscure=0.742; floor 0.05 ciascuno). Lo **0.05 di headroom** è disponibile
-> per alzare `finalBossMenace` nel prossimo slice (parity slice → backlog item #5).
+> per alzare `finalBossMenace` nel prossimo slice (parity slice → backlog item #1).
 
 > **Strong-final-boss step DONE** (2026-07-01): finalBossMenace locked **-0.34**, statMult **0.66**
 > (raised from 0.616). campaignBalanceB winRate **0.1667** (headroom **0.0167** sopra il floor 0.15).
@@ -27,7 +27,7 @@
 L'item aperto a leva più alta. **Il campaign era incollato al floor di completamento 0.15**
 (`campaignBalanceB` winRate **0.158** pre-pass → **0.200** post-pass → **0.1667** post-boss-raise),
 e questo BLOCCA due cose desiderate:
-- un **boss finale forte**: la parità con i boss d'area (statMult ~1.08 dopo il snowball pass; era ~1.33 prima che menaceOffset -0.75→-1.00 abbassasse menaceForLevel(10) da 0.33 a 0.08) crolla il completamento a ~2.5%
+- un **boss finale forte**: la parità con i boss d'area (statMult ~1.08 dopo il snowball pass; era ~1.33 prima che menaceOffset -0.75→-1.00 abbassasse menaceForLevel(10) da 0.33 a 0.08) crolla il completamento a ~0.042 (5/120)
   → oggi il boss è a statMult 0.66 (`finalBossMenace -0.34`), più forte del vecchio pushover (0.616) ma ancora sotto parità (1.08);
 - una **forbice tra case più stretta**: Serpeverde 0.658 vs Grifondoro 0.183 (~3.5×), tenuta solo dal
   gate rilassato `<0.71`.
