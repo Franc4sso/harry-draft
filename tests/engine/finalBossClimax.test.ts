@@ -18,6 +18,17 @@ import { menaceForLevel } from '@/game/engine/resolvers/combat'
 //   All 4 archetype sweeps in band: veleno=0.608, esecuzione=0.800,
 //   scudiRigen=0.142, magieOscure=0.742 (floor 0.05 each).
 //
+// Strong-final-boss slice DONE 2026-07-01 (guard sweeps + tripwire pass):
+//   finalBossMenace locked at -0.34, statMult = 0.66 (raised from 0.616).
+//   campaignBalanceB winRate: 0.1667 (headroom 0.0167 above the 0.15 floor).
+//   Boss is stronger than the old pushover (0.616→0.66) but still BELOW parity (1.08).
+//   Archetype sweeps post-raise: veleno=0.567, esecuzione=0.792, scudiRigen=0.142,
+//   magieOscure=0.733 (all above floor 0.05).
+//   Raising the boss alone is winRate-expensive (0.2000→0.1667 per +0.044 menace);
+//   full parity DEFERRED to a player-power/scripted-boss slice — flat menace lever too costly.
+//   Serpeverde house-scissor also remains a separate future slice.
+//   Tripwire (second test below) still PASSES: 0.66 < 1.08 — no assertion change made.
+//
 // Full area-boss PARITY (1 + finalBossMenace >= 1 + menaceForLevel(levelMax)) is DEFERRED:
 //   NOTE (2026-07-01 snowball pass): menaceOffset -0.75→-1.00 lowered menaceForLevel(10) from 0.33 to 0.08,
 //   so the area-boss parity target dropped from statMult ~1.33 to ~1.08. A future final-boss-raise
@@ -25,7 +36,7 @@ import { menaceForLevel } from '@/game/engine/resolvers/combat'
 //   parity would require statMult ~1.08, collapsing campaign completion to ~2.5%.
 //   Parity is pending a player-power pass — see:
 //     docs/superpowers/specs/2026-06-30-strong-final-boss-design.md
-//     docs/superpowers/remaining-work.md (backlog item #5)
+//     docs/superpowers/remaining-work.md (backlog item #1)
 
 describe('final boss climax invariant', () => {
   const finalStatMult = 1 + BALANCE.campaignB.finalBossMenace

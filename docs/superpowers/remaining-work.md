@@ -16,10 +16,19 @@
 > scudiRigen=0.142, magieOscure=0.742; floor 0.05 ciascuno). Lo **0.05 di headroom** è disponibile
 > per alzare `finalBossMenace` nel prossimo slice (parity slice → backlog item #5).
 
+> **Strong-final-boss step DONE** (2026-07-01): finalBossMenace locked **-0.34**, statMult **0.66**
+> (raised from 0.616). campaignBalanceB winRate **0.1667** (headroom **0.0167** sopra il floor 0.15).
+> Archetype sweeps post-raise: veleno=0.567, esecuzione=0.792, scudiRigen=0.142, magieOscure=0.733
+> (tutte sopra il floor 0.05). Il tripwire `finalBossClimax` PASSA ancora (0.66 < 1.08 = parity),
+> nessuna modifica alle assertion. Alzare il boss da solo è costoso in winRate (-0.033 per +0.044 di
+> menace); la **piena parità** è DEFERRED a un player-power/scripted-boss slice.
+> Serpeverde house-scissor è anch'essa un futuro slice separato.
+
 L'item aperto a leva più alta. **Il campaign era incollato al floor di completamento 0.15**
-(`campaignBalanceB` winRate **0.158** pre-pass → **0.200** post-pass), e questo BLOCCA due cose desiderate:
+(`campaignBalanceB` winRate **0.158** pre-pass → **0.200** post-pass → **0.1667** post-boss-raise),
+e questo BLOCCA due cose desiderate:
 - un **boss finale forte**: la parità con i boss d'area (statMult ~1.08 dopo il snowball pass; era ~1.33 prima che menaceOffset -0.75→-1.00 abbassasse menaceForLevel(10) da 0.33 a 0.08) crolla il completamento a ~2.5%
-  → oggi c'è solo un buff simbolico (`finalBossMenace -0.40→-0.384`, statMult 0.60→0.616);
+  → oggi il boss è a statMult 0.66 (`finalBossMenace -0.34`), più forte del vecchio pushover (0.616) ma ancora sotto parità (1.08);
 - una **forbice tra case più stretta**: Serpeverde 0.658 vs Grifondoro 0.183 (~3.5×), tenuta solo dal
   gate rilassato `<0.71`.
 
