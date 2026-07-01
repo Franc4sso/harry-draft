@@ -134,15 +134,17 @@ defenseK: 0.5,
     //   -0.384 is the empirically highest value that keeps winRate strictly > 0.15. statMult 0.616.
     //   Area-boss parity (1 + menaceForLevel(levelMax) ≈ 1.33) is DEFERRED pending a player-power
     //   pass — see docs/superpowers/specs/2026-06-30-strong-final-boss-design.md and remaining-work.md.
-    // Re-calibrated (2026-07-01, Task 1 — raise finalBossMenace to max holding 0.15 floor):
+    // Re-calibrated (2026-07-01, Task 1 — raise finalBossMenace, then robustness fix):
     //   Baseline after snowball-flatten: -0.384 → winRate 0.2000 (24/120), headroom 0.05.
     //   Sweep: -0.30 → 0.1167 (14/120), -0.33 → 0.1500 (18/120, fails strict >),
     //          -0.32 → 0.1083 (13/120), -0.334 → passes, -0.331 → passes, -0.3305 → passes,
     //          -0.3302 → 0.1583 (19/120, passes), -0.3301 → 0.1500 (18/120, fails strict >).
-    //   Locked: -0.3302 → statMult 0.6698, winRate 0.1583 (19/120), headroom 0.0083 above floor.
-    //   Area-boss parity (statMult 1.08 → finalBossMenace +0.08) not reached: at +0.08 → ~0.117.
-    //   Parity DEFERRED — real climax awaits a player-power buff.
-    finalBossMenace: -0.3302,
+    //   The 4-decimal value -0.3302 was a fragile 1-seed noise-fit (headroom 0.0083, 1 seed above floor).
+    //   Robustness fix: use -0.34 (statMult 0.66) — hair weaker than absolute max, robust margin.
+    //   Area-boss parity (statMult 1.08 → finalBossMenace +0.08) not reached: raising boss alone
+    //   is a very winRate-expensive lever (at +0.08 → ~0.117, far below floor). Parity DEFERRED
+    //   pending a player-power buff or scripted-boss slice (Slice 3).
+    finalBossMenace: -0.34,
     enemyRelicsElite: 0,
     enemyRelicsBoss: 1,
   },
