@@ -35,7 +35,7 @@ export const MURO: BossDef = {
   name: 'Il Muro',
   budget: 1000,
   hpMult: 1.3,
-  unitDamageReduction: 0.4, // starting value; calibrated in Task 6
+  unitDamageReduction: 0.4, // calibrated 2026-07-01 (Task 6b): passing plateau {0.40,0.45}; 0.35/0.50 flip overall to 0.1500 (< floor). See campaignBalanceB.test.ts.
   pinnedArea: 0,
   unitCount: 3,
 }

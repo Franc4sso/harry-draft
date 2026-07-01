@@ -7,6 +7,7 @@ import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
 import { createRng } from '@/game/engine/rng'
 import { powerOf } from '@/game/engine/combat/teamGen'
 import { BALANCE } from '@/data/constants'
+import { SPELLS } from '@/data/spells'
 import type { RunNode, RunState } from '@/types'
 
 // Register at module scope (idempotent): the greedy runs below are evaluated in
@@ -52,6 +53,24 @@ import type { RunNode, RunState } from '@/types'
 //   statMult 1.08) → winRate ~0.042 (5/120), far below the 0.15 floor. Full area-boss parity requires a
 //   future player-power spike or a scripted-boss slice — flat final-boss menace alone cannot reach it.
 //   Parity DEFERRED pending player-power buff (Slice 3).
+// Calibration (2026-07-01, Muro wall — 3-unit): added the two-profile veleno harness (preferVeleno
+//   variant of runOne: recruit picks bias to veleno-tagged wizards, relic picks to veleno-keyword
+//   relics; fallback to the power-greedy pick). Veleno bypasses MURO.unitDamageReduction by design
+//   (poison ticks subtract HP directly), so it is the intended counter to the wall. MURO is now a
+//   3-unit scripted area-0 boss (budget 1000, hpMult 1.3); prior task's canaries flipped green as a
+//   side effect of the unit-count drop, NOT from wall tuning — so the margin was unmeasured until now.
+//   Only allowed lever this slice: MURO.unitDamageReduction. Sweep (wall → [overall, scudi, withVeleno, noVeleno]):
+//     wall 0.35 → [0.1500, 0.092, 0.217, 0.150]  (overall == 0.15, FAILS strict > floor)
+//     wall 0.40 → [0.1583, 0.083, 0.225, 0.158]  (all four hold; overall headroom 0.0083)
+//     wall 0.45 → [0.1583, 0.083, 0.225, 0.158]  (identical discrete outcomes to 0.40)
+//     wall 0.50 → [0.1500, 0.083, 0.217, 0.150]  (overall == 0.15, FAILS strict > floor)
+//   overall winRate == noVeleno winRate (the overall harness IS the noVeleno path). It is a small
+//   plateau: {0.40, 0.45} pass identically; 0.35 and 0.50 each flip one seed to a loss (0.1500).
+//   Chosen: wall 0.40 (mid of the passing plateau; conservative on the soft-wall/noVeleno side; no
+//   number change vs. the shipped value — the sweep CONFIRMS 0.40 already satisfies all four targets).
+//   Final winRates: campaignBalanceB overall 0.1583 (headroom 0.0083 above 0.15 floor, in (0.15,0.45)),
+//   scudiRigen 0.083 (> 0.05 floor, headroom 0.033), withVeleno 0.225 > noVeleno 0.158 (gap +0.067 ✓),
+//   noVeleno 0.158 > 0 (soft wall ✓). All four targets hold.
 registerCoreResolvers()
 
 // Near-optimal ("upper-bound") player policy. A pure recruit/relic-first greedy is
@@ -69,7 +88,18 @@ function pickNode(s: RunState): RunNode {
   return opts.find(n => n.type === 'boss') ?? opts[0]!
 }
 
-function runOne(seed: string, battleTurns?: number[]): 'win' | 'defeat' {
+// Veleno = the intended counter to the Muro wall (poison bypasses unitDamageReduction).
+// The preferVeleno policy variant biases recruit picks to veleno-tagged wizards and relic
+// picks to veleno-keyword relics; otherwise it is identical to the near-optimal policy.
+const VELENO_SPELL_IDS = new Set(
+  SPELLS.filter(s => (s.spec ?? []).some(e => e.kind === 'applyStatus' && e.statusId === 'veleno')).map(s => s.id),
+)
+void VELENO_SPELL_IDS // veleno wizards are identified by tag; spell-id set kept for parity with brief
+function isVeleno(dw: { wizard: { tags?: string[] } }): boolean {
+  return (dw.wizard.tags ?? []).includes('veleno')
+}
+
+function runOne(seed: string, battleTurns?: number[], preferVeleno = false): 'win' | 'defeat' {
   let s = startRunB(seed)
   const offer = starterOffer(seed, 'Grifondoro')
   const starters = [...offer].sort((a, b) => powerOf(b) - powerOf(a)).slice(0, 2).map(d => d.wizard.id)
@@ -88,7 +118,10 @@ function runOne(seed: string, battleTurns?: number[]): 'win' | 'defeat' {
     }
     if (s.phase === 'recruit-node') {
       const off = recruitOffer(s, node, createRng(seed))
-      const best = [...off].sort((a, b) => powerOf(b) - powerOf(a))[0]!
+      const velenoCand = [...off].filter(isVeleno).sort((a, b) => powerOf(b) - powerOf(a))[0]
+      const best = preferVeleno
+        ? (velenoCand ?? [...off].sort((a, b) => powerOf(b) - powerOf(a))[0]!)
+        : [...off].sort((a, b) => powerOf(b) - powerOf(a))[0]!
       const full = s.team.length >= (s.teamMax ?? 5)
       const replaceId = full ? [...s.team].sort((a, b) => powerOf(a) - powerOf(b))[0]!.wizard.id : undefined
       s = resolveCurrent(s, { kind: 'recruit-pick', wizardId: best.wizard.id, replaceId }, createRng(seed))
@@ -96,7 +129,9 @@ function runOne(seed: string, battleTurns?: number[]): 'win' | 'defeat' {
     }
     if (s.phase === 'relic-node') {
       const off = relicOffer(s, node, createRng(seed))
-      s = resolveCurrent(s, { kind: 'relic-pick', relicId: off[0]!.id }, createRng(seed))
+      const velenoRelic = off.find(r => (r.keywords ?? []).includes('veleno'))
+      const chosen = preferVeleno ? (velenoRelic ?? off[0]!) : off[0]!
+      s = resolveCurrent(s, { kind: 'relic-pick', relicId: chosen.id }, createRng(seed))
       s = { ...s, phase: 'map' }; continue
     }
     if (s.phase === 'infirmary-node') {
@@ -115,6 +150,9 @@ describe('campaign balance (new loop)', () => {
   const outcomes = Array.from({ length: N }, (_, i) => runOne(`run-${i}`))
   const winRate = outcomes.filter(o => o === 'win').length / N
 
+  // eslint-disable-next-line no-console
+  console.log(`[campaignBalanceB overall] winRate=${winRate.toFixed(4)}`)
+
   it('is winnable but not trivial for a near-optimal player', () => {
     expect(winRate).toBeGreaterThan(0.15)
     expect(winRate).toBeLessThan(0.45)
@@ -128,5 +166,22 @@ describe('campaign balance (new loop)', () => {
     for (let i = 0; i < N; i++) runOne(`run-${i}`, turns)
     expect(turns.length).toBeGreaterThan(0)
     expect(Math.max(...turns)).toBeLessThan(BALANCE.combat.turnCap)
+  })
+})
+
+describe('Muro wall — veleno is the counter', () => {
+  const N = 120
+  const withVeleno = Array.from({ length: N }, (_, i) => runOne(`run-${i}`, undefined, true))
+  const noVeleno = Array.from({ length: N }, (_, i) => runOne(`run-${i}`, undefined, false))
+  const wr = (o: ('win' | 'defeat')[]) => o.filter(x => x === 'win').length / N
+
+  // eslint-disable-next-line no-console
+  console.log(`[muro veleno] N=${N} withVeleno=${wr(withVeleno).toFixed(3)} noVeleno=${wr(noVeleno).toFixed(3)}`)
+
+  it('veleno players win more than non-veleno players (the wall teaches)', () => {
+    expect(wr(withVeleno)).toBeGreaterThan(wr(noVeleno))
+  })
+  it('soft wall: non-veleno play is still winnable (above zero)', () => {
+    expect(wr(noVeleno)).toBeGreaterThan(0)
   })
 })
