@@ -14,6 +14,8 @@ export interface BattleReplayController {
   total: number
   hp: Record<string, number>
   entry: LogEntry | null
+  /** Turn number of the current frame (0 before any action has played). */
+  currentTurn: number
   playing: boolean
   done: boolean
   modalReady: boolean
@@ -86,12 +88,22 @@ export function useBattleReplay(
   }, [])
 
   const frame = replay.frames[Math.min(index, total - 1)]!
+  // Frame 0 has no entry (pre-combat state) — walk back to the nearest played
+  // frame's turn so callers always get a sensible turn number, even at the start.
+  let currentTurn = frame.entry?.turn ?? 0
+  if (frame.entry == null) {
+    for (let i = Math.min(index, total - 1) - 1; i >= 0; i--) {
+      const t = replay.frames[i]?.entry?.turn
+      if (t != null) { currentTurn = t; break }
+    }
+  }
   return {
     frame,
     index,
     total,
     hp: frame.hp,
     entry: frame.entry,
+    currentTurn,
     playing,
     done,
     modalReady,

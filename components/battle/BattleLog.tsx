@@ -53,6 +53,7 @@ export function describeEntry(
     }
   }
   if (entry.action === 'Veleno') return `${actor} subisce ${entry.value ?? 0} danni da veleno`
+  if (entry.action === 'Fatica') return `Sfinimento — ${actor} perde ${entry.value} PV`
 
   if (entry.flags.includes('heal')) return `${actor} lancia ${entry.action} e cura ${entry.value ?? 0} HP`
   if (entry.flags.includes('dodge')) return `${actor} lancia ${entry.action} ma ${target ?? 'il bersaglio'} schiva`

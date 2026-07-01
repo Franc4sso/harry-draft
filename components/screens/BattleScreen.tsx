@@ -4,6 +4,8 @@ import { Play, Pause, SkipForward, FastForward, ChevronRight } from 'lucide-reac
 import type { ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard, LogEntry } from '@/types'
 import { buildReplay } from '@/game/engine/combat/replay'
 import { useBattleReplay, REPLAY_SPEEDS } from '@/hooks/useBattleReplay'
+import { BALANCE } from '@/data/constants'
+import { Hourglass } from 'lucide-react'
 import { InitiativeBar } from '@/components/battle/InitiativeBar'
 import { BattleArena } from '@/components/battle/BattleArena'
 import { ActionPanel } from '@/components/battle/ActionPanel'
@@ -40,6 +42,13 @@ export function BattleScreen({
   // track the real frame.
   const stickyEntry = useMemo(() => lastRealEntryAt(replay, r.index), [replay, r.index])
 
+  // Fatigue ("Sfinimento") kicks in once the anti-stall system starts ticking
+  // true damage every turn. Flag it as soon as the current turn passes the
+  // threshold, or the moment a Fatica entry has actually played (whichever
+  // comes first) so the banner never lags behind the log/HP bars.
+  const fatigueActive = r.currentTurn > BALANCE.combat.fatigueStart
+    || replay.frames.slice(0, r.index + 1).some(f => f.entry?.action === 'Fatica')
+
   const controlAt = useMemo(() => {
     const kinds = ['stun', 'freeze', 'silence', 'disarm'] as const
     return (entry: LogEntry) => {
@@ -60,6 +69,16 @@ export function BattleScreen({
           {r.entry?.actorId ? <> · agisce <span className="text-white/60">{replay.units.find(u => u.id === r.entry!.actorId && u.side === r.entry!.actorSide)?.name ?? r.entry!.actorId}</span></> : null}
         </p>
       </div>
+
+      {fatigueActive && (
+        <div
+          data-testid="fatigue-banner"
+          className="flex items-center gap-2 rounded-xl border border-fuchsia-400/40 bg-fuchsia-950/40 px-4 py-1.5 text-xs font-semibold text-fuchsia-200 shadow-[0_0_16px_rgba(217,70,239,0.15)]"
+        >
+          <Hourglass size={14} className="shrink-0 text-fuchsia-300" aria-hidden />
+          Sfinimento! Tutti i maghi perdono PV ogni turno.
+        </div>
+      )}
 
       {!r.done && (
         <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">

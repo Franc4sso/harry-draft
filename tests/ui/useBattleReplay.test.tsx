@@ -125,4 +125,12 @@ describe('useBattleReplay', () => {
     act(() => { result.current.stepBack(); result.current.stepBack() })
     expect(result.current.index).toBe(0)
   })
+
+  it('exposes currentTurn: 0 before any action, then the played entry\'s turn', () => {
+    const replay = makeReplay()
+    const { result } = renderHook(() => useBattleReplay(replay, { autoPlay: false }))
+    expect(result.current.currentTurn).toBe(0)
+    act(() => result.current.step())
+    expect(result.current.currentTurn).toBe(result.current.entry?.turn)
+  })
 })
