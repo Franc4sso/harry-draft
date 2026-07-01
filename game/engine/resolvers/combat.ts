@@ -50,7 +50,15 @@ export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatR
   // Enemies now carry a real level (stamped in buildBattlePackage) and go through the
   // SAME leveling path as the player, so a level-N enemy shows level-N stats instead
   // of flat level-1 stats propped up entirely by menace.
-  const enemy = battleReadyTeam(pkg.enemyTeam)
+  // Safety net for saves whose MAP was generated before per-unit levels were stamped
+  // (pre-f67fe4e): such units carry no `level`, which would silently fall back to
+  // level-1 stats in leveledStats. Backfill from the package's own enemyLevel — the
+  // same value map-gen would have stamped — so old saves see the correct enemy level
+  // too. No-op for fresh packages, which already carry `level` on every unit.
+  const enemyTeam = pkg.enemyTeam.some(dw => dw.level === undefined)
+    ? pkg.enemyTeam.map(dw => (dw.level === undefined ? { ...dw, level: pkg.enemyLevel ?? enemyLevel } : dw))
+    : pkg.enemyTeam
+  const enemy = battleReadyTeam(enemyTeam)
   const rightRelics = pkg.enemyRelics
   const bossSyn = pkg.bossSynergy?.synergy
   const rightDamageReduction = pkg.unitDamageReduction ?? 0
