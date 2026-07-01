@@ -23,6 +23,8 @@ export interface NodeBattle {
   enemyLevel: number
   /** Exclusive synergy carried by the FINAL boss only. */
   bossSynergy?: ActiveSynergy
+  /** Wall archetype: per-unit direct-damage reduction for the enemy boss team (boss nodes only). */
+  unitDamageReduction?: number
 }
 
 export interface NodePreview {
@@ -30,6 +32,8 @@ export interface NodePreview {
   synergyIds: string[]
   /** Final-boss display name (boss nodes only). */
   bossName?: string
+  /** Telegraph copy for a scripted boss weakness (e.g. Muro → veleno). */
+  bossHint?: string
 }
 
 export interface RunNode {

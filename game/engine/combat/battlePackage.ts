@@ -5,7 +5,7 @@ import { enemyLevelFor, globalDepth, budgetB } from './threat'
 import { detectSynergies } from '../synergy'
 import { selectEnemyRelics } from '../relics'
 import { BALANCE } from '@/data/constants'
-import { BOSSES } from '@/data/bosses'
+import { BOSSES, MURO } from '@/data/bosses'
 
 type Kind = 'battle' | 'elite' | 'boss'
 const enemyKind = (k: Kind): 'normal' | 'elite' | 'boss' => (k === 'battle' ? 'normal' : k)
@@ -19,6 +19,7 @@ export function buildBattlePackage(
   const cb = BALANCE.campaignB
   const isBoss = kind === 'boss'
   const isFinalBoss = isBoss && area >= BALANCE.map.areas - 1
+  const isFirstBoss = isBoss && area === MURO.pinnedArea
   const ek = enemyKind(kind)
   const depth = globalDepth(area, floor)
   const enemyLevel = enemyLevelFor(area, ek, isFinalBoss)
@@ -34,11 +35,18 @@ export function buildBattlePackage(
     : (cb.enemyCountByArea[area] ?? cb.enemyCountByArea[cb.enemyCountByArea.length - 1]!)
 
   let enemyTeam, themeId: string | null = null, bossSynergy: ActiveSynergy | undefined
+  let unitDamageReduction: number | undefined
   if (isFinalBoss) {
     enemyTeam = generateBossTeam(enemyRng, BOSSES[0]!)
     bossSynergy = BOSSES[0]!.exclusiveSynergy
       ? { synergy: BOSSES[0]!.exclusiveSynergy, memberIds: enemyTeam.map(d => d.wizard.id) }
       : undefined
+  } else if (isFirstBoss) {
+    enemyTeam = generateBossTeam(enemyRng, MURO)
+    bossSynergy = MURO.exclusiveSynergy
+      ? { synergy: MURO.exclusiveSynergy, memberIds: enemyTeam.map(d => d.wizard.id) }
+      : undefined
+    unitDamageReduction = MURO.unitDamageReduction
   } else {
     const out = themedEnemyTeam(enemyRng, {
       area, kind: ek, budget: Math.round(budgetB(depth) * budgetMult), count, excludeThemes,
@@ -55,10 +63,11 @@ export function buildBattlePackage(
     ? [...detected.map(s => s.synergy.id), bossSynergy.synergy.id]
     : detected.map(s => s.synergy.id)
 
-  const battle: NodeBattle = { enemyTeam, enemyRelics, enemyLevel, bossSynergy }
+  const battle: NodeBattle = { enemyTeam, enemyRelics, enemyLevel, bossSynergy, unitDamageReduction }
   const preview: NodePreview = {
     synergyIds,
-    bossName: isFinalBoss ? BOSSES[0]!.name : undefined,
+    bossName: isFinalBoss ? BOSSES[0]!.name : isFirstBoss ? MURO.name : undefined,
+    bossHint: isFirstBoss ? 'Incassa i colpi diretti — il veleno lo ignora.' : undefined,
   }
   return { battle, preview, themeId }
 }
