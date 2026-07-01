@@ -11,6 +11,13 @@ import { menaceForLevel } from '@/game/engine/resolvers/combat'
 //   The Serpeverde balance tune (Voldemort atk trim) ate into the campaignBalanceB headroom,
 //   leaving only 0.0083 above the 0.15 floor — so the raise is modest but real and honest.
 //
+// Snowball pass completed 2026-07-01 (Task 3+4):
+//   growthBudgetPerLevel 0.40 → 0.28, menaceOffset -0.75 → -1.00.
+//   campaignBalanceB winRate: 0.2000 (headroom 0.05 above the 0.15 floor).
+//   This 0.05 headroom is available for a future finalBossMenace raise (parity slice).
+//   All 4 archetype sweeps in band: veleno=0.608, esecuzione=0.800,
+//   scudiRigen=0.142, magieOscure=0.742 (floor 0.05 each).
+//
 // Full area-boss PARITY (1 + finalBossMenace >= 1 + menaceForLevel(levelMax)) is DEFERRED:
 //   parity would require statMult ~1.33, collapsing campaign completion to ~2.5%.
 //   Parity is pending a player-power pass — see:

@@ -10,8 +10,14 @@
 
 ## 1. PRIORITÀ #1 — Pass di "potere del giocatore" (sblocca il climax + stringe il bilanciamento)
 
-L'item aperto a leva più alta. **Il campaign è incollato al floor di completamento 0.15**
-(`campaignBalanceB` winRate **0.158**), e questo BLOCCA due cose desiderate:
+> **Snowball pass DONE** (2026-07-01): growthBudgetPerLevel 0.40→0.28, menaceOffset -0.75→-1.00,
+> snowball ratio 1.447→1.365. campaignBalanceB winRate **0.2000** (headroom **0.05** sopra il floor
+> 0.15). Tutti e 4 gli archetype-sweep in band (veleno=0.608, esecuzione=0.800,
+> scudiRigen=0.142, magieOscure=0.742; floor 0.05 ciascuno). Lo **0.05 di headroom** è disponibile
+> per alzare `finalBossMenace` nel prossimo slice (parity slice → backlog item #5).
+
+L'item aperto a leva più alta. **Il campaign era incollato al floor di completamento 0.15**
+(`campaignBalanceB` winRate **0.158** pre-pass → **0.200** post-pass), e questo BLOCCA due cose desiderate:
 - un **boss finale forte**: la parità con i boss d'area (statMult 1.33) crolla il completamento a ~2.5%
   → oggi c'è solo un buff simbolico (`finalBossMenace -0.40→-0.384`, statMult 0.60→0.616);
 - una **forbice tra case più stretta**: Serpeverde 0.658 vs Grifondoro 0.183 (~3.5×), tenuta solo dal
