@@ -11,6 +11,8 @@ export interface BossDef {
   unitDamageReduction?: number
   /** Area this scripted boss is pinned to (e.g. Muro → 0). Final boss uses isFinalBoss instead. */
   pinnedArea?: number
+  /** Team size override; defaults to BALANCE.draft.teamSize (5) when absent. */
+  unitCount?: number
 }
 
 export const BOSSES: BossDef[] = [
@@ -35,4 +37,5 @@ export const MURO: BossDef = {
   hpMult: 1.3,
   unitDamageReduction: 0.4, // starting value; calibrated in Task 6
   pinnedArea: 0,
+  unitCount: 3,
 }

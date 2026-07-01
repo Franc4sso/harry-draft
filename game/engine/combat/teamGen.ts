@@ -56,8 +56,9 @@ export function generateEnemyTeam(rng: Rng, targetBudget: number): DraftedWizard
 }
 
 export function generateBossTeam(rng: Rng, boss: BossDef): DraftedWizard[] {
-  const perUnit = boss.budget / BALANCE.draft.teamSize
-  const team = pickTowardBudget(rng, perUnit, BALANCE.draft.teamSize)
+  const size = boss.unitCount ?? BALANCE.draft.teamSize
+  const perUnit = boss.budget / size
+  const team = pickTowardBudget(rng, perUnit, size)
   const leader = team.reduce((best, d) => (powerOf(d) > powerOf(best) ? d : best), team[0]!)
   leader.stats = { ...leader.stats, hp: Math.round(leader.stats.hp * boss.hpMult) }
   leader.maxHp = leader.stats.hp
