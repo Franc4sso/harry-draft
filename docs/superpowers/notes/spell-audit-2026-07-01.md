@@ -79,15 +79,17 @@ independent regression test at the requested path/location (full-battle
 harness rather than single-`resolveAction` unit test), per the brief's Step
 2, but it is confirmatory rather than a fix.
 
-## Unreferenced status defs (not spells, flagged for completeness)
+## Graded status defs not applied by any base spell (in-scope note)
 
 `data/statuses.ts` defines graded percentage variants — `weaken1/2/3`,
 `expose1/2/3`, `slow1/2/3` — that no spell in `data/spells.ts` applies via
-`statusId` (grep confirms zero references outside `statuses.ts` itself).
-These are pure dead data, presumably reserved for boss/trait use. **Deferred**
-— out of scope for a spell sweep (no spell regresses because of them), and
-inventing a consumer would be scope creep per the brief's Step 9 guidance
-("do not scope-creep into new mechanics").
+`statusId`. They are NOT dead data, however: `data/traits.ts` (lines 72, 117,
+171) and `data/signatures.ts` (multiple `onHit` effects) apply these exact
+status IDs via `statusId`, so they are live, reachable game content reached
+through traits/signatures rather than base spells. **No action** — they are
+correctly wired and consumed; a spell sweep simply isn't their delivery path,
+and adding a spell that applies them would be scope creep per the brief's
+Step 9 guidance ("do not scope-creep into new mechanics").
 
 ## Summary of fixes applied in this task
 
