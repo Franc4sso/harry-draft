@@ -26,7 +26,7 @@ const ACCENT: Record<RunNodeType, string> = {
 }
 
 // Layout grid: each floor is a row (entry at the bottom, boss at the top).
-const COL = 132, ROW = 116, NODE = 60, BOSS = 80
+const COL = 168, ROW = 148, NODE = 60, BOSS = 80
 
 export function MapScreen({
   map, currentNodeId, reachableIds, onChoose, area, areasTotal,
@@ -163,13 +163,17 @@ export function MapScreen({
                       )}
                     </span>
                   )}
-                  {n.preview.synergyIds.map(sid => (
-                    <span key={sid} data-synergy={sid}
-                      className="rounded-full border px-1.5 py-0.5 text-[8px] font-semibold"
-                      style={{ color: '#f3e6c4', borderColor: 'rgba(202,162,74,0.6)', background: 'rgba(176,141,87,0.16)' }}>
-                      {synergyName(sid)}
+                  {n.preview.synergyIds.length > 0 && (
+                    <span className="flex flex-wrap justify-center gap-0.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">
+                      {n.preview.synergyIds.map(sid => (
+                        <span key={sid} data-synergy={sid}
+                          className="rounded-full border px-1.5 py-0.5 text-[8px] font-semibold"
+                          style={{ color: '#f3e6c4', borderColor: 'rgba(202,162,74,0.6)', background: 'rgba(176,141,87,0.16)' }}>
+                          {synergyName(sid)}
+                        </span>
+                      ))}
                     </span>
-                  ))}
+                  )}
                 </span>
               )}
             </button>
