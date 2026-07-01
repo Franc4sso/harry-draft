@@ -99,7 +99,10 @@ export function tickStatuses(turn: number, unit: BattleUnit, opts: { velenoMult?
       logs.push({ turn, actorId: unit.wizard.id, actorSide: unit.side, action: def?.name ?? 'Rigenerazione',
         targetId: unit.wizard.id, targetSide: unit.side, type: 'Cura', value: tickHeal, flags: ['heal'] })
     }
-    e.remaining -= 1
+    // Stat buffs/debuffs are permanent (last the whole battle): never decrement their
+    // remaining counter. All other kinds (control, dot, regen, shield, ward) keep
+    // their normal timed expiry below.
+    if (e.kind !== 'buff' && e.kind !== 'debuff') e.remaining -= 1
   }
   unit.statusEffects = unit.statusEffects.filter(e => e.remaining > 0)
   for (const id of Object.keys(unit.cooldowns)) {

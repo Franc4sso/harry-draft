@@ -24,13 +24,20 @@ describe('status core', () => {
     applyStatus(u, 'slow')
     expect(effectiveStats(u).spd).toBe(25) // 40 - 15
   })
-  it('refresh stack policy resets duration, no duplicate', () => {
+  it('refresh stack policy resets duration, no duplicate (control effects still use it)', () => {
+    const u = unit()
+    applyStatus(u, 'silence', { duration: 1 })
+    applyStatus(u, 'silence', { duration: 3 })
+    const sil = u.statusEffects.filter(e => e.statusId === 'silence')
+    expect(sil).toHaveLength(1)
+    expect(sil[0]?.remaining).toBe(3)
+  })
+  it('stat debuffs (slow) are now stack policy: re-apply adds a new permanent instance', () => {
     const u = unit()
     applyStatus(u, 'slow', { duration: 1 })
     applyStatus(u, 'slow', { duration: 3 })
     const slows = u.statusEffects.filter(e => e.statusId === 'slow')
-    expect(slows).toHaveLength(1)
-    expect(slows[0]?.remaining).toBe(3)
+    expect(slows).toHaveLength(2) // cumulative, not refreshed
   })
   it('stack policy (burn) adds instances up to maxStacks', () => {
     const u = unit()
