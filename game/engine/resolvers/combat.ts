@@ -47,7 +47,10 @@ export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatR
   // saves (no node.battle) reconstruct it from the SAME builder — no divergence. The
   // combat path adds ZERO new rng draws: the team/relics are pre-built.
   const pkg = node.battle ?? buildBattlePackage(state.seed, area, floor, node.type as 'battle' | 'elite' | 'boss').battle
-  const enemy = pkg.enemyTeam
+  // Enemies now carry a real level (stamped in buildBattlePackage) and go through the
+  // SAME leveling path as the player, so a level-N enemy shows level-N stats instead
+  // of flat level-1 stats propped up entirely by menace.
+  const enemy = battleReadyTeam(pkg.enemyTeam)
   const rightRelics = pkg.enemyRelics
   const bossSyn = pkg.bossSynergy?.synergy
   const rightDamageReduction = pkg.unitDamageReduction ?? 0

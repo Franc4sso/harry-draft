@@ -1,4 +1,4 @@
-import type { ActiveSynergy, NodeBattle, NodePreview } from '@/types'
+import type { ActiveSynergy, DraftedWizard, NodeBattle, NodePreview } from '@/types'
 import { createRng } from '../rng'
 import { themedEnemyTeam, generateBossTeam } from './teamGen'
 import { enemyLevelFor, globalDepth, budgetB } from './threat'
@@ -54,6 +54,12 @@ export function buildBattlePackage(
     enemyTeam = out.team
     themeId = out.themeId
   }
+
+  // Stamp the displayed threat tier onto every enemy so they run through the same
+  // leveling path as the player (battleReadyTeam / leveledStats) — a level-N enemy
+  // now genuinely SHOWS level-N stats instead of flat level-1 stats + menace only.
+  // enemyLevelFor already clamps to [1, levelMax]; carry it through verbatim.
+  enemyTeam = enemyTeam.map((dw: DraftedWizard) => ({ ...dw, level: enemyLevel }))
 
   const relicCount = ek === 'boss' ? cb.enemyRelicsBoss : ek === 'elite' ? cb.enemyRelicsElite : 0
   const enemyRelics = relicCount > 0 ? selectEnemyRelics(combatFork.fork(depth + 200), relicCount) : []

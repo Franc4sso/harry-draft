@@ -106,8 +106,42 @@ defenseK: 0.5,
     // Re-calibrated (2026-07-01, snowball-flatten — growthBudgetPerLevel 0.40→0.28):
     //   Player nerf dropped winRate to 0.0667. Eased menaceOffset -0.75→-1.00 to compensate.
     //   Scan: -0.90→0.1417, -0.93→0.1583 (only 0.0083 headroom), -1.00→0.2000 (headroom 0.05 ✓).
-    menacePerLevel: 0.12,
-    menaceOffset: -1.00,
+    // Re-calibrated (2026-07-01, Task 7 — REAL enemy per-level stat growth added):
+    //   Enemies now run through the SAME leveledStats path as the player (a level-N enemy
+    //   shows level-N stats via battleReadyTeam), instead of flat level-1 base stats propped
+    //   up entirely by menace. This is a double-count fix, not a pure buff.
+    //   IMPORTANT CONSTRAINT: toBattleUnits clamps the menace multiplier at
+    //   Math.max(0, 1 + menacePct) — if menacePct <= -1 at ANY level that actually occurs
+    //   (real enemy levels are 2/4/6/8/10, never 1: normalLevelBase=2), that enemy's stats
+    //   are multiplied by ZERO (not just "weak" — an literal walkover with 0 HP/ATK/DEF/SPD).
+    //   A first sweep pushed menaceOffset to -2.00 to compensate for growth and DID clear the
+    //   0.15 floor (winRate 0.1583) — but a diagnostic (per-node stat dump) revealed EVERY
+    //   normal/elite/area-boss fight below level 10 was hitting this zero-clamp: the "difficulty"
+    //   was fake (enemies with literally zero stats), not real balance. That result was discarded.
+    //   Correct approach: keep 1 + (level-1)*menacePerLevel + menaceOffset > 0 for every real
+    //   level (2,4,6,8,10) with a safety margin, so growth is REDUCING menace's job (its old
+    //   per-level slope is now redundant with leveledStats), not eliminating enemies outright.
+    //   Baseline (growth ON, old campaignB values unchanged: menaceOffset=-1.00, menacePerLevel=0.12,
+    //   finalBossMenace=-0.34 — all non-degenerate): winRate CRASHED to 0.0417 (5/120). Diagnostic
+    //   trace showed losses concentrated at area0-boss (Il Muro, 49/115 losses) and area0-elite
+    //   (18/115) — the scripted early wall, not the final boss — because Muro units gain real
+    //   growth (level 6: +60-70% HP/ATK) on top of the unchanged menace.
+    //   menaceOffset sweep (non-degenerate range only, menacePerLevel=0.12, finalBossMenace=-0.34):
+    //     -1.00→0.0417 (baseline), -0.90→0.0333, -0.70→0.0083 (wrong direction — softer offset is
+    //     WORSE now that growth stacks on top), -1.05→0.0417, -1.08/-1.10/-1.11→0.0500 (near the
+    //     -1.12 clamp boundary for menacePerLevel=0.12, ceiling ~0.05, far below floor).
+    //   menacePerLevel sweep (menaceOffset=-1.00 held): 0.12→0.0417, 0.10→0.0583, 0.08→0.0667,
+    //     0.06→0.1000, 0.04→0.1000, 0.02→0.1167, 0.00→0.1417 (but 0.00 exactly zero-clamps level 2 —
+    //     degenerate, discarded). Flattening the slope helps (growth now supplies the per-level
+    //     ramp that menacePerLevel used to), but menaceOffset must retreat in lockstep to avoid
+    //     zero-clamping the now much-flatter curve at level 2.
+    //   Final joint sweep, keeping level-2 statMult >= 0.05 (safety margin above the zero-clamp):
+    //     off=-0.96/per=0.01 → statMult per level [0.05, 0.07, 0.09, 0.11, 0.13] (all non-degenerate).
+    //     At this curve, finalBossMenace became the binding lever for the overall floor (see below).
+    //   Chosen: menacePerLevel 0.12→0.01, menaceOffset -1.00→-0.96. Combined with finalBossMenace
+    //   (below), winRate 0.1667 (20/120), all 5 campaignBalanceB sub-tests pass, no zero-clamping.
+    menacePerLevel: 0.01,
+    menaceOffset: -0.96,
     // The FINAL area boss is the scripted Voldemort (BOSSES[0], fixed budget); its
     // menace is this flat value (independent of the level curve) so it stays the climax.
     // -0.31 → statMult 0.69 (was -0.45 → 0.55 before the Infermeria was on the live path).
@@ -144,7 +178,20 @@ defenseK: 0.5,
     //   Area-boss parity (statMult 1.08 → finalBossMenace +0.08) not reached: raising boss alone
     //   is a very winRate-expensive lever (at +0.08 → ~0.042 (5/120), far below floor). Parity DEFERRED
     //   pending a player-power buff or scripted-boss slice (Slice 3).
-    finalBossMenace: -0.34,
+    // Re-calibrated (2026-07-01, Task 7 — enemy per-level growth added; see menaceOffset/menacePerLevel
+    //   note above for the full context). With the new non-degenerate curve (menaceOffset=-0.96,
+    //   menacePerLevel=0.01), few runs even reach the final boss, so finalBossMenace became the
+    //   binding lever for the OVERALL campaignBalanceB floor (not just the final-boss fight alone).
+    //   Sweep (menaceOffset=-0.96, menacePerLevel=0.01 held): -0.34→0.1167, -0.40→0.1417 (fail),
+    //     -0.41→0.1500 (fail, exactly floor), -0.42→0.1583 (fails the veleno-gap sub-test: withVeleno
+    //     0.150 < noVeleno 0.158), -0.43→0.1667 (all 5 pass), -0.435→0.1667, -0.44→0.1583, -0.445→0.1750,
+    //     -0.45→0.1667, -0.455→0.1750, -0.46→0.1667 (stable passing plateau from -0.43 to -0.46),
+    //     -0.50→0.1917, -0.60→0.2833 (comfortably in-band, not chosen — user wants the LOW edge).
+    //   Chosen: -0.43 (statMult 0.57) — the value closest to the 0.15 floor that still sits on a
+    //   stable plateau (NOT a 1-seed fragile edge like -0.42, which flips the veleno-gap sub-test).
+    //   Final: campaignBalanceB overall winRate 0.1667 (20/120, headroom 2 seeds above 0.15),
+    //   withVeleno 0.183 > noVeleno 0.167 (wall-teaches gap holds), all 5 sub-tests pass.
+    finalBossMenace: -0.43,
     enemyRelicsElite: 0,
     enemyRelicsBoss: 1,
   },
