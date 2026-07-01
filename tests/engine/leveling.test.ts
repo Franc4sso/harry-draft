@@ -63,11 +63,11 @@ describe('leveling — per-wizard growth', () => {
     expect(w.spd).toBeCloseTo(0.25, 10)
   })
 
-  it('an average-profile wizard still grows by the legacy uniform 1 + 0.10*(level-1)', () => {
+  it('an average-profile wizard still grows by the legacy uniform 1 + 0.07*(level-1)', () => {
     const L = BALANCE.leveling
     const lvl = 6
     const got = leveledStats(dw(ROSTER_MEAN, { level: lvl }))
-    const mult = 1 + L.autoGrowthPct * (lvl - 1) // 0.40 budget × 0.25 weight == 0.10/level
+    const mult = 1 + L.autoGrowthPct * (lvl - 1) // 0.28 budget × 0.25 weight == 0.07/level
     expect(got.hp).toBe(Math.round(ROSTER_MEAN.hp * mult))
     expect(got.atk).toBe(Math.round(ROSTER_MEAN.atk * mult))
     expect(got.def).toBe(Math.round(ROSTER_MEAN.def * mult))

@@ -160,7 +160,8 @@ defenseK: 0.5,
     } as Record<RelicRarity, number>,
   },
   leveling: {
-    autoGrowthPct: 0.10,        // yardstick: legacy uniform per-level growth (reference for menacePerLevel)
+    autoGrowthPct: 0.07,        // yardstick: avg per-level growth = growthBudgetPerLevel × 0.25 (avg weight)
+                                // MUST track growthBudgetPerLevel×0.25: 0.28×0.25=0.07. Update together.
     // Re-calibrated (2026-07-01, snowball-flatten — growthBudgetPerLevel 0.40→0.28, user-approved):
     //   Reduces the per-level stat-growth budget to flatten late-game snowball. Players weaker at high levels;
     //   menaceOffset eased (less negative) in campaignB to compensate and re-hold the [0.15, 0.45] floor.
