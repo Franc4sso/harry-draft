@@ -36,7 +36,7 @@ describe('permanent + cumulative stat buffs/debuffs', () => {
 
   it('(c) the cap holds — applications beyond maxStacks do not exceed the cap effect', () => {
     const u = unit()
-    const cap = 5
+    const cap = 3
     for (let i = 0; i < cap + 10; i++) applyStatus(u, 'slow')
     expect(u.statusEffects.filter(e => e.statusId === 'slow')).toHaveLength(cap)
     const cappedSpd = effectiveStats(u).spd

@@ -15,11 +15,14 @@ describe('relic balance sanity', () => {
     // KNOWN BALANCE REGRESSION (2026-07-01, permanent+cumulative stat buffs/debuffs task):
     // Making stat buffs/debuffs permanent + cumulative (instead of timed/refresh) changed full-roster
     // simulated outcomes broadly, since many wizard signatures apply on-hit stat buffs/debuffs that
-    // now stack unboundedly (to maxStacks:5) for the whole fight instead of expiring after ~2 turns.
+    // now stack for the whole fight instead of expiring after ~2 turns.
     // Measured winsNoRelic=103, winsRelic=80 (of 200) — relics now measurably HURT the player's win
     // rate on average, the opposite of the intended "relics help" sanity check. This is a real,
-    // reproducible (seeded) effect, not flakiness — see task-12-report.md for details. Left as a
-    // documented regression rather than silently re-tuned; flagging for balance follow-up.
+    // reproducible (seeded) effect, not flakiness — see task-12-report.md for details.
+    // RE-CHECKED 2026-07-01 after lowering maxStacks 5→3: numbers UNCHANGED (still 103/80) — cap 3
+    // does not restore this subsystem. Left as a documented regression rather than silently
+    // re-tuned; flagging for balance follow-up (likely needs per-signature proc-rate tuning, not
+    // just a lower stack cap).
     let winsNoRelic = 0, winsRelic = 0
     const N = 200
     const relics = [ar('mappa-malandrino'), ar('giratempo'), ar('mantello-invisibilita')]

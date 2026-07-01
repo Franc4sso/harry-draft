@@ -13,21 +13,22 @@ export const STATUS_DEFS: StatusDef[] = [
   // Stat buffs/debuffs are permanent (tickStatuses never decrements kind:'buff'/'debuff') and
   // cumulative: stack:'stack' pushes a new entry per re-apply, and effectiveStats sums every
   // entry, so re-casting genuinely compounds the effect instead of just refreshing duration.
-  // maxStacks:5 bounds this so spd (flat, additive) or the pct debuffs below (which compound
-  // multiplicatively as (1-x)^N per stack) can't runaway to a soft-lock (e.g. spd floor of 1).
-  { id: 'atkUp', name: 'Forza', kind: 'buff', family: 'buff', statMod: { stat: 'atk', amount: 20 }, defaultDuration: 2, stack: 'stack', maxStacks: 5, priority: 20, removable: true },
-  { id: 'defUp', name: 'Difesa Rinforzata', kind: 'buff', family: 'buff', statMod: { stat: 'def', amount: 25 }, defaultDuration: 2, stack: 'stack', maxStacks: 5, priority: 20, removable: true },
-  { id: 'slow', name: 'Lentezza', kind: 'debuff', family: 'debuff', statMod: { stat: 'spd', amount: 15 }, defaultDuration: 2, stack: 'stack', maxStacks: 5, priority: 20, removable: true },
+  // maxStacks:3 bounds this so spd (flat, additive) or the pct debuffs below (which compound
+  // multiplicatively as (1-x)^3 max per stack; flat ones sum to 3x max) can't runaway to a
+  // soft-lock (e.g. spd floor of 1).
+  { id: 'atkUp', name: 'Forza', kind: 'buff', family: 'buff', statMod: { stat: 'atk', amount: 20 }, defaultDuration: 2, stack: 'stack', maxStacks: 3, priority: 20, removable: true },
+  { id: 'defUp', name: 'Difesa Rinforzata', kind: 'buff', family: 'buff', statMod: { stat: 'def', amount: 25 }, defaultDuration: 2, stack: 'stack', maxStacks: 3, priority: 20, removable: true },
+  { id: 'slow', name: 'Lentezza', kind: 'debuff', family: 'debuff', statMod: { stat: 'spd', amount: 15 }, defaultDuration: 2, stack: 'stack', maxStacks: 3, priority: 20, removable: true },
   // Graded percentage debuffs (engine applies statMod.pct as stat*(1+delta/100); debuff → negative).
-  { id: 'weaken1', name: 'Indebolimento', kind: 'debuff', family: 'debuff', statMod: { stat: 'atk', amount: 15, pct: true }, defaultDuration: 2, stack: 'stack', maxStacks: 5, priority: 20, removable: true },
-  { id: 'weaken2', name: 'Indebolimento', kind: 'debuff', family: 'debuff', statMod: { stat: 'atk', amount: 25, pct: true }, defaultDuration: 2, stack: 'stack', maxStacks: 5, priority: 20, removable: true },
-  { id: 'weaken3', name: 'Indebolimento', kind: 'debuff', family: 'debuff', statMod: { stat: 'atk', amount: 40, pct: true }, defaultDuration: 2, stack: 'stack', maxStacks: 5, priority: 20, removable: true },
-  { id: 'expose1', name: 'Vulnerabilità', kind: 'debuff', family: 'debuff', statMod: { stat: 'def', amount: 15, pct: true }, defaultDuration: 2, stack: 'stack', maxStacks: 5, priority: 20, removable: true },
-  { id: 'expose2', name: 'Vulnerabilità', kind: 'debuff', family: 'debuff', statMod: { stat: 'def', amount: 25, pct: true }, defaultDuration: 2, stack: 'stack', maxStacks: 5, priority: 20, removable: true },
-  { id: 'expose3', name: 'Vulnerabilità', kind: 'debuff', family: 'debuff', statMod: { stat: 'def', amount: 40, pct: true }, defaultDuration: 2, stack: 'stack', maxStacks: 5, priority: 20, removable: true },
-  { id: 'slow1', name: 'Lentezza', kind: 'debuff', family: 'debuff', statMod: { stat: 'spd', amount: 15, pct: true }, defaultDuration: 2, stack: 'stack', maxStacks: 5, priority: 20, removable: true },
-  { id: 'slow2', name: 'Lentezza', kind: 'debuff', family: 'debuff', statMod: { stat: 'spd', amount: 25, pct: true }, defaultDuration: 2, stack: 'stack', maxStacks: 5, priority: 20, removable: true },
-  { id: 'slow3', name: 'Lentezza', kind: 'debuff', family: 'debuff', statMod: { stat: 'spd', amount: 40, pct: true }, defaultDuration: 2, stack: 'stack', maxStacks: 5, priority: 20, removable: true },
+  { id: 'weaken1', name: 'Indebolimento', kind: 'debuff', family: 'debuff', statMod: { stat: 'atk', amount: 15, pct: true }, defaultDuration: 2, stack: 'stack', maxStacks: 3, priority: 20, removable: true },
+  { id: 'weaken2', name: 'Indebolimento', kind: 'debuff', family: 'debuff', statMod: { stat: 'atk', amount: 25, pct: true }, defaultDuration: 2, stack: 'stack', maxStacks: 3, priority: 20, removable: true },
+  { id: 'weaken3', name: 'Indebolimento', kind: 'debuff', family: 'debuff', statMod: { stat: 'atk', amount: 40, pct: true }, defaultDuration: 2, stack: 'stack', maxStacks: 3, priority: 20, removable: true },
+  { id: 'expose1', name: 'Vulnerabilità', kind: 'debuff', family: 'debuff', statMod: { stat: 'def', amount: 15, pct: true }, defaultDuration: 2, stack: 'stack', maxStacks: 3, priority: 20, removable: true },
+  { id: 'expose2', name: 'Vulnerabilità', kind: 'debuff', family: 'debuff', statMod: { stat: 'def', amount: 25, pct: true }, defaultDuration: 2, stack: 'stack', maxStacks: 3, priority: 20, removable: true },
+  { id: 'expose3', name: 'Vulnerabilità', kind: 'debuff', family: 'debuff', statMod: { stat: 'def', amount: 40, pct: true }, defaultDuration: 2, stack: 'stack', maxStacks: 3, priority: 20, removable: true },
+  { id: 'slow1', name: 'Lentezza', kind: 'debuff', family: 'debuff', statMod: { stat: 'spd', amount: 15, pct: true }, defaultDuration: 2, stack: 'stack', maxStacks: 3, priority: 20, removable: true },
+  { id: 'slow2', name: 'Lentezza', kind: 'debuff', family: 'debuff', statMod: { stat: 'spd', amount: 25, pct: true }, defaultDuration: 2, stack: 'stack', maxStacks: 3, priority: 20, removable: true },
+  { id: 'slow3', name: 'Lentezza', kind: 'debuff', family: 'debuff', statMod: { stat: 'spd', amount: 40, pct: true }, defaultDuration: 2, stack: 'stack', maxStacks: 3, priority: 20, removable: true },
 ]
 
 export const STATUS_BY_ID: Record<string, StatusDef> = Object.fromEntries(
