@@ -87,7 +87,7 @@ const STAT_LABEL: Record<Stat, string> = { hp: 'HP', atk: 'ATK', def: 'DIF', spd
 
 export function synergyBonusText(synergy: Synergy): string[] {
   const out: string[] = []
-  const bonus: SynergyBonus = synergy.bonus
+  const bonus: SynergyBonus = synergy.bonus ?? {}
   for (const stat of ['hp', 'atk', 'def', 'spd'] as Stat[]) {
     const v = bonus[stat]
     if (v) out.push(`+${v} ${STAT_LABEL[stat]}`)
