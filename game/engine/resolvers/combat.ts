@@ -50,6 +50,7 @@ export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatR
   const enemy = pkg.enemyTeam
   const rightRelics = pkg.enemyRelics
   const bossSyn = pkg.bossSynergy?.synergy
+  const rightDamageReduction = pkg.unitDamageReduction ?? 0
 
   const enemySyn = bossSyn
     ? [...detectSynergies(enemy), { synergy: bossSyn, memberIds: enemy.map(d => d.wizard.id) }]
@@ -62,7 +63,7 @@ export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatR
   const playerSyn = detectSynergies(ready)
   const result = simulateBattle(ready, enemy, battleRng, {
     leftSyn: playerSyn, rightSyn: enemySyn, leftRelics: state.relics,
-    rightRelics, rightMenace,
+    rightRelics, rightMenace, rightDamageReduction,
   })
 
   // Persist HP onto the ORIGINAL (unleveled) roster via the existing helper, then grant
