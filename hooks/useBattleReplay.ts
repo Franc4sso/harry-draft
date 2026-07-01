@@ -6,12 +6,17 @@ import type { Replay, ReplayFrame } from '@/game/engine/combat/replay'
 export const REPLAY_SPEEDS = [1, 2, 4] as const
 export type ReplaySpeed = (typeof REPLAY_SPEEDS)[number]
 
-const POST_DEATH_DELAY_MS = 700
+// Must exceed the HpBar spring settle time (~stiffness 220/damping 30, settles well under
+// 500ms) so the victory modal never appears while an HP bar is still visibly draining.
+const POST_DEATH_DELAY_MS = 600
 
 export interface BattleReplayController {
   frame: ReplayFrame
   index: number
   total: number
+  /** First frame index at which every unit on the losing side has hp <= 0, or the
+   *  last frame index as a fallback (e.g. a timeout win with survivors on both sides). */
+  deathFrame: number
   hp: Record<string, number>
   entry: LogEntry | null
   /** Turn number of the current frame (0 before any action has played). */
@@ -60,6 +65,22 @@ export function useBattleReplay(
 
   const done = index >= total - 1
 
+  // The engine appends trailing WINNER-side frames after the killing blow (regen ticks,
+  // fatigue, wait turns) — so the LAST frame is not when the fight is visually decided.
+  // Find the earliest frame where every unit on the losing side has hp <= 0 instead, and
+  // gate the victory modal off that. Falls back to the last frame when no such frame
+  // exists (a timeout win: both sides have survivors at turnCap).
+  const deathFrame = (() => {
+    const losingSide = replay.winner === 'left' ? 'right' : 'left'
+    const losingKeys = replay.units.filter(u => u.side === losingSide).map(u => u.key)
+    if (losingKeys.length === 0) return total - 1
+    for (let i = 0; i < total; i++) {
+      const hp = replay.frames[i]!.hp
+      if (losingKeys.every(k => (hp[k] ?? 0) <= 0)) return i
+    }
+    return total - 1
+  })()
+
   useEffect(() => {
     if (!playing || done) return
     const t = setTimeout(() => setIndex(i => Math.min(total - 1, i + 1)), stepMs / speed)
@@ -69,10 +90,10 @@ export function useBattleReplay(
   useEffect(() => { if (done) setPlaying(false) }, [done])
 
   useEffect(() => {
-    if (!done) { setModalReady(false); return }
+    if (index < deathFrame) { setModalReady(false); return }
     const t = setTimeout(() => setModalReady(true), POST_DEATH_DELAY_MS)
     return () => clearTimeout(t)
-  }, [done])
+  }, [index, deathFrame])
 
   const play = useCallback(() => setPlaying(true), [])
   const pause = useCallback(() => setPlaying(false), [])
@@ -101,6 +122,7 @@ export function useBattleReplay(
     frame,
     index,
     total,
+    deathFrame,
     hp: frame.hp,
     entry: frame.entry,
     currentTurn,
