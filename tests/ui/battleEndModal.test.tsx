@@ -16,3 +16,33 @@ it('renders the loss outcome with the right button', () => {
   expect(screen.getByText('Sconfitta')).toBeInTheDocument()
   expect(screen.getByRole('button', { name: /Vedi esito/i })).toBeInTheDocument()
 })
+
+it('renders a close affordance when onClose is provided, and clicking it fires onClose (not onConfirm)', () => {
+  const onConfirm = vi.fn()
+  const onClose = vi.fn()
+  render(<BattleEndModal outcome="win" onConfirm={onConfirm} onClose={onClose} />)
+  fireEvent.click(screen.getByRole('button', { name: /chiudi/i }))
+  expect(onClose).toHaveBeenCalledOnce()
+  expect(onConfirm).not.toHaveBeenCalled()
+})
+
+it('does not render a close affordance when onClose is not provided', () => {
+  render(<BattleEndModal outcome="win" onConfirm={() => {}} />)
+  expect(screen.queryByRole('button', { name: /chiudi/i })).toBeNull()
+})
+
+it('Esc calls onClose when provided instead of onConfirm', () => {
+  const onConfirm = vi.fn()
+  const onClose = vi.fn()
+  render(<BattleEndModal outcome="win" onConfirm={onConfirm} onClose={onClose} />)
+  fireEvent.keyDown(window, { key: 'Escape' })
+  expect(onClose).toHaveBeenCalledOnce()
+  expect(onConfirm).not.toHaveBeenCalled()
+})
+
+it('Esc still calls onConfirm when onClose is not provided', () => {
+  const onConfirm = vi.fn()
+  render(<BattleEndModal outcome="win" onConfirm={onConfirm} />)
+  fireEvent.keyDown(window, { key: 'Escape' })
+  expect(onConfirm).toHaveBeenCalledOnce()
+})

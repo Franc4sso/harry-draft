@@ -357,6 +357,34 @@ describe('BattleScreen', () => {
     expect(screen.getAllByText(/Danni nemici/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.queryByTestId('status-legend')).toBeNull()
   })
+
+  it('closing the end modal hides it and reveals a "Rivedi esito" reopen button; onFinish stays reachable', async () => {
+    const l = left(), r = right()
+    const result = simulateBattle(l, r, createRng(42), {
+      leftSyn: detectSynergies(l), rightSyn: detectSynergies(r),
+    })
+    const onFinish = vi.fn()
+    render(
+      <BattleScreen
+        result={result} playerTeam={l} playerSyn={detectSynergies(l)}
+        enemy={r} enemySyn={detectSynergies(r)} title="Sfida 1 di 5" onFinish={onFinish}
+      />,
+    )
+    await userEvent.click(screen.getByRole('button', { name: /salta/i }))
+    await screen.findByTestId('battle-end-modal')
+
+    await userEvent.click(screen.getByRole('button', { name: /chiudi/i }))
+    expect(screen.queryByTestId('battle-end-modal')).toBeNull()
+    const reopen = await screen.findByRole('button', { name: /rivedi esito/i })
+
+    await userEvent.click(reopen)
+    const modal = await screen.findByTestId('battle-end-modal')
+    expect(modal).toBeInTheDocument()
+
+    const cont = screen.getByRole('button', { name: /continua|esito/i })
+    await userEvent.click(cont)
+    expect(onFinish).toHaveBeenCalledOnce()
+  }, 15000)
 })
 
 describe('SpellFx', () => {

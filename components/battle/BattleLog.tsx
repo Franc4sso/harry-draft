@@ -1,4 +1,5 @@
 'use client'
+import { useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { LogEntry } from '@/types'
 import type { ReplayUnit } from '@/game/engine/combat/replay'
@@ -81,37 +82,40 @@ export function describeEntry(
 }
 
 export function BattleLog({
-  entries, units, max = 7, controlAt,
+  entries, units, controlAt,
 }: {
   entries: LogEntry[]
   units: ReplayUnit[]
-  max?: number
   controlAt?: (entry: LogEntry) => 'stun' | 'freeze' | 'silence' | 'disarm' | undefined
 }) {
   const names: Record<string, string> = {}
   for (const u of units) names[u.key] = u.name
-  const recent = entries.slice(Math.max(0, entries.length - max))
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  // Auto-scroll to the newest entry as the replay advances, while still
+  // letting the player scroll up to review earlier lines.
+  useEffect(() => {
+    const el = scrollRef.current
+    if (el) el.scrollTop = el.scrollHeight
+  }, [entries.length])
 
   return (
-    <div className="glass rounded-2xl p-3 w-full max-w-md h-44 overflow-hidden flex flex-col justify-end">
+    <div ref={scrollRef} className="glass rounded-2xl p-3 w-full max-w-md max-h-64 overflow-y-auto">
       <ul className="space-y-1 text-xs">
         <AnimatePresence initial={false}>
-          {recent.map((entry, i) => {
-            const globalIdx = entries.length - recent.length + i
-            return (
-              <motion.li
-                key={globalIdx}
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className={cn('leading-snug', TONE_CLASS[toneFor(entry)])}
-              >
-                <span className="text-white/30 tabular-nums mr-1">T{entry.turn}</span>
-                {describeEntry(entry, names, controlAt?.(entry))}
-              </motion.li>
-            )
-          })}
+          {entries.map((entry, i) => (
+            <motion.li
+              key={i}
+              initial={{ opacity: 0, x: -8 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className={cn('leading-snug', TONE_CLASS[toneFor(entry)])}
+            >
+              <span className="text-white/30 tabular-nums mr-1">T{entry.turn}</span>
+              {describeEntry(entry, names, controlAt?.(entry))}
+            </motion.li>
+          ))}
         </AnimatePresence>
       </ul>
     </div>

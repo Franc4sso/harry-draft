@@ -1,19 +1,23 @@
 'use client'
 import { useEffect, useRef } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
+import { X } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 
 /**
  * End-of-battle modal: a dimmed premium overlay with the outcome and a single
- * action, so the player never hunts for a "continue" button. Shown after the
- * replay finishes. Esc or the button confirm.
+ * primary action, so the player never hunts for a "continue" button. Shown
+ * after the replay finishes. Esc or the button confirm; if `onClose` is
+ * provided the modal is also dismissable (to review the settled board), and
+ * Esc dismisses instead of confirming.
  */
 export function BattleEndModal({
-  outcome, timedOut, onConfirm,
+  outcome, timedOut, onConfirm, onClose,
 }: {
   outcome: 'win' | 'loss'
   timedOut?: boolean
   onConfirm: () => void
+  onClose?: () => void
 }) {
   const reduce = useReducedMotion()
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -22,10 +26,10 @@ export function BattleEndModal({
 
   useEffect(() => {
     wrapRef.current?.querySelector('button')?.focus()
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onConfirm() }
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') (onClose ?? onConfirm)() }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [onConfirm])
+  }, [onConfirm, onClose])
 
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 backdrop-blur-sm p-6">
@@ -37,8 +41,18 @@ export function BattleEndModal({
         initial={reduce ? false : { opacity: 0, scale: 0.92, y: 8 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         transition={{ type: 'spring', stiffness: 300, damping: 26 }}
-        className="w-full max-w-sm rounded-2xl border border-[#C9A24B]/40 bg-[rgba(20,16,33,0.92)] px-6 py-7 text-center shadow-[0_0_40px_rgba(201,162,75,0.18)]"
+        className="relative w-full max-w-sm rounded-2xl border border-[#C9A24B]/40 bg-[rgba(20,16,33,0.92)] px-6 py-7 text-center shadow-[0_0_40px_rgba(201,162,75,0.18)]"
       >
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Chiudi"
+            className="absolute right-3 top-3 rounded-full p-1.5 text-white/40 transition-colors hover:bg-white/10 hover:text-white/80"
+          >
+            <X size={18} />
+          </button>
+        )}
         <h2 className={win ? 'font-display text-3xl text-[#F0D98A]' : 'font-display text-3xl text-rose-300'}>
           {timeoutWin ? 'Vittoria ai punti' : win ? 'Vittoria' : 'Sconfitta'}
         </h2>

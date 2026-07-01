@@ -1,5 +1,5 @@
 'use client'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Play, Pause, SkipForward, FastForward, ChevronRight } from 'lucide-react'
 import type { ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard, LogEntry } from '@/types'
 import { buildReplay } from '@/game/engine/combat/replay'
@@ -46,6 +46,9 @@ export function BattleScreen({
     [result, playerTeam, enemy, playerSyn, enemySyn, playerRelics, rightRelics, rightMenace, rightDamageReduction, rightIgnoresTaunt],
   )
   const r = useBattleReplay(replay)
+  // Lets the player dismiss the end modal to review the settled board/log,
+  // then reopen it (or confirm) via the floating "Rivedi esito" button.
+  const [dismissed, setDismissed] = useState(false)
   // Sticky entry for the ActionPanel: hold the last REAL action across system
   // frames so the panel doesn't flicker to "…" on every regen/DoT/KO tick.
   // BattleArena keeps the TRUE current entry (r.entry) so floats/auras/laser
@@ -145,12 +148,23 @@ export function BattleScreen({
         controlAt={controlAt}
       />
 
-      {r.modalReady && (
+      {r.modalReady && !dismissed && (
         <BattleEndModal
           outcome={result.winner === 'left' ? 'win' : 'loss'}
           timedOut={result.timedOut}
           onConfirm={onFinish}
+          onClose={() => setDismissed(true)}
         />
+      )}
+
+      {r.modalReady && dismissed && (
+        <button
+          type="button"
+          onClick={() => setDismissed(false)}
+          className="fixed bottom-6 right-6 z-50 rounded-full border border-[#C9A24B]/40 bg-[rgba(20,16,33,0.92)] px-4 py-2 text-sm font-display tracking-wide text-[#F0D98A] shadow-[0_0_24px_rgba(201,162,75,0.2)] transition-colors hover:bg-[rgba(20,16,33,1)]"
+        >
+          Rivedi esito
+        </button>
       )}
     </main>
   )
