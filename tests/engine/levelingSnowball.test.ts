@@ -1,6 +1,10 @@
-// Baseline (recorded 2026-07-01):
+// Baseline (recorded 2026-07-01, growthBudgetPerLevel=0.40, menaceOffset=-0.75):
 //   [snowball] avgAtkMult=1.900 carrierAtkMult=2.750 maxAtkWeight=0.486 ratio=1.447
 //   [snowball] nearOptimalRate=0.1583 averageRate=0.1000 gap=0.0583
+// Post-tune (2026-07-01, growthBudgetPerLevel=0.28, menaceOffset=-1.00):
+//   [snowball] avgAtkMult=1.630 carrierAtkMult=2.225 maxAtkWeight=0.486 ratio=1.365
+//   [snowball] nearOptimalRate=0.2000 averageRate=0.1500 gap=0.0500
+//   ratio 1.447→1.365 (↓ 5.7%), gap 0.0583→0.0500 (↓ 14%) — snowball genuinely flattened.
 
 import { describe, it, expect } from 'vitest'
 import {

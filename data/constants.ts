@@ -103,8 +103,11 @@ defenseK: 0.5,
     //   area-0 opener is the main wall; elites/bosses hit at level-coherent strength.
     // Re-calibrated (2026-06-30): menaceOffset eased -0.70→-0.75 to compensate for the live
     //   Infermeria consuming one combat floor per area (net power loss without the offset nudge).
+    // Re-calibrated (2026-07-01, snowball-flatten — growthBudgetPerLevel 0.40→0.28):
+    //   Player nerf dropped winRate to 0.0667. Eased menaceOffset -0.75→-1.00 to compensate.
+    //   Scan: -0.90→0.1417, -0.93→0.1583 (only 0.0083 headroom), -1.00→0.2000 (headroom 0.05 ✓).
     menacePerLevel: 0.12,
-    menaceOffset: -0.75,
+    menaceOffset: -1.00,
     // The FINAL area boss is the scripted Voldemort (BOSSES[0], fixed budget); its
     // menace is this flat value (independent of the level curve) so it stays the climax.
     // -0.31 → statMult 0.69 (was -0.45 → 0.55 before the Infermeria was on the live path).
@@ -158,8 +161,11 @@ defenseK: 0.5,
   },
   leveling: {
     autoGrowthPct: 0.10,        // yardstick: legacy uniform per-level growth (reference for menacePerLevel)
-    growthBudgetPerLevel: 0.40, // total per-level growth budget, distributed per-wizard by growthWeights
-                                // (0.40 × an average 0.25 weight = the old uniform +10%/level)
+    // Re-calibrated (2026-07-01, snowball-flatten — growthBudgetPerLevel 0.40→0.28, user-approved):
+    //   Reduces the per-level stat-growth budget to flatten late-game snowball. Players weaker at high levels;
+    //   menaceOffset eased (less negative) in campaignB to compensate and re-hold the [0.15, 0.45] floor.
+    growthBudgetPerLevel: 0.28, // total per-level growth budget, distributed per-wizard by growthWeights
+                                // (0.28 × an average 0.25 weight = +7%/level, down from +10%)
     levelMax: 10,
     expStep: 70,                // exp curve step (cumulative); kept for exp/level coherence
     // Win-based progression: clearing a fight grants WHOLE levels to the survivors

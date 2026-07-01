@@ -35,6 +35,11 @@ import type { RunNode, RunState } from '@/types'
 //   0.1583 (19/120), leaving only 0.0083 headroom. Empirical ceiling: -0.383→0.1500 (exactly 0.15, fails
 //   strict >); -0.384→0.1583 (passes). -0.384 is the highest holding the floor. winRate=0.1583 (19/120).
 //   Area-boss parity (statMult ≥ 1.33) is DEFERRED — see docs/superpowers/specs/2026-06-30-strong-final-boss-design.md.
+// Recalibration (2026-07-01, snowball-flatten — growthBudgetPerLevel 0.40→0.28, user-approved):
+//   Lowering player growth budget weakens players at high levels; menaceOffset eased more negative to compensate.
+//   Sweep: -0.75→0.0667 (8/120), -0.60→0.0417 (5/120, wrong dir — less neg = harder early), -0.90→0.1417 (17/120),
+//   -0.93→0.1583 (19/120, only 0.0083 headroom), -1.00→0.2000 (24/120, headroom 0.05 ✓).
+//   Final: menaceOffset -0.75→-1.00. winRate=0.2000 (24/120), headroom=0.05 above 0.15 floor.
 registerCoreResolvers()
 
 // Near-optimal ("upper-bound") player policy. A pure recruit/relic-first greedy is
