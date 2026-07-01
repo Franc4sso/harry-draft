@@ -46,4 +46,17 @@ describe('MapScreen telegraph', () => {
     render(<MapScreen map={map} {...base} />)
     expect(screen.queryByTestId('telegraph-a0f1n0')).toBeNull()
   })
+
+  it('renders the boss hint text when preview has bossHint', () => {
+    const map: RunNode[] = [
+      node({ id: 'a0f0n0', type: 'battle', next: ['a0f1n0'] }),
+      node({
+        id: 'a0f1n0', type: 'boss', next: [],
+        preview: { synergyIds: [], bossName: 'Il Muro', bossHint: 'Incassa i colpi diretti — il veleno lo ignora.' },
+      }),
+    ]
+    render(<MapScreen map={map} {...base} />)
+    expect(screen.getByTestId('telegraph-a0f1n0')).toBeInTheDocument()
+    expect(screen.getByText('Incassa i colpi diretti — il veleno lo ignora.')).toBeInTheDocument()
+  })
 })

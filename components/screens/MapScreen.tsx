@@ -145,15 +145,22 @@ export function MapScreen({
               <span className="pointer-events-none absolute top-full mt-1 whitespace-nowrap rounded-md border border-white/15 bg-[#15121f]/95 px-2 py-0.5 text-[10px] text-white/85 opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">
                 {LABEL[n.type]}
               </span>
-              {n.preview && (n.preview.synergyIds.length > 0 || n.preview.bossName) && (
+              {n.preview && (n.preview.synergyIds.length > 0 || n.preview.bossName || n.preview.bossHint) && (
                 <span
                   data-testid={`telegraph-${n.id}`}
                   className="pointer-events-none absolute bottom-full mb-1 flex max-w-[120px] flex-wrap justify-center gap-0.5"
                 >
                   {n.preview.bossName && (
-                    <span className="rounded-full border px-1.5 py-0.5 text-[8px] font-bold"
-                      style={{ color: '#f5c451', borderColor: 'rgba(245,196,81,0.6)', background: 'rgba(245,196,81,0.16)' }}>
+                    <span className="group/hint relative rounded-full border px-1.5 py-0.5 text-[8px] font-bold"
+                      style={{ color: '#f5c451', borderColor: 'rgba(245,196,81,0.6)', background: 'rgba(245,196,81,0.16)' }}
+                      tabIndex={n.preview.bossHint ? 0 : undefined}
+                    >
                       {n.preview.bossName}
+                      {n.preview.bossHint && (
+                        <span className="pointer-events-none absolute bottom-full left-1/2 mb-1 w-max max-w-[160px] -translate-x-1/2 whitespace-normal rounded-md border border-white/15 bg-[#15121f]/95 px-2 py-1 text-[9px] font-normal normal-case text-white/85 opacity-0 shadow-lg transition-opacity duration-150 group-hover/hint:opacity-100 group-focus-visible/hint:opacity-100">
+                          {n.preview.bossHint}
+                        </span>
+                      )}
                     </span>
                   )}
                   {n.preview.synergyIds.map(sid => (

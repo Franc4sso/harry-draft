@@ -7,7 +7,6 @@ import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
 import { createRng } from '@/game/engine/rng'
 import { powerOf } from '@/game/engine/combat/teamGen'
 import { BALANCE } from '@/data/constants'
-import { SPELLS } from '@/data/spells'
 import type { RunNode, RunState } from '@/types'
 
 // Register at module scope (idempotent): the greedy runs below are evaluated in
@@ -71,6 +70,8 @@ import type { RunNode, RunState } from '@/types'
 //   Final winRates: campaignBalanceB overall 0.1583 (headroom 0.0083 above 0.15 floor, in (0.15,0.45)),
 //   scudiRigen 0.083 (> 0.05 floor, headroom 0.033), withVeleno 0.225 > noVeleno 0.158 (gap +0.067 ✓),
 //   noVeleno 0.158 > 0 (soft wall ✓). All four targets hold.
+//   Area-0 boss power (MURO budget/hpMult/unitCount/wall) is now a floor-sensitive lever: any change to
+//   it, or to Area-0 enemy scaling, must re-measure the campaignBalanceB floor (headroom is only ~1 seed).
 registerCoreResolvers()
 
 // Near-optimal ("upper-bound") player policy. A pure recruit/relic-first greedy is
@@ -91,10 +92,6 @@ function pickNode(s: RunState): RunNode {
 // Veleno = the intended counter to the Muro wall (poison bypasses unitDamageReduction).
 // The preferVeleno policy variant biases recruit picks to veleno-tagged wizards and relic
 // picks to veleno-keyword relics; otherwise it is identical to the near-optimal policy.
-const VELENO_SPELL_IDS = new Set(
-  SPELLS.filter(s => (s.spec ?? []).some(e => e.kind === 'applyStatus' && e.statusId === 'veleno')).map(s => s.id),
-)
-void VELENO_SPELL_IDS // veleno wizards are identified by tag; spell-id set kept for parity with brief
 function isVeleno(dw: { wizard: { tags?: string[] } }): boolean {
   return (dw.wizard.tags ?? []).includes('veleno')
 }
