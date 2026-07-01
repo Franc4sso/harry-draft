@@ -76,6 +76,14 @@ di draft più alto per aree profonde. Il player invece cresce davvero
 3. Iterazione di tuning come nei lavori snowball/final-boss: lever primario = quota di
    crescita nemici vs menace residuo; misuro dopo ogni step, annoto i valori.
 
+**Direzione (decisione utente):** i nemici DEVONO crescere di stat (livello 4 deve
+mostrare stat da livello 4, non base) E il gioco deve restare/diventare difficile. Quindi
+C non è solo percezione: la crescita reale va assorbita solo in parte dal menace, lasciando
+la difficoltà netta **uguale o superiore** a oggi. Target: winRate near-optimal resta ≥
+floor 0.15 ma NON più in alto del necessario — puntiamo al bordo basso della banda, non a
+un margine comodo. Se durante la misura c'è headroom, lo spendo alzando la minaccia nemica,
+non abbassandola.
+
 **Rischio:** alto. Può servire più di un giro di tuning. Trattato con approvazione
 measure-driven prima di committare i valori finali.
 
