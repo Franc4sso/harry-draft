@@ -1,6 +1,7 @@
 import { Container, Graphics } from 'pixi.js'
 import { GlowFilter } from 'pixi-filters'
 import { gsap } from 'gsap'
+import './gsapSetup' // registers Physics2D/CustomWiggle (side effect)
 import type { PixiStage } from './PixiStage'
 import type { VfxColor } from './palette'
 import { GOLD, GOLD_DEEP, CRIMSON } from './palette'
@@ -347,7 +348,9 @@ export function fxExplosion(ctx: FxCtx, at: number, x: number, y: number, color:
     tl.to(b.position, { x: x + Math.cos(ang) * d, y: y + Math.sin(ang) * d, duration: 0.5, ease: 'power2.out' }, at)
     tl.to(b.scale, { x: 0, y: 0, duration: 0.6, ease: 'power1.in', onComplete: () => b.destroy() }, at)
   }
-  fxImpactSpray(ctx, at, x, y, color.spark, 24, 0, Math.PI * 2, 100)
+  fxImpactSpray(ctx, at, x, y, color.spark, 20, 0, Math.PI * 2, 100)
+  fxPhysicsBurst(ctx, at, x, y, color.spark, 20, { speed: 320, gravity: 520, size: 3 })
+  fxSmoke(ctx, at + 0.05, x, y, 9)
   fxDebris(ctx, at, x, y, color.glow, 9, 0)
 }
 
@@ -527,5 +530,48 @@ export function fxBuffAura(ctx: FxCtx, at: number, x: number, y: number, color: 
     const t = at + i * 0.03
     tl.to(p.position, { y: y - 34, duration: 0.7, ease: 'power1.out' }, t)
     tl.to(p, { alpha: 0, duration: 0.7, ease: 'power1.in', onComplete: () => p.destroy() }, t)
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Physics-driven particles (GSAP Physics2DPlugin)                     */
+/* ------------------------------------------------------------------ */
+
+/** Real velocity/gravity particle spray — embers, debris, blood. Angles in degrees (0 = right, -90 = up). */
+export function fxPhysicsBurst(
+  ctx: FxCtx, at: number, x: number, y: number, colors: number[], count: number,
+  opts: { speed?: number; gravity?: number; angleMin?: number; angleRange?: number; size?: number; life?: number } = {},
+): void {
+  const { stage, tl } = ctx
+  const speed = opts.speed ?? 280
+  const gravity = opts.gravity ?? 500
+  const angleMin = opts.angleMin ?? 0
+  const angleRange = opts.angleRange ?? 360
+  for (let i = 0; i < count; i++) {
+    const col = colors[i % colors.length] ?? 0xffffff
+    const sz = opts.size ?? 1.5 + Math.random() * 3
+    const p = new Graphics().circle(0, 0, sz).fill({ color: col })
+    p.position.set(x, y)
+    p.blendMode = 'add'
+    p.filters = [glow(col, 6, 1.2)]
+    stage.fx.addChild(p)
+    const dur = opts.life ?? 0.7 + Math.random() * 0.5
+    tl.to(p, { duration: dur, physics2D: { velocity: speed * (0.5 + Math.random() * 0.85), angle: angleMin + Math.random() * angleRange, gravity }, ease: 'none' }, at)
+    tl.to(p.scale, { x: 0.15, y: 0.15, duration: dur, ease: 'power1.in' }, at)
+    tl.to(p, { alpha: 0, duration: dur, ease: 'power1.in', onComplete: () => p.destroy() }, at)
+  }
+}
+
+/** Dark rolling smoke puffs rising + expanding. Non-additive so they read as mass. */
+export function fxSmoke(ctx: FxCtx, at: number, x: number, y: number, count = 8): void {
+  const { stage, tl } = ctx
+  for (let i = 0; i < count; i++) {
+    const g = new Graphics().circle(0, 0, 6 + Math.random() * 8).fill({ color: 0x2a211a, alpha: 0.5 })
+    g.position.set(x + (Math.random() * 2 - 1) * 16, y)
+    stage.fx.addChild(g)
+    const t = at + Math.random() * 0.1
+    tl.to(g.position, { y: y - 40 - Math.random() * 44, x: g.position.x + (Math.random() * 2 - 1) * 30, duration: 0.9 + Math.random() * 0.4, ease: 'power1.out' }, t)
+    tl.to(g.scale, { x: 2.6, y: 2.6, duration: 1.1, ease: 'power1.out' }, t)
+    tl.to(g, { alpha: 0, duration: 1.1, ease: 'power1.in', onComplete: () => g.destroy() }, t)
   }
 }

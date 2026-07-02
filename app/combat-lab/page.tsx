@@ -12,6 +12,7 @@ import { SPELLS as GAME_SPELLS } from '@/data/spells'
 import { createPixiStage, type PixiStage } from '@/lib/vfx/PixiStage'
 import { createAudio, type AudioBus } from '@/lib/vfx/audio'
 import { choreograph } from '@/lib/vfx/choreograph'
+import { spellVfxFor } from '@/lib/vfx/spellVfx'
 
 const LMAX = 120
 const RMAX = 220
@@ -58,6 +59,7 @@ function calloutFor(entry: LogEntry, kind: ImpactKind): { text: string; tone: st
 export default function CombatLab() {
   const arenaRef = useRef<HTMLDivElement>(null)
   const fxDomRef = useRef<HTMLDivElement>(null)
+  const screenRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<PixiStage | null>(null)
   const audioRef = useRef<AudioBus | null>(null)
   const bustRef = useRef<Record<Side, HTMLDivElement | null>>({ left: null, right: null })
@@ -146,14 +148,23 @@ export default function CombatLab() {
     setLog((l) => [`${entry.action} → ${kind === 'heal' ? `+${v}` : v > 0 ? `-${v}` : kind}`, ...l].slice(0, 4))
   }, [reduced, floatNumber])
 
+  const onScreen = useCallback((color: number) => {
+    const el = screenRef.current
+    if (!el || reduced) return
+    el.style.background = `radial-gradient(circle, #${color.toString(16).padStart(6, '0')}, transparent 78%)`
+    el.animate([{ opacity: 0 }, { opacity: 0.5, offset: 0.12 }, { opacity: 0 }], { duration: 600, easing: 'ease-out' })
+  }, [reduced])
+
   const fire = useCallback((entry: LogEntry) => {
     const stage = stageRef.current
     if (!stage) return
     setTurn((t) => t + 1)
     const from = entry.actorSide ? centerOf(entry.actorSide) : null
     const to = entry.targetSide ? centerOf(entry.targetSide) : null
-    choreograph(stage, { entry, from, to, budgetMs: 1100, reduced, audio: audioOn ? audioRef.current : null, onImpact: (side, kind) => handleImpact(entry, side, kind) })
-  }, [centerOf, reduced, audioOn, handleImpact])
+    const tier = spellVfxFor(entry.action)?.tier ?? 1
+    const budgetMs = tier >= 3 ? 2000 : tier >= 2 ? 1500 : 1100
+    choreograph(stage, { entry, from, to, budgetMs, reduced, audio: audioOn ? audioRef.current : null, onImpact: (side, kind) => handleImpact(entry, side, kind), onScreen })
+  }, [centerOf, reduced, audioOn, handleImpact, onScreen])
 
   const reset = useCallback(() => { setHp({ left: LMAX, right: RMAX }); setLog([]); setCallout(null) }, [])
   const playAll = useCallback(() => {
@@ -210,6 +221,9 @@ export default function CombatLab() {
           {callout && (
             <div key={callout.key} className="labAnim pointer-events-none absolute left-1/2 top-[40%] z-[11] font-serif text-5xl font-bold uppercase tracking-[0.12em]" style={{ color: callout.tone, textShadow: `0 0 30px ${callout.tone}, 0 4px 12px rgba(0,0,0,.8)`, animation: reduced ? undefined : 'labCallout 1.3s cubic-bezier(.22,1,.36,1)', transform: 'translate(-50%,-50%)' }}>{callout.text}</div>
           )}
+
+          {/* full-screen ultimate colour wash (tier-3) */}
+          <div ref={screenRef} aria-hidden className="pointer-events-none absolute inset-0 z-[8] opacity-0" style={{ mixBlendMode: 'screen' }} />
 
           {/* DOM fx layer (floating numbers) */}
           <div ref={fxDomRef} aria-hidden className="pointer-events-none absolute inset-0 z-[12]" />

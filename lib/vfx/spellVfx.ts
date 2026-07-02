@@ -19,6 +19,10 @@ export interface SpellVfxConfig {
   sigil?: boolean
   /** What happens at the target (projectile) or caster (self). */
   impact: Flourish
+  /** Power tier: 2/3 unlock cinematic screen effects (zoom-punch, god rays, screen flash). */
+  tier?: 1 | 2 | 3
+  /** Full-screen additive colour wash on a tier-3 impact ("the screen goes green"). */
+  screen?: number
   audioCast?: string
   audioHit?: string
 }
@@ -51,20 +55,20 @@ const SPELL_VFX: Record<string, SpellVfxConfig> = {
   'colpo base': { kind: 'projectile', color: C.gold, motion: 'bolt', sigil: false, impact: 'burst' },
   'expelliarmus': { kind: 'projectile', color: C.gold, motion: 'bolt', impact: 'burst' },
   'stupeficium': { kind: 'projectile', color: C.crimson, motion: 'bolt', impact: 'stun' },
-  'sectumsempra': { kind: 'projectile', color: C.darkCrimson, motion: 'bolt', impact: 'slash' },
-  'bombarda': { kind: 'projectile', color: C.concussive, motion: 'lob', impact: 'explosion' },
+  'sectumsempra': { kind: 'projectile', color: C.darkCrimson, motion: 'bolt', impact: 'slash', tier: 2 },
+  'bombarda': { kind: 'projectile', color: C.concussive, motion: 'lob', impact: 'explosion', tier: 2 },
   'incendio': { kind: 'projectile', color: C.fire, motion: 'lob', impact: 'flames' },
-  'avada kedavra': { kind: 'projectile', color: C.green, motion: 'orb', impact: 'skull' },
-  'reducto': { kind: 'projectile', color: C.concussive, motion: 'bolt', impact: 'explosion' },
+  'avada kedavra': { kind: 'projectile', color: C.green, motion: 'orb', impact: 'skull', tier: 3, screen: 0x2ecc40 },
+  'reducto': { kind: 'projectile', color: C.concussive, motion: 'bolt', impact: 'explosion', tier: 2 },
   'diffindo': { kind: 'projectile', color: C.silver, motion: 'bolt', sigil: false, impact: 'slash' },
-  'confringo': { kind: 'projectile', color: C.fire, motion: 'lob', impact: 'explosion' },
+  'confringo': { kind: 'projectile', color: C.fire, motion: 'lob', impact: 'explosion', tier: 2 },
   'flipendo': { kind: 'projectile', color: C.concussive, motion: 'bolt', sigil: false, impact: 'burst' },
   'oppugno': { kind: 'projectile', color: C.gold, motion: 'bolt', sigil: false, impact: 'burst' },
-  'ardemonio': { kind: 'projectile', color: C.cursedFire, motion: 'orb', impact: 'explosion' },
+  'ardemonio': { kind: 'projectile', color: C.cursedFire, motion: 'orb', impact: 'explosion', tier: 3, screen: 0xff6a2a },
   'serpensortia': { kind: 'projectile', color: C.venom, motion: 'lob', impact: 'snake' },
 
   // ── Controllo ──
-  'crucio': { kind: 'projectile', color: C.crimson, motion: 'bolt', impact: 'lightning' },
+  'crucio': { kind: 'projectile', color: C.crimson, motion: 'bolt', impact: 'lightning', tier: 2 },
   'imperio': { kind: 'projectile', color: C.purple, motion: 'orb', impact: 'swirl' },
   'petrificus totalus': { kind: 'projectile', color: C.bone, motion: 'bolt', impact: 'stun' },
   'levicorpus': { kind: 'projectile', color: C.purple, motion: 'bolt', impact: 'lift' },
@@ -76,7 +80,7 @@ const SPELL_VFX: Record<string, SpellVfxConfig> = {
 
   // ── Cura ──
   'episkey': { kind: 'heal', color: C.heal, impact: 'heal' },
-  'vulnera sanentur': { kind: 'heal', color: C.heal, impact: 'heal' },
+  'vulnera sanentur': { kind: 'heal', color: C.heal, impact: 'heal', tier: 2 },
   'rennervate': { kind: 'heal', color: C.heal, impact: 'heal' },
   'anapneo': { kind: 'heal', color: C.heal, impact: 'heal' },
   'ferula': { kind: 'heal', color: C.heal, impact: 'heal' },
@@ -89,7 +93,7 @@ const SPELL_VFX: Record<string, SpellVfxConfig> = {
   'fianto duri': { kind: 'self', color: C.gold, sigil: true, impact: 'hex' },
   'salvio hexia': { kind: 'self', color: C.shield, sigil: true, impact: 'buff' },
   'riddikulus': { kind: 'self', color: C.gold, sigil: true, impact: 'buff' },
-  'expecto patronum': { kind: 'self', color: C.silver, sigil: true, impact: 'patronus' },
+  'expecto patronum': { kind: 'self', color: C.silver, sigil: true, impact: 'patronus', tier: 3, screen: 0xdaf0ff },
   'aegis': { kind: 'self', color: C.shield, sigil: true, impact: 'hex' },
 }
 
