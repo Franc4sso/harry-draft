@@ -1,12 +1,10 @@
 'use client'
-import { useLayoutEffect, useRef, useState } from 'react'
 import type React from 'react'
 import type { LogEntry } from '@/types'
 import type { Replay, ReplayUnit } from '@/game/engine/combat/replay'
 import { unitKey } from '@/game/engine/combat/replay'
 import { UnitBust } from './UnitBust'
 import { ArenaBackdrop } from './ArenaBackdrop'
-import { type FxPoint } from './SpellFx'
 import { PixiArena } from './PixiArena'
 import { Callout } from './Callout'
 import { floatFor } from './damageFloat'
@@ -41,34 +39,6 @@ export function BattleArena({
   const left = replay.units.filter(u => u.side === 'left')
   const right = replay.units.filter(u => u.side === 'right')
 
-  // Measure the real on-screen caster/target busts so the projectile flies between
-  // their actual positions (not fixed arena percentages). Read layout AFTER the busts
-  // lay out for this frame: useLayoutEffect keyed on the frame + caster/target.
-  const arenaRef = useRef<HTMLDivElement>(null)
-  const [fx, setFx] = useState<{ from: FxPoint; to: FxPoint } | null>(null)
-  useLayoutEffect(() => {
-    const measure = () => {
-      const arena = arenaRef.current
-      if (!arena || !actingKey || !targetKey) { setFx(null); return }
-      const casterEl = arena.querySelector(`[data-unit-key="${CSS.escape(actingKey)}"]`)
-      const targetEl = arena.querySelector(`[data-unit-key="${CSS.escape(targetKey)}"]`)
-      if (!casterEl || !targetEl) { setFx(null); return }
-      const arenaRect = arena.getBoundingClientRect()
-      if (arenaRect.width === 0 || arenaRect.height === 0) { setFx(null); return }
-      const center = (el: Element): FxPoint => {
-        const r = el.getBoundingClientRect()
-        return {
-          x: ((r.left + r.width / 2 - arenaRect.left) / arenaRect.width) * 100,
-          y: ((r.top + r.height / 2 - arenaRect.top) / arenaRect.height) * 100,
-        }
-      }
-      setFx({ from: center(casterEl), to: center(targetEl) })
-    }
-    measure()
-    window.addEventListener('resize', measure)
-    return () => window.removeEventListener('resize', measure)
-  }, [frameKey, actingKey, targetKey])
-
   const anyAction = !!actingKey
   const renderSide = (units: ReplayUnit[], mirrored: boolean) =>
     units.map(u => {
@@ -92,7 +62,7 @@ export function BattleArena({
     })
 
   return (
-    <div ref={arenaRef} data-testid="battle-arena" className="relative flex flex-col items-center gap-4 w-full">
+    <div data-testid="battle-arena" className="relative flex flex-col items-center gap-4 w-full">
       <ArenaBackdrop />
       <section className="flex flex-col items-center gap-2 w-full">
         <h3 className="text-xs uppercase tracking-widest text-white/40">{leftTitle}</h3>
@@ -108,7 +78,7 @@ export function BattleArena({
         <h3 className="text-xs uppercase tracking-widest text-white/40">{rightTitle}</h3>
       </section>
 
-      <PixiArena entry={entry} frameKey={frameKey} from={fx?.from} to={fx?.to} speed={speed} />
+      <PixiArena entry={entry} frameKey={frameKey} speed={speed} />
       <Callout entry={entry} frameKey={frameKey} />
     </div>
   )

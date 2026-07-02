@@ -5,23 +5,22 @@ import type { LogEntry } from '@/types'
 import { createPixiStage, type PixiStage } from '@/lib/vfx/PixiStage'
 import { choreograph } from '@/lib/vfx/choreograph'
 
-/** A point on the arena, expressed as a percentage (0–100) of the arena box. */
-type FxPoint = { x: number; y: number }
-
 /**
  * Mounts the Pixi WebGL VFX layer inside the real BattleArena and drives it
  * from replay frames. Adapted from `app/combat-lab/page.tsx`'s mounting +
  * `onScreen` wash logic. Client-only: the stage is created in a `useEffect`
  * and destroyed on cleanup. When `prefers-reduced-motion` is set, no Pixi
  * stage is mounted at all — only the (inert) container divs render.
+ *
+ * Positions are measured HERE, from the live DOM at fire time (caster/target
+ * bust centers as % of the canvas box), so every effect launches from the
+ * actual wizard card toward its actual target — never a stale/lagged prop.
  */
 export function PixiArena({
-  entry, frameKey, from, to, speed,
+  entry, frameKey, speed,
 }: {
   entry: LogEntry | null
   frameKey: number
-  from?: FxPoint | null
-  to?: FxPoint | null
   speed: number
 }) {
   const reduced = !!useReducedMotion()
@@ -33,14 +32,10 @@ export function PixiArena({
   const activeTls = useRef<Set<NonNullable<ReturnType<typeof choreograph>>>>(new Set())
 
   // Latest values, read inside the frameKey-keyed effect so it doesn't need
-  // to depend on (and re-fire for) from/to/entry/speed changing mid-frame.
+  // to depend on (and re-fire for) entry/speed changing mid-frame.
   const entryRef = useRef(entry)
-  const fromRef = useRef(from)
-  const toRef = useRef(to)
   const speedRef = useRef(speed)
   entryRef.current = entry
-  fromRef.current = from
-  toRef.current = to
   speedRef.current = speed
 
   useEffect(() => {
@@ -80,13 +75,30 @@ export function PixiArena({
     lastFiredRef.current = frameKey
     const stage = stageRef.current
     const entry = entryRef.current
-    if (!entry) return
-    if (reduced || !stage) return
+    const mount = mountRef.current
+    if (!entry || reduced || !stage || !mount) return
+
+    // Sync the renderer to the live arena size, then measure caster/target bust
+    // centers from the DOM as % of the canvas box — effects align to the cards.
+    try { stage.app.resize() } catch { /* ignore */ }
+    const a = mount.getBoundingClientRect()
+    if (a.width === 0 || a.height === 0) return
+    const centerPct = (side?: string, id?: string) => {
+      if (!side || !id) return null
+      const el = document.querySelector(`[data-unit-key="${CSS.escape(`${side}:${id}`)}"]`)
+      if (!el) return null
+      const r = el.getBoundingClientRect()
+      return {
+        x: ((r.left + r.width / 2 - a.left) / a.width) * 100,
+        y: ((r.top + r.height / 2 - a.top) / a.height) * 100,
+      }
+    }
+    const from = centerPct(entry.actorSide, entry.actorId)
+    const to = centerPct(entry.targetSide, entry.targetId)
+
     const speed = speedRef.current
     const budgetMs = Math.max(700, Math.round(1200 / speed))
-    const tl = choreograph(stage, {
-      entry, from: fromRef.current, to: toRef.current, budgetMs, reduced, audio: null, onScreen,
-    })
+    const tl = choreograph(stage, { entry, from, to, budgetMs, reduced, audio: null, onScreen })
     if (tl) {
       const set = activeTls.current
       set.add(tl)
