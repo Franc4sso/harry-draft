@@ -6,6 +6,7 @@ import { STARTER_PICKS } from '@/game/engine/runEngine'
 import { SquadPanel } from '@/components/draft/SquadPanel'
 import { SynergyTracker } from '@/components/draft/SynergyTracker'
 import { DraftCandidateCard } from '@/components/draft/DraftCandidateCard'
+import { Stagger, StaggerItem } from '@/components/ui/motion'
 import { synergyProgress, previewSynergies } from '@/game/engine/synergy'
 import { displayName } from '@/lib/displayName'
 
@@ -77,25 +78,26 @@ export function DraftScreen({
         {/* items-start (above) + content-start (here) keep each candidate at its
             own height: without them the column stretches to match the synergy
             rail, growing the hovered card downward when the rail gets taller. */}
-        <section
-          className="grid grid-cols-1 content-start gap-4"
-          onPointerLeave={() => setConsidered(null)}
-        >
-          {current.map((c, i) => (
-            <DraftCandidateCard
-              key={c.wizard.id}
-              drafted={c}
-              testId={`draft-pick-${i}`}
-              hotSynergyIds={hotByCandidate.get(c.wizard.id)}
-              onConsider={() => setConsidered(c)}
-              onPick={() => { setConsidered(null); pick(i) }}
-            />
-          ))}
+        <section onPointerLeave={() => setConsidered(null)}>
+          {/* Re-key by pick count so each new hand cascades in again. */}
+          <Stagger key={picks.length} className="grid grid-cols-1 content-start gap-4">
+            {current.map((c, i) => (
+              <StaggerItem key={c.wizard.id}>
+                <DraftCandidateCard
+                  drafted={c}
+                  testId={`draft-pick-${i}`}
+                  hotSynergyIds={hotByCandidate.get(c.wizard.id)}
+                  onConsider={() => setConsidered(c)}
+                  onPick={() => { setConsidered(null); pick(i) }}
+                />
+              </StaggerItem>
+            ))}
+          </Stagger>
         </section>
 
         {/* Synergy tracker: right rail on desktop, stacks below candidates on mobile */}
         <aside>
-          <div className="sticky top-28 rounded-xl border border-white/10 bg-white/[0.03] p-3">
+          <div className="panel-premium sticky top-28 p-3">
             <SynergyTracker rows={rows} candidateName={considered ? displayName(considered) : undefined} />
           </div>
         </aside>
