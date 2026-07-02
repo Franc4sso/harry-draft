@@ -34,15 +34,17 @@ const STATUS_ICON: Record<StatusKind, LucideIcon> = {
   regen: Heart,
   ward: ShieldCheck,
 }
+// Each control kind gets a clearly distinct hue (disarm was amber → collided with stun
+// yellow and the crit/level gold; now fuchsia). Freeze/shield split cyan vs blue.
 const STATUS_CLASS: Record<StatusKind, string> = {
   dot: 'text-orange-400',
   stun: 'text-yellow-300',
   freeze: 'text-cyan-300',
-  shield: 'text-sky-300',
+  shield: 'text-blue-400',
   buff: 'text-emerald-400',
   debuff: 'text-rose-400',
-  silence: 'text-violet-300',
-  disarm: 'text-amber-300',
+  silence: 'text-violet-400',
+  disarm: 'text-fuchsia-400',
   regen: 'text-emerald-300',
   ward: 'text-indigo-300',
 }
@@ -51,8 +53,8 @@ const STATUS_CLASS: Record<StatusKind, string> = {
 const CONTROL_OVERLAY: Record<string, { label: string; cls: string }> = {
   stun:    { label: 'Stordito',   cls: 'bg-yellow-300/25 ring-2 ring-yellow-300/60' },
   freeze:  { label: 'Congelato',  cls: 'bg-cyan-300/25 ring-2 ring-cyan-300/60' },
-  silence: { label: 'Silenziato', cls: 'bg-violet-300/20 ring-2 ring-violet-300/50' },
-  disarm:  { label: 'Disarmato',  cls: 'bg-amber-300/20 ring-2 ring-amber-300/50' },
+  silence: { label: 'Silenziato', cls: 'bg-violet-400/20 ring-2 ring-violet-400/55' },
+  disarm:  { label: 'Disarmato',  cls: 'bg-fuchsia-400/20 ring-2 ring-fuchsia-400/55' },
 }
 
 const STAT_LABEL: Record<string, string> = { hp: 'HP', atk: 'atk', def: 'def', spd: 'spd' }
