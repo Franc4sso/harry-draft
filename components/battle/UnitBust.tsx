@@ -124,7 +124,7 @@ function effectCount(e: ActiveEffect): number {
  * floating damage/heal number. Reduced-motion → static final state.
  */
 export function UnitBust({
-  unit, hp, acting, targeted, mirrored, boss, float, floatKey, effects = [], cooldown = 0, level,
+  unit, hp, acting, targeted, mirrored, boss, compact, float, floatKey, effects = [], cooldown = 0, level,
 }: {
   unit: ReplayUnit
   hp: number
@@ -133,6 +133,8 @@ export function UnitBust({
   mirrored?: boolean
   /** Ominous boss treatment (bigger bust + arcane aura), e.g. a lone final-boss enemy. */
   boss?: boolean
+  /** Compact bust: smaller + hides stat bars / cooldown so full teams (5v5) fit without scroll. */
+  compact?: boolean
   float?: FloatDescriptor | null
   floatKey?: number | string
   /** Real active status effects on this unit for the current frame. */
@@ -169,7 +171,10 @@ export function UnitBust({
         scaleY: impact ? { type: 'tween', duration: isCrit ? 0.44 : 0.32, ease: [0.22, 1, 0.36, 1] } : { type: 'spring', stiffness: 360, damping: 22 },
         x: { type: 'spring', stiffness: 360, damping: 22 },
       }}
-      className={cn('relative rounded-2xl border bg-[rgba(20,16,33,0.45)] p-1.5 backdrop-blur-sm', boss ? 'w-32 sm:w-40 border-[#7c3aed]/40' : 'w-28 sm:w-32 border-[#C9A24B]/15', mirrored && 'text-right')}
+      className={cn('relative rounded-2xl border bg-[rgba(20,16,33,0.45)] backdrop-blur-sm',
+        compact && !boss ? 'p-1' : 'p-1.5',
+        boss ? 'w-32 sm:w-40 border-[#7c3aed]/40' : compact ? 'w-[4.75rem] sm:w-24 border-[#C9A24B]/15' : 'w-28 sm:w-32 border-[#C9A24B]/15',
+        mirrored && 'text-right')}
       style={{ boxShadow: aura, filter: dead ? 'grayscale(0.85)' : undefined }}
     >
       <RarityFrame tier={unit.tier}>
@@ -215,7 +220,7 @@ export function UnitBust({
       )}
 
       <div className="mt-1 flex items-center justify-center gap-1 leading-tight">
-        <span className="truncate text-xs font-medium">{unit.name}</span>
+        <span className={cn('truncate font-medium', compact ? 'text-[10px]' : 'text-xs')}>{unit.name}</span>
         <span
           data-role="level-badge"
           className="shrink-0 rounded border border-[#C9A24B]/45 bg-[#C9A24B]/25 px-1 text-[10px] font-bold tabular-nums text-[#F4DE9A]"
@@ -225,13 +230,15 @@ export function UnitBust({
       </div>
       <div className="mt-0.5"><HpBar hp={hp} maxHp={unit.maxHp} /></div>
 
-      <div className="mt-1.5 flex flex-col gap-1">
-        <StatBar label="ATT" value={unit.atk} base={unit.baseAtk} color="bg-rose-400" icon={Sword} />
-        <StatBar label="DIF" value={unit.def} base={unit.baseDef} color="bg-sky-400" icon={Shield} />
-        <StatBar label="VEL" value={unit.spd} base={unit.baseSpd} color="bg-amber-400" icon={Zap} />
-      </div>
+      {!compact && (
+        <div className="mt-1.5 flex flex-col gap-1">
+          <StatBar label="ATT" value={unit.atk} base={unit.baseAtk} color="bg-rose-400" icon={Sword} />
+          <StatBar label="DIF" value={unit.def} base={unit.baseDef} color="bg-sky-400" icon={Shield} />
+          <StatBar label="VEL" value={unit.spd} base={unit.baseSpd} color="bg-amber-400" icon={Zap} />
+        </div>
+      )}
 
-      <div data-role="cooldown" className="mt-0.5 truncate text-center text-[11px] leading-tight">
+      <div data-role="cooldown" className={cn('mt-0.5 truncate text-center leading-tight', compact ? 'text-[9px]' : 'text-[11px]')}>
         <span className="text-white/55">{unit.spell.name}: </span>
         {cooldown > 0 ? (
           <span className="text-white/45 tabular-nums">{turnsLabel(cooldown)}</span>

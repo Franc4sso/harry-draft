@@ -54,6 +54,7 @@ export function BattleArena({
             targeted={u.key === targetKey}
             mirrored={mirrored}
             boss={boss}
+            compact={!boss}
             float={u.key === targetKey ? float : null}
             floatKey={frameKey}
             effects={statusEffects[u.key] ?? []}
@@ -74,7 +75,7 @@ export function BattleArena({
       {/* Two teams as facing vertical columns (Slay-the-Spire style). Column & center
           widths are FIXED so the varying ActionPanel content never reflows the field. */}
       <div className="flex items-center justify-center gap-4 sm:gap-10">
-        <section className="flex w-32 shrink-0 flex-col items-center gap-2 sm:w-40">
+        <section className="flex w-24 shrink-0 flex-col items-center gap-2 sm:w-28">
           <h3 className="max-w-full truncate text-xs uppercase tracking-widest text-white/40">{leftTitle}</h3>
           <div data-testid="row-player" className="flex flex-col items-center gap-2 sm:gap-3">{renderSide(left, false)}</div>
         </section>
@@ -83,7 +84,7 @@ export function BattleArena({
           {center ?? <span className="font-display text-2xl text-white/30 select-none">VS</span>}
         </div>
 
-        <section className="flex w-32 shrink-0 flex-col items-center gap-2 sm:w-40">
+        <section className={`flex shrink-0 flex-col items-center gap-2 ${bossFight ? 'w-32 sm:w-40' : 'w-24 sm:w-28'}`}>
           <h3 className="max-w-full truncate text-xs uppercase tracking-widest text-white/40">{rightTitle}</h3>
           <div data-testid="row-enemies" className="flex flex-col items-center gap-2 sm:gap-3">{renderSide(right, true, bossFight)}</div>
         </section>
