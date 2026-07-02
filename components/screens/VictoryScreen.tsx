@@ -93,8 +93,9 @@ export function VictoryScreen({
           transition={{ duration: 0.55, delay: 0.35, ease: EASE_CINEMATIC }}
           className="w-full"
         >
-          <Frame variant="panel" innerClassName="p-0">
-            <Parchment className="flex flex-col gap-3 rounded-[11px] p-5">
+          <Frame variant="panel" innerClassName="relative rounded-[11px] p-0">
+            <Parchment className="absolute inset-0 rounded-[11px]" aria-hidden />
+            <div className="relative flex flex-col gap-3 rounded-[11px] p-5">
               <div className="flex items-center gap-2 text-amber-200">
                 <Crown size={18} />
                 <span className="text-sm">
@@ -113,7 +114,7 @@ export function VictoryScreen({
                   <span className="text-white/70">{fallenNames.join(', ')}</span>
                 </div>
               )}
-            </Parchment>
+            </div>
           </Frame>
         </motion.div>
 

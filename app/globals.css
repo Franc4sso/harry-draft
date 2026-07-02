@@ -194,14 +194,8 @@ html, body {
     0 12px 28px -10px rgba(0,0,0,0.8),
     0 0 18px -4px rgba(202,162,74,0.5);
 }
-@keyframes foilSweep { from { background-position: -180% 0; } to { background-position: 280% 0; } }
-@keyframes dividerDraw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-@keyframes dividerNode { 0% { left: 8%; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { left: 92%; opacity: 0; } }
 @keyframes warmDrift {
   0% { transform: translate3d(-3%, 0, 0) scale(1); }
   50% { transform: translate3d(3%, -2%, 0) scale(1.06); }
   100% { transform: translate3d(-3%, 0, 0) scale(1); }
-}
-@media (prefers-reduced-motion: reduce) {
-  .frame-thick, .seal { }
 }
