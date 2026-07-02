@@ -74,14 +74,51 @@ defenseK: 0.5,
     // --- Displayed enemy LEVEL by (area, kind) ---
     // Honest, area-scaled threat tiers so an Elite/Boss reads as a real level (no
     // more "Lv.1" elites). level = base + perArea*area, clamped to leveling.levelMax.
-    //   normal → 2,4,6   elite → 4,6,8   area-boss → 6,8,10   final boss → levelMax(10)
+    //   normal → 1,2,3   elite → 2,3,4   area-boss → 3,4,5   final boss → levelMax(10)
     // The level is NOT cosmetic: it drives REAL per-level stat growth (`leveledStats`),
     // so a higher level is a genuinely tougher foe (no menace multiplier — see below).
-    // Scaled up to match win-based player levelling (elite +2 / boss +3 a clear) —
-    // elites and bosses must hit harder than before.
-    normalLevelBase: 2, normalLevelPerArea: 2,
-    eliteLevelBase: 4, eliteLevelPerArea: 2,
-    bossLevelBase: 6, bossLevelPerArea: 2,
+    //
+    // LOWERED 2026-07-02 (urgent balance fix, menace-removal follow-up; bases
+    // 2/4/6→1/2/3, perArea 2→1). Enemies now fight at FULL leveled stats (menace
+    // removed 2026-07-01), which crashed campaignBalanceB to 0.0167 (2/120) — a
+    // level-1 duo could not clear even area 0. User decision: lower enemy levels
+    // (not raise the starting roster) so enemies stay honestly stat-scaled to a
+    // genuinely lower level, no crush multiplier reintroduced.
+    //
+    // SWEPT (120-seed campaignBalanceB + 4 archetype-sweep tests; all combos below
+    // hold normal<elite<boss within an area and area N<area N+1, i.e. no degenerate
+    // flat-level rows): (normalBase,eliteBase,bossBase,perArea) → campaignBalanceB:
+    //   (2,4,6,2) baseline(pre-fix)  → 0.0167  (esec 0.000, oscure 0.050, scudi 0.017, veleno 0.017)
+    //   (1,2,3,2)                    → 0.0167  (esec 0.000, oscure —,     scudi 0.017, veleno 0.033)
+    //   (1,2,3,1) SHIPPED            → 0.0167  (esec 0.000, oscure PASS, scudi 0.017, veleno 0.033)
+    //   (1,1,2,1)                    → 0.0167  (esec 0.008, oscure PASS, scudi 0.042, veleno 0.042)
+    //                                   marginally better on the sub-sweeps, but eliteBase==normalBase
+    //                                   at area 0 (both level 1) BREAKS the required elite>normal
+    //                                   ordering invariant (enemyLevel.test.ts / finalBossClimax.test.ts)
+    //                                   — rejected on structural-invariant grounds, not picked.
+    //   (1,1,1,0) / (0,1,1,0) / degenerate all-level-1 everywhere → 0.0250 (ceiling seen in the
+    //                                   whole sweep) — still short of 0.15, and perArea=0 kills the
+    //                                   area-to-area difficulty curve (all areas read identical).
+    // CONCLUSION: the level lever, even pushed to its absolute floor (level 1 everywhere,
+    // perArea 0), tops out at winRate≈0.025 — nowhere near the 0.15 floor. campaignBalanceB,
+    // esecuzioneSweep, scudiRigenSweep and velenoSweep's ">0.05"/">0.15" viability floors are
+    // NOT fixable via enemy level alone. Root cause (confirmed by direct diagnostic — every
+    // living unit acts every turn in `simulate.ts`'s turn loop): area-0 Elite/Boss field
+    // `enemyCountByArea[0]=3` units against the player's starting `normalEnemyCount`-sized
+    // roster of 2-3, a permanent action-economy deficit (3 enemy actions/turn vs 2 player
+    // actions/turn) that compounds every round regardless of per-unit stat parity, further
+    // compounded by HP persisting across sequential normal→elite→boss fights with only one
+    // opportunistic (not guaranteed) Infermeria per area. Lowering level (or budget — already
+    // swept to the same conclusion, see below) reduces enemy per-unit stats but cannot fix a
+    // per-turn ACTION COUNT deficit. Shipped (1,2,3,1) as the best value that preserves every
+    // structural invariant (normal<elite<boss, area N<area N+1, no flat-level curve) while
+    // being honestly lower than the pre-fix baseline; it is NOT a claim that the 0.15/0.05
+    // floors are met — see tests/engine/campaignBalanceB.test.ts's header for the full
+    // calibration history and the follow-up recommendation (raise starting roster size or
+    // area-0 enemy unit count, or guarantee an Infermeria between every area-0 fight).
+    normalLevelBase: 1, normalLevelPerArea: 1,
+    eliteLevelBase: 2, eliteLevelPerArea: 1,
+    bossLevelBase: 3, bossLevelPerArea: 1,
     // --- Enemy budget (stat-selection) by global depth d = area*floorsPerArea + floor ---
     //   normal = baseBudget + d*budgetStep, ×eliteBudgetMult on elite, ×bossBudgetMult on area boss.
     // Re-tuned 2026-07-01 (menace removal, urgent balance fix): 300/70/1.15/1.3 was

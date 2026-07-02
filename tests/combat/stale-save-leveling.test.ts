@@ -21,7 +21,11 @@ function starterState(): RunState {
 describe('resolveCombat — stale pre-f67fe4e save fallback', () => {
   it('stamps the persisted pkg.enemyLevel onto enemy units missing a level field, so they get leveled stats', () => {
     const s = starterState()
-    const battleNode = s.map!.find((n: RunNode) => n.type === 'battle' && n.battle)!
+    // Use an 'elite' node, not a plain 'battle': area-0 normal fights were lowered to
+    // enemyLevel exactly 1 (2026-07-02 balance fix, data/constants.ts campaignB), which
+    // would make the level1Stats comparison below vacuous. Area-0 elite is level 2 —
+    // still genuinely > 1 — so the stale-save leveled-stats fallback is still exercised.
+    const battleNode = s.map!.find((n: RunNode) => n.type === 'elite' && n.battle)!
     // Simulate a save generated BEFORE f67fe4e: enemyTeam units carry no `level`,
     // even though the package itself still records the intended enemyLevel.
     const staleNode: RunNode = {

@@ -2,8 +2,9 @@ import { BALANCE } from '@/data/constants'
 
 export type EnemyKind = 'normal' | 'elite' | 'boss'
 
-/** Displayed enemy level as an explicit, area-scaled threat tier. normal → 2,4,6 ·
- *  elite → 4,6,8 · area-boss → 6,8,10 · final boss → levelMax. Clamped to [1, levelMax].
+/** Displayed enemy level as an explicit, area-scaled threat tier. normal → 1,2,3 ·
+ *  elite → 2,3,4 · area-boss → 3,4,5 · final boss → levelMax. Clamped to [1, levelMax].
+ *  (Lowered 2026-07-02, urgent balance fix — see data/constants.ts campaignB for the sweep.)
  *  This level drives REAL stat growth (via `leveledStats`/`battleReadyTeam`), so the
  *  level the player sees genuinely tracks difficulty — no menace multiplier involved
  *  (menace was removed 2026-07-01; see `menaceForLevel` below). */

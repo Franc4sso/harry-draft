@@ -52,6 +52,33 @@ import type { RunNode, RunState } from '@/types'
 // HP-persistence bleed between area-0 fights, or (c) revisit the near-optimal test
 // policy's infirmary-skipping behavior — budget/boss-stat tuning alone cannot fix this.
 //
+// *** STILL FAILING (2026-07-02, enemy-LEVEL lowering — user-directed follow-up;
+// UNRESOLVED, same root cause) ***
+// User decision: lower enemy LEVELS (campaignB normalLevelBase/eliteLevelBase/
+// bossLevelBase/perArea, data/constants.ts) instead of raising the starting roster,
+// keeping enemies at honest FULL leveled stats for their (now lower) level — no
+// menace/crush multiplier reintroduced. Swept bases 2/4/6 (perArea 2) all the way
+// down to the hard floor (level 1 everywhere, perArea 0) — see data/constants.ts
+// campaignB for the full table. Result: winRate is FLAT at ≈0.0167-0.0250 across the
+// ENTIRE sweep range, topping out at 0.0250 only at the fully-degenerate all-level-1
+// setting (which also breaks the elite>normal/area monotonicity invariants this file
+// and enemyLevel.test.ts/finalBossClimax.test.ts require, so it was not shipped).
+// Diagnostic confirmed why: `simulate.ts`'s turn loop lets EVERY living unit act
+// EVERY turn — so `enemyCountByArea[0]=3` (elite/boss) vs the player's starting
+// 2-3-unit roster is a permanent action-economy deficit (more enemy actions per turn
+// than player actions) that compounds every round independent of per-unit stat
+// totals; a direct stat-magnitude check at enemy level 1 showed enemy total team
+// power was already comparable to or below the player's, yet win rate barely moved.
+// This is the SAME structural bottleneck the budget sweep above already identified,
+// now confirmed independent of BOTH levers (budget and level) that are allowed
+// without reintroducing menace. CONCLUSION: the 0.15 floor is not reachable by
+// tuning enemy stats (budget or level) alone; it requires a structural change
+// (unit-count parity and/or guaranteed HP recovery between area-0 fights) — see the
+// recommendation above, still valid. Shipped normalLevelBase/eliteLevelBase/
+// bossLevelBase = 1/2/3 (perArea 1) — the best value found that preserves every
+// required ordering invariant — as an honest partial mitigation, not a claim that
+// the floor is met.
+//
 // Calibration (2026-06-29, post enemy-scaling fix — menaceOffset -1.05→-0.70, finalBossMenace -0.35→-0.50):
 //   Observed winRate=0.167 (20/120 wins). Band tightened to [0.15, 0.45] for "much harder" target.
 //   lv2-normal statMult 0.42 (was 0.07), lv10-boss statMult 1.38 (was 1.03) — enemies at level-coherent stats.
