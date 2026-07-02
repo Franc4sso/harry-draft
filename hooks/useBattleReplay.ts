@@ -10,6 +10,19 @@ export type ReplaySpeed = (typeof REPLAY_SPEEDS)[number]
 // 500ms) so the victory modal never appears while an HP bar is still visibly draining.
 const POST_DEATH_DELAY_MS = 600
 
+/** Per-frame dwell time: linger on the big moments (kill/crit) and fast-forward the
+ *  trivial ticks (DoT/regen/fatigue/system/wait) so the reveal has dramatic rhythm
+ *  instead of a flat metronome. Multiplies the base step; `speed` still divides it. */
+export function frameDelay(entry: LogEntry | null, base: number): number {
+  if (!entry) return base
+  const f = entry.flags ?? []
+  if (f.includes('kill')) return Math.round(base * 1.7)
+  if (f.includes('crit')) return Math.round(base * 1.35)
+  if (entry.type === 'system' || f.includes('dot') || f.includes('wait') || f.includes('recoil')) return Math.round(base * 0.5)
+  if (f.includes('dodge') || f.includes('block')) return Math.round(base * 0.85)
+  return base
+}
+
 export interface BattleReplayController {
   frame: ReplayFrame
   index: number
@@ -83,9 +96,12 @@ export function useBattleReplay(
 
   useEffect(() => {
     if (!playing || done) return
-    const t = setTimeout(() => setIndex(i => Math.min(total - 1, i + 1)), stepMs / speed)
+    // Dwell longer on the frame just revealed if it's a big moment, shorter if it's a
+    // trivial tick — the current frame's entry drives how long it stays on screen.
+    const delay = frameDelay(replay.frames[index]?.entry ?? null, stepMs) / speed
+    const t = setTimeout(() => setIndex(i => Math.min(total - 1, i + 1)), delay)
     return () => clearTimeout(t)
-  }, [playing, done, index, speed, total, stepMs])
+  }, [playing, done, index, speed, total, stepMs, replay])
 
   useEffect(() => { if (done) setPlaying(false) }, [done])
 
