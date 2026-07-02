@@ -10,6 +10,7 @@ import { InitiativeBar } from '@/components/battle/InitiativeBar'
 import { BattleArena } from '@/components/battle/BattleArena'
 import { ActionPanel } from '@/components/battle/ActionPanel'
 import { BattleLog } from '@/components/battle/BattleLog'
+import { StatusLegend } from '@/components/battle/StatusLegend'
 import { BattleRecap } from '@/components/battle/BattleRecap'
 import { Button } from '@/components/ui/Button'
 import { SynergyRibbon } from '@/components/battle/SynergyRibbon'
@@ -140,6 +141,10 @@ export function BattleScreen({
         <InitiativeBar replay={replay} index={r.index} />
         <BattleRecap frames={replay.frames.slice(0, r.index + 1)} units={replay.units} side="left" title="I tuoi danni" tone="ally" />
         <BattleRecap frames={replay.frames.slice(0, r.index + 1)} units={replay.units} side="right" title="Danni nemici" tone="enemy" />
+      </div>
+
+      <div className="flex w-full max-w-md justify-center">
+        <StatusLegend />
       </div>
 
       <BattleLog

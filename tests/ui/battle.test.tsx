@@ -350,12 +350,13 @@ describe('BattleScreen', () => {
     expect(passo.compareDocumentPosition(arena) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
-  it('shows dual damage recaps and no status legend', () => {
+  it('shows dual damage recaps and the status legend', () => {
     renderBattleScreen()
     // Both recaps render twice (desktop grid + below-lg block); getAllByText asserts at least one present.
     expect(screen.getAllByText(/I tuoi danni/i).length).toBeGreaterThanOrEqual(1)
     expect(screen.getAllByText(/Danni nemici/i).length).toBeGreaterThanOrEqual(1)
-    expect(screen.queryByTestId('status-legend')).toBeNull()
+    // The status legend is now mounted so players can decode control statuses.
+    expect(screen.getByTestId('status-legend')).toBeInTheDocument()
   })
 
   it('closing the end modal hides it and reveals a "Rivedi esito" reopen button; onFinish stays reachable', async () => {

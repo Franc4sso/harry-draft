@@ -6,7 +6,7 @@ import { STATUS_BY_ID } from '@/data/statuses'
 import { absorbDamage, applyInlineEffect, applyStatus, canAttack, effectiveStats } from '../status'
 
 export interface EffectCtx { rng: Rng; turn: number; actor: BattleUnit; target: BattleUnit; flags: LogFlag[]; bus?: EventBus; allies?: BattleUnit[]; dark?: boolean }
-export interface EffectResult { value?: number; dodged?: boolean }
+export interface EffectResult { value?: number; dodged?: boolean; wardTarget?: BattleUnit }
 
 export function computeDamage(rng: Rng, actor: BattleUnit, target: BattleUnit, power: number, flags: LogFlag[]): number {
   const c = BALANCE.combat
@@ -139,6 +139,8 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
       applyStatus(u, 'protego', { sourceId: `${ctx.actor.side}:${ctx.actor.wizard.id}` })
     }
     ctx.flags.push('block')
-    return {}
+    // Report the primary warded ally so the log/replay attribute Protego to whom it
+    // actually protects (the carry), not the caster.
+    return { wardTarget: ranked[0] }
   },
 }

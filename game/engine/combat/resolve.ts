@@ -27,16 +27,20 @@ export function resolveAction(
 
   const dark = spell.keywords?.includes('magieOscure') ?? false
   const ctx = { rng, turn, actor, target, flags, bus, allies, dark }
+  // Protego wards an ALLY (the carry), not the caster — the handler reports it so the
+  // log/replay/VFX attribute the shield to whoever it actually protects.
+  let entryTarget = target
   for (const eff of normalizeSpell(spell)) {
     const r = EFFECT_HANDLERS[eff.kind](ctx, eff)
     if (r.dodged) { value = 0; break }
     if (r.value !== undefined && value === undefined) value = r.value
+    if (r.wardTarget) entryTarget = r.wardTarget
   }
 
   if (spell.type === 'Difesa' && !flags.includes('block')) flags.push('block') // log tagging only (idempotent: shield handler may have already added it)
 
   return {
     turn, actorId: actor.wizard.id, actorSide: actor.side, action: spell.name,
-    targetId: target.wizard.id, targetSide: target.side, type: spell.type, value, flags,
+    targetId: entryTarget.wizard.id, targetSide: entryTarget.side, type: spell.type, value, flags,
   }
 }

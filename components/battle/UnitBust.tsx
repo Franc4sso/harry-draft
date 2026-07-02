@@ -93,6 +93,8 @@ function describeEffect(e: ActiveEffect): string {
       return `Potenziamento ${stat} ${magnitudeLabel(e)}, ${turns}`
     case 'debuff':
       return `Indebolimento ${stat} ${magnitudeLabel(e)}, ${turns}`
+    case 'ward':
+      return 'Protetto: annulla la prossima magia nemica'
     default:
       return turns
   }
