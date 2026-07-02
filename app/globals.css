@@ -74,3 +74,71 @@ html, body {
 }
 .synergy-bar-fill { transition: width 180ms ease; }
 @media (prefers-reduced-motion: reduce) { .synergy-bar-fill { transition: none; } }
+
+/* ==== Premium foundations ==== */
+.kicker {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.42em;
+  color: rgb(202 162 74 / 0.85);
+}
+.title-gradient {
+  background-image: linear-gradient(180deg, #f6ecc4 0%, #d9b65f 48%, #a9802f 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 4px 24px rgba(202,162,74,0.35));
+}
+.panel-premium {
+  position: relative;
+  border-radius: 1rem;
+  border: 1px solid rgba(255,255,255,0.09);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.055), rgba(255,255,255,0.015) 40%, rgba(0,0,0,0.12)),
+    #131020;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,0.06) inset,
+    0 -12px 32px -18px rgba(202,162,74,0.18) inset,
+    0 18px 40px -18px rgba(0,0,0,0.7);
+}
+.elev-gold {
+  box-shadow:
+    0 0 0 1px rgba(243,230,160,0.4) inset,
+    0 1px 0 rgba(255,255,255,0.35) inset,
+    0 10px 30px rgba(176,133,58,0.35),
+    0 22px 50px -18px rgba(0,0,0,0.8);
+}
+@keyframes emberRise {
+  0%   { transform: translate3d(0, 0, 0) scale(1); opacity: 0; }
+  8%   { opacity: var(--ember-peak, 0.7); }
+  90%  { opacity: 0.1; }
+  100% { transform: translate3d(var(--ember-drift, 20px), -85vh, 0) scale(0.4); opacity: 0; }
+}
+@keyframes fogDrift {
+  0%   { transform: translate3d(-4%, 0, 0) scale(1); }
+  50%  { transform: translate3d(4%, -3%, 0) scale(1.08); }
+  100% { transform: translate3d(-4%, 0, 0) scale(1); }
+}
+@keyframes sheenSweep { from { transform: translateX(-130%) skewX(-18deg); } to { transform: translateX(230%) skewX(-18deg); } }
+@keyframes breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+@media (prefers-reduced-motion: reduce) {
+  .anim-ambient { animation: none !important; }
+}
+/* Sheen sweep: put .btn-sheen inside an overflow-hidden parent; sweeps once per hover. */
+.btn-sheen {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(100deg, transparent 40%, rgba(255,255,255,0.35) 50%, transparent 60%);
+  transform: translateX(-130%) skewX(-18deg);
+}
+.group:hover > .btn-sheen, .btn-sheen-host:hover > .btn-sheen {
+  animation: sheenSweep 0.7s ease forwards;
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .group:hover > .btn-sheen, .btn-sheen-host:hover > .btn-sheen { animation: none; opacity: 0; }
+}
