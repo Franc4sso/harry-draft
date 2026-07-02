@@ -1,6 +1,7 @@
 'use client'
 import type { ReactNode } from 'react'
-import { AnimatePresence, motion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { screenVariants } from '@/components/ui/motion'
 import { useRunB } from '@/hooks/useRunB'
 import { DraftScreen } from './DraftScreen'
 import { MapScreen } from './MapScreen'
@@ -23,6 +24,7 @@ import { parseAreaNodeId } from '@/game/engine/map'
 
 export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: () => void }) {
   const c = useRunB(seed)
+  const reduce = useReducedMotion()
   const animKey = `${c.view}-${c.run.currentNodeId ?? c.area}`
 
   // Between-battle phases (map / recruit / relic) show the roster + owned relics as a
@@ -31,18 +33,23 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
   // don't use it (battle shows relics in-fight).
   const withTeamSidebar = (content: ReactNode) => (
     <div className="flex-1 flex flex-row items-start gap-4 p-3">
-      <aside className="sticky top-3 flex w-56 shrink-0 flex-col gap-3">
+      <motion.aside
+        initial={reduce ? false : { opacity: 0, x: -18 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+        className="sticky top-3 flex w-56 shrink-0 flex-col gap-3"
+      >
         <TeamSynergyBar
           team={c.run.team}
           synergies={c.run.activeSynergies}
           orientation="vertical"
           onSetSpell={c.setWizardSpell}
         />
-        <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Reliquie</span>
+        <div className="panel-premium p-3">
+          <span className="font-display text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Reliquie</span>
           <RelicBar relics={c.run.relics} className="mt-2" onUse={c.useConsumableRelic} team={c.run.team} />
         </div>
-      </aside>
+      </motion.aside>
       <div className="min-w-0 flex-1">{content}</div>
     </div>
   )
@@ -178,9 +185,10 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
     <AnimatePresence mode="wait">
       <motion.div
         key={animKey}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
+        variants={reduce ? undefined : screenVariants}
+        initial={reduce ? { opacity: 0 } : 'initial'}
+        animate={reduce ? { opacity: 1 } : 'animate'}
+        exit={reduce ? { opacity: 0 } : 'exit'}
         className="flex-1 flex flex-col"
       >
         {renderView()}
