@@ -58,11 +58,12 @@ defenseK: 0.5,
   },
   // New roguelite loop (Plan B) difficulty — DECOUPLED from `campaign` above.
   // The legacy single-area loop starts with a full drafted team of 5; the new loop
-  // starts with 2 level-1 wizards growing to 5 across 3 areas, so it needs a much
-  // gentler early curve. Enemy budgets below `campaign.baseBudget` (700) make
-  // `pickTowardBudget` draft from the weakest roster percentile. These are the ONLY
-  // numbers the new-loop balance harness (campaignBalanceB.test.ts) calibrates; the
-  // legacy `campaign` block and its test are never touched by new-loop tuning.
+  // starts with 4 level-1 wizards (RAISED 2→4, Task 21 — see game/engine/runEngine.ts
+  // STARTER_PICKS) growing to 5 across 3 areas, so it needs a much gentler early curve.
+  // Enemy budgets below `campaign.baseBudget` (700) make `pickTowardBudget` draft from
+  // the weakest roster percentile. These are the ONLY numbers the new-loop balance
+  // harness (campaignBalanceB.test.ts) calibrates; the legacy `campaign` block and its
+  // test are never touched by new-loop tuning.
   campaignB: {
     // --- Enemy team SIZE ---
     // Normal fights are single-wizard skirmishes (LOWERED 2→1 2026-07-02, urgent
@@ -209,6 +210,46 @@ defenseK: 0.5,
     enemyRelicsElite: 0,
     enemyRelicsBoss: 1,
   },
+  // Task 21 (2026-07-02, final calibration): USER DECISION set the final boss
+  // (Voldemort/BOSSES[0]) unitCount 2→3 (felt too scrawny at 2), which is a genuine
+  // difficulty INCREASE — campaignBalanceB dropped from 0.1583 to 0.0833, then to 0.0500
+  // once Voldemort=3 was applied on top. Menace stays removed (not reintroduced) per prior
+  // decree. Swept the starting-roster-size lever (game/engine/runEngine.ts STARTER_PICKS,
+  // plus every balance-harness test's hardcoded starter-pick count, which must mirror it):
+  //   STARTER_PICKS=2 (baseline, Voldemort=3)                → 0.0500
+  //   STARTER_PICKS=3 (+ enemyCountByArea[0] 2→1)             → 0.0667 (no gain — area0-elite
+  //                                                              is not the bottleneck once
+  //                                                              Voldemort=3 dominates)
+  //   STARTER_PICKS=3 (+ Bellatrix unitCount 3→2)             → 0.1000 (progress, still short)
+  //   STARTER_PICKS=3 (+ Bellatrix unitCount 3→2 + Muro 3→2)  → 0.0833 (worse — non-monotonic,
+  //                                                              trimming Muro further hurt)
+  //   STARTER_PICKS=3 (+ Bellatrix hpMult 0.85→0.7, unitCount 2) → 0.1000 (flat plateau)
+  //   STARTER_PICKS=4 (Muro/Bellatrix back to their calibrated 3/3, 0.85)  → 0.2083 (PASSES;
+  //                                                              robust plateau — perturbing
+  //                                                              Bellatrix hpMult or Muro's
+  //                                                              unitDamageReduction at
+  //                                                              STARTER_PICKS=4 did not move
+  //                                                              the number, confirming the
+  //                                                              bottleneck moved away from
+  //                                                              area-0/1 entirely)
+  // SHIPPED: STARTER_PICKS 2→4 (game/engine/runEngine.ts), Voldemort unitCount 2→3
+  // (data/bosses.ts), Muro/Bellatrix left UNCHANGED at their prior calibration (budget 250/
+  // hpMult 0.5/unitCount 3 and budget 300/hpMult 0.85/unitCount 3 respectively).
+  // campaignBalanceB=0.2083 (25/120) — inside (0.15, 0.45), on the higher side of the
+  // requested 0.15-0.18 sweet spot but the sweep shows no clean intermediate lever
+  // (STARTER_PICKS=3 combos plateaued at 0.0667-0.1000 regardless of Muro/Bellatrix
+  // trims — the roster-size lever moves in a coarse, non-linear way here because it's a
+  // structural action-economy fix, not a smooth stat dial). Accepted as the best
+  // available value that clears the floor without exceeding the 0.22 overshoot ceiling.
+  // esecuzioneSweep 0.292, scudiRigenSweep 0.608, velenoSweep 0.467 (all >> 0.05 floor;
+  // scudiRigenSweep's OWN starter-pick slice also had to be raised 2→4 in lockstep — it was
+  // failing at exactly 0.050 with the old slice count). Muro veleno-teaches-the-wall holds:
+  // withVeleno 0.217 > noVeleno 0.208 > 0. Every balance-harness test file that hardcodes a
+  // starter-pick slice count (campaignBalanceB, levelingSnowball, scudiRigenSweep) was raised
+  // to 4 to mirror the real STARTER_PICKS change; esecuzione/veleno/magieOscure/serpeverde
+  // sweeps were left at their existing slice(0,2) since they already passed comfortably and
+  // are diagnostic/floor-only (not gated on roster size). STARTER_PICKS is now a
+  // floor-sensitive lever: any future change must re-measure campaignBalanceB.
   map: {
     floors: 6,            // total floors incl. start(0) + boss(last); 4 middle floors
     minWidth: 2,          // min nodes per middle floor

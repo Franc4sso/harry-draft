@@ -34,9 +34,14 @@ export const BOSSES: BossDef[] = [
     // across sweep configs) — an exhaustive degenerate sweep of every OTHER lever (with
     // Voldemort still implicit-default 5) topped out at winRate 0.0417, proving 5 units is
     // structurally uncompensable. unitCount 2 (paired with enemyCountByArea [2,3,3] and
-    // Muro/Bellatrix left at their calibrated 3) clears the 0.15 floor at 0.1583 — see
-    // tests/engine/campaignBalanceB.test.ts header for the full sweep table.
-    unitCount: 2,
+    // Muro/Bellatrix left at their calibrated 3) cleared the 0.15 floor at 0.1583.
+    // RAISED 2→3 (2026-07-02, Task 21, USER DECISION): the final boss felt too scrawny at
+    // 2 units. This is a genuine difficulty increase (campaignBalanceB dropped to 0.0500
+    // with unitCount=3 alone) — restored via a starting-roster-size raise instead
+    // (game/engine/runEngine.ts STARTER_PICKS 2→4), landing at winRate 0.2083. See
+    // data/constants.ts campaignB's Task 21 note and tests/engine/campaignBalanceB.test.ts
+    // header for the full sweep table.
+    unitCount: 3,
     exclusiveSynergy: {
       id: 'darkLord', name: "L'Oscuro Signore", kind: 'group',
       requires: { count: 1 }, bonus: { allPct: 0.2 },

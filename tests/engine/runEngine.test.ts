@@ -19,14 +19,14 @@ describe('run engine — start & map', () => {
     expect(s.team).toHaveLength(0)
     expect(s.teamMax).toBe(BALANCE.draft.teamSize)
   })
-  it('starts in the draft phase and confirmDraftPicks seeds a 2-wizard team on the map', () => {
+  it('starts in the draft phase and confirmDraftPicks seeds a starter team on the map', () => {
     const s = startRunB('seed-x')
     expect(s.phase).toBe('draft')
-    expect(STARTER_PICKS).toBe(2)
-    const pool = createDraftPool().slice(0, 2).map(w => draftWizard(createRng('seed-x'), w, true))
+    expect(STARTER_PICKS).toBe(4)
+    const pool = createDraftPool().slice(0, STARTER_PICKS).map(w => draftWizard(createRng('seed-x'), w, true))
     const next = confirmDraftPicks(s, pool, createRng('seed-x'))
     expect(next.phase).toBe('map')
-    expect(next.team.length).toBe(2)
+    expect(next.team.length).toBe(STARTER_PICKS)
     expect(next.team.every(d => d.level === 1 && d.recruitedVia === 'iniziale')).toBe(true)
     expect(next.map && next.map.length).toBeGreaterThan(0)
     expect(next.currentNodeId).toBe(next.map!.find(n => n.id.endsWith('f0n0'))!.id)

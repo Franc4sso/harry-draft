@@ -64,7 +64,7 @@ function favorScudiRigenRun(seed: string): RunMetrics {
   const offer = starterOffer(seed, 'Tassorosso')
   const starters = [...offer]
     .sort((a, b) => (Number(isScudiRigen(b)) - Number(isScudiRigen(a))) || (powerOf(b) - powerOf(a)))
-    .slice(0, 2).map(d => d.wizard.id)
+    .slice(0, 4).map(d => d.wizard.id)
   s = chooseStarters(s, 'Tassorosso', starters, createRng(seed))
   const m: RunMetrics = { outcome: 'defeat', bastione: false, shieldUptake: false, turns: [] }
   let guard = 0

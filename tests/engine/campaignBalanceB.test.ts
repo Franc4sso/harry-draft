@@ -224,6 +224,46 @@ import type { RunNode, RunState } from '@/types'
 // 0.158 > 0 (both hold). enemyCountByArea and all three scripted-boss unitCounts are now
 // ALL floor-sensitive levers: any future change to enemy count/level/budget on ANY area
 // or scripted boss must re-measure campaignBalanceB (headroom is only ~1 seed).
+//
+// *** RESOLVED (2026-07-02, Task 21 — final calibration: Voldemort unitCount 2→3 +
+// starting-roster raise) ***
+// USER DECISION: Voldemort (BOSSES[0]) unitCount 2→3 — felt too scrawny at 2 as the game's
+// final boss. This is a genuine difficulty INCREASE: campaignBalanceB had already drifted
+// to 0.0833 from unrelated combat-rework changes upstream of this task (protego nerf,
+// armor-pen cut, role-identity damage multipliers), then dropped further to 0.0500 once
+// Voldemort=3 was applied on top. Menace stays removed (not reintroduced) per standing
+// decree; the fix had to come from a different lever.
+// Swept the starting-roster-size lever (`game/engine/runEngine.ts` STARTER_PICKS, which
+// gates the real game's `confirmDraftPicks`; the balance-harness tests call `chooseStarters`
+// directly with their own hardcoded starter-pick slice, which must be raised in lockstep to
+// stay representative) — this is the "action-economy" fix flagged as the top recommendation
+// in every prior recalibration note in this file. Sweep (120 seeds, Voldemort=3 throughout):
+//   STARTER_PICKS=2 (baseline)                                    → 0.0500
+//   STARTER_PICKS=3, enemyCountByArea[0] 2→1                      → 0.0667 (flat — area0-elite
+//                                                                    was not the live bottleneck)
+//   STARTER_PICKS=3, Bellatrix unitCount 3→2                      → 0.1000
+//   STARTER_PICKS=3, Bellatrix unitCount 3→2, Muro unitCount 3→2  → 0.0833 (worse; non-monotonic)
+//   STARTER_PICKS=3, Bellatrix hpMult 0.85→0.7, unitCount 2       → 0.1000 (flat plateau)
+//   STARTER_PICKS=4, Muro/Bellatrix reverted to their prior calibrated values (3/3, 0.85) →
+//                                                                    0.2083 (PASSES)
+// At STARTER_PICKS=4, perturbing Bellatrix hpMult (0.85→1.0) and Muro's unitDamageReduction
+// (0.4→0.5, which also broke the withVeleno>noVeleno invariant via a tie) produced NO change
+// in campaignBalanceB, confirming the area-0/1 scripted bosses are no longer the bottleneck
+// once the roster reaches 4 — the plateau is robust, not a 1-seed fragile fit like most prior
+// entries in this file.
+// SHIPPED: STARTER_PICKS 2→4 (game/engine/runEngine.ts); every balance-harness file with a
+// hardcoded starter-pick slice count that could move the outcome (campaignBalanceB here,
+// levelingSnowball, scudiRigenSweep — the last was failing at exactly 0.050 with the stale
+// slice(0,2)) raised to slice(0,4) to match; esecuzione/veleno/magieOscure/serpeverdeBalance
+// sweeps left at slice(0,2) since they already passed comfortably and are diagnostic/floor-only.
+// Final winRates: campaignBalanceB overall 0.2083 (25/120, inside (0.15,0.45); on the higher
+// side of the requested 0.15-0.18 sweet spot, but STARTER_PICKS=3 combos plateaued at
+// 0.0667-0.1000 regardless of Muro/Bellatrix trims — no clean intermediate value exists because
+// the roster-size lever is a coarse structural fix, not a smooth stat dial). esecuzioneSweep
+// 0.292, scudiRigenSweep 0.608, velenoSweep 0.467 (all >> 0.05 floor). Muro veleno-teaches-the-
+// wall holds: withVeleno 0.217 > noVeleno 0.208 > 0. STARTER_PICKS is now a floor-sensitive
+// lever alongside enemyCountByArea and the three scripted-boss unitCounts: any future change
+// to any of them must re-measure campaignBalanceB.
 registerCoreResolvers()
 
 // Near-optimal ("upper-bound") player policy. A pure recruit/relic-first greedy is
@@ -251,7 +291,7 @@ function isVeleno(dw: { wizard: { tags?: string[] } }): boolean {
 function runOne(seed: string, battleTurns?: number[], preferVeleno = false): 'win' | 'defeat' {
   let s = startRunB(seed)
   const offer = starterOffer(seed, 'Grifondoro')
-  const starters = [...offer].sort((a, b) => powerOf(b) - powerOf(a)).slice(0, 2).map(d => d.wizard.id)
+  const starters = [...offer].sort((a, b) => powerOf(b) - powerOf(a)).slice(0, 4).map(d => d.wizard.id)
   s = chooseStarters(s, 'Grifondoro', starters, createRng(seed))
   let guard = 0
   while (guard++ < 200) {
