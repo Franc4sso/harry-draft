@@ -56,33 +56,47 @@ export function choreograph(stage: PixiStage, o: ChoreoOpts): gsap.core.Timeline
   const side = o.entry.targetSide
   // Fire the DOM reaction + audio ON the timeline (at the real impact moment), not at build time.
   const at = (time: number, fn: () => void) => { tl.add(fn, time) }
+  const dir = from && to ? Math.atan2(to.y - from.y, to.x - from.x) : 0
 
   if (archetype === 'heal' && to) {
-    FX.fxHeal(ctx, 0, to.x, to.y, color)
-    at(0.1, () => { o.audio?.play('heal'); o.onImpact?.(side, 'heal') })
-    nominal = 1.0
+    FX.fxRuneColumn(ctx, 0, to.x, to.y, color)
+    at(0.15, () => { o.audio?.play('heal'); o.onImpact?.(side, 'heal') })
+    nominal = 1.05
   } else if (archetype === 'shield' && to) {
-    if (from) FX.fxProjectile(ctx, from, to, vfxColor('curse'), { at: 0, arc: 28 })
-    FX.fxDome(ctx, 0.3, to.x, to.y, color)
-    FX.fxBurst(ctx, 0.42, to.x, to.y, color.spark, 8, 46)
-    at(0.42, () => { o.audio?.play('shield'); o.onImpact?.(side, 'block') })
-    nominal = 0.95
+    if (from) FX.fxSigil(ctx, 0.05, from.x, from.y, vfxColor('curse'), 0.26)
+    if (from) FX.fxProjectile(ctx, from, to, vfxColor('curse'), { at: 0.2, arc: 26 })
+    FX.fxHexBarrier(ctx, 0.5, to.x, to.y, color)
+    FX.fxFlash(ctx, 0.6, to.x, to.y, color, 30)
+    FX.fxBloomPulse(ctx, 0.6, 0.7, 0.4)
+    FX.fxImpactSpray(ctx, 0.6, to.x, to.y, color.spark, 10, dir + Math.PI, 1.6, 48) // deflect back toward caster
+    at(0.6, () => { o.audio?.play('shield'); o.onImpact?.(side, 'block') })
+    nominal = 1.1
   } else if (dodge && to) {
     // Whiff: the bolt sails past; no impact FX, DOM does the sidestep.
-    if (from) FX.fxProjectile(ctx, from, { x: to.x, y: to.y }, color, { at: 0, arc: 20 })
-    at(0.32, () => o.onImpact?.(side, 'dodge'))
-    nominal = 0.6
+    if (from) FX.fxSigil(ctx, 0.05, from.x, from.y, color, 0.24)
+    if (from) FX.fxProjectile(ctx, from, to, color, { at: 0.2, arc: 18 })
+    at(0.5, () => o.onImpact?.(side, 'dodge'))
+    nominal = 0.78
   } else if (to) {
-    if (from) at(0, () => o.audio?.play('cast'))
-    const impactAt = from ? FX.fxProjectile(ctx, from, to, color, { at: 0, arc: archetype === 'dark' ? 46 : 34 }) : 0
+    // Telegraph: a rune sigil winds up at the caster before the bolt launches.
+    if (from) { FX.fxSigil(ctx, 0, from.x, from.y, color, 0.3); at(0.08, () => o.audio?.play('cast')) }
+    const launchAt = from ? 0.2 : 0
+    const impactAt = from ? FX.fxProjectile(ctx, from, to, color, { at: launchAt, arc: archetype === 'dark' ? 46 : 34 }) : 0
+    const spread = from ? 1.5 : Math.PI * 2
+
     if (crit || kill) FX.fxSlowmo(ctx, impactAt)
-    FX.fxFlash(ctx, impactAt, to.x, to.y, color, crit ? 46 : 34)
-    FX.fxShockwave(ctx, impactAt, to.x, to.y, color, (crit ? 4.2 : 2.6) + power * 2.2)
-    FX.fxBurst(ctx, impactAt, to.x, to.y, color.spark, Math.round((crit ? 18 : 10) + power * 10), crit ? 92 : 64)
+    FX.fxBloomPulse(ctx, impactAt, crit || kill ? 1.5 : 0.7, crit || kill ? 0.6 : 0.4)
+    FX.fxFlash(ctx, impactAt, to.x, to.y, color, crit ? 48 : 34)
+    FX.fxShockwave(ctx, impactAt, to.x, to.y, color, (crit ? 4.4 : 2.8) + power * 2.2, crit ? 4 : 3)
+    if (crit || kill) FX.fxShockwave(ctx, impactAt + 0.06, to.x, to.y, color, (crit ? 3 : 2) + power, 2)
+    FX.fxImpactSpray(ctx, impactAt, to.x, to.y, color.spark, Math.round((crit ? 22 : 12) + power * 12), dir, spread, crit ? 100 : 74)
+    FX.fxDebris(ctx, impactAt, to.x, to.y, color.glow, crit ? 6 : 4, dir)
+    if (archetype === 'fire') FX.fxFlames(ctx, impactAt, to.x, to.y, color)
+    if (archetype === 'dark') FX.fxLightning(ctx, impactAt, to.x, to.y, color)
     if (archetype === 'stun') FX.fxStunRings(ctx, impactAt + 0.05, to.x, to.y, color)
     if (kill) FX.fxKill(ctx, impactAt + 0.1, to.x, to.y)
     at(impactAt, () => { o.audio?.play(crit || kill ? 'crit' : 'hit'); o.onImpact?.(side, crit || kill ? 'crit' : 'hit') })
-    nominal = impactAt + (crit || kill ? 0.75 : 0.5)
+    nominal = impactAt + (crit || kill ? 0.85 : 0.55)
   } else {
     return null
   }

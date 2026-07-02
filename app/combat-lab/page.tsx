@@ -169,6 +169,12 @@ export default function CombatLab() {
           className="relative overflow-hidden rounded-2xl border border-[#caa24a]/40"
           style={{ height: 420, background: 'radial-gradient(120% 90% at 50% 12%, rgba(154,123,255,.10), transparent 55%), linear-gradient(180deg,#241a10,#160f08)', boxShadow: 'inset 0 0 120px rgba(0,0,0,.7)' }}
         >
+          {/* stage dressing */}
+          <div aria-hidden className="pointer-events-none absolute left-1/2 top-[64%] h-24 w-[74%] -translate-x-1/2 rounded-[50%] border border-[#caa24a]/15" style={{ background: 'radial-gradient(60% 80% at 50% 50%, rgba(202,162,74,.08), transparent 72%)' }} />
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3" style={{ background: 'linear-gradient(180deg, transparent, rgba(0,0,0,.55))' }} />
+          <div aria-hidden className="pointer-events-none absolute inset-0" style={{ boxShadow: 'inset 0 0 150px rgba(0,0,0,.72)' }} />
+          <span aria-hidden className="pointer-events-none absolute left-1/2 top-[30%] -translate-x-1/2 font-serif text-2xl text-white/15">VS</span>
+
           {/* duelists */}
           <Duelist ref={(el) => { bustRef.current.left = el }} side="left" emoji="🦁" name="Harry" bar={bar('left')} />
           <Duelist ref={(el) => { bustRef.current.right = el }} side="right" emoji="🐍" name="Voldemort" bar={bar('right')} />
@@ -215,6 +221,8 @@ const Duelist = forwardRef<HTMLDivElement, { side: Side; emoji: string; name: st
     const grad = side === 'left' ? 'radial-gradient(circle at 50% 34%, #b1442f, #5a140c 70%, #2a0a06)' : 'radial-gradient(circle at 50% 34%, #2f9c63, #0f4c2c 70%, #06251a)'
     return (
       <div className={`absolute bottom-[16%] flex flex-col items-center gap-3 ${side === 'left' ? 'left-[8%]' : 'right-[8%]'}`}>
+        {/* ground shadow */}
+        <div aria-hidden className="pointer-events-none absolute -bottom-2 left-1/2 h-4 w-24 -translate-x-1/2 rounded-[50%]" style={{ background: 'radial-gradient(circle, rgba(0,0,0,.55), transparent 70%)' }} />
         {/* the ref/anchor the FX measures; also the element that squashes */}
         <div ref={ref} data-unit-key={`${side}:${name.toLowerCase()}`} className="relative grid h-24 w-24 place-items-center rounded-full will-change-transform sm:h-28 sm:w-28" style={{ background: grad, boxShadow: 'inset 0 0 26px rgba(0,0,0,.6), 0 0 24px rgba(202,162,74,.22)' }}>
           <span className="text-5xl">{emoji}</span>

@@ -1,4 +1,5 @@
 import { Application, Container } from 'pixi.js'
+import { AdvancedBloomFilter } from 'pixi-filters'
 
 /**
  * A mounted Pixi WebGL overlay for the battle arena. The canvas is transparent
@@ -10,8 +11,12 @@ import { Application, Container } from 'pixi.js'
  */
 export interface PixiStage {
   app: Application
-  /** Container all effects are added to. */
+  /** Container all effects are added to (bloomed). */
   fx: Container
+  /** The bloom filter on `fx` — pulse `bloomScale` on impact for a light kick. */
+  bloom: AdvancedBloomFilter
+  /** Resting bloomScale to return to after a pulse. */
+  bloomBase: number
   /** Convert an arena percentage point (0–100) to canvas pixels. */
   toPx: (pt: { x: number; y: number }) => { x: number; y: number }
   size: () => { w: number; h: number }
@@ -38,6 +43,9 @@ export async function createPixiStage(el: HTMLElement): Promise<PixiStage> {
   el.appendChild(canvas)
 
   const fx = new Container()
+  const bloomBase = 1.0
+  const bloom = new AdvancedBloomFilter({ threshold: 0.3, bloomScale: bloomBase, brightness: 1, blur: 6, quality: 5 })
+  fx.filters = [bloom]
   app.stage.addChild(fx)
 
   const toPx = (pt: { x: number; y: number }) => ({
@@ -53,5 +61,5 @@ export async function createPixiStage(el: HTMLElement): Promise<PixiStage> {
     }
   }
 
-  return { app, fx, toPx, size, destroy }
+  return { app, fx, bloom, bloomBase, toPx, size, destroy }
 }

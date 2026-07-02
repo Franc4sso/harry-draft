@@ -20,51 +20,118 @@ function glow(color: number, distance = 14, outer = 2): GlowFilter {
 
 function orb(radius: number, core: number, halo: number): Container {
   const c = new Container()
-  const glowRing = new Graphics().circle(0, 0, radius * 1.9).fill({ color: halo, alpha: 0.3 })
+  const glowRing = new Graphics().circle(0, 0, radius * 2).fill({ color: halo, alpha: 0.3 })
   const body = new Graphics().circle(0, 0, radius).fill({ color: core, alpha: 1 })
-  c.addChild(glowRing, body)
-  c.filters = [glow(halo, 18, 2.2)]
+  const spec = new Graphics().circle(-radius * 0.3, -radius * 0.3, radius * 0.4).fill({ color: 0xffffff, alpha: 0.8 })
+  c.addChild(glowRing, body, spec)
+  c.filters = [glow(halo, 20, 2.4)]
   return c
+}
+
+/* ------------------------------------------------------------------ */
+/* Screen-wide juice                                                   */
+/* ------------------------------------------------------------------ */
+
+/** Kick the bloom intensity up and let it settle — a light bloom "pop" on impact. */
+export function fxBloomPulse(ctx: FxCtx, at: number, amount: number, dur: number): void {
+  const b = ctx.stage.bloom
+  const base = ctx.stage.bloomBase
+  ctx.tl.to(b, { bloomScale: base + amount, duration: 0.08, ease: 'power2.out' }, at)
+  ctx.tl.to(b, { bloomScale: base, duration: dur, ease: 'power2.out' }, at + 0.08)
+}
+
+/**
+ * A brief scene-wide dim behind the impact — implies slow-motion on a crit/kill
+ * WITHOUT touching time or moving the camera. Added behind everything so sparks pop.
+ */
+export function fxSlowmo(ctx: FxCtx, at: number): void {
+  const { w, h } = ctx.stage.size()
+  const v = new Graphics().rect(0, 0, w, h).fill({ color: 0x0a0612, alpha: 1 })
+  v.alpha = 0
+  ctx.stage.fx.addChildAt(v, 0)
+  ctx.tl.to(v, { alpha: 0.42, duration: 0.12, ease: 'power2.out' }, at)
+  ctx.tl.to(v, { alpha: 0, duration: 0.6, ease: 'power2.out', onComplete: () => v.destroy() }, at + 0.14)
+}
+
+/* ------------------------------------------------------------------ */
+/* Casting                                                             */
+/* ------------------------------------------------------------------ */
+
+/** A rotating rune sigil that blooms under/at the caster — the wind-up telegraph. */
+export function fxSigil(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor, dur = 0.4): void {
+  const s = new Container()
+  s.position.set(x, y)
+
+  const outer = new Graphics().circle(0, 0, 34).stroke({ width: 2, color: color.glow, alpha: 0.85 })
+  const inner = new Graphics().circle(0, 0, 22).stroke({ width: 1, color: color.core, alpha: 0.7 })
+  const ticks = new Graphics()
+  for (let i = 0; i < 12; i++) {
+    const a = (Math.PI / 6) * i
+    ticks.moveTo(Math.cos(a) * 24, Math.sin(a) * 24).lineTo(Math.cos(a) * 34, Math.sin(a) * 34)
+  }
+  ticks.stroke({ width: 1, color: color.glow, alpha: 0.55 })
+  const tri = new Graphics()
+  for (let i = 0; i < 3; i++) {
+    const a = ((Math.PI * 2) / 3) * i - Math.PI / 2
+    if (i) tri.lineTo(Math.cos(a) * 19, Math.sin(a) * 19)
+    else tri.moveTo(Math.cos(a) * 19, Math.sin(a) * 19)
+  }
+  tri.closePath().stroke({ width: 1, color: color.core, alpha: 0.5 })
+
+  s.addChild(outer, inner, ticks, tri)
+  s.filters = [glow(color.glow, 12, 1.8)]
+  s.scale.set(0.4)
+  s.alpha = 0
+  ctx.stage.fx.addChild(s)
+
+  ctx.tl.to(s, { alpha: 1, duration: 0.12 }, at)
+  ctx.tl.to(s.scale, { x: 1, y: 1, duration: 0.32, ease: 'back.out(1.8)' }, at)
+  ctx.tl.to(s, { rotation: Math.PI * 0.7, duration: dur + 0.2, ease: 'none' }, at)
+  ctx.tl.to(s, { alpha: 0, duration: 0.2, ease: 'power2.in', onComplete: () => s.destroy() }, at + dur)
 }
 
 /**
  * A glowing projectile flying caster→target along a shallow arc, leaving a
- * fading trail. Returns the timeline time (seconds) at which it reaches impact.
+ * ribbon trail (ticker-emitted). Returns the timeline time (s) of impact.
  */
-export function fxProjectile(ctx: FxCtx, from: Px, to: Px, color: VfxColor, opts: { at?: number; arc?: number } = {}): number {
+export function fxProjectile(ctx: FxCtx, from: Px, to: Px, color: VfxColor, opts: { at?: number; arc?: number; flight?: number } = {}): number {
   const { stage, tl } = ctx
   const at = opts.at ?? 0
-  const flight = 0.4
-  const p = orb(8, color.core, color.glow)
+  const flight = opts.flight ?? 0.42
+  const p = orb(7, color.core, color.glow)
   p.position.set(from.x, from.y)
   p.alpha = 0
   stage.fx.addChild(p)
 
   const midY = (from.y + to.y) / 2 - (opts.arc ?? 34)
 
-  tl.to(p, { alpha: 1, duration: 0.08 }, at)
-  tl.to(p.scale, { x: 1.25, y: 1.25, duration: flight, ease: 'none' }, at)
+  tl.to(p, { alpha: 1, duration: 0.06 }, at)
+  tl.to(p.scale, { x: 1.3, y: 1.3, duration: flight, ease: 'none' }, at)
   tl.to(p.position, { x: to.x, duration: flight, ease: 'power1.in' }, at)
   tl.to(p.position, { y: midY, duration: flight / 2, ease: 'sine.out' }, at)
   tl.to(p.position, { y: to.y, duration: flight / 2, ease: 'sine.in' }, at + flight / 2)
 
-  // Trail: a handful of fading ghost dots dropped along the path.
-  const trailN = 6
-  for (let i = 1; i <= trailN; i++) {
-    const t = at + (flight * i) / (trailN + 1)
-    const dot = new Graphics().circle(0, 0, 4).fill({ color: color.glow, alpha: 0.5 })
-    dot.alpha = 0
-    stage.fx.addChild(dot)
-    // Snapshot the projectile position at the drop moment, then fade in place.
-    tl.add(() => dot.position.set(p.position.x, p.position.y), t)
-    tl.to(dot, { alpha: 0.5, duration: 0.02 }, t)
-    tl.to(dot.scale, { x: 0.2, y: 0.2, duration: 0.35, ease: 'power1.in' }, t)
-    tl.to(dot, { alpha: 0, duration: 0.35, ease: 'power1.in', onComplete: () => dot.destroy() }, t)
+  // Ribbon trail: drop fading segments as the projectile travels.
+  const ticker = stage.app.ticker
+  let frame = 0
+  const emit = () => {
+    if (frame++ % 2) return
+    const seg = new Graphics().circle(0, 0, 3 + Math.random() * 2.5).fill({ color: color.glow, alpha: 0.7 })
+    seg.position.set(p.position.x, p.position.y)
+    seg.blendMode = 'add'
+    stage.fx.addChild(seg)
+    gsap.to(seg, { alpha: 0, duration: 0.42, ease: 'power1.in', onComplete: () => seg.destroy() })
+    gsap.to(seg.scale, { x: 0.15, y: 0.15, duration: 0.42, ease: 'power1.in' })
   }
-
-  tl.to(p, { alpha: 0, duration: 0.08, onComplete: () => p.destroy() }, at + flight)
+  tl.add(() => ticker.add(emit), at)
+  tl.add(() => ticker.remove(emit), at + flight)
+  tl.to(p, { alpha: 0, duration: 0.06, onComplete: () => p.destroy() }, at + flight)
   return at + flight
 }
+
+/* ------------------------------------------------------------------ */
+/* Impact                                                              */
+/* ------------------------------------------------------------------ */
 
 /** A bright additive flash at the impact point. */
 export function fxFlash(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor, size: number): void {
@@ -78,9 +145,9 @@ export function fxFlash(ctx: FxCtx, at: number, x: number, y: number, color: Vfx
 }
 
 /** Expanding ring — reads as a shockwave without moving the camera. `radius` is a scale multiple. */
-export function fxShockwave(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor, radius: number): void {
+export function fxShockwave(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor, radius: number, width = 3): void {
   const base = 18
-  const ring = new Graphics().circle(0, 0, base).stroke({ width: 3, color: color.glow, alpha: 0.9 })
+  const ring = new Graphics().circle(0, 0, base).stroke({ width, color: color.glow, alpha: 0.9 })
   ring.position.set(x, y)
   ring.scale.set(0.2)
   ring.filters = [glow(color.glow, 12, 1.6)]
@@ -89,49 +156,86 @@ export function fxShockwave(ctx: FxCtx, at: number, x: number, y: number, color:
   ctx.tl.to(ring, { alpha: 0, duration: 0.5, ease: 'power2.out', onComplete: () => ring.destroy() }, at)
 }
 
-/** Radiating particle burst at the impact point. */
-export function fxBurst(ctx: FxCtx, at: number, x: number, y: number, colors: number[], count: number, spread: number): void {
+/**
+ * Directional particle spray: particles fan out in a cone around `dir` (radians)
+ * with `spread` width. Pass spread = Math.PI * 2 for a full radial burst.
+ */
+export function fxImpactSpray(ctx: FxCtx, at: number, x: number, y: number, colors: number[], count: number, dir: number, spread: number, dist: number): void {
   const { stage, tl } = ctx
   for (let i = 0; i < count; i++) {
     const col = colors[i % colors.length] ?? 0xffffff
-    const p = new Graphics().circle(0, 0, 2 + Math.random() * 3).fill({ color: col })
+    const p = new Graphics().circle(0, 0, 1.5 + Math.random() * 3).fill({ color: col })
     p.position.set(x, y)
+    p.blendMode = 'add'
     p.filters = [glow(col, 8, 1.4)]
     stage.fx.addChild(p)
-    const ang = Math.random() * Math.PI * 2
-    const dist = spread * (0.4 + Math.random() * 0.85)
-    const dur = 0.5 + Math.random() * 0.3
-    tl.to(p.position, { x: x + Math.cos(ang) * dist, y: y + Math.sin(ang) * dist, duration: dur, ease: 'power2.out' }, at)
+    const ang = dir + (Math.random() - 0.5) * spread
+    const d = dist * (0.35 + Math.random() * 0.9)
+    const dur = 0.45 + Math.random() * 0.35
+    const tx = x + Math.cos(ang) * d
+    const ty = y + Math.sin(ang) * d
+    tl.to(p.position, { x: tx, duration: dur, ease: 'power3.out' }, at)
+    tl.to(p.position, { y: ty, duration: dur * 0.55, ease: 'power3.out' }, at)
+    tl.to(p.position, { y: ty + 26, duration: dur * 0.45, ease: 'power1.in' }, at + dur * 0.55) // gravity fall
     tl.to(p.scale, { x: 0, y: 0, duration: dur, ease: 'power1.in', onComplete: () => p.destroy() }, at)
   }
 }
 
-/** Rising heal sparkles anchored on the target, no projectile. */
-export function fxHeal(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor): void {
+/** Chunky spinning debris flung along the impact direction. */
+export function fxDebris(ctx: FxCtx, at: number, x: number, y: number, color: number, count: number, dir: number): void {
   const { stage, tl } = ctx
-  for (let i = 0; i < 12; i++) {
-    const col = color.spark[i % color.spark.length] ?? color.glow
-    const p = new Graphics().circle(0, 0, 2 + Math.random() * 2.5).fill({ color: col })
-    p.position.set(x + (Math.random() * 2 - 1) * 34, y + 32)
-    p.filters = [glow(color.glow, 8, 1.4)]
-    stage.fx.addChild(p)
-    const t = at + i * 0.045
-    tl.to(p.position, { y: y - 44, duration: 0.9, ease: 'power1.out' }, t)
-    tl.to(p, { alpha: 0, duration: 0.9, ease: 'power1.in', onComplete: () => p.destroy() }, t)
+  for (let i = 0; i < count; i++) {
+    const s = 2 + Math.random() * 3
+    const d = new Graphics().rect(-s, -s, s * 2, s * 2).fill({ color })
+    d.position.set(x, y)
+    d.rotation = Math.random() * Math.PI
+    stage.fx.addChild(d)
+    const ang = dir + (Math.random() - 0.5) * 1.6
+    const dist = 40 + Math.random() * 50
+    tl.to(d.position, { x: x + Math.cos(ang) * dist, duration: 0.6, ease: 'power2.out' }, at)
+    tl.to(d.position, { y: y + Math.sin(ang) * dist + 30, duration: 0.6, ease: 'power1.in' }, at)
+    tl.to(d, { rotation: d.rotation + (Math.random() - 0.5) * 8, alpha: 0, duration: 0.6, ease: 'power1.in', onComplete: () => d.destroy() }, at)
   }
 }
 
-/** Protego dome around the defender, expanding then dissipating. */
-export function fxDome(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor): void {
-  const dome = new Graphics().circle(0, 0, 52).fill({ color: color.glow, alpha: 0.16 }).stroke({ width: 3, color: color.core, alpha: 0.9 })
-  dome.position.set(x, y)
-  dome.scale.set(0.5)
-  dome.alpha = 0
-  dome.filters = [glow(color.glow, 20, 2)]
-  ctx.stage.fx.addChild(dome)
-  ctx.tl.to(dome, { alpha: 1, duration: 0.14 }, at)
-  ctx.tl.to(dome.scale, { x: 1, y: 1, duration: 0.35, ease: 'back.out(2)' }, at)
-  ctx.tl.to(dome, { alpha: 0, duration: 0.4, ease: 'power2.in', onComplete: () => dome.destroy() }, at + 0.55)
+/* ------------------------------------------------------------------ */
+/* Archetype signatures                                                */
+/* ------------------------------------------------------------------ */
+
+/** Rising flames + embers for a fire hit. */
+export function fxFlames(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor): void {
+  const { stage, tl } = ctx
+  for (let i = 0; i < 16; i++) {
+    const col = color.spark[i % color.spark.length] ?? color.glow
+    const f = new Graphics().circle(0, 0, 3 + Math.random() * 4).fill({ color: col, alpha: 0.95 })
+    f.position.set(x + (Math.random() * 2 - 1) * 22, y + 12)
+    f.blendMode = 'add'
+    stage.fx.addChild(f)
+    const t = at + Math.random() * 0.12
+    tl.to(f.position, { y: y - 42 - Math.random() * 44, x: f.position.x + (Math.random() * 2 - 1) * 16, duration: 0.55 + Math.random() * 0.4, ease: 'power1.out' }, t)
+    tl.to(f.scale, { x: 0, y: 0, duration: 0.7, ease: 'power1.in', onComplete: () => f.destroy() }, t)
+  }
+}
+
+/** Jagged lightning arcs radiating from a dark hit. */
+export function fxLightning(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor): void {
+  const { stage, tl } = ctx
+  for (let k = 0; k < 5; k++) {
+    const g = new Graphics()
+    const ang = Math.random() * Math.PI * 2
+    const len = 30 + Math.random() * 34
+    const seg = 4
+    g.moveTo(0, 0)
+    for (let s = 1; s <= seg; s++) {
+      const r = (len * s) / seg
+      g.lineTo(Math.cos(ang) * r + (Math.random() * 2 - 1) * 11, Math.sin(ang) * r + (Math.random() * 2 - 1) * 11)
+    }
+    g.stroke({ width: 2, color: color.core, alpha: 0.9 })
+    g.position.set(x, y)
+    g.filters = [glow(color.glow, 10, 2)]
+    stage.fx.addChild(g)
+    tl.to(g, { alpha: 0, duration: 0.3, ease: 'power2.out', onComplete: () => g.destroy() }, at + k * 0.02)
+  }
 }
 
 /** Rings around the target — a stun burst. */
@@ -148,30 +252,66 @@ export function fxStunRings(ctx: FxCtx, at: number, x: number, y: number, color:
   }
 }
 
-/**
- * A brief scene-wide dim behind the impact — implies slow-motion on a crit/kill
- * WITHOUT touching time or moving the camera. Added behind the burst so sparks pop.
- */
-export function fxSlowmo(ctx: FxCtx, at: number): void {
-  const { w, h } = ctx.stage.size()
-  const v = new Graphics().rect(0, 0, w, h).fill({ color: 0x120a1e, alpha: 1 })
-  v.alpha = 0
-  ctx.stage.fx.addChildAt(v, 0)
-  ctx.tl.to(v, { alpha: 0.38, duration: 0.12, ease: 'power2.out' }, at)
-  ctx.tl.to(v, { alpha: 0, duration: 0.55, ease: 'power2.out', onComplete: () => v.destroy() }, at + 0.14)
+/** A column of light + rune sigil + rising motes for a heal. */
+export function fxRuneColumn(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor): void {
+  const { stage, tl } = ctx
+  const col = new Graphics().rect(-15, -74, 30, 96).fill({ color: color.core, alpha: 0.22 })
+  col.position.set(x, y + 22)
+  col.blendMode = 'add'
+  col.alpha = 0
+  stage.fx.addChild(col)
+  tl.to(col, { alpha: 1, duration: 0.16 }, at)
+  tl.to(col, { alpha: 0, duration: 0.6, ease: 'power2.out', onComplete: () => col.destroy() }, at + 0.32)
+
+  fxSigil(ctx, at, x, y + 36, color, 0.7)
+  for (let i = 0; i < 14; i++) {
+    const c = color.spark[i % color.spark.length] ?? color.glow
+    const p = new Graphics().circle(0, 0, 2 + Math.random() * 2.5).fill({ color: c })
+    p.position.set(x + (Math.random() * 2 - 1) * 30, y + 30)
+    p.blendMode = 'add'
+    p.filters = [glow(color.glow, 8, 1.4)]
+    stage.fx.addChild(p)
+    const t = at + i * 0.04
+    tl.to(p.position, { y: y - 46, duration: 0.9, ease: 'power1.out' }, t)
+    tl.to(p, { alpha: 0, duration: 0.9, ease: 'power1.in', onComplete: () => p.destroy() }, t)
+  }
+}
+
+/** Hexagonal Protego barrier that snaps up then dissipates. */
+export function fxHexBarrier(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor): void {
+  const hex = new Graphics()
+  for (let i = 0; i < 6; i++) {
+    const a = (Math.PI / 3) * i - Math.PI / 2
+    const px = Math.cos(a) * 52
+    const py = Math.sin(a) * 52
+    if (i) hex.lineTo(px, py)
+    else hex.moveTo(px, py)
+  }
+  hex.closePath().fill({ color: color.glow, alpha: 0.14 }).stroke({ width: 3, color: color.core, alpha: 0.9 })
+  hex.position.set(x, y)
+  hex.scale.set(0.5)
+  hex.alpha = 0
+  hex.filters = [glow(color.glow, 20, 2)]
+  ctx.stage.fx.addChild(hex)
+  ctx.tl.to(hex, { alpha: 1, duration: 0.14 }, at)
+  ctx.tl.to(hex.scale, { x: 1, y: 1, duration: 0.32, ease: 'back.out(2)' }, at)
+  ctx.tl.to(hex, { alpha: 0, duration: 0.42, ease: 'power2.in', onComplete: () => hex.destroy() }, at + 0.55)
 }
 
 /** Finisher flourish for a killing blow: gold+crimson shock + rising embers. */
 export function fxKill(ctx: FxCtx, at: number, x: number, y: number): void {
-  fxShockwave(ctx, at, x, y, { core: GOLD, glow: GOLD_DEEP, spark: [GOLD] }, 6.5)
-  for (let i = 0; i < 16; i++) {
+  fxShockwave(ctx, at, x, y, { core: GOLD, glow: GOLD_DEEP, spark: [GOLD] }, 7, 4)
+  fxShockwave(ctx, at + 0.08, x, y, { core: GOLD, glow: CRIMSON, spark: [GOLD] }, 5, 2)
+  const { stage, tl } = ctx
+  for (let i = 0; i < 18; i++) {
     const col = i % 2 ? GOLD : CRIMSON
     const e = new Graphics().circle(0, 0, 2 + Math.random() * 2).fill({ color: col })
     e.position.set(x + (Math.random() * 2 - 1) * 30, y)
+    e.blendMode = 'add'
     e.filters = [glow(col, 8, 1.4)]
-    ctx.stage.fx.addChild(e)
+    stage.fx.addChild(e)
     const t = at + Math.random() * 0.15
-    ctx.tl.to(e.position, { y: y - 60 - Math.random() * 40, duration: 1, ease: 'power1.out' }, t)
-    ctx.tl.to(e, { alpha: 0, duration: 1, ease: 'power1.in', onComplete: () => e.destroy() }, t)
+    tl.to(e.position, { y: y - 60 - Math.random() * 44, duration: 1, ease: 'power1.out' }, t)
+    tl.to(e, { alpha: 0, duration: 1, ease: 'power1.in', onComplete: () => e.destroy() }, t)
   }
 }
