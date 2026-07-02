@@ -9,6 +9,11 @@ import { PixiArena } from './PixiArena'
 import { Callout } from './Callout'
 import { floatFor } from './damageFloat'
 
+/** Big/ultimate enemy spells worth warning the player about a beat before they land. */
+const BIG_SPELLS = new Set([
+  'Avada Kedavra', 'Ardemonio', 'Sectumsempra', 'Bombarda', 'Reducto', 'Confringo', 'Crucio',
+])
+
 /**
  * Staged battlefield: player's busts on top, enemies on the bottom, the
  * spell-effect layer between them, and the Protego dome over a blocking
@@ -48,6 +53,17 @@ export function BattleArena({
     return fresh?.kind ?? null
   })()
 
+  // Boss telegraph: peek at the NEXT frame — if an enemy is about to unleash a big/ultimate
+  // spell, warn the player one beat before it lands.
+  const telegraph = (() => {
+    const next = replay.frames[frameKey + 1]?.entry
+    if (next && next.actorSide === 'right' && BIG_SPELLS.has(next.action)) {
+      const caster = replay.units.find(u => u.id === next.actorId && u.side === 'right')
+      return { name: caster?.name ?? 'Il nemico', spell: next.action }
+    }
+    return null
+  })()
+
   const left = replay.units.filter(u => u.side === 'left')
   const right = replay.units.filter(u => u.side === 'right')
 
@@ -79,6 +95,16 @@ export function BattleArena({
   return (
     <div data-testid="battle-arena" className="relative mx-auto flex w-full max-w-5xl flex-col items-center gap-4 rounded-3xl px-2 py-4">
       <ArenaBackdrop />
+      {telegraph && (
+        <div
+          key={`tg-${frameKey}`}
+          data-testid="boss-telegraph"
+          className="pointer-events-none absolute left-1/2 top-1 z-20 -translate-x-1/2 whitespace-nowrap rounded-full border border-rose-500/50 bg-black/75 px-4 py-1.5 text-xs font-semibold text-rose-200 backdrop-blur-sm motion-safe:animate-pulse sm:text-sm"
+          style={{ boxShadow: '0 0 26px rgba(224,90,74,.45)' }}
+        >
+          ⚠ {telegraph.name} sta caricando {telegraph.spell}…
+        </div>
+      )}
       {/* Teams as horizontal rows (player on top, enemies below) — clearest read of
           who-hits-whom. A fixed-height center keeps the field from reflowing. */}
       <section className="flex w-full flex-col items-center gap-2">
