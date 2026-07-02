@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, useReducedMotion } from 'framer-motion'
-import { TiltCard, FoilText } from '@/components/ui/motion'
+import { TiltCard } from '@/components/ui/motion'
 import { SealButton } from '@/components/ui/SealButton'
 import { WizardCard } from '@/components/cards/WizardCard'
 import { draftWizard } from '@/game/engine/statRoll'
@@ -58,12 +58,14 @@ export function MenuScreen() {
           className="font-display text-7xl font-extrabold tracking-wide sm:text-8xl lg:text-9xl"
           aria-label="Harry Draft"
         >
-          <FoilText as="span" className="inline-block">
-            {'Harry Draft'.split('').map((ch, i) => (
+          {/* Each letter carries the gold gradient itself: background-clip:text does NOT
+              propagate through nested spans, so the gradient must live on the clipped
+              element that actually holds the glyph (a FoilText wrapper left them invisible). */}
+          {'Harry Draft'.split('').map((ch, i) => (
               <motion.span
                 key={i}
                 aria-hidden
-                className="inline-block"
+                className="title-gradient inline-block"
                 initial={reduce ? false : { opacity: 0, y: 22, filter: 'blur(8px)' }}
                 animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
                 transition={{ duration: 0.55, delay: 0.08 + i * 0.045, ease: [0.22, 1, 0.36, 1] }}
@@ -71,7 +73,6 @@ export function MenuScreen() {
                 {ch === ' ' ? ' ' : ch}
               </motion.span>
             ))}
-          </FoilText>
         </h1>
         <p className="mx-auto max-w-md text-white/60">
           Componi una squadra di cinque maghi, supera cinque sfidanti e affronta il Boss Finale.
