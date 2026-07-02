@@ -134,7 +134,7 @@ export const WIZARDS: Wizard[] = [
     id: 'luna', name: 'Luna Lovegood', house: 'Corvonero', role: 'Supporto', tier: 3,
     gender: 'f',
     ranges: { hp: [81, 102], atk: [12, 18], def: [12, 19], spd: [18, 25] },
-    spellPool: ['episkey', 'rennervate', 'protego', 'salvio', 'riddikulus'],
+    spellPool: ['episkey', 'rennervate', 'protego', 'salvio', 'riddikulus', 'incitamento'],
     tags: ['da'],
   },
   {
@@ -155,14 +155,14 @@ export const WIZARDS: Wizard[] = [
     id: 'molly', name: 'Molly Weasley', house: 'Grifondoro', role: 'Supporto', tier: 3,
     gender: 'f',
     ranges: { hp: [93, 114], atk: [13, 18], def: [16, 22], spd: [14, 20] },
-    spellPool: ['vulnera', 'episkey', 'ferula', 'protego', 'fianto'],
+    spellPool: ['vulnera', 'episkey', 'ferula', 'protego', 'fianto', 'colletivo_scudo'],
     tags: ['weasley', 'order'],
   },
   {
     id: 'arthur', name: 'Arthur Weasley', house: 'Grifondoro', role: 'Supporto', tier: 3,
     gender: 'm',
     ranges: { hp: [91, 112], atk: [12, 18], def: [16, 22], spd: [15, 21] },
-    spellPool: ['episkey', 'rennervate', 'protego', 'salvio'],
+    spellPool: ['episkey', 'rennervate', 'protego', 'salvio', 'incitamento'],
     tags: ['weasley', 'order'],
   },
   {

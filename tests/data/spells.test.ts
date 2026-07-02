@@ -19,7 +19,11 @@ describe('spells data', () => {
         const hasSpecDamage = s.spec?.some(e => e.kind === 'damage' && e.power > 0) ?? false
         expect(hasPower || hasSpecDamage).toBe(true)
       }
-      if (s.type === 'Cura') expect(s.heal ?? 0).toBeGreaterThan(0)
+      if (s.type === 'Cura') {
+        const hasHeal = (s.heal ?? 0) > 0
+        const hasSpecHeal = s.spec?.some(e => e.kind === 'heal' && e.amount > 0) ?? false
+        expect(hasHeal || hasSpecHeal).toBe(true)
+      }
     }
   })
   it('exposes a base attack and a lookup map', () => {

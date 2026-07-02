@@ -97,7 +97,10 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
   applyStatus: (ctx, eff) => {
     if (eff.kind !== 'applyStatus') return {}
     if (eff.chance !== undefined && !ctx.rng.chance(eff.chance)) return {}
-    // NOTE: 'ally' currently collapses to ctx.target like 'enemy'; no shipped trait/spell uses 'ally' here. Revisit if one does.
+    // 'ally': ctx.target IS the resolved ally (resolveAction is called with an ally as
+    // `target` for ally/team-buff spells — see simulate.ts healIntent-style targeting for
+    // Cura-type spells, which already routes to the most-wounded ally). 'enemy' keeps using
+    // ctx.target directly (the resolved enemy). 'self' always means the caster.
     const unit = eff.target === 'self' ? ctx.actor : ctx.target
     if (eff.statusId) {
       const maxStacks = eff.statusId === 'veleno' && ctx.actor.velenoUncapped ? Infinity : undefined

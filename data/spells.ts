@@ -28,16 +28,33 @@ export const SPELLS: Spell[] = [
   { id: 'vulnera', name: 'Vulnera Sanentur', desc: 'Cura profonda.', type: 'Cura', heal: 48, hitChance: 1, cooldown: 1 },
   { id: 'rennervate', name: 'Rennervate', desc: 'Rianima e cura.', type: 'Cura', heal: 34, hitChance: 1, cooldown: 1 },
   { id: 'anapneo', name: 'Anapneo', desc: 'Libera e ristora.', type: 'Cura', heal: 22, hitChance: 1, cooldown: 1 },
-  { id: 'ferula', name: 'Ferula', desc: 'Fascia le ferite, cura nel tempo.', type: 'Cura', heal: 14, hitChance: 1, cooldown: 1, effects: [{ kind: 'buff', stat: 'def', amount: 10, duration: 2 }] },
+  // Def rider rerouted (2026-07-02) to the capped defUp status; heal is unchanged (kept as
+  // a spec since heal-type spells target the caster here — self cast, same as before).
+  { id: 'ferula', name: 'Ferula', desc: 'Fascia le ferite, cura nel tempo.', type: 'Cura', hitChance: 1, cooldown: 1,
+    spec: [{ kind: 'heal', amount: 14 }, { kind: 'applyStatus', target: 'self', statusId: 'defUp' }] },
+
+  // Ally/team buff spells (2026-07-02): first buffs that don't target the caster. Routed
+  // through the capped atkUp/defUp statuses (maxStacks 3). Modeled as type:'Cura' so the
+  // existing heal-targeting path (simulate.ts healIntent -> mostWounded(allies) ?? actor)
+  // resolves a genuine ally target without touching targeting.ts/simulate.ts.
+  { id: 'colletivo_scudo', name: 'Colletivo Scudo', desc: "Rinforza la difesa di un alleato ferito.", type: 'Cura', hitChance: 1, cooldown: 2,
+    spec: [{ kind: 'heal', amount: 8 }, { kind: 'applyStatus', target: 'ally', statusId: 'defUp' }] },
+  { id: 'incitamento', name: 'Incitamento', desc: "Incita un alleato ferito, +attacco.", type: 'Cura', hitChance: 1, cooldown: 2,
+    spec: [{ kind: 'heal', amount: 8 }, { kind: 'applyStatus', target: 'ally', statusId: 'atkUp' }] },
 
   // Difesa
-  { id: 'protego', name: 'Protego', desc: 'Annulla la prossima magia sul bersaglio.', type: 'Difesa', hitChance: 1, cooldown: 1, spec: [{ kind: 'protego', count: 1 }] },
-  { id: 'protego_maxima', name: 'Protego Maxima', desc: 'Annulla la prossima magia su due alleati.', type: 'Difesa', hitChance: 1, cooldown: 2, spec: [{ kind: 'protego', count: 2 }] },
+  // Nerf (2026-07-02): cooldown 1->2 pairs with the protego ward's defaultDuration cut
+  // (3->1 in data/statuses.ts) so a warded charge doesn't sit near-permanently.
+  { id: 'protego', name: 'Protego', desc: 'Annulla la prossima magia sul bersaglio.', type: 'Difesa', hitChance: 1, cooldown: 2, spec: [{ kind: 'protego', count: 1 }] },
+  { id: 'protego_maxima', name: 'Protego Maxima', desc: 'Annulla la prossima magia su due alleati.', type: 'Difesa', hitChance: 1, cooldown: 3, spec: [{ kind: 'protego', count: 2 }] },
   { id: 'fianto', name: 'Fianto Duri', desc: 'Erige una barriera che assorbe il danno.', type: 'Difesa', hitChance: 1, cooldown: 1,
-    spec: [{ kind: 'shield', amount: 40, duration: 2 }, { kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'def', amount: 10, duration: 2 } }] },
-  { id: 'salvio', name: 'Salvio Hexia', desc: 'Devia gli incantesimi, +velocità.', type: 'Difesa', hitChance: 1, cooldown: 1, effects: [{ kind: 'buff', stat: 'spd', amount: 20, duration: 2 }] },
-  { id: 'riddikulus', name: 'Riddikulus', desc: 'Rinforza il morale, +attacco.', type: 'Difesa', hitChance: 1, cooldown: 1, effects: [{ kind: 'buff', stat: 'atk', amount: 20, duration: 2 }] },
-  { id: 'expecto', name: 'Expecto Patronum', desc: 'Protezione luminosa, +tutte le difese.', type: 'Difesa', hitChance: 1, cooldown: 2, effects: [{ kind: 'buff', stat: 'def', amount: 25, duration: 3 }, { kind: 'buff', stat: 'spd', amount: 15, duration: 3 }] },
+    spec: [{ kind: 'shield', amount: 40, duration: 2 }, { kind: 'applyStatus', target: 'self', statusId: 'defUp' }] },
+  // Self-buff riders rerouted (2026-07-02) from uncapped inline {kind:'buff'} effects to the
+  // capped atkUp/defUp/spdUp status IDs (maxStacks 3) — recasting no longer stacks to infinity.
+  { id: 'salvio', name: 'Salvio Hexia', desc: 'Devia gli incantesimi, +velocità.', type: 'Difesa', hitChance: 1, cooldown: 1, spec: [{ kind: 'applyStatus', target: 'self', statusId: 'spdUp' }] },
+  { id: 'riddikulus', name: 'Riddikulus', desc: 'Rinforza il morale, +attacco.', type: 'Difesa', hitChance: 1, cooldown: 1, spec: [{ kind: 'applyStatus', target: 'self', statusId: 'atkUp' }] },
+  { id: 'expecto', name: 'Expecto Patronum', desc: 'Protezione luminosa, +tutte le difese.', type: 'Difesa', hitChance: 1, cooldown: 2,
+    spec: [{ kind: 'applyStatus', target: 'self', statusId: 'defUp' }, { kind: 'applyStatus', target: 'self', statusId: 'spdUp' }] },
 
   // extra Attacco to reach count + variety
   { id: 'flipendo', name: 'Flipendo', desc: 'Spinta concussiva.', type: 'Attacco', power: 1.1, hitChance: 0.93, cooldown: 0 },

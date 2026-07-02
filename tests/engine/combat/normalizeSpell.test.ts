@@ -22,15 +22,15 @@ describe('normalizeSpell', () => {
       { kind: 'applyStatus', target: 'enemy', effect: { kind: 'stun', stat: undefined, amount: undefined, duration: 2 } },
     ])
   })
-  it('defense buff → applyStatus(self)', () => {
+  it('defense buff (riddikulus) → spec applyStatus(self, atkUp), returned verbatim (capped status, not inline)', () => {
     expect(normalizeSpell(SPELL_BY_ID['riddikulus']!)).toEqual([
-      { kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'atk', amount: 20, duration: 2 } },
+      { kind: 'applyStatus', target: 'self', statusId: 'atkUp' },
     ])
   })
-  it('fianto (shield spec) → shield + applyStatus(self), returned verbatim', () => {
+  it('fianto (shield spec) → shield + applyStatus(self, defUp), returned verbatim', () => {
     expect(normalizeSpell(SPELL_BY_ID['fianto']!)).toEqual([
       { kind: 'shield', amount: 40, duration: 2 },
-      { kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'def', amount: 10, duration: 2 } },
+      { kind: 'applyStatus', target: 'self', statusId: 'defUp' },
     ])
   })
   it('spell.spec is returned verbatim', () => {
