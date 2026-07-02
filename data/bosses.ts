@@ -27,6 +27,16 @@ export const BOSSES: BossDef[] = [
     hpMult: 1.4,
     forcedSpellIds: ['avada', 'fiendfyre'],
     bossWizardId: 'voldemort',
+    // ADDED 2026-07-02 (Task 18d, area-0 blocker resolution): previously unset (implicit
+    // default BALANCE.draft.teamSize=5). A 120-seed loss trace showed that once
+    // enemyCountByArea/Muro/Bellatrix were trimmed to fix area-0/1, Voldemort's fixed
+    // 5-unit squad became the dominant remaining wall (area2-boss losses rose to 28-62/120
+    // across sweep configs) — an exhaustive degenerate sweep of every OTHER lever (with
+    // Voldemort still implicit-default 5) topped out at winRate 0.0417, proving 5 units is
+    // structurally uncompensable. unitCount 2 (paired with enemyCountByArea [2,3,3] and
+    // Muro/Bellatrix left at their calibrated 3) clears the 0.15 floor at 0.1583 — see
+    // tests/engine/campaignBalanceB.test.ts header for the full sweep table.
+    unitCount: 2,
     exclusiveSynergy: {
       id: 'darkLord', name: "L'Oscuro Signore", kind: 'group',
       requires: { count: 1 }, bonus: { allPct: 0.2 },

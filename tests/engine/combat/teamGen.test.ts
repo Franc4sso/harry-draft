@@ -3,6 +3,7 @@ import { generateEnemyTeam, generateBossTeam, budgetForStage, powerOf } from '@/
 import { createRng } from '@/game/engine/rng'
 import { BALANCE } from '@/data/constants'
 import { BOSSES, MURO } from '@/data/bosses'
+import type { BossDef } from '@/data/bosses'
 
 describe('teamGen', () => {
   it('builds a 5-wizard enemy team deterministically', () => {
@@ -20,8 +21,11 @@ describe('teamGen', () => {
     expect(strong).toBeGreaterThan(weak)
   })
   it('boss team applies hp multiplier to leader', () => {
+    // Voldemort (final boss) now carries its own unitCount override (2, area-0/final-boss
+    // action-economy rebalance — see campaignBalanceB.test.ts calibration history), so this
+    // exercises the boss.unitCount path rather than the BALANCE.draft.teamSize default.
     const boss = generateBossTeam(createRng(1), BOSSES[0]!)
-    expect(boss).toHaveLength(5)
+    expect(boss).toHaveLength(BOSSES[0]!.unitCount ?? BALANCE.draft.teamSize)
     const maxHp = Math.max(...boss.map(d => d.maxHp))
     expect(maxHp).toBeGreaterThan(120)
   })
@@ -30,7 +34,11 @@ describe('teamGen', () => {
     expect(team).toHaveLength(3)
   })
   it('boss without unitCount defaults to BALANCE.draft.teamSize', () => {
-    const team = generateBossTeam(createRng(1), BOSSES[0]!)
+    // A synthetic boss (no unitCount field) exercises the `?? BALANCE.draft.teamSize`
+    // fallback directly — every scripted boss in data/bosses.ts now carries an explicit
+    // unitCount override, so none of them can exercise the default path any more.
+    const noOverrideBoss: BossDef = { id: 'test_boss', name: 'Test Boss', budget: 900, hpMult: 1 }
+    const team = generateBossTeam(createRng(1), noOverrideBoss)
     expect(team).toHaveLength(BALANCE.draft.teamSize)
     expect(BALANCE.draft.teamSize).toBe(5)
   })

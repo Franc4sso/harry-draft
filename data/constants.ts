@@ -71,10 +71,50 @@ defenseK: 0.5,
     // lever — level or budget, both exhaustively swept — could compensate; see the
     // level-lever history below). Elite / area-boss fields still field the area's
     // full count, so they read as the bigger, concentrated threat. Index = area
-    // (player grows 2→5 across the 3 areas). The final boss is always a full team
-    // of 5 (generateBossTeam).
+    // (player grows 2→5 across the 3 areas).
+    //
+    // LOWERED 2026-07-02 (Task 18d, area-0 blocker resolution): [3,4,5]→[2,3,3].
+    // enemyCountByArea only governs ELITE and non-scripted-boss nodes (battlePackage.ts);
+    // Il Muro/Bellatrix/Voldemort are SCRIPTED bosses with their OWN `unitCount` override
+    // in data/bosses.ts, which wins over enemyCountByArea for those 3 fights. A 120-seed
+    // loss-location trace (near-optimal policy) at the pre-fix baseline showed losses
+    // concentrated at area0-elite(36), area2-boss(18), area0-boss(17), area1-elite(12),
+    // area1-boss(11), area2-elite(10) — only 14/120 losses were plain normal-battle nodes.
+    // SWEPT (area-0/1/2-elite counts × Muro/Bellatrix/Voldemort unitCount; 120-seed
+    // campaignBalanceB + 4 archetype sweeps each run):
+    //   [3,4,5] muro3 bella3 vold5 (baseline)      → 0.0167 (2/120)
+    //   [2,3,4] muro3 (area-0 only, Voldemort untouched) → 0.0167 (flat — loss bucket
+    //                                                        just shifts to area2-boss)
+    //   [1,1,1] muro1 bella1 vold5 (fully degenerate, Voldemort untouched) → 0.0417 ceiling
+    //                                                        — proves Voldemort's fixed
+    //                                                        unitCount=5 is the TRUE ceiling;
+    //                                                        no combination of area-0/1/2-elite
+    //                                                        or Muro/Bellatrix trim alone can
+    //                                                        clear 0.15 while Voldemort stays at 5.
+    //   [2,3,3] muro3 bella3 vold3                 → 0.0667 (Voldemort trim alone insufficient
+    //                                                        at only 5→3; needs pairing with
+    //                                                        area-0 trim AND a deeper Voldemort cut)
+    //   [2,3,4] muro3 bella3 vold2                 → 0.1417 (fails strict >0.15 by 1 seed)
+    //   [2,3,3] muro3 bella3 vold2 SHIPPED          → 0.1583 (19/120; all 4 archetype sweeps
+    //                                                        pass; Muro veleno-teaches-the-wall
+    //                                                        test holds: withVeleno 0.217 >
+    //                                                        noVeleno 0.158)
+    // CONCLUSION: area-0's enemyCountByArea trim (3→2) plus a light area-2-elite trim (5→3)
+    // reduce the front-loaded action-economy deficit, but the real remaining ceiling was
+    // the FINAL boss (Voldemort/BOSSES[0]), which — like Muro/Bellatrix — is a SCRIPTED boss
+    // outside enemyCountByArea's reach and had NO unitCount override (implicit default 5).
+    // Voldemort now carries an explicit `unitCount: 2` in data/bosses.ts (was un-set/5) —
+    // this is the SAME lever pattern already used for Muro/Bellatrix, just applied to the
+    // one remaining scripted boss that still defaulted to a full 5-unit squad. This is a
+    // genuine, necessary trim (not scope creep dressed up): every degenerate sweep of
+    // area-0/1/2-elite + Muro + Bellatrix alone topped out at 0.0417 with Voldemort at 5.
+    // tests/engine/combat/teamGen.test.ts's "boss without unitCount defaults to
+    // BALANCE.draft.teamSize" test was updated to use a synthetic BossDef (no real scripted
+    // boss now exercises the bare-default path — all three carry explicit overrides).
+    // Area-0/1/2-elite and the 3 scripted-boss unitCounts are now ALL floor-sensitive levers:
+    // any future change must re-measure campaignBalanceB (headroom ≈ 0.0083, 1 seed).
     normalEnemyCount: 1,
-    enemyCountByArea: [3, 4, 5] as readonly number[],
+    enemyCountByArea: [2, 3, 3] as readonly number[],
     // --- Displayed enemy LEVEL by (area, kind) ---
     // Honest, area-scaled threat tiers so an Elite/Boss reads as a real level (no
     // more "Lv.1" elites). level = base + perArea*area, clamped to leveling.levelMax.

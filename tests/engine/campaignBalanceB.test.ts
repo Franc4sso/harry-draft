@@ -180,6 +180,50 @@ import type { RunNode, RunState } from '@/types'
 // see the recommendation in the prior (2026-07-01) note, still valid. Reported per the
 // task's explicit instruction to STOP and report rather than unilaterally trim
 // elite/boss counts.
+//
+// *** RESOLVED (2026-07-02, Task 18d — enemyCountByArea + scripted-boss unitCount
+// trim; area-0 blocker cleared) ***
+// User decision: trim `enemyCountByArea` and, ultimately, ALL THREE scripted-boss
+// `unitCount` overrides (Muro, Bellatrix, and now Voldemort/final boss) to close the
+// floor, targeting the LOW edge (near 0.15, not comfortable). `enemyCountByArea` only
+// governs elite/non-scripted-boss nodes (battlePackage.ts); each of the three scripted
+// bosses in data/bosses.ts has its OWN unitCount that wins over enemyCountByArea for
+// that fight.
+// Sweep (enemyCountByArea, muro/bella/voldemort unitCount → winRate; 120 seeds):
+//   [3,4,5] muro3 bella3 vold— (baseline, vold implicit-default 5)     → 0.0167 (2/120)
+//   [2,3,4] muro3 bella3 vold— (area-0-only trim, Voldemort untouched) → 0.0167 (flat;
+//                                     loss bucket shifts from area0-elite to area2-boss)
+//   [1,1,1] muro1 bella1 vold— (fully degenerate area/Muro/Bellatrix,
+//                                Voldemort still implicit-default 5)   → 0.0417 (ceiling —
+//                                     proves Voldemort's fixed 5-unit squad is the TRUE
+//                                     remaining wall; no area-0/1/2-elite or Muro/Bellatrix
+//                                     trim alone can clear 0.15 while Voldemort stays at 5)
+//   [2,3,3] muro3 bella3 vold3                                        → 0.0667 (Voldemort
+//                                     5→3 alone, paired with a moderate area/Muro/Bellatrix
+//                                     trim, still insufficient)
+//   [2,3,4] muro3 bella3 vold2                                        → 0.1417 (fails
+//                                     strict >0.15 by 1 seed)
+//   [2,3,3] muro3 bella3 vold2  SHIPPED                                → 0.1583 (19/120)
+// Loss-location trace at the shipped config: area2-boss 28, area0-elite 21, area1-boss 17,
+// area1-elite 8, area0-boss 8, area2-elite 6, area0-battle 11, area1-battle 1, area2-battle 1
+// (wins 19/120) — losses now spread across areas instead of concentrating at area0-elite/
+// area0-boss/area2-boss as in the pre-fix baseline.
+// Voldemort (BOSSES[0], the final boss) now carries an explicit `unitCount: 2` in
+// data/bosses.ts (previously unset, implicit default `BALANCE.draft.teamSize`=5) — the
+// SAME lever already used for Muro (3) and Bellatrix (3), applied to the one remaining
+// scripted boss that still fielded a full 5-unit squad untouched by any area-count lever.
+// This is a genuine, necessary trim, not scope creep: the exhaustive degenerate sweep
+// above proves 0.15 is UNREACHABLE via enemyCountByArea/Muro/Bellatrix alone while
+// Voldemort stays at 5. tests/engine/combat/teamGen.test.ts's "boss without unitCount
+// defaults to BALANCE.draft.teamSize" test was updated to exercise a synthetic BossDef,
+// since all three real scripted bosses now carry explicit unitCount overrides.
+// Final winRates (all pass): campaignBalanceB overall 0.1583 (19/120, headroom 0.0083
+// above the 0.15 floor — a 1-seed margin, consistent with every other floor-adjacent
+// lever in this file), esecuzioneSweep 0.483, scudiRigenSweep 0.183, velenoSweep 0.575
+// (all >> their 0.05 floors), Muro veleno-teaches-the-wall: withVeleno 0.217 > noVeleno
+// 0.158 > 0 (both hold). enemyCountByArea and all three scripted-boss unitCounts are now
+// ALL floor-sensitive levers: any future change to enemy count/level/budget on ANY area
+// or scripted boss must re-measure campaignBalanceB (headroom is only ~1 seed).
 registerCoreResolvers()
 
 // Near-optimal ("upper-bound") player policy. A pure recruit/relic-first greedy is
