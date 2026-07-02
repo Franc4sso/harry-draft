@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Gem, Sparkles } from 'lucide-react'
 import type { ActiveRelic, DraftedWizard, Relic } from '@/types'
 import { Button } from '@/components/ui/Button'
+import { Stagger, StaggerItem } from '@/components/ui/motion'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { RELIC_RARITY_COLOR } from '@/lib/relicRarity'
 
@@ -90,7 +91,11 @@ export function RelicNodeScreen({
 
   return (
     <main className="flex-1 flex flex-col items-center gap-6 p-6">
-      <h1 className="font-display text-3xl">Scegli una reliquia</h1>
+      <div className="text-center">
+        <p className="kicker">Sala dei tesori</p>
+        <h1 className="title-gradient mt-1 font-display text-3xl font-bold">Scegli una reliquia</h1>
+        <div aria-hidden className="mx-auto mt-2 h-px w-48" style={{ background: 'linear-gradient(90deg, transparent, rgba(202,162,74,0.6), transparent)' }} />
+      </div>
 
       {owned.length > 0 && (
         <div className="w-full max-w-4xl">
@@ -101,11 +106,13 @@ export function RelicNodeScreen({
         </div>
       )}
 
-      <div className="grid max-w-4xl grid-cols-1 gap-6 sm:grid-cols-3">
+      <Stagger delay={0.15} className="grid max-w-4xl grid-cols-1 gap-6 sm:grid-cols-3">
         {offer.map(r => (
-          <Pedestal key={r.id} relic={r} selected={pick === r.id} onSelect={() => { setPick(r.id); setCarrier(null) }} />
+          <StaggerItem key={r.id} className="h-full">
+            <Pedestal relic={r} selected={pick === r.id} onSelect={() => { setPick(r.id); setCarrier(null) }} />
+          </StaggerItem>
         ))}
-      </div>
+      </Stagger>
 
       {needsCarrier && pick && (
         <div className="w-full max-w-3xl">

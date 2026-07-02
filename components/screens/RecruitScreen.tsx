@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import type { DraftedWizard } from '@/types'
 import { WizardCardRow } from '@/components/cards/WizardCardRow'
 import { Button } from '@/components/ui/Button'
+import { Stagger, StaggerItem } from '@/components/ui/motion'
 import { powerOf } from '@/game/engine/combat/teamGen'
 import { previewSynergies, type SynergyPreview } from '@/game/engine/synergy'
 import { synergyBonusText } from '@/lib/glossary'
@@ -15,7 +16,7 @@ import { isDead } from '@/game/engine/roster'
  *  only thing shown — building-but-inactive synergies are deliberately omitted. */
 function ActivationRail({ candidate, activating }: { candidate: DraftedWizard | null; activating: SynergyPreview[] }) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02]">
+    <div className="panel-premium overflow-hidden rounded-2xl">
       <div className="border-b border-white/10 bg-[#7cdc7c]/[0.06] px-4 py-3">
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Sinergie attivate</p>
         <p className="mt-0.5 text-sm font-display text-white/90">
@@ -98,8 +99,10 @@ export function RecruitScreen({
     // two-column grid (candidates left / synergy rail right) using md:grid-cols-[1fr_280px].
     <main className="flex-1 w-full">
       <header className="px-4 pt-5 text-center">
-        <h1 className="font-display text-2xl">Reclutamento</h1>
-        <p className="mt-1 text-sm text-white/60">
+        <p className="kicker">Nuovo alleato</p>
+        <h1 className="title-gradient mt-1 font-display text-3xl font-bold">Reclutamento</h1>
+        <div aria-hidden className="mx-auto mt-2 h-px w-48" style={{ background: 'linear-gradient(90deg, transparent, rgba(202,162,74,0.6), transparent)' }} />
+        <p className="mt-2 text-sm text-white/60">
           {full
             ? 'Squadra al completo: scegli chi reclutare e quale mago sostituire.'
             : 'Scegli un mago da aggiungere alla squadra.'}
@@ -108,12 +111,13 @@ export function RecruitScreen({
 
       <div className="mx-auto grid max-w-5xl grid-cols-1 items-start gap-6 p-4 md:grid-cols-[1fr_280px]">
         {/* Candidates (left column) — same WizardCardRow the draft uses, stacked. */}
-        <section
+        <Stagger
+          as="section"
           className="grid grid-cols-1 content-start gap-4"
           onPointerLeave={() => setConsidered(null)}
         >
           {offer.map(d => (
-            <div
+            <StaggerItem
               key={d.wizard.id}
               data-testid={`recruit-${d.wizard.id}`}
               role="button"
@@ -131,7 +135,7 @@ export function RecruitScreen({
               className="cursor-pointer rounded-2xl"
             >
               <WizardCardRow drafted={d} selected={pick === d.wizard.id} />
-            </div>
+            </StaggerItem>
           ))}
 
           {full && (
@@ -183,7 +187,7 @@ export function RecruitScreen({
               </div>
             </div>
           )}
-        </section>
+        </Stagger>
 
         {/* Synergy rail (right column) — same sticky aside position as the draft. */}
         <aside>

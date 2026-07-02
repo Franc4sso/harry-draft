@@ -11,6 +11,7 @@ import {
   useReducedMotion,
   useSpring,
   useTransform,
+  type HTMLMotionProps,
   type Variants,
 } from 'framer-motion'
 
@@ -50,24 +51,43 @@ const staggerItem: Variants = {
 }
 
 /** Cascading entrance container — wrap a grid/row of StaggerItem. */
-export function Stagger({ children, delay = 0, className }: { children: ReactNode; delay?: number; className?: string }) {
+export function Stagger({
+  children,
+  delay = 0,
+  className,
+  as = 'div',
+  ...rest
+}: {
+  children: ReactNode
+  delay?: number
+  className?: string
+  /** Rendered element — lets layout-semantic containers (e.g. <section>) stagger directly. */
+  as?: 'div' | 'section'
+} & Omit<HTMLMotionProps<'div'>, 'variants' | 'children'>) {
   const reduce = useReducedMotion()
+  // Both tags share HTMLElement-level props; typing via motion.div keeps the rest-spread sound.
+  const Tag = (as === 'section' ? motion.section : motion.div) as typeof motion.div
   return (
-    <motion.div
+    <Tag
       className={className}
       variants={reduce ? undefined : staggerContainer(delay)}
       initial={reduce ? false : 'initial'}
       animate="animate"
+      {...rest}
     >
       {children}
-    </motion.div>
+    </Tag>
   )
 }
 
-export function StaggerItem({ children, className }: { children: ReactNode; className?: string }) {
+export function StaggerItem({
+  children,
+  className,
+  ...rest
+}: { children: ReactNode; className?: string } & Omit<HTMLMotionProps<'div'>, 'variants' | 'children'>) {
   const reduce = useReducedMotion()
   return (
-    <motion.div className={className} variants={reduce ? undefined : staggerItem}>
+    <motion.div className={className} variants={reduce ? undefined : staggerItem} {...rest}>
       {children}
     </motion.div>
   )
