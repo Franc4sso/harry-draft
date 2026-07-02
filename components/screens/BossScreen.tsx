@@ -2,7 +2,8 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import { Skull } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
-import { EASE_CINEMATIC } from '@/components/ui/motion'
+import { Frame } from '@/components/ui/Frame'
+import { FoilText, EASE_CINEMATIC } from '@/components/ui/motion'
 
 /** Dramatic intro shown right before the final boss fight. */
 export function BossScreen({ bossName, onBegin }: { bossName: string; onBegin: () => void }) {
@@ -32,14 +33,21 @@ export function BossScreen({ bossName, onBegin }: { bossName: string; onBegin: (
           <Skull size={64} className="text-rose-500" style={{ filter: 'drop-shadow(0 0 22px rgba(244,63,94,0.6))' }} />
         </motion.div>
         <p className="font-display text-xs font-semibold uppercase tracking-[0.4em] text-rose-300/70">Boss Finale</p>
-        <h1 className="font-display text-6xl font-bold text-rose-100 drop-shadow-[0_0_24px_rgba(244,63,94,0.5)]">
-          {bossName}
-        </h1>
+        <span
+          className="drop-shadow-[0_0_24px_rgba(244,63,94,0.55)]"
+          style={{ filter: 'hue-rotate(-50deg) saturate(1.6) brightness(1.05)' }}
+        >
+          <FoilText as="h1" className="font-display text-6xl font-bold">
+            {bossName}
+          </FoilText>
+        </span>
         <div aria-hidden className="h-px w-56" style={{ background: 'linear-gradient(90deg, transparent, rgba(244,63,94,0.6), transparent)' }} />
-        <p className="max-w-md text-white/50 text-sm">
-          L&apos;ultima sfida ti attende. Solo una squadra all&apos;apice delle sue sinergie
-          può sperare di prevalere.
-        </p>
+        <Frame variant="panel" innerClassName="px-5 py-4 max-w-md">
+          <p className="text-white/60 text-sm">
+            L&apos;ultima sfida ti attende. Solo una squadra all&apos;apice delle sue sinergie
+            può sperare di prevalere.
+          </p>
+        </Frame>
       </motion.div>
       <motion.div
         initial={reduce ? false : { opacity: 0, y: 12 }}

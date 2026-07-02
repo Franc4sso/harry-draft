@@ -2,9 +2,9 @@
 import { useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Sparkles, Skull, Copy, Check } from 'lucide-react'
-import { GlowPanel } from '@/components/ui/GlowPanel'
+import { Frame } from '@/components/ui/Frame'
 import { Button } from '@/components/ui/Button'
-import { EASE_CINEMATIC } from '@/components/ui/motion'
+import { FoilText, EASE_CINEMATIC } from '@/components/ui/motion'
 
 /** Terminal campaign screen: triumphant win or run-ending defeat.
  *  Two distinct moods: win is warm gold and quick; defeat is cold,
@@ -22,7 +22,7 @@ export function ResultScreen({
   const won = outcome === 'win'
   const reduce = useReducedMotion()
   const [copied, setCopied] = useState(false)
-  const beat = won ? 1 : 1.6 // defeat breathes slower
+  const beat = won ? 1 : 1.75 // defeat breathes slower — cold scene, deliberate pacing
 
   const copySeed = () => {
     void navigator.clipboard?.writeText(seed)
@@ -64,9 +64,13 @@ export function ResultScreen({
             <Skull size={56} className="text-slate-400/70" />
           </motion.span>
         )}
-        <h1 className={`font-display text-5xl font-bold ${won ? 'title-gradient' : 'text-slate-300/85'}`}>
-          {won ? 'Campione!' : 'Sconfitta'}
-        </h1>
+        {won ? (
+          <FoilText as="h1" className="font-display text-5xl font-bold">
+            Campione!
+          </FoilText>
+        ) : (
+          <h1 className="font-display text-5xl font-bold text-slate-300/85">Sconfitta</h1>
+        )}
         <p className={`max-w-md text-sm ${won ? 'text-white/55' : 'text-slate-400/70'}`}>
           {won
             ? 'Hai battuto tutte le squadre e il Boss Finale. La tua leggenda è completa.'
@@ -81,7 +85,11 @@ export function ResultScreen({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 * beat, delay: 0.45 * beat, ease: EASE_CINEMATIC }}
       >
-        <GlowPanel glow={won ? '#caa24a' : undefined} className={`px-5 py-3 flex items-center gap-3 ${won ? '' : 'saturate-50'}`}>
+        <Frame
+          variant="panel"
+          className={won ? '' : 'saturate-50'}
+          innerClassName="px-5 py-3 flex items-center gap-3"
+        >
           <p className="text-[11px] uppercase tracking-widest text-white/40">
             seed: <span className="text-white/70">{seed}</span>
           </p>
@@ -94,7 +102,7 @@ export function ResultScreen({
             {copied ? <Check size={13} /> : <Copy size={13} />}
             {copied ? 'Copiato!' : 'Copia seed'}
           </button>
-        </GlowPanel>
+        </Frame>
       </motion.div>
 
       <motion.div
