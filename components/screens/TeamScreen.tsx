@@ -18,7 +18,11 @@ export function TeamScreen({
 
   return (
     <main className="flex-1 flex flex-col items-center gap-7 p-6">
-      <h1 className="font-display text-4xl mt-2">La tua squadra</h1>
+      <div className="mt-2 text-center">
+        <p className="kicker">Il tuo schieramento</p>
+        <h1 className="title-gradient mt-1 font-display text-4xl font-bold">La tua squadra</h1>
+        <div aria-hidden className="mx-auto mt-2 h-px w-48" style={{ background: 'linear-gradient(90deg, transparent, rgba(202,162,74,0.6), transparent)' }} />
+      </div>
 
       {/* Synergies first — a modern gold band at the top, before the roster. */}
       <section className="w-full max-w-3xl">

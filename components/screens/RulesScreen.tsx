@@ -71,7 +71,9 @@ export function RulesScreen() {
   return (
     <main className="flex-1 flex flex-col items-center gap-6 sm:gap-8 px-4 py-6 sm:p-8 max-w-4xl mx-auto w-full">
       <header className="text-center mt-2 sm:mt-6">
-        <h1 className="font-display text-3xl sm:text-4xl">Compendio</h1>
+        <p className="kicker">Il grimorio del gioco</p>
+        <h1 className="title-gradient mt-1 font-display text-3xl font-bold sm:text-4xl">Compendio</h1>
+        <div aria-hidden className="mx-auto mt-2 h-px w-48" style={{ background: 'linear-gradient(90deg, transparent, rgba(202,162,74,0.6), transparent)' }} />
         <p className="mt-2 text-white/60 text-sm max-w-xl mx-auto">
           Tutto ciò che serve sapere: come si gioca, cosa fanno le magie, le reliquie e le sinergie.
         </p>
@@ -93,8 +95,8 @@ export function RulesScreen() {
               className={cn(
                 'shrink-0 rounded-full px-4 py-2 text-sm font-display uppercase tracking-wider transition-colors',
                 isActive
-                  ? 'bg-white/15 text-white border border-white/25'
-                  : 'text-white/60 hover:text-white border border-white/10 bg-white/5',
+                  ? 'border border-gold/50 bg-gold/15 text-[#f3e6c4] shadow-[0_0_14px_rgba(202,162,74,0.25)]'
+                  : 'text-white/60 hover:text-white border border-white/10 bg-white/5 hover:border-gold/30',
               )}
             >
               {t.label}
