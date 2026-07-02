@@ -20,7 +20,7 @@ describe('RunBRunner', () => {
     for (let i = 0; i < STARTER_PICKS; i++) {
       await userEvent.click(screen.getByTestId('draft-pick-0'))
     }
-    expect(screen.getByText(/Scegli il tuo cammino/)).toBeInTheDocument()
+    expect(screen.getByText(/Scegli il cammino/)).toBeInTheDocument()
   }, 15000)
 
   it('shows the team+synergy bar on map but not during draft', async () => {
@@ -32,7 +32,7 @@ describe('RunBRunner', () => {
     for (let i = 0; i < STARTER_PICKS; i++) {
       await userEvent.click(screen.getByTestId('draft-pick-0'))
     }
-    expect(screen.getByText(/Scegli il tuo cammino/)).toBeInTheDocument()
+    expect(screen.getByText(/Scegli il cammino/)).toBeInTheDocument()
     // map phase: bar is mounted as a persistent strip
     expect(screen.getByTestId('team-synergy-bar')).toBeInTheDocument()
   })

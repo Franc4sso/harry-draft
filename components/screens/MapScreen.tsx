@@ -4,6 +4,7 @@ import type { RunNode, RunNodeType } from '@/types'
 import { parseAreaNodeId, nodeDepth } from '@/game/engine/map'
 import { cn } from '@/lib/theme'
 import { synergyName } from '@/lib/synergyBadge'
+import { Insegna } from '@/components/ui/Insegna'
 
 /** Floor index for any node id (area-scoped `a#f#n#` or legacy `f#n#`). */
 function floorOf(id: string): number {
@@ -42,15 +43,7 @@ export function MapScreen({
   const reduce = useReducedMotion()
   const reachable = new Set(reachableIds)
   const header = (
-    <div className="text-center">
-      {area !== undefined && (
-        <div className="kicker !tracking-[0.3em]">
-          Area {area + 1}{areasTotal ? ` / ${areasTotal}` : ''}
-        </div>
-      )}
-      <h2 className="title-gradient mt-1 font-display text-3xl font-bold">Scegli il tuo cammino</h2>
-      <div aria-hidden className="mx-auto mt-2 h-px w-48" style={{ background: 'linear-gradient(90deg, transparent, rgba(202,162,74,0.6), transparent)' }} />
-    </div>
+    <Insegna kicker={`Area ${(area ?? 0) + 1} / ${areasTotal ?? 1}`} title="Scegli il cammino" />
   )
 
   // Defensive: with no nodes there is nothing to wire (and the geometry below
@@ -99,42 +92,47 @@ export function MapScreen({
           {edges.map(e => {
             const midY = (e.p.y + e.q.y) / 2
             const d = `M ${e.p.x} ${e.p.y} C ${e.p.x} ${midY}, ${e.q.x} ${midY}, ${e.q.x} ${e.q.y}`
-            if (e.active && !reduce) {
-              // The live trail draws itself from the current node, then keeps flowing.
+            if (e.active) {
+              // The live trail: one static wide glow twin (no animation, no blur) +
+              // ONE main stroke that draws once via pathLength + an optional
+              // travelling light (SMIL animateMotion, independent of the stroke).
+              // Keeping these three layers separate avoids the flicker caused by
+              // running framer-motion's pathLength and a CSS dash-offset loop on
+              // the same path.
               return (
                 <g key={e.id}>
-                  <motion.path
+                  <path
+                    data-edge-glow
+                    aria-hidden
                     d={d}
-                    stroke="rgba(202,162,74,0.25)"
-                    strokeWidth={5}
+                    stroke="rgba(202,162,74,0.22)"
+                    strokeWidth={7}
                     strokeLinecap="round"
-                    initial={{ pathLength: 0, opacity: 0 }}
-                    animate={{ pathLength: 1, opacity: 1 }}
-                    transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
-                    style={{ filter: 'blur(3px)' }}
                   />
                   <motion.path
+                    data-live-edge
                     d={d}
-                    stroke="var(--gold)"
-                    strokeWidth={2.5}
+                    stroke="var(--gold-2)"
+                    strokeWidth={3.5}
                     strokeLinecap="round"
-                    strokeDasharray="5 7"
-                    className="map-trail"
                     initial={{ pathLength: 0 }}
                     animate={{ pathLength: 1 }}
                     transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
                   />
+                  {!reduce && (
+                    <circle r={3} fill="#f6e6a8">
+                      <animateMotion dur="1.8s" repeatCount="indefinite" path={d} />
+                    </circle>
+                  )}
                 </g>
               )
             }
             return (
               <path
                 key={e.id} d={d}
-                stroke={e.active ? 'var(--gold)' : 'rgba(255,255,255,0.12)'}
-                strokeWidth={e.active ? 2.5 : 1.5}
+                stroke="rgba(255,255,255,0.10)"
+                strokeWidth={2}
                 strokeLinecap="round"
-                strokeDasharray={e.active ? '5 7' : undefined}
-                className={e.active ? 'map-trail' : undefined}
               />
             )
           })}
@@ -157,7 +155,7 @@ export function MapScreen({
               onClick={() => onChoose(n.id)}
               aria-label={LABEL[n.type]}
               className={cn(
-                'group absolute flex items-center justify-center rounded-full border-2 transition-all duration-200',
+                'group absolute flex items-center justify-center rounded-full border-4 transition-all duration-200',
                 isReachable ? 'cursor-pointer hover:scale-110 focus-visible:scale-110' : 'cursor-not-allowed',
                 isReachable && !isCurrent && 'anim-ambient map-breathe',
                 n.resolved && 'opacity-45 saturate-50',
@@ -169,14 +167,14 @@ export function MapScreen({
                 borderColor: lit ? accent : 'rgba(255,255,255,0.18)',
                 background: `radial-gradient(circle at 50% 30%, rgba(255,255,255,0.10), transparent 42%), radial-gradient(circle at 50% 35%, ${accent}2e, #15121f 72%)`,
                 boxShadow: isCurrent
-                  ? `inset 0 0 0 2.5px rgba(10,8,19,0.85), inset 0 0 0 3.5px ${accent}66, 0 0 0 3px ${accent}55, 0 0 26px ${accent}aa, 0 10px 24px -10px rgba(0,0,0,0.8)`
+                  ? `0 2px 0 rgba(255,255,255,0.22) inset, inset 0 0 0 2.5px rgba(10,8,19,0.85), inset 0 0 0 3.5px ${accent}66, 0 0 0 3px ${accent}55, 0 0 26px ${accent}aa, 0 10px 24px -10px rgba(0,0,0,0.8)`
                   : isReachable
-                    ? `inset 0 0 0 2.5px rgba(10,8,19,0.85), inset 0 0 0 3.5px ${accent}55, 0 0 16px ${accent}66, 0 10px 24px -10px rgba(0,0,0,0.8)`
+                    ? `0 2px 0 rgba(255,255,255,0.18) inset, inset 0 0 0 2.5px rgba(10,8,19,0.85), inset 0 0 0 3.5px ${accent}55, 0 0 16px ${accent}66, 0 10px 24px -10px rgba(0,0,0,0.8)`
                     : `inset 0 0 0 2.5px rgba(10,8,19,0.7), 0 6px 18px -10px rgba(0,0,0,0.7)`,
               }}
             >
               <span
-                className={cn('leading-none', isBoss ? 'text-3xl' : 'text-xl')}
+                className={cn('emboss leading-none', isBoss ? 'text-3xl' : 'text-xl')}
                 style={lit ? { filter: `drop-shadow(0 0 6px ${accent}88)` } : undefined}
               >
                 {ICON[n.type]}
@@ -221,14 +219,12 @@ export function MapScreen({
       </div>
 
       <style>{`
-        @keyframes mapTrailFlow { to { stroke-dashoffset: -24; } }
-        .map-trail { animation: mapTrailFlow 0.9s linear infinite; }
         @keyframes mapCurrentPulse { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
         .map-current { animation: mapCurrentPulse 1.8s ease-in-out infinite; }
         @keyframes mapBreathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
         .map-breathe { animation: mapBreathe 2.6s ease-in-out infinite; }
         .map-breathe:hover, .map-breathe:focus-visible { animation: none; }
-        @media (prefers-reduced-motion: reduce) { .map-trail, .map-current, .map-breathe { animation: none; } }
+        @media (prefers-reduced-motion: reduce) { .map-current, .map-breathe { animation: none; } }
       `}</style>
     </div>
   )
