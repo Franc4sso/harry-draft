@@ -123,7 +123,7 @@ export function BattleScreen({
           <SynergyRibbon synergies={playerSyn} relics={playerRelics ?? []} align="left" title="Le tue sinergie" tone="ally" />
           <BattleArena
             replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle}
-            enemyLevel={enemyLevel}
+            enemyLevel={enemyLevel} speed={r.speed}
             center={<ActionPanel entry={stickyEntry} units={replay.units} />}
           />
           <SynergyRibbon synergies={enemySyn} align="left" title="Sinergie nemiche" tone="enemy" />

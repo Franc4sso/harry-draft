@@ -433,7 +433,7 @@ describe('BattleArena', () => {
     render(<BattleArena replay={replay} hp={replay.frames[0]!.hp} entry={null} frameKey={0} />)
     expect(screen.getAllByTestId('battle-unit')).toHaveLength(10)
   })
-  it('shows the Protego dome when a hit is blocked', () => {
+  it('no longer renders the legacy DOM Protego dome (block reaction moved to the Pixi VFX layer)', () => {
     const l = left(), r = right()
     const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
     const blocked: LogEntry = {
@@ -441,7 +441,7 @@ describe('BattleArena', () => {
       targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 0, flags: ['block'],
     }
     render(<BattleArena replay={replay} hp={replay.frames[0]!.hp} entry={blocked} frameKey={1} />)
-    expect(screen.getByTestId('shield-fx')).toBeInTheDocument()
+    expect(screen.queryByTestId('shield-fx')).toBeNull()
   })
 
   it('surfaces real status effects from the current frame onto the unit bust', () => {

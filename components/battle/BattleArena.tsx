@@ -6,9 +6,9 @@ import type { Replay, ReplayUnit } from '@/game/engine/combat/replay'
 import { unitKey } from '@/game/engine/combat/replay'
 import { UnitBust } from './UnitBust'
 import { ArenaBackdrop } from './ArenaBackdrop'
-import { SpellFx, ShieldFx, type FxPoint } from './SpellFx'
+import { type FxPoint } from './SpellFx'
+import { PixiArena } from './PixiArena'
 import { floatFor } from './damageFloat'
-import { archetypeFor } from '@/lib/spellArchetype'
 
 /**
  * Staged battlefield: player's busts on top, enemies on the bottom, the
@@ -16,7 +16,7 @@ import { archetypeFor } from '@/lib/spellArchetype'
  * defender. Statuses are derived per frame; HP comes from the current frame.
  */
 export function BattleArena({
-  replay, hp, entry, frameKey = 0, leftTitle = 'La tua squadra', rightTitle = 'Avversari', center, enemyLevel = 1,
+  replay, hp, entry, frameKey = 0, leftTitle = 'La tua squadra', rightTitle = 'Avversari', center, enemyLevel = 1, speed = 1,
 }: {
   replay: Replay
   hp: Record<string, number>
@@ -27,6 +27,8 @@ export function BattleArena({
   center?: React.ReactNode
   /** Level shown on every enemy bust (menace was removed 2026-07-01). Players use their own. */
   enemyLevel?: number
+  /** Replay playback speed — feeds the Pixi VFX layer's time budget. */
+  speed?: number
 }) {
   const actingKey = entry?.actorSide ? unitKey(entry.actorSide, entry.actorId) : null
   const targetKey = entry?.targetSide && entry.targetId ? unitKey(entry.targetSide, entry.targetId) : null
@@ -34,7 +36,6 @@ export function BattleArena({
   const frame = replay.frames[frameKey]
   const statusEffects = frame?.statusEffects ?? {}
   const cooldowns = frame?.cooldowns ?? {}
-  const blocked = !!entry && (entry.flags.includes('block') || archetypeFor(entry) === 'shield')
 
   const left = replay.units.filter(u => u.side === 'left')
   const right = replay.units.filter(u => u.side === 'right')
@@ -85,7 +86,6 @@ export function BattleArena({
             cooldown={cooldowns[u.key]?.[u.spell.id] ?? 0}
             level={u.side === 'right' ? enemyLevel : u.level}
           />
-          {u.key === targetKey && <ShieldFx active={blocked} fxKey={frameKey} />}
         </div>
       )
     })
@@ -107,7 +107,7 @@ export function BattleArena({
         <h3 className="text-xs uppercase tracking-widest text-white/40">{rightTitle}</h3>
       </section>
 
-      {!blocked && <SpellFx entry={entry} from={fx?.from} to={fx?.to} fxKey={frameKey} />}
+      <PixiArena entry={entry} frameKey={frameKey} from={fx?.from} to={fx?.to} speed={speed} />
     </div>
   )
 }
