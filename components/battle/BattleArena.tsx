@@ -8,6 +8,7 @@ import { UnitBust } from './UnitBust'
 import { ArenaBackdrop } from './ArenaBackdrop'
 import { type FxPoint } from './SpellFx'
 import { PixiArena } from './PixiArena'
+import { Callout } from './Callout'
 import { floatFor } from './damageFloat'
 
 /**
@@ -108,6 +109,7 @@ export function BattleArena({
       </section>
 
       <PixiArena entry={entry} frameKey={frameKey} from={fx?.from} to={fx?.to} speed={speed} />
+      <Callout entry={entry} frameKey={frameKey} />
     </div>
   )
 }

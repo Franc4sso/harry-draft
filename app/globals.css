@@ -50,6 +50,13 @@ html, body {
 
 @keyframes resaShimmer { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
 @keyframes resaPulse { 0%,100% { opacity: .85 } 50% { opacity: 1 } }
+/* Battle arena central callout (CRITICO/PARATO/…): scale/blur-in then fade. */
+@keyframes battleCallout {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(2.3); filter: blur(9px); }
+  22% { opacity: 1; transform: translate(-50%, -50%) scale(1); filter: blur(0); }
+  76% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.1); }
+}
 @media (prefers-reduced-motion: reduce) {
   .resa-animated { animation: none !important; }
 }
