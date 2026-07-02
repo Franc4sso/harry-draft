@@ -1,7 +1,8 @@
 /**
- * Ambient background layer for the whole app: drifting fog, rising embers,
- * film-grain noise and a vignette. Pure CSS animations (GPU-only transforms),
- * fully static under prefers-reduced-motion, invisible to a11y tree.
+ * Ambient background layer for the whole app: warm "Sala Comune" drift —
+ * candlelit amber/brass fog, rising gold embers, parchment grain and a
+ * heavy vignette. Pure CSS animations (GPU-only transforms), fully static
+ * under prefers-reduced-motion, invisible to a11y tree.
  */
 
 const EMBER_COUNT = 14
@@ -14,7 +15,7 @@ function emberStyle(i: number): React.CSSProperties {
   const dur = 9 + (h % 8) // 9..16s
   const delay = (h % 90) / 10 // 0..8.9s
   const drift = ((h % 60) - 30) * 1.4 // -42..40px
-  const violet = h % 5 === 0
+  const bright = h % 5 === 0
   return {
     left: `${left}%`,
     bottom: '-2vh',
@@ -23,11 +24,11 @@ function emberStyle(i: number): React.CSSProperties {
     animationDuration: `${dur}s`,
     animationDelay: `${delay}s`,
     ['--ember-drift' as string]: `${drift}px`,
-    ['--ember-peak' as string]: violet ? '0.45' : '0.7',
-    background: violet
-      ? 'radial-gradient(circle, #b79bf5 0%, rgba(124,58,237,0.4) 60%, transparent 100%)'
+    ['--ember-peak' as string]: bright ? '0.85' : '0.7',
+    background: bright
+      ? 'radial-gradient(circle, #fff2c8 0%, rgba(246,230,168,0.55) 60%, transparent 100%)'
       : 'radial-gradient(circle, #f3e6a0 0%, rgba(202,162,74,0.5) 60%, transparent 100%)',
-    boxShadow: violet ? '0 0 6px rgba(124,58,237,0.5)' : '0 0 6px rgba(202,162,74,0.55)',
+    boxShadow: bright ? '0 0 7px rgba(246,230,168,0.6)' : '0 0 6px rgba(202,162,74,0.55)',
   }
 }
 
@@ -37,29 +38,29 @@ const NOISE_URI =
 export function GameShell() {
   return (
     <div aria-hidden="true" className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      {/* Fog blobs — big, blurred, drifting slowly. */}
+      {/* Fog blobs — big, blurred, drifting slowly. Warm amber/brass "Sala Comune" haze. */}
       <div
         data-fog
         className="anim-ambient absolute left-[-15%] top-[-20%] h-[60vh] w-[70vw] rounded-full blur-[110px]"
         style={{
-          background: 'radial-gradient(circle, rgba(202,162,74,0.10), transparent 65%)',
-          animation: 'fogDrift 90s ease-in-out infinite',
+          background: 'radial-gradient(circle, rgba(202,162,74,0.14), transparent 65%)',
+          animation: 'warmDrift 90s ease-in-out infinite',
         }}
       />
       <div
         data-fog
         className="anim-ambient absolute bottom-[-25%] right-[-10%] h-[55vh] w-[60vw] rounded-full blur-[120px]"
         style={{
-          background: 'radial-gradient(circle, rgba(124,58,237,0.09), transparent 65%)',
-          animation: 'fogDrift 110s ease-in-out infinite reverse',
+          background: 'radial-gradient(circle, rgba(140,90,40,0.16), transparent 65%)',
+          animation: 'warmDrift 110s ease-in-out infinite reverse',
         }}
       />
       <div
         data-fog
         className="anim-ambient absolute left-[20%] top-[45%] h-[40vh] w-[45vw] rounded-full blur-[100px]"
         style={{
-          background: 'radial-gradient(circle, rgba(34,47,91,0.35), transparent 65%)',
-          animation: 'fogDrift 70s ease-in-out infinite',
+          background: 'radial-gradient(circle, rgba(90,50,20,0.4), transparent 65%)',
+          animation: 'warmDrift 70s ease-in-out infinite',
           animationDelay: '-30s',
         }}
       />
@@ -74,13 +75,13 @@ export function GameShell() {
         />
       ))}
 
-      {/* Film grain. */}
-      <div className="absolute inset-0 opacity-[0.05] mix-blend-overlay" style={{ backgroundImage: NOISE_URI }} />
+      {/* Parchment-grain noise — warm candlelit texture. */}
+      <div className="absolute inset-0 opacity-[0.06] mix-blend-overlay" style={{ backgroundImage: NOISE_URI }} />
 
-      {/* Vignette — draws the eye to centre stage. */}
+      {/* Vignette — heavy, warm-dark, draws the eye to centre stage. */}
       <div
         className="absolute inset-0"
-        style={{ background: 'radial-gradient(120% 90% at 50% 42%, transparent 55%, rgba(5,4,10,0.55) 100%)' }}
+        style={{ background: 'radial-gradient(120% 90% at 50% 42%, transparent 45%, rgba(20,12,4,0.72) 100%)' }}
       />
     </div>
   )
