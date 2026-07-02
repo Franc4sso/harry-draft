@@ -54,7 +54,6 @@ export function BattleArena({
             targeted={u.key === targetKey}
             mirrored={mirrored}
             boss={boss}
-            compact={!boss}
             float={u.key === targetKey ? float : null}
             floatKey={frameKey}
             effects={statusEffects[u.key] ?? []}
@@ -66,29 +65,23 @@ export function BattleArena({
     })
 
   return (
-    <div
-      data-testid="battle-arena"
-      className="relative mx-auto flex w-full max-w-6xl items-center justify-center rounded-3xl px-2 py-4"
-      style={{ minHeight: 480 }}
-    >
+    <div data-testid="battle-arena" className="relative mx-auto flex w-full max-w-5xl flex-col items-center gap-4 rounded-3xl px-2 py-4">
       <ArenaBackdrop />
-      {/* Two teams as facing vertical columns (Slay-the-Spire style). Column & center
-          widths are FIXED so the varying ActionPanel content never reflows the field. */}
-      <div className="flex items-center justify-center gap-4 sm:gap-10">
-        <section className="flex w-24 shrink-0 flex-col items-center gap-2 sm:w-28">
-          <h3 className="max-w-full truncate text-xs uppercase tracking-widest text-white/40">{leftTitle}</h3>
-          <div data-testid="row-player" className="flex flex-col items-center gap-2 sm:gap-3">{renderSide(left, false)}</div>
-        </section>
+      {/* Teams as horizontal rows (player on top, enemies below) — clearest read of
+          who-hits-whom. A fixed-height center keeps the field from reflowing. */}
+      <section className="flex w-full flex-col items-center gap-2">
+        <h3 className="text-xs uppercase tracking-widest text-white/40">{leftTitle}</h3>
+        <div data-testid="row-player" className="flex flex-nowrap justify-center gap-2 sm:gap-3">{renderSide(left, false)}</div>
+      </section>
 
-        <div className="flex w-64 shrink-0 items-center justify-center self-center sm:w-80">
-          {center ?? <span className="font-display text-2xl text-white/30 select-none">VS</span>}
-        </div>
-
-        <section className={`flex shrink-0 flex-col items-center gap-2 ${bossFight ? 'w-32 sm:w-40' : 'w-24 sm:w-28'}`}>
-          <h3 className="max-w-full truncate text-xs uppercase tracking-widest text-white/40">{rightTitle}</h3>
-          <div data-testid="row-enemies" className="flex flex-col items-center gap-2 sm:gap-3">{renderSide(right, true, bossFight)}</div>
-        </section>
+      <div className="flex min-h-[5.5rem] w-full items-center justify-center self-center">
+        {center ?? <span className="font-display text-2xl text-white/30 select-none">VS</span>}
       </div>
+
+      <section className="flex w-full flex-col items-center gap-2">
+        <div data-testid="row-enemies" className="flex flex-nowrap justify-center gap-2 sm:gap-3">{renderSide(right, true, bossFight)}</div>
+        <h3 className="text-xs uppercase tracking-widest text-white/40">{rightTitle}</h3>
+      </section>
 
       <PixiArena entry={entry} frameKey={frameKey} speed={speed} />
       <Callout entry={entry} frameKey={frameKey} />
