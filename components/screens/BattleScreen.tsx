@@ -29,7 +29,7 @@ export function BattleScreen({
   title: string
   rightTitle?: string
   onFinish: () => void
-  /** Level shown on enemy busts (derived from menace); players use their own. */
+  /** Level shown on enemy busts (menace was removed 2026-07-01); players use their own. */
   enemyLevel?: number
   /** Same values simulateBattle used for the enemy side — threaded into buildReplay so
    *  the InitiativeBar's displayed spd matches the sim's actual turn order. */

@@ -252,8 +252,8 @@ defenseK: 0.5,
   // floor-sensitive lever: any future change must re-measure campaignBalanceB.
   map: {
     floors: 6,            // total floors incl. start(0) + boss(last); 4 middle floors
-    minWidth: 2,          // min nodes per middle floor
-    maxWidth: 3,          // max nodes per middle floor
+    // (minWidth/maxWidth removed 2026-07-02: dead — game/engine/map.ts hardcodes floor
+    // widths directly, 1 for entry/boss floors and 3 for middle floors; nothing read these.)
     eliteFloors: [3] as readonly number[],  // 0-based middle-floor indices forced to 'elite'
     eliteBudgetMult: 1.35,// enemy-budget multiplier on elite nodes
     areas: 3,                   // numero di aree per run

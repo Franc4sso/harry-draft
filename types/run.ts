@@ -19,7 +19,7 @@ export interface NodeBattle {
   enemyTeam: DraftedWizard[]
   /** Enemy relics for elite/boss nodes (empty otherwise). */
   enemyRelics: ActiveRelic[]
-  /** Displayed enemy level; menace is derived from it. */
+  /** Displayed enemy level (menace was removed 2026-07-01; difficulty now comes from level + budget). */
   enemyLevel: number
   /** Exclusive synergy carried by the FINAL boss only. */
   bossSynergy?: ActiveSynergy

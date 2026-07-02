@@ -5,7 +5,6 @@ describe('BALANCE.map', () => {
   it('defines map generation tunables', () => {
     const m = BALANCE.map
     expect(m.floors).toBeGreaterThanOrEqual(4)
-    expect(m.minWidth).toBeLessThanOrEqual(m.maxWidth)
     expect(Array.isArray(m.eliteFloors)).toBe(true)
     expect(m.eliteBudgetMult).toBeGreaterThan(1)
   })

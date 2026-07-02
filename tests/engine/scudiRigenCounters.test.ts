@@ -31,15 +31,21 @@ describe('Scudi-Rigen counter-web', () => {
   it('BEATS an attrition enemy (overflow→shield out-sustains chip damage)', () => {
     // KNOWN BALANCE REGRESSION (2026-07-01, permanent+cumulative stat buffs/debuffs task):
     // Cedric's signature ('Gioco Leale', on-hit chance to self-buff atkUp) now stacks permanently
-    // instead of expiring after 2 turns. Over a long attrition fight his atk escalates
-    // (up to the maxStacks cap) and overwhelms the shield-conversion wall that used to flip this
-    // matchup — swept wallHp/wallDef widely (100-250 hp, 12-30 def) and could not find a
-    // configuration where conversion still wins. The counter-relationship this test encodes
-    // ("shield conversion beats attrition") no longer holds for these archetypes; only the
-    // regression is documented here, not silently re-tuned. See task-12-report.md.
-    // RE-CHECKED 2026-07-01 after lowering maxStacks 5→3: swept 8 seeds x 4 wallHp x 5 wallDef
-    // (160 combos) — 0 configurations restore a conversion win at cap 3 either. Even 3 stacks of
-    // atkUp (+60 flat atk on top of Cedric's base 60) is enough to keep out-damaging this wall.
+    // instead of expiring after 2 turns. Over a long attrition fight his atk escalates and
+    // overwhelms the shield-conversion wall that used to flip this matchup — swept wallHp/wallDef
+    // widely (100-250 hp, 12-30 def) and could not find a configuration where conversion still
+    // wins. The counter-relationship this test encodes ("shield conversion beats attrition") no
+    // longer holds for these archetypes; only the regression is documented here, not silently
+    // re-tuned. See task-12-report.md.
+    // RE-CHECKED 2026-07-02 (inline-effect stack-cap task): the real cause of the escalation was
+    // applyInlineEffect (game/engine/status.ts) never capping inline buff/debuff stacks — every
+    // maxStacks reference in prior comments here was misattributed, since maxStacks only ever
+    // gated the statusId path (applyStatus), and 'atkUp' here is applied via a statusId ('atkUp'
+    // has StatusDef.maxStacks: 3), so it was ALREADY capped before this task. Fixed the inline path
+    // to cap at MAX_STAT_STACKS (3) anyway (it affects other content), but re-swept 8 seeds x 4
+    // wallHp x 5 wallDef (160 combos) after the fix — 0 configurations restore a conversion win.
+    // 3 stacks of atkUp (+60 flat atk on top of Cedric's base 60) alone is enough to keep
+    // out-damaging this wall; the regression is unrelated to the inline-path cap and persists.
     const attrition = [mk('cedric', { hp: 300, atk: 60, def: 16, spd: 16 })]
     const plain = simulateBattle(wall(), attrition, createRng('seed4'), { leftSyn: [regenSyn(60)] })
     const withConvert = simulateBattle(wall(), attrition, createRng('seed4'), { leftSyn: [regenSyn(60)], leftRelics: convert })

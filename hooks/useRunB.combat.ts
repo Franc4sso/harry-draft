@@ -14,7 +14,7 @@ export interface ActiveBattleB {
   isFinalBoss: boolean
   playerTeam: DraftedWizard[]
   playerSyn: ActiveSynergy[]
-  /** Level shown on enemy busts, derived from the right-side menace. */
+  /** Level shown on enemy busts (menace was removed 2026-07-01; this is the explicit area+kind threat tier). */
   enemyLevel: number
   /** Right-side menace/relics/damageReduction/ignoresTaunt fed to simulateBattle — threaded
    *  into buildReplay so the InitiativeBar's displayed spd matches the sim's actual order. */

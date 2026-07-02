@@ -1,6 +1,11 @@
 import type { ActionGate, ActiveEffect, BattleUnit, LogEntry, Stat, Stats } from '@/types'
 import { STATUS_BY_ID } from '@/data/statuses'
 
+/** Shared cap on cumulative stat buff/debuff instances (per unit, per stat) — applies to
+ *  both the statusId path (applyStatus, via StatusDef.maxStacks) and the inline-effect
+ *  path (applyInlineEffect) so neither can stack permanent stat mods without limit. */
+export const MAX_STAT_STACKS = 3
+
 /** statMod for an active effect: prefer its StatusDef, fall back to legacy inline fields. */
 function statModOf(e: ActiveEffect): { stat: Stat; delta: number; pct: boolean } | null {
   if (e.statusId) {
@@ -59,6 +64,14 @@ export function applyInlineEffect(
   eff: { kind: ActiveEffect['kind']; stat?: Stat; amount?: number; duration?: number },
   opts: { sourceId?: string } = {},
 ): void {
+  // Inline stat buffs/debuffs are permanent (see tickStatuses) and, like the statusId
+  // 'stack' policy, must be bounded — otherwise on-hit/on-turn-start signature and
+  // Controllo-spell effects stack forever. Cap cumulative instances of the same
+  // (kind, stat) at MAX_STAT_STACKS; once at cap, further applications are no-ops.
+  if ((eff.kind === 'buff' || eff.kind === 'debuff') && eff.stat) {
+    const existing = unit.statusEffects.filter(e => !e.statusId && e.kind === eff.kind && e.stat === eff.stat)
+    if (existing.length >= MAX_STAT_STACKS) return
+  }
   unit.statusEffects.push({
     kind: eff.kind, stat: eff.stat, amount: eff.amount,
     remaining: eff.duration ?? 1, sourceId: opts.sourceId,

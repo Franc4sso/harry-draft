@@ -25,7 +25,7 @@ export function BattleArena({
   leftTitle?: string
   rightTitle?: string
   center?: React.ReactNode
-  /** Level shown on every enemy bust (derived from menace). Players use their own. */
+  /** Level shown on every enemy bust (menace was removed 2026-07-01). Players use their own. */
   enemyLevel?: number
 }) {
   const actingKey = entry?.actorSide ? unitKey(entry.actorSide, entry.actorId) : null

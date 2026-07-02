@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { applyStatus, effectiveStats, tickStatuses } from '@/game/engine/status'
+import { applyInlineEffect, applyStatus, effectiveStats, tickStatuses } from '@/game/engine/status'
 import type { BattleUnit, DraftedWizard } from '@/types'
 import { SPELL_BY_ID } from '@/data/spells'
 
@@ -62,5 +62,15 @@ describe('permanent + cumulative stat buffs/debuffs', () => {
     expect(u.statusEffects.find(e => e.statusId === 'veleno')?.remaining).toBe(1)
     tickStatuses(2, u)
     expect(u.statusEffects.filter(e => e.statusId === 'veleno')).toHaveLength(0)
+  })
+
+  it('(f) an inline debuff (e.g. confundo-shaped atk -15) applied 5x caps at 3 stacks', () => {
+    const u = unit()
+    // atk (base 80) has headroom so the cap is visible without hitting the effectiveStats floor.
+    const inlineDebuff = { kind: 'debuff' as const, stat: 'atk' as const, amount: 15, duration: 2 }
+    for (let i = 0; i < 5; i++) applyInlineEffect(u, inlineDebuff)
+    const stacks = u.statusEffects.filter(e => !e.statusId && e.kind === 'debuff' && e.stat === 'atk')
+    expect(stacks).toHaveLength(3) // capped, not 5
+    expect(effectiveStats(u).atk).toBe(80 - 15 * 3) // bounded reduction (35), not unbounded (80-75=5)
   })
 })
