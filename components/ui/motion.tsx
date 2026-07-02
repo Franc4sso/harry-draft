@@ -156,3 +156,52 @@ export function TiltCard({ children, max = 6, className }: { children: ReactNode
     </motion.div>
   )
 }
+
+export function FoilText({
+  children, as = 'span', className,
+}: { children: ReactNode; as?: 'h1' | 'h2' | 'span'; className?: string }) {
+  const reduce = useReducedMotion()
+  const Tag = motion[as]
+  return (
+    <Tag
+      className={className}
+      style={{
+        backgroundImage: 'linear-gradient(100deg, #8a6420 0%, #caa24a 30%, #f6e6a8 50%, #caa24a 70%, #8a6420 100%)',
+        backgroundSize: '220% 100%',
+        WebkitBackgroundClip: 'text',
+        backgroundClip: 'text',
+        color: 'transparent',
+        filter: 'drop-shadow(0 3px 18px rgba(202,162,74,0.35))',
+      }}
+      initial={reduce ? false : { backgroundPosition: '-180% 0' }}
+      animate={{ backgroundPosition: reduce ? '50% 0' : '280% 0' }}
+      transition={reduce ? { duration: 0 } : { duration: 1.4, ease: EASE_CINEMATIC }}
+    >
+      {children}
+    </Tag>
+  )
+}
+
+export function DrawDivider({ className, widthClass = 'w-56' }: { className?: string; widthClass?: string }) {
+  const reduce = useReducedMotion()
+  return (
+    <div aria-hidden className={`relative mx-auto h-px ${widthClass} ${className ?? ''}`}>
+      <motion.div
+        className="absolute inset-0 origin-center"
+        style={{ background: 'linear-gradient(90deg, transparent, rgba(202,162,74,0.9), transparent)' }}
+        initial={reduce ? false : { scaleX: 0 }}
+        animate={{ scaleX: 1 }}
+        transition={reduce ? { duration: 0 } : { duration: 0.7, ease: EASE_CINEMATIC, delay: 0.15 }}
+      />
+      {!reduce && (
+        <motion.span
+          className="absolute top-1/2 h-1.5 w-1.5 -translate-y-1/2 rounded-full"
+          style={{ background: '#f6e6a8', boxShadow: '0 0 10px #f6e6a8' }}
+          initial={{ left: '8%', opacity: 0 }}
+          animate={{ left: ['8%', '92%'], opacity: [0, 1, 1, 0] }}
+          transition={{ duration: 0.9, ease: EASE_CINEMATIC, delay: 0.2 }}
+        />
+      )}
+    </div>
+  )
+}
