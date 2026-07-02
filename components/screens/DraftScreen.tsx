@@ -7,6 +7,9 @@ import { SquadPanel } from '@/components/draft/SquadPanel'
 import { SynergyTracker } from '@/components/draft/SynergyTracker'
 import { DraftCandidateCard } from '@/components/draft/DraftCandidateCard'
 import { Stagger, StaggerItem } from '@/components/ui/motion'
+import { Insegna } from '@/components/ui/Insegna'
+import { Frame } from '@/components/ui/Frame'
+import { Parchment } from '@/components/ui/Parchment'
 import { synergyProgress, previewSynergies } from '@/game/engine/synergy'
 import { displayName } from '@/lib/displayName'
 
@@ -50,22 +53,20 @@ export function DraftScreen({
       {/* Sticky header: squad + progress */}
       {/* z-[60] keeps the sticky header above card chip tooltips (z-50) — without it,
           a tooltip on a top-row wizard paints over the header. */}
-      <header className="sticky top-0 z-[60] border-b border-white/10 bg-[rgba(10,8,19,0.9)] px-4 py-3 backdrop-blur">
-        <div className="mb-2 flex items-center justify-between gap-3">
-          <h1 className="font-display text-xl">Scegli il {picks.length + 1}º mago</h1>
-          <div className="flex items-center gap-2 text-[11px] uppercase tracking-widest">
-            <span
-              className="rounded-full border px-2 py-0.5 font-semibold"
-              style={{
-                color: activeSynergies > 0 ? '#7cdc7c' : 'rgba(255,255,255,0.45)',
-                borderColor: activeSynergies > 0 ? 'rgba(124,220,124,0.5)' : 'rgba(255,255,255,0.15)',
-                background: activeSynergies > 0 ? 'rgba(124,220,124,0.12)' : 'transparent',
-              }}
-            >
-              ⚡ {activeSynergies} sinergie attive
-            </span>
-            <span className="text-[#b08d57]">Pesca {picks.length}/{target}</span>
-          </div>
+      <header className="sticky top-0 z-[60] border-b border-white/10 bg-[rgba(10,8,19,0.9)] px-4 py-2 backdrop-blur">
+        <Insegna kicker={`Pesca ${picks.length + 1} / ${target}`} title="Scegli il mago" className="[&_h1]:text-xl [&_.kicker]:text-[9px] [&_.kicker]:tracking-[0.3em] sm:[&_h1]:text-2xl" />
+        <div className="mb-2 mt-1 flex items-center justify-center gap-2 text-[11px] uppercase tracking-widest">
+          <span
+            className="rounded-full border px-2 py-0.5 font-semibold"
+            style={{
+              color: activeSynergies > 0 ? '#7cdc7c' : 'rgba(255,255,255,0.45)',
+              borderColor: activeSynergies > 0 ? 'rgba(124,220,124,0.5)' : 'rgba(255,255,255,0.15)',
+              background: activeSynergies > 0 ? 'rgba(124,220,124,0.12)' : 'transparent',
+            }}
+          >
+            ⚡ {activeSynergies} sinergie attive
+          </span>
+          <span className="text-[#b08d57]">Pesca {picks.length}/{target}</span>
         </div>
         <SquadPanel picks={picks} teamSize={target} layout="row" />
       </header>
@@ -97,9 +98,12 @@ export function DraftScreen({
 
         {/* Synergy tracker: right rail on desktop, stacks below candidates on mobile */}
         <aside>
-          <div className="panel-premium sticky top-28 p-3">
-            <SynergyTracker rows={rows} candidateName={considered ? displayName(considered) : undefined} />
-          </div>
+          <Frame variant="panel" className="sticky top-28" innerClassName="relative p-3">
+            <Parchment className="absolute inset-0" />
+            <div className="relative">
+              <SynergyTracker rows={rows} candidateName={considered ? displayName(considered) : undefined} />
+            </div>
+          </Frame>
         </aside>
       </div>
 
