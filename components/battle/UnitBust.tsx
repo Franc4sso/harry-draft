@@ -153,14 +153,16 @@ export function UnitBust({
       data-dead={dead || undefined}
       data-acting={acting || undefined}
       animate={reduce ? {} : {
-        scale: acting ? 1.04 : 1,
-        x: impact ? (isCrit ? [0, -6, 6, -3, 0] : [0, -3, 3, 0]) : (targeted ? (mirrored ? -4 : 4) : 0),
+        // Impact = squash & stretch (no positional shake). Otherwise: acting lift, targeted lean.
+        scaleX: impact ? (isCrit ? [1, 1.15, 0.95, 1.03, 1] : [1, 1.1, 0.97, 1]) : (acting ? 1.04 : 1),
+        scaleY: impact ? (isCrit ? [1, 0.85, 1.06, 0.98, 1] : [1, 0.9, 1.04, 1]) : (acting ? 1.04 : 1),
+        x: impact ? 0 : (targeted ? (mirrored ? -4 : 4) : 0),
       }}
       transition={{
         type: 'spring', stiffness: 360, damping: 22,
-        x: impact
-          ? { type: 'tween', duration: isCrit ? 0.4 : 0.28, ease: 'easeOut' }
-          : { type: 'spring', stiffness: 360, damping: 22 },
+        scaleX: impact ? { type: 'tween', duration: isCrit ? 0.44 : 0.32, ease: [0.22, 1, 0.36, 1] } : { type: 'spring', stiffness: 360, damping: 22 },
+        scaleY: impact ? { type: 'tween', duration: isCrit ? 0.44 : 0.32, ease: [0.22, 1, 0.36, 1] } : { type: 'spring', stiffness: 360, damping: 22 },
+        x: { type: 'spring', stiffness: 360, damping: 22 },
       }}
       className={cn('relative w-28 sm:w-32 rounded-2xl border border-[#C9A24B]/15 bg-[rgba(20,16,33,0.45)] p-1.5 backdrop-blur-sm', mirrored && 'text-right')}
       style={{ boxShadow: aura, filter: dead ? 'grayscale(0.85)' : undefined }}
