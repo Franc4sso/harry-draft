@@ -3,6 +3,8 @@ import { useState } from 'react'
 import { Gem, Sparkles } from 'lucide-react'
 import type { ActiveRelic, DraftedWizard, Relic } from '@/types'
 import { Button } from '@/components/ui/Button'
+import { Frame } from '@/components/ui/Frame'
+import { Insegna } from '@/components/ui/Insegna'
 import { Stagger, StaggerItem } from '@/components/ui/motion'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { RELIC_RARITY_COLOR } from '@/lib/relicRarity'
@@ -32,20 +34,23 @@ function Pedestal({ relic, selected, onSelect }: { relic: Relic; selected: boole
   const reactive = Boolean(relic.triggers?.length)
   const Icon = reactive ? Sparkles : Gem
   return (
-    <div
+    <Frame
+      variant="card"
+      className="h-full cursor-pointer transition-transform duration-200 hover:-translate-y-1.5"
+      innerClassName="relative flex h-full flex-col items-center p-5 text-center"
+      style={{ boxShadow: selected ? `0 0 0 2px ${color}, 0 0 26px ${color}66` : `0 0 18px ${color}22` }}
       data-testid={`relic-${relic.id}`}
       role="button"
       tabIndex={0}
       aria-pressed={selected}
       onClick={onSelect}
       onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onSelect() } }}
-      className="group relative flex cursor-pointer flex-col items-center rounded-2xl border p-5 text-center transition-transform duration-200 hover:-translate-y-1.5"
-      style={{
-        borderColor: selected ? color : `${color}44`,
-        background: `radial-gradient(120% 80% at 50% 0%, ${color}1f, rgba(12,10,22,0.6) 62%)`,
-        boxShadow: selected ? `0 0 0 2px ${color}, 0 0 26px ${color}66` : `0 0 18px ${color}22`,
-      }}
     >
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0"
+        style={{ background: `radial-gradient(120% 80% at 50% 0%, ${color}1f, transparent 62%)` }}
+      />
       {/* Artifact + aura */}
       <div className="relative mb-3 grid h-20 w-20 place-items-center">
         <span
@@ -55,23 +60,23 @@ function Pedestal({ relic, selected, onSelect }: { relic: Relic; selected: boole
         />
         <Icon size={40} style={{ color }} className="relative" aria-hidden />
       </div>
-      {/* Pedestal base */}
+      {/* Pedestal base — lit ledge the artifact rests on */}
       <span
         aria-hidden
-        className="mb-3 h-2 w-16 rounded-[50%]"
+        className="relative mb-3 h-2 w-16 rounded-[50%]"
         style={{ background: `${color}55`, boxShadow: `0 6px 14px ${color}55` }}
       />
 
-      <h3 className="font-display text-base leading-tight">{relic.name}</h3>
-      <div className="mt-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider">
+      <h3 className="relative font-display text-base leading-tight">{relic.name}</h3>
+      <div className="relative mt-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider">
         <span style={{ color }}>{relic.rarity}</span>
         <span className="text-white/25">·</span>
         <span className="inline-flex items-center gap-0.5 text-white/55">
           <span aria-hidden>{reactive ? '✦' : '⟳'}</span>{reactive ? 'A innesco' : 'Passiva'}
         </span>
       </div>
-      <p className="mt-2 text-sm leading-relaxed text-white/75">{relic.desc}</p>
-    </div>
+      <p className="relative mt-2 text-sm leading-relaxed text-white/75">{relic.desc}</p>
+    </Frame>
   )
 }
 
@@ -91,11 +96,7 @@ export function RelicNodeScreen({
 
   return (
     <main className="flex-1 flex flex-col items-center gap-6 p-6">
-      <div className="text-center">
-        <p className="kicker">Sala dei tesori</p>
-        <h1 className="title-gradient mt-1 font-display text-3xl font-bold">Scegli una reliquia</h1>
-        <div aria-hidden className="mx-auto mt-2 h-px w-48" style={{ background: 'linear-gradient(90deg, transparent, rgba(202,162,74,0.6), transparent)' }} />
-      </div>
+      <Insegna kicker="Sala dei tesori" title="Scegli una reliquia" />
 
       {owned.length > 0 && (
         <div className="w-full max-w-4xl">

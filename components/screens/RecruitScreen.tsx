@@ -4,6 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import type { DraftedWizard } from '@/types'
 import { WizardCardRow } from '@/components/cards/WizardCardRow'
 import { Button } from '@/components/ui/Button'
+import { Frame } from '@/components/ui/Frame'
+import { Insegna } from '@/components/ui/Insegna'
+import { Parchment } from '@/components/ui/Parchment'
 import { Stagger, StaggerItem } from '@/components/ui/motion'
 import { powerOf } from '@/game/engine/combat/teamGen'
 import { previewSynergies, type SynergyPreview } from '@/game/engine/synergy'
@@ -16,15 +19,16 @@ import { isDead } from '@/game/engine/roster'
  *  only thing shown — building-but-inactive synergies are deliberately omitted. */
 function ActivationRail({ candidate, activating }: { candidate: DraftedWizard | null; activating: SynergyPreview[] }) {
   return (
-    <div className="panel-premium overflow-hidden rounded-2xl">
-      <div className="border-b border-white/10 bg-[#7cdc7c]/[0.06] px-4 py-3">
+    <Frame variant="panel" innerClassName="relative overflow-hidden">
+      <Parchment className="absolute inset-0" />
+      <div className="relative border-b border-white/10 bg-[#7cdc7c]/[0.06] px-4 py-3">
         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Sinergie attivate</p>
         <p className="mt-0.5 text-sm font-display text-white/90">
           {candidate ? <>Reclutando <span className="text-[#8ee68e]">{displayName(candidate)}</span></> : 'Scegli una recluta'}
         </p>
       </div>
 
-      <div className="p-3">
+      <div className="relative p-3">
         {!candidate && (
           <p className="px-1 py-6 text-center text-xs text-white/40">
             Passa sopra o seleziona una recluta per vedere quali sinergie attiva.
@@ -62,7 +66,7 @@ function ActivationRail({ candidate, activating }: { candidate: DraftedWizard | 
           </AnimatePresence>
         </div>
       </div>
-    </div>
+    </Frame>
   )
 }
 
@@ -98,11 +102,9 @@ export function RecruitScreen({
     // Layout copied verbatim from DraftScreen: a header above, then the exact same
     // two-column grid (candidates left / synergy rail right) using md:grid-cols-[1fr_280px].
     <main className="flex-1 w-full">
-      <header className="px-4 pt-5 text-center">
-        <p className="kicker">Nuovo alleato</p>
-        <h1 className="title-gradient mt-1 font-display text-3xl font-bold">Reclutamento</h1>
-        <div aria-hidden className="mx-auto mt-2 h-px w-48" style={{ background: 'linear-gradient(90deg, transparent, rgba(202,162,74,0.6), transparent)' }} />
-        <p className="mt-2 text-sm text-white/60">
+      <header className="px-4 pt-5">
+        <Insegna kicker="Nuovo alleato" title="Reclutamento" />
+        <p className="mt-2 text-center text-sm text-white/60">
           {full
             ? 'Squadra al completo: scegli chi reclutare e quale mago sostituire.'
             : 'Scegli un mago da aggiungere alla squadra.'}

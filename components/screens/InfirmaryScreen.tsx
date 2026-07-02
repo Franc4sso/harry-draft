@@ -2,6 +2,8 @@
 import { motion, useReducedMotion } from 'framer-motion'
 import type { DraftedWizard } from '@/types'
 import { Button } from '@/components/ui/Button'
+import { Frame } from '@/components/ui/Frame'
+import { Parchment } from '@/components/ui/Parchment'
 import { Reveal, Stagger, StaggerItem } from '@/components/ui/motion'
 
 export function InfirmaryScreen({
@@ -15,7 +17,8 @@ export function InfirmaryScreen({
   return (
     <main className="flex-1 w-full flex flex-col items-center justify-center gap-6 p-6 text-center">
       <Reveal>
-        <div className="relative max-w-md overflow-hidden rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-8 py-6 shadow-[0_0_32px_rgba(52,211,153,0.12)]">
+        <Frame variant="panel" className="max-w-md shadow-[0_0_32px_rgba(52,211,153,0.12)]" innerClassName="relative px-8 py-6 text-center">
+          <Parchment className="absolute inset-0" />
           {/* Healing pulse — a soft green heartbeat behind the ward crest. */}
           {!reduce && (
             <motion.span
@@ -31,7 +34,7 @@ export function InfirmaryScreen({
           <p className="relative mt-2 text-sm leading-relaxed text-white/70">
             L&apos;Infermeria ti rimette in sesto — tutti tornano in piena salute.
           </p>
-        </div>
+        </Frame>
       </Reveal>
 
       <Stagger delay={0.25} className="flex w-full max-w-xs flex-col gap-2">
