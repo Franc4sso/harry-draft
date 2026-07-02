@@ -40,6 +40,7 @@ export async function createPixiStage(el: HTMLElement): Promise<PixiStage> {
   canvas.style.width = '100%'
   canvas.style.height = '100%'
   canvas.style.pointerEvents = 'none'
+  canvas.style.zIndex = '5' // above the portraits (z<5), below the HUD/callouts (z>5)
   el.appendChild(canvas)
 
   const fx = new Container()
