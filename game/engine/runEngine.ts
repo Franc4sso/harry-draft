@@ -40,7 +40,7 @@ export function registerCoreResolvers(): void {
 }
 
 /** Number of starters the player drafts before the run begins. */
-export const STARTER_PICKS = 4
+export const STARTER_PICKS = 3
 
 export function startRunB(seed: string): RunState {
   return { seed, phase: 'draft', team: [], activeSynergies: [], stage: 0, relics: [],

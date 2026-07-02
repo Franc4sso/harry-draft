@@ -22,7 +22,7 @@ describe('run engine — start & map', () => {
   it('starts in the draft phase and confirmDraftPicks seeds a starter team on the map', () => {
     const s = startRunB('seed-x')
     expect(s.phase).toBe('draft')
-    expect(STARTER_PICKS).toBe(4)
+    expect(STARTER_PICKS).toBe(3)
     const pool = createDraftPool().slice(0, STARTER_PICKS).map(w => draftWizard(createRng('seed-x'), w, true))
     const next = confirmDraftPicks(s, pool, createRng('seed-x'))
     expect(next.phase).toBe('map')

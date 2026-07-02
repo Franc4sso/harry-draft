@@ -90,7 +90,7 @@ function pickAverage(s: RunState, rng: Rng): RunNode {
 function runAverage(seed: string): 'win' | 'defeat' {
   let s = startRunB(seed)
   const offer = starterOffer(seed, 'Grifondoro')
-  const starters = [...offer].sort((a, b) => powerOf(b) - powerOf(a)).slice(0, 4).map(d => d.wizard.id)
+  const starters = [...offer].sort((a, b) => powerOf(b) - powerOf(a)).slice(0, 3).map(d => d.wizard.id)
   s = chooseStarters(s, 'Grifondoro', starters, createRng(seed))
   let guard = 0
   let step = 0
@@ -131,7 +131,7 @@ function runAverage(seed: string): 'win' | 'defeat' {
 function runNearOptimal(seed: string): 'win' | 'defeat' {
   let s = startRunB(seed)
   const offer = starterOffer(seed, 'Grifondoro')
-  const starters = [...offer].sort((a, b) => powerOf(b) - powerOf(a)).slice(0, 4).map(d => d.wizard.id)
+  const starters = [...offer].sort((a, b) => powerOf(b) - powerOf(a)).slice(0, 3).map(d => d.wizard.id)
   s = chooseStarters(s, 'Grifondoro', starters, createRng(seed))
   let guard = 0
   while (guard++ < 200) {

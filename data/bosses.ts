@@ -23,8 +23,8 @@ export const BOSSES: BossDef[] = [
   {
     id: 'voldemort_boss',
     name: 'Lord Voldemort',
-    budget: 1800,
-    hpMult: 1.4,
+    budget: 1080,
+    hpMult: 1.09,
     forcedSpellIds: ['avada', 'fiendfyre'],
     bossWizardId: 'voldemort',
     // ADDED 2026-07-02 (Task 18d, area-0 blocker resolution): previously unset (implicit
@@ -41,6 +41,21 @@ export const BOSSES: BossDef[] = [
     // (game/engine/runEngine.ts STARTER_PICKS 2→4), landing at winRate 0.2083. See
     // data/constants.ts campaignB's Task 21 note and tests/engine/campaignBalanceB.test.ts
     // header for the full sweep table.
+    //
+    // Task 25 (2026-07-02, USER DECISION): STARTER_PICKS reverted 4→3 ("MAI 4, 3 maghi
+    // voglio"), reopening the area-2-boss action-economy deficit Task 21 had fixed via the
+    // roster raise (campaignBalanceB crashed to 0.1000). unitCount=3 is a hard user pin
+    // (untouched) — every area-0/1 lever (Muro/Bellatrix unitCount/budget/hpMult,
+    // enemyCountByArea) was re-swept and found flat or non-monotonic; area-2-boss was
+    // confirmed the dominant loss location (loss trace: area2-boss 39-42/120). Voldemort's
+    // OWN budget/hpMult (previously untouched, since unitCount was assumed the only
+    // worthwhile scripted-boss lever) turned out to be the lever that actually moves this
+    // floor: budget 1800→1080, hpMult 1.4→1.09 clears it at winRate 0.1583 (19/120, headroom
+    // 0.0083 — same 1-seed margin pattern as every other floor-adjacent lever in this file).
+    // Budget/hpMult sweep highlights (unitCount fixed at 3 throughout): 1800/1.4 (orig) →
+    // 0.1000; 900/1.0 → 0.2833 (overshoots the 0.22 ceiling); 1300/1.2 → 0.1000 (sharp cliff,
+    // not a smooth dial); 1100/1.1 → 0.1500 (fails strict >, exact boundary); 1080/1.09
+    // SHIPPED → 0.1583. See tests/engine/campaignBalanceB.test.ts header for the full table.
     unitCount: 3,
     exclusiveSynergy: {
       id: 'darkLord', name: "L'Oscuro Signore", kind: 'group',
@@ -78,7 +93,13 @@ export const MURO: BossDef = {
  *  (matches Muro's pattern) plus hpMult trimmed below 1.0 was needed to clear the floor: hpMult
  *  0.85 passes at 0.1583 across budget∈[200,450] (stable plateau); hpMult flips to 0.1500 (fails
  *  strict >) at 0.88+ (boundary measured at 0.875 pass / 0.88 fail — 1-seed margin, same fragility
- *  pattern as the final-boss and Muro tunings). See campaignBalanceB.test.ts. */
+ *  pattern as the final-boss and Muro tunings). See campaignBalanceB.test.ts.
+ *  unitCount TRIMMED 3→2 (2026-07-02, Task 25, STARTER_PICKS=3 exploration): part of the
+ *  Task-25 sweep to recover the 0.15 floor after STARTER_PICKS reverted 4→3; kept as-is
+ *  since area-1/Bellatrix was confirmed NOT the live bottleneck in the final Task 25 sweep
+ *  (flat 0.1000 plateau when perturbing hpMult further at unitCount=2) — the floor was
+ *  ultimately cleared via Voldemort's own budget/hpMult instead. See
+ *  tests/engine/campaignBalanceB.test.ts header for the full Task 25 table. */
 export const BELLATRIX: BossDef = {
   id: 'bellatrix_boss',
   name: 'Bellatrix Lestrange',
@@ -87,5 +108,5 @@ export const BELLATRIX: BossDef = {
   bossWizardId: 'bellatrix',
   ignoresTaunt: true,
   pinnedArea: 1,
-  unitCount: 3,
+  unitCount: 2,
 }

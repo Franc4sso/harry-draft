@@ -21,13 +21,23 @@ describe('teamGen', () => {
     expect(strong).toBeGreaterThan(weak)
   })
   it('boss team applies hp multiplier to leader', () => {
-    // Voldemort (final boss) now carries its own unitCount override (2, area-0/final-boss
-    // action-economy rebalance — see campaignBalanceB.test.ts calibration history), so this
-    // exercises the boss.unitCount path rather than the BALANCE.draft.teamSize default.
+    // Voldemort (final boss) now carries its own unitCount override (3, USER DECISION —
+    // see campaignBalanceB.test.ts calibration history), so this exercises the
+    // boss.unitCount path rather than the BALANCE.draft.teamSize default.
+    // Assert the multiplier's EFFECT (leader HP > what hpMult=1 would have produced)
+    // rather than an absolute HP threshold: BOSSES[0]'s budget/hpMult are a
+    // floor-sensitive balance lever (task 25, STARTER_PICKS=3 recalibration) that will
+    // keep moving as campaignBalanceB is re-tuned, and a hardcoded number silently goes
+    // stale every time — this compares the multiplier's actual effect instead.
     const boss = generateBossTeam(createRng(1), BOSSES[0]!)
     expect(boss).toHaveLength(BOSSES[0]!.unitCount ?? BALANCE.draft.teamSize)
-    const maxHp = Math.max(...boss.map(d => d.maxHp))
-    expect(maxHp).toBeGreaterThan(120)
+    // Compare the LEADER's own HP against its unmultiplied counterpart (not
+    // Math.max across the team) — another teammate can have higher raw HP than the
+    // boosted leader, so a team-wide max doesn't reliably reflect hpMult's effect.
+    const unmultiplied = generateBossTeam(createRng(1), { ...BOSSES[0]!, hpMult: 1 })
+    const leaderHp = boss.find(d => d.wizard.id === BOSSES[0]!.bossWizardId)!.maxHp
+    const leaderHpNoMult = unmultiplied.find(d => d.wizard.id === BOSSES[0]!.bossWizardId)!.maxHp
+    expect(leaderHp).toBeGreaterThan(leaderHpNoMult)
   })
   it('Muro fields unitCount override (3) instead of default teamSize', () => {
     const team = generateBossTeam(createRng(1), MURO)

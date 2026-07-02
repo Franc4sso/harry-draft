@@ -259,6 +259,59 @@ defenseK: 0.5,
   // sweeps were left at their existing slice(0,2) since they already passed comfortably and
   // are diagnostic/floor-only (not gated on roster size). STARTER_PICKS is now a
   // floor-sensitive lever: any future change must re-measure campaignBalanceB.
+  //
+  // Task 25 (2026-07-02, SUPERSEDES Task 21 above): USER DECISION reverted STARTER_PICKS
+  // 4→3 ("MAI 4, 3 maghi voglio"). Every balance-harness test's hardcoded starter-pick
+  // slice count was lowered 4→3 in lockstep (avgPolicyProbe, campaignBalanceB,
+  // levelingSnowball, runEngine.test, scudiRigenSweep). This reopened the exact area-2-boss
+  // (Voldemort) action-economy deficit Task 21 had fixed via the roster raise — measured
+  // campaignBalanceB crashed back to 0.1000 (12/120), loss trace: area2-boss 39-42/120,
+  // area0-boss 29/120 dominant. Voldemort unitCount=3 and STARTER_PICKS=3 are BOTH hard
+  // user pins (cannot move). Re-swept every other lever (120-seed campaignBalanceB):
+  //   baseline (Bellatrix unitCount=2, everything else as Task 21 shipped) → 0.1000
+  //   Muro unitCount 3→2                                          → 0.0833 (worse — same
+  //                                                                  non-monotonic pattern
+  //                                                                  as Task 21's sweep)
+  //   enemyCountByArea [2,3,3]→[2,2,3]                             → 0.0917 (worse)
+  //   Bellatrix hpMult 0.85→0.6 (unitCount already 2)              → 0.1000 (flat plateau —
+  //                                                                  Bellatrix/area-1 is not
+  //                                                                  the live bottleneck once
+  //                                                                  Voldemort=3 dominates)
+  //   Muro budget 250→150, hpMult 0.5→0.35                        → 0.1000 (flat plateau —
+  //                                                                  same conclusion, area-0
+  //                                                                  is not the live bottleneck)
+  //   Voldemort budget 1800→900, hpMult 1.4→1.0 (unitCount stays 3, PINNED) → 0.2833
+  //                                                                  (overshoots the 0.22
+  //                                                                  ceiling)
+  //   Voldemort budget 1800→1300, hpMult 1.4→1.2                  → 0.1000 (sharp cliff back
+  //                                                                  to floor — this lever is
+  //                                                                  a threshold, not a smooth
+  //                                                                  dial, matching every other
+  //                                                                  floor-adjacent lever in
+  //                                                                  this file's history)
+  //   Voldemort budget 1800→1100, hpMult 1.4→1.1                  → 0.1500 (fails strict >,
+  //                                                                  exact boundary)
+  //   Voldemort budget 1800→1080, hpMult 1.4→1.09  SHIPPED         → 0.1583 (19/120, headroom
+  //                                                                  0.0083 — the same 1-seed
+  //                                                                  margin pattern as every
+  //                                                                  other floor-adjacent lever
+  //                                                                  in this file)
+  // CONCLUSION: with both STARTER_PICKS=3 and Voldemort unitCount=3 pinned, area-0/area-1
+  // scripted-boss and enemyCountByArea levers are all flat/non-monotonic (area-2-boss is the
+  // dominant loss location, not area-0/1) — the only lever that moved the floor was
+  // Voldemort's OWN budget/hpMult (data/bosses.ts), left untouched by every prior task
+  // because unitCount was assumed to be the only lever worth pulling on a scripted boss.
+  // SHIPPED: Voldemort (BOSSES[0]) budget 1800→1080, hpMult 1.4→1.09 (data/bosses.ts);
+  // unitCount stays 3 (user pin, untouched). Muro and Bellatrix left at their Task 21/18d
+  // values (Muro budget 250/hpMult 0.5/unitCount 3; Bellatrix budget 300/hpMult 0.85/
+  // unitCount 2 — Bellatrix's unitCount 3→2 trim from the STARTER_PICKS=3 exploration
+  // earlier in this task carries forward since reverting it to 3 was never re-tested
+  // against the final Voldemort tune and the shipped config already clears the floor).
+  // Final winRates (120 seeds): campaignBalanceB overall 0.1583 (19/120), withVeleno 0.217 >
+  // noVeleno 0.158 > 0 (Muro veleno-teaches-the-wall holds), esecuzioneSweep/scudiRigenSweep/
+  // velenoSweep/scudiRigenCounters all pass comfortably. Voldemort's budget/hpMult are now
+  // ALSO floor-sensitive levers (in addition to unitCount and every lever listed above): any
+  // future change must re-measure campaignBalanceB (headroom ≈ 0.0083, 1 seed).
   map: {
     floors: 6,            // total floors incl. start(0) + boss(last); 4 middle floors
     // (minWidth/maxWidth removed 2026-07-02: dead — game/engine/map.ts hardcodes floor

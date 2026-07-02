@@ -264,6 +264,46 @@ import type { RunNode, RunState } from '@/types'
 // wall holds: withVeleno 0.217 > noVeleno 0.208 > 0. STARTER_PICKS is now a floor-sensitive
 // lever alongside enemyCountByArea and the three scripted-boss unitCounts: any future change
 // to any of them must re-measure campaignBalanceB.
+//
+// *** Task 25 (2026-07-02, SUPERSEDES the block above) *** USER DECISION reverted
+// STARTER_PICKS 4→3 ("MAI 4, 3 maghi voglio" — hard pin). This slice's starter-pick count
+// (below, `slice(0, 3)`) was lowered 4→3 in lockstep, alongside avgPolicyProbe,
+// levelingSnowball, runEngine.test, scudiRigenSweep. Reopened the exact area-2-boss
+// (Voldemort, unitCount=3, ALSO a hard user pin) action-economy deficit Task 21 had fixed
+// via the roster raise: campaignBalanceB crashed back to 0.1000 (12/120); loss trace showed
+// area2-boss (39-42/120) and area0-boss (29/120) dominant, area1(Bellatrix)/normal-battle
+// minor. With both pins held, re-swept every remaining lever (120 seeds):
+//   baseline (STARTER_PICKS=3, Bellatrix unitCount=2 from the Task-21-era exploration) → 0.1000
+//   Muro unitCount 3→2                                       → 0.0833 (worse, non-monotonic)
+//   enemyCountByArea [2,3,3]→[2,2,3]                         → 0.0917 (worse)
+//   Bellatrix hpMult 0.85→0.6                                → 0.1000 (flat — area-1 is not
+//                                                                the live bottleneck)
+//   Muro budget 250→150, hpMult 0.5→0.35                     → 0.1000 (flat — area-0 is not
+//                                                                the live bottleneck either)
+//   Voldemort budget 1800→900, hpMult 1.4→1.0 (unitCount stays 3, pinned) → 0.2833 (overshoots
+//                                                                the 0.22 ceiling)
+//   Voldemort budget 1800→1300, hpMult 1.4→1.2               → 0.1000 (sharp cliff — this
+//                                                                lever is a threshold, not a
+//                                                                smooth dial)
+//   Voldemort budget 1800→1100, hpMult 1.4→1.1               → 0.1500 (fails strict >, exact
+//                                                                boundary)
+//   Voldemort budget 1800→1080, hpMult 1.4→1.09  SHIPPED      → 0.1583 (19/120, headroom
+//                                                                0.0083 — same 1-seed margin
+//                                                                pattern as every other
+//                                                                floor-adjacent lever here)
+// CONCLUSION: with STARTER_PICKS=3 and Voldemort unitCount=3 both pinned, area-0/area-1
+// scripted-boss levers and enemyCountByArea are flat or non-monotonic — area-2-boss
+// (Voldemort) is the dominant loss location, and the lever that actually moved the floor was
+// Voldemort's OWN budget/hpMult (data/bosses.ts), previously left untouched because unitCount
+// was assumed the only worthwhile lever on a scripted boss.
+// SHIPPED: Voldemort (BOSSES[0]) budget 1800→1080, hpMult 1.4→1.09; unitCount stays 3
+// (user pin, untouched). Muro/Bellatrix unchanged from the Task-21-era values already in the
+// tree (Muro budget 250/hpMult 0.5/unitCount 3; Bellatrix budget 300/hpMult 0.85/unitCount 2).
+// Final winRates (120 seeds): campaignBalanceB overall 0.1583 (19/120, in (0.15,0.45)),
+// withVeleno 0.217 > noVeleno 0.158 > 0 (Muro veleno-teaches-the-wall holds),
+// esecuzioneSweep/scudiRigenSweep/velenoSweep/scudiRigenCounters all pass comfortably.
+// Voldemort's budget/hpMult are now ALSO floor-sensitive levers (in addition to unitCount and
+// every lever above): any future change must re-measure campaignBalanceB (headroom ≈ 0.0083).
 registerCoreResolvers()
 
 // Near-optimal ("upper-bound") player policy. A pure recruit/relic-first greedy is
@@ -291,7 +331,7 @@ function isVeleno(dw: { wizard: { tags?: string[] } }): boolean {
 function runOne(seed: string, battleTurns?: number[], preferVeleno = false): 'win' | 'defeat' {
   let s = startRunB(seed)
   const offer = starterOffer(seed, 'Grifondoro')
-  const starters = [...offer].sort((a, b) => powerOf(b) - powerOf(a)).slice(0, 4).map(d => d.wizard.id)
+  const starters = [...offer].sort((a, b) => powerOf(b) - powerOf(a)).slice(0, 3).map(d => d.wizard.id)
   s = chooseStarters(s, 'Grifondoro', starters, createRng(seed))
   let guard = 0
   while (guard++ < 200) {
