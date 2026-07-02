@@ -7,7 +7,8 @@
  * Not part of the game loop; a workbench for the redesign.
  */
 import { forwardRef, useCallback, useEffect, useRef, useState } from 'react'
-import type { LogEntry, Side } from '@/types'
+import type { LogEntry, Side, Spell } from '@/types'
+import { SPELLS as GAME_SPELLS } from '@/data/spells'
 import { createPixiStage, type PixiStage } from '@/lib/vfx/PixiStage'
 import { createAudio, type AudioBus } from '@/lib/vfx/audio'
 import { choreograph } from '@/lib/vfx/choreograph'
@@ -17,8 +18,6 @@ const RMAX = 220
 type House = 'gryf' | 'slyth'
 type ImpactKind = 'hit' | 'crit' | 'heal' | 'block' | 'dodge'
 
-type SpellDef = { label: string; emoji: string; group: string; make: () => LogEntry }
-
 const E = (p: { action: string; type: LogEntry['type']; value?: number; flags?: LogEntry['flags']; targetSide?: Side }): LogEntry => ({
   turn: 1, actorId: 'a', targetId: 'b',
   targetSide: p.targetSide ?? 'right',
@@ -26,20 +25,25 @@ const E = (p: { action: string; type: LogEntry['type']; value?: number; flags?: 
   value: p.value, flags: p.flags ?? [], action: p.action, type: p.type,
 })
 
-const SPELLS: SpellDef[] = [
-  { label: 'Colpo', emoji: '⚔️', group: 'Attacchi', make: () => E({ action: 'Stupeficium', type: 'Attacco', value: 22 }) },
-  { label: 'Critico', emoji: '💥', group: 'Attacchi', make: () => E({ action: 'Stupeficium', type: 'Attacco', value: 46, flags: ['crit'] }) },
-  { label: 'Maledizione', emoji: '🟣', group: 'Incantesimi', make: () => E({ action: 'Avada Kedavra', type: 'Attacco', value: 34 }) },
-  { label: 'Controllo', emoji: '🔴', group: 'Incantesimi', make: () => E({ action: 'Confundo', type: 'Controllo', value: 16 }) },
-  { label: 'Incendio', emoji: '🔥', group: 'Incantesimi', make: () => E({ action: 'Incendio', type: 'Attacco', value: 18, flags: ['dot'] }) },
-  { label: 'Stun', emoji: '⚡', group: 'Controllo', make: () => E({ action: 'Petrificus Totalus', type: 'Controllo', value: 10, flags: ['stun'] }) },
-  { label: 'Disarmo', emoji: '🪄', group: 'Controllo', make: () => E({ action: 'Expelliarmus', type: 'Attacco', value: 8 }) },
-  { label: 'Protego', emoji: '🛡️', group: 'Difesa', make: () => E({ action: 'Protego', type: 'Difesa', flags: ['block'], targetSide: 'left' }) },
-  { label: 'Schiva', emoji: '💨', group: 'Difesa', make: () => E({ action: 'Stupeficium', type: 'Attacco', value: 20, flags: ['dodge'] }) },
-  { label: 'Cura', emoji: '✨', group: 'Supporto', make: () => E({ action: 'Episkey', type: 'Cura', value: 40, flags: ['heal'], targetSide: 'left' }) },
-  { label: 'Esecuzione', emoji: '⚰️', group: 'Climax', make: () => E({ action: 'Sectumsempra', type: 'Attacco', value: 70, flags: ['crit', 'kill'] }) },
-]
-const GROUPS = ['Attacchi', 'Incantesimi', 'Controllo', 'Difesa', 'Supporto', 'Climax']
+const EMOJI: Record<string, string> = {
+  base_attack: '⚔️', expelliarmus: '🪄', stupeficium: '⚡', sectumsempra: '🩸', bombarda: '💣',
+  incendio: '🔥', avada: '💀', reducto: '💥', diffindo: '✂️', confringo: '🧨', flipendo: '🌀',
+  oppugno: '🎯', fiendfyre: '🔥', serpensortia: '🐍', crucio: '🌩️', imperio: '👁️', petrificus: '🗿',
+  levicorpus: '🙃', confundo: '😵', langlock: '🤐', tarantallegra: '💃', glacius: '❄️', silencio: '🔇',
+  episkey: '✨', vulnera: '💚', rennervate: '🌟', anapneo: '🫧', ferula: '🩹', colletivo_scudo: '🛡️',
+  incitamento: '📣', protego: '🛡️', protego_maxima: '🛡️', fianto: '🧱', salvio: '🌬️', riddikulus: '😄',
+  expecto: '🦌', aegis: '🔰',
+}
+const TYPE_ORDER: LogEntry['type'][] = ['Attacco', 'Controllo', 'Cura', 'Difesa']
+const SHOWCASE = ['stupeficium', 'sectumsempra', 'incendio', 'avada', 'bombarda', 'glacius', 'serpensortia', 'crucio', 'protego', 'expecto', 'vulnera']
+
+function entryFromSpell(sp: Spell, crit: boolean): LogEntry {
+  const target: Side = sp.type === 'Cura' || sp.type === 'Difesa' ? 'left' : 'right'
+  const flags: LogEntry['flags'] = []
+  if (crit && (sp.type === 'Attacco' || sp.type === 'Controllo')) flags.push('crit')
+  const value = sp.heal ?? Math.round((sp.power ?? 1.2) * 16)
+  return E({ action: sp.name, type: sp.type, value, targetSide: target, flags })
+}
 
 function calloutFor(entry: LogEntry, kind: ImpactKind): { text: string; tone: string } | null {
   if (kind === 'crit' && entry.flags.includes('kill')) return { text: 'ESECUZIONE', tone: '#e05a4a' }
@@ -64,6 +68,7 @@ export default function CombatLab() {
   const [log, setLog] = useState<string[]>([])
   const [reduced, setReduced] = useState(false)
   const [audioOn, setAudioOn] = useState(false)
+  const [crit, setCrit] = useState(false)
   const [ready, setReady] = useState(false)
   const evKey = useRef(0)
 
@@ -151,7 +156,11 @@ export default function CombatLab() {
   }, [centerOf, reduced, audioOn, handleImpact])
 
   const reset = useCallback(() => { setHp({ left: LMAX, right: RMAX }); setLog([]); setCallout(null) }, [])
-  const playAll = useCallback(() => { reset(); SPELLS.forEach((s, i) => setTimeout(() => fire(s.make()), i * 1300)) }, [fire, reset])
+  const playAll = useCallback(() => {
+    reset()
+    const list = SHOWCASE.map((id) => GAME_SPELLS.find((s) => s.id === id)).filter((s): s is Spell => !!s)
+    list.forEach((sp, i) => setTimeout(() => fire(entryFromSpell(sp, false)), i * 1300))
+  }, [fire, reset])
 
   const activeSide: Side = turn % 2 === 0 ? 'left' : 'right'
 
@@ -218,20 +227,30 @@ export default function CombatLab() {
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#caa24a]/40 bg-[#20180f] px-4 py-3">
           <button onClick={playAll} className="rounded-lg bg-gradient-to-b from-[#f6e6a8] to-[#caa24a] px-5 py-2.5 font-serif text-[15px] font-semibold text-[#1a1206] shadow-lg transition hover:brightness-105">▶ Sequenza completa</button>
           <div className="flex items-center gap-5 font-mono text-[11px] text-[#c9b998]">
+            <label className="flex cursor-pointer items-center gap-2"><input type="checkbox" checked={crit} onChange={(e) => setCrit(e.target.checked)} className="accent-[#caa24a]" /> Critico</label>
             <label className="flex cursor-pointer items-center gap-2"><input type="checkbox" checked={audioOn} onChange={(e) => setAudioOn(e.target.checked)} className="accent-[#caa24a]" /> Audio</label>
             <label className="flex cursor-pointer items-center gap-2"><input type="checkbox" checked={reduced} onChange={(e) => setReduced(e.target.checked)} className="accent-[#caa24a]" /> Riduci movimento</label>
           </div>
           <button onClick={reset} className="rounded-lg border border-[#caa24a]/50 px-4 py-2 text-[13px] text-[#c9b998] transition hover:border-[#caa24a] hover:text-[#f3ead6]">↺ Ripristina</button>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          {GROUPS.map((g) => (
-            <div key={g} className="flex flex-col gap-2 rounded-xl border border-[#caa24a]/25 bg-[#20180f] p-3">
-              <h3 className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#caa24a]">{g}</h3>
-              {SPELLS.filter((s) => s.group === g).map((s) => (
-                <button key={s.label} onClick={() => fire(s.make())} disabled={!ready} className="flex items-center gap-2.5 rounded-lg border border-[#caa24a]/20 bg-black/25 px-3 py-2 text-left text-[13.5px] transition hover:-translate-y-px hover:border-[#caa24a]/50 hover:bg-[#caa24a]/10 disabled:opacity-40">
-                  <span className="grid h-7 w-7 place-items-center rounded-md border border-[#caa24a]/20 bg-black/40 text-[15px]">{s.emoji}</span>
-                  {s.label}
+        {/* scenari (esiti di combattimento, non incantesimi) */}
+        <div className="flex flex-wrap gap-2">
+          <span className="self-center font-mono text-[10px] uppercase tracking-[0.2em] text-[#caa24a]/70">Scenari</span>
+          <button onClick={() => fire(E({ action: 'Stupeficium', type: 'Attacco', value: 20, flags: ['dodge'] }))} disabled={!ready} className="rounded-lg border border-[#8ec9ff]/30 bg-black/25 px-3 py-1.5 text-[12.5px] transition hover:border-[#8ec9ff]/60 disabled:opacity-40">💨 Schiva</button>
+          <button onClick={() => fire(E({ action: 'Stupeficium', type: 'Attacco', value: 20, flags: ['block'] }))} disabled={!ready} className="rounded-lg border border-[#8ec9ff]/30 bg-black/25 px-3 py-1.5 text-[12.5px] transition hover:border-[#8ec9ff]/60 disabled:opacity-40">🛡️ Parato</button>
+          <button onClick={() => fire(E({ action: 'Avada Kedavra', type: 'Attacco', value: 130, flags: ['crit', 'kill'] }))} disabled={!ready} className="rounded-lg border border-[#e05a4a]/40 bg-black/25 px-3 py-1.5 text-[12.5px] transition hover:border-[#e05a4a]/70 disabled:opacity-40">⚰️ Esecuzione</button>
+        </div>
+
+        {/* tutte le mosse reali, per tipo */}
+        <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {TYPE_ORDER.map((t) => (
+            <div key={t} className="flex flex-col gap-1.5 rounded-xl border border-[#caa24a]/25 bg-[#20180f] p-3">
+              <h3 className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#caa24a]">{t}</h3>
+              {GAME_SPELLS.filter((s) => s.type === t && s.id !== 'base_attack').map((sp) => (
+                <button key={sp.id} onClick={() => fire(entryFromSpell(sp, crit))} disabled={!ready} title={sp.desc} className="flex items-center gap-2 rounded-lg border border-[#caa24a]/15 bg-black/25 px-2.5 py-1.5 text-left text-[12.5px] transition hover:-translate-y-px hover:border-[#caa24a]/50 hover:bg-[#caa24a]/10 disabled:opacity-40">
+                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded border border-[#caa24a]/20 bg-black/40 text-[13px]">{EMOJI[sp.id] ?? '✦'}</span>
+                  <span className="truncate">{sp.name}</span>
                 </button>
               ))}
             </div>
