@@ -155,6 +155,31 @@ import type { RunNode, RunState } from '@/types'
 //   file. Final: BELLATRIX budget 300, hpMult 0.85, unitCount 3, ignoresTaunt true.
 //   winRate=0.1583 (19/120, headroom 0.0083 above the 0.15 floor). Area-1 boss power is now a
 //   floor-sensitive lever: any future change to BELLATRIX or Area-1 enemy scaling must re-measure.
+//
+// *** STILL FAILING (2026-07-02, Task 18c — normalEnemyCount 2→1; UNRESOLVED, root cause
+// confirmed elite/boss not normal fights) ***
+// User decision: normal (non-elite/non-boss) battles field only 1 enemy wizard
+// (`campaignB.normalEnemyCount` 2→1); `enemyCountByArea` ([3,4,5], elite/boss) left
+// UNCHANGED per explicit instruction. Result: winRate did NOT move at all —
+// campaignBalanceB stayed at 0.0167 (2/120), esecuzioneSweep/scudiRigenSweep/velenoSweep
+// stayed at 0.000/0.0167→0.0333/0.0333 (noise-level, same order of magnitude as before).
+// A loss-location trace of the same 120 seeds (near-optimal pickNode, which prefers
+// `elite` over `battle` whenever both are reachable) explains why: losses concentrate at
+// area0-elite (36/120), area2-boss (18/120), area0-boss (17/120), area1-elite (12/120),
+// area1-boss (11/120), area2-elite (10/120) — only 10 (battle) + 4 (battle) = 14/120
+// losses were ever at a plain normal-battle node, and those were already survivable
+// relative to the elite/boss bottleneck. Shrinking normalEnemyCount fixes fights the
+// near-optimal player was already winning; it cannot touch the actual bottleneck
+// (elite/boss unit-count vs. the player's still-small early roster), which
+// `enemyCountByArea` governs and this task was explicitly told not to touch.
+// CONCLUSION: normalEnemyCount alone does not clear the 0.15 floor. Shipped anyway
+// (1 enemy in normal fights is a real, uncontroversial UX/economy improvement per the
+// user's decision) but it does NOT resolve area-0 winnability by itself. The next lever
+// is elite/boss unit count and/or budget/hpMult on `enemyCountByArea`-driven nodes, or a
+// structural change (extra roster growth / guaranteed recovery before area-0 elite) —
+// see the recommendation in the prior (2026-07-01) note, still valid. Reported per the
+// task's explicit instruction to STOP and report rather than unilaterally trim
+// elite/boss counts.
 registerCoreResolvers()
 
 // Near-optimal ("upper-bound") player policy. A pure recruit/relic-first greedy is

@@ -65,11 +65,15 @@ defenseK: 0.5,
   // legacy `campaign` block and its test are never touched by new-loop tuning.
   campaignB: {
     // --- Enemy team SIZE ---
-    // Normal fights are small skirmishes (a starting level-1 duo is not swarmed);
-    // Elite / area-boss fields field the area's full count, so they read as the
-    // bigger threat. Index = area (player grows 2→5 across the 3 areas). The final
-    // boss is always a full team of 5 (generateBossTeam).
-    normalEnemyCount: 2,
+    // Normal fights are single-wizard skirmishes (LOWERED 2→1 2026-07-02, urgent
+    // action-economy fix: every unit acts every turn, so a 2-3 unit player team
+    // facing 2 enemies every normal fight was outnumbered structurally, and no stat
+    // lever — level or budget, both exhaustively swept — could compensate; see the
+    // level-lever history below). Elite / area-boss fields still field the area's
+    // full count, so they read as the bigger, concentrated threat. Index = area
+    // (player grows 2→5 across the 3 areas). The final boss is always a full team
+    // of 5 (generateBossTeam).
+    normalEnemyCount: 1,
     enemyCountByArea: [3, 4, 5] as readonly number[],
     // --- Displayed enemy LEVEL by (area, kind) ---
     // Honest, area-scaled threat tiers so an Elite/Boss reads as a real level (no
