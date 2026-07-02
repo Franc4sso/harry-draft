@@ -298,11 +298,13 @@ export function UnitBust({
         })()}
       </div>
 
-      {effects.length > 0 && (
+      {/* Only NON-stat statuses get a top pill (control/dot/shield/regen/ward). Stat
+          buffs/debuffs are shown by the LIVE stat bars (green ▲ / red ▼) instead — pills
+          for them just stacked up (e.g. "def+25 ×3") and cluttered the corner. */}
+      {effects.some(e => e.kind !== 'buff' && e.kind !== 'debuff') && (
         <div className={cn('absolute top-1 flex flex-wrap gap-0.5', mirrored ? 'left-1' : 'right-1')}>
-          {effects.map((e, i) => {
+          {effects.filter(e => e.kind !== 'buff' && e.kind !== 'debuff').map((e, i) => {
             const Icon = STATUS_ICON[e.kind] ?? Flame
-            const isMod = e.kind === 'buff' || e.kind === 'debuff'
             return (
               <span
                 key={`${e.kind}-${e.statusId ?? 'n'}-${i}`}
@@ -311,7 +313,7 @@ export function UnitBust({
                 className={cn('inline-flex items-center gap-0.5 rounded bg-black/55 px-0.5 text-[9px] font-semibold tabular-nums', STATUS_CLASS[e.kind])}
               >
                 <Icon size={11} aria-hidden />
-                {isMod ? `${e.stat ? STAT_LABEL[e.stat] ?? e.stat : ''}${magnitudeLabel(e)}` : effectCount(e)}
+                {effectCount(e)}
               </span>
             )
           })}

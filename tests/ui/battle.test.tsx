@@ -222,12 +222,10 @@ describe('UnitBust', () => {
       const root = screen.getByTestId('battle-unit')
       expect(root.querySelectorAll('[data-status-kind]').length).toBe(3)
     })
-    it('renders a pill for buff/debuff effects (stat name + magnitude)', () => {
+    it('does NOT render a pill for buff/debuff effects (the live stat bars show those)', () => {
       render(<UnitBust unit={u} hp={50} effects={[{ kind: 'buff', stat: 'atk', amount: 10, remaining: 2 }]} />)
       const root = screen.getByTestId('battle-unit')
-      const pill = root.querySelector('[data-status-kind="buff"]')
-      expect(pill).not.toBeNull()
-      expect(pill?.textContent).toMatch(/atk/i)
+      expect(root.querySelector('[data-status-kind="buff"]')).toBeNull()
     })
   })
 
