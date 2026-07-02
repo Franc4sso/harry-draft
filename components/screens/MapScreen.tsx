@@ -1,4 +1,5 @@
 'use client'
+import { motion, useReducedMotion } from 'framer-motion'
 import type { RunNode, RunNodeType } from '@/types'
 import { parseAreaNodeId, nodeDepth } from '@/game/engine/map'
 import { cn } from '@/lib/theme'
@@ -38,15 +39,17 @@ export function MapScreen({
   area?: number
   areasTotal?: number
 }) {
+  const reduce = useReducedMotion()
   const reachable = new Set(reachableIds)
   const header = (
     <div className="text-center">
       {area !== undefined && (
-        <div className="text-[11px] font-semibold uppercase tracking-[0.3em] text-gold/80">
+        <div className="kicker !tracking-[0.3em]">
           Area {area + 1}{areasTotal ? ` / ${areasTotal}` : ''}
         </div>
       )}
-      <h2 className="mt-1 text-2xl font-bold text-white/90">Scegli il tuo cammino</h2>
+      <h2 className="title-gradient mt-1 font-display text-3xl font-bold">Scegli il tuo cammino</h2>
+      <div aria-hidden className="mx-auto mt-2 h-px w-48" style={{ background: 'linear-gradient(90deg, transparent, rgba(202,162,74,0.6), transparent)' }} />
     </div>
   )
 
@@ -96,6 +99,34 @@ export function MapScreen({
           {edges.map(e => {
             const midY = (e.p.y + e.q.y) / 2
             const d = `M ${e.p.x} ${e.p.y} C ${e.p.x} ${midY}, ${e.q.x} ${midY}, ${e.q.x} ${e.q.y}`
+            if (e.active && !reduce) {
+              // The live trail draws itself from the current node, then keeps flowing.
+              return (
+                <g key={e.id}>
+                  <motion.path
+                    d={d}
+                    stroke="rgba(202,162,74,0.25)"
+                    strokeWidth={5}
+                    strokeLinecap="round"
+                    initial={{ pathLength: 0, opacity: 0 }}
+                    animate={{ pathLength: 1, opacity: 1 }}
+                    transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+                    style={{ filter: 'blur(3px)' }}
+                  />
+                  <motion.path
+                    d={d}
+                    stroke="var(--gold)"
+                    strokeWidth={2.5}
+                    strokeLinecap="round"
+                    strokeDasharray="5 7"
+                    className="map-trail"
+                    initial={{ pathLength: 0 }}
+                    animate={{ pathLength: 1 }}
+                    transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1], delay: 0.2 }}
+                  />
+                </g>
+              )
+            }
             return (
               <path
                 key={e.id} d={d}
@@ -128,6 +159,7 @@ export function MapScreen({
               className={cn(
                 'group absolute flex items-center justify-center rounded-full border-2 transition-all duration-200',
                 isReachable ? 'cursor-pointer hover:scale-110 focus-visible:scale-110' : 'cursor-not-allowed',
+                isReachable && !isCurrent && 'anim-ambient map-breathe',
                 n.resolved && 'opacity-45 saturate-50',
                 !lit && !n.resolved && 'opacity-55',
                 isCurrent && 'map-current',
@@ -135,13 +167,20 @@ export function MapScreen({
               style={{
                 left: p.x - sz / 2, top: p.y - sz / 2, width: sz, height: sz,
                 borderColor: lit ? accent : 'rgba(255,255,255,0.18)',
-                background: `radial-gradient(circle at 50% 35%, ${accent}22, #15121f 72%)`,
+                background: `radial-gradient(circle at 50% 30%, rgba(255,255,255,0.10), transparent 42%), radial-gradient(circle at 50% 35%, ${accent}2e, #15121f 72%)`,
                 boxShadow: isCurrent
-                  ? `0 0 0 3px ${accent}55, 0 0 22px ${accent}aa`
-                  : isReachable ? `0 0 14px ${accent}66` : 'none',
+                  ? `inset 0 0 0 2.5px rgba(10,8,19,0.85), inset 0 0 0 3.5px ${accent}66, 0 0 0 3px ${accent}55, 0 0 26px ${accent}aa, 0 10px 24px -10px rgba(0,0,0,0.8)`
+                  : isReachable
+                    ? `inset 0 0 0 2.5px rgba(10,8,19,0.85), inset 0 0 0 3.5px ${accent}55, 0 0 16px ${accent}66, 0 10px 24px -10px rgba(0,0,0,0.8)`
+                    : `inset 0 0 0 2.5px rgba(10,8,19,0.7), 0 6px 18px -10px rgba(0,0,0,0.7)`,
               }}
             >
-              <span className={cn('leading-none', isBoss ? 'text-3xl' : 'text-xl')}>{ICON[n.type]}</span>
+              <span
+                className={cn('leading-none', isBoss ? 'text-3xl' : 'text-xl')}
+                style={lit ? { filter: `drop-shadow(0 0 6px ${accent}88)` } : undefined}
+              >
+                {ICON[n.type]}
+              </span>
               <span className="pointer-events-none absolute top-full mt-1 whitespace-nowrap rounded-md border border-white/15 bg-[#15121f]/95 px-2 py-0.5 text-[10px] text-white/85 opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">
                 {LABEL[n.type]}
               </span>
@@ -186,7 +225,10 @@ export function MapScreen({
         .map-trail { animation: mapTrailFlow 0.9s linear infinite; }
         @keyframes mapCurrentPulse { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
         .map-current { animation: mapCurrentPulse 1.8s ease-in-out infinite; }
-        @media (prefers-reduced-motion: reduce) { .map-trail, .map-current { animation: none; } }
+        @keyframes mapBreathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+        .map-breathe { animation: mapBreathe 2.6s ease-in-out infinite; }
+        .map-breathe:hover, .map-breathe:focus-visible { animation: none; }
+        @media (prefers-reduced-motion: reduce) { .map-trail, .map-current, .map-breathe { animation: none; } }
       `}</style>
     </div>
   )
