@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, useReducedMotion } from 'framer-motion'
-import { TiltCard } from '@/components/ui/motion'
+import { TiltCard, FoilText } from '@/components/ui/motion'
+import { SealButton } from '@/components/ui/SealButton'
 import { WizardCard } from '@/components/cards/WizardCard'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
@@ -53,41 +54,46 @@ export function MenuScreen() {
         className="relative space-y-3"
       >
         <p className="kicker">Roguelite di maghi</p>
-        <h1 className="font-display text-6xl font-extrabold tracking-wide sm:text-7xl" aria-label="Harry Draft">
-          {'Harry Draft'.split('').map((ch, i) => (
-            <motion.span
-              key={i}
-              aria-hidden
-              className="title-gradient inline-block"
-              initial={reduce ? false : { opacity: 0, y: 22, filter: 'blur(8px)' }}
-              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-              transition={{ duration: 0.55, delay: 0.08 + i * 0.045, ease: [0.22, 1, 0.36, 1] }}
-            >
-              {ch === ' ' ? ' ' : ch}
-            </motion.span>
-          ))}
+        <h1
+          className="font-display text-7xl font-extrabold tracking-wide sm:text-8xl lg:text-9xl"
+          aria-label="Harry Draft"
+        >
+          <FoilText as="span" className="inline-block">
+            {'Harry Draft'.split('').map((ch, i) => (
+              <motion.span
+                key={i}
+                aria-hidden
+                className="inline-block"
+                initial={reduce ? false : { opacity: 0, y: 22, filter: 'blur(8px)' }}
+                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+                transition={{ duration: 0.55, delay: 0.08 + i * 0.045, ease: [0.22, 1, 0.36, 1] }}
+              >
+                {ch === ' ' ? ' ' : ch}
+              </motion.span>
+            ))}
+          </FoilText>
         </h1>
         <p className="mx-auto max-w-md text-white/60">
           Componi una squadra di cinque maghi, supera cinque sfidanti e affronta il Boss Finale.
         </p>
       </motion.div>
 
-      {/* Teaser of the draft — a single card, breathing gently. */}
+      {/* Teaser of the draft — a single card, levitating with real weight. */}
       <motion.div
         initial={reduce ? false : { opacity: 0, scale: 0.96 }}
         animate={
           reduce
             ? { opacity: 1, scale: 1 }
-            : { opacity: 1, scale: 1, y: [0, -8, 0] }
+            : { opacity: 1, scale: 1, y: [0, -14, 0] }
         }
         transition={
           reduce
             ? { duration: 0.5, delay: 0.15 }
-            : { opacity: { duration: 0.5, delay: 0.15 }, scale: { duration: 0.5, delay: 0.15 }, y: { duration: 6, repeat: Infinity, ease: 'easeInOut' } }
+            : { opacity: { duration: 0.5, delay: 0.15 }, scale: { duration: 0.5, delay: 0.15 }, y: { duration: 5, repeat: Infinity, ease: 'easeInOut' } }
         }
         className="relative"
       >
-        <TiltCard className="relative">
+        <TiltCard className="relative" max={8}>
           <WizardCard drafted={teaser} />
         </TiltCard>
       </motion.div>
@@ -109,15 +115,9 @@ export function MenuScreen() {
               transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
             />
           )}
-          <button
-            type="button"
-            onClick={play}
-            className="btn-sheen-host elev-gold relative overflow-hidden rounded-2xl px-12 py-4 font-display text-base font-bold uppercase tracking-[0.22em] text-[#1a1206] transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f3e6a0] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            style={{ backgroundImage: 'linear-gradient(180deg, #f3e0a0 0%, #caa24a 55%, #b0853a 100%)' }}
-          >
-            <span aria-hidden className="btn-sheen" />
-            <span className="relative">Gioca</span>
-          </button>
+          <SealButton onClick={play} data-testid="play-cta" className="px-14 py-5 text-lg">
+            Gioca
+          </SealButton>
 
           {hasSavedRun && (
             <button
@@ -131,10 +131,10 @@ export function MenuScreen() {
         </div>
         <p className="text-xs text-white/45">Ogni partita, una nuova mano del destino.</p>
 
-        <div className="mt-2 flex gap-5">
-          <Link href="/rules" className="font-display text-sm uppercase tracking-wider text-white/55 transition-colors hover:text-gold">Compendio</Link>
-          <span aria-hidden className="text-white/20">·</span>
-          <Link href="/credits" className="font-display text-sm uppercase tracking-wider text-white/55 transition-colors hover:text-gold">Credits</Link>
+        <div className="mt-2 flex items-center gap-5">
+          <Link href="/rules" className="font-display text-xs uppercase tracking-wider text-white/45 transition-colors hover:text-gold">Compendio</Link>
+          <span aria-hidden className="text-white/15">·</span>
+          <Link href="/credits" className="font-display text-xs uppercase tracking-wider text-white/45 transition-colors hover:text-gold">Credits</Link>
         </div>
       </motion.div>
     </main>
