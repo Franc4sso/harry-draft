@@ -35,6 +35,14 @@ describe('calloutFor', () => {
   it('returns null for a null entry', () => {
     expect(calloutFor(null)).toBeNull()
   })
+  it('announces a freshly-applied control (silence/disarm carry no flag)', () => {
+    expect(calloutFor(entry([]), 'silence')?.text).toBe('SILENZIATO')
+    expect(calloutFor(entry([]), 'disarm')?.text).toBe('DISARMATO')
+    expect(calloutFor(entry([]), 'stun')?.text).toBe('STORDITO')
+  })
+  it('a killing blow takes priority over an applied control', () => {
+    expect(calloutFor(entry(['crit', 'kill']), 'silence')?.text).toBe('ESECUZIONE')
+  })
 })
 
 describe('Callout', () => {

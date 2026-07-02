@@ -36,6 +36,18 @@ export function BattleArena({
   const statusEffects = frame?.statusEffects ?? {}
   const cooldowns = frame?.cooldowns ?? {}
 
+  // A control status (stun/freeze/silence/disarm) carries no flag of its own, so detect
+  // one freshly applied to the target THIS frame by diffing against the previous frame —
+  // this is what lets the Callout announce SILENZIATO / DISARMATO / STORDITO / CONGELATO.
+  const appliedControl = (() => {
+    if (!targetKey) return null
+    const CONTROLS = new Set(['stun', 'freeze', 'silence', 'disarm'])
+    const prev = replay.frames[frameKey - 1]?.statusEffects?.[targetKey] ?? []
+    const prevKeys = new Set(prev.map(e => e.statusId ?? e.kind))
+    const fresh = (statusEffects[targetKey] ?? []).find(e => CONTROLS.has(e.kind) && !prevKeys.has(e.statusId ?? e.kind))
+    return fresh?.kind ?? null
+  })()
+
   const left = replay.units.filter(u => u.side === 'left')
   const right = replay.units.filter(u => u.side === 'right')
 
@@ -84,7 +96,7 @@ export function BattleArena({
       </section>
 
       <PixiArena entry={entry} frameKey={frameKey} speed={speed} />
-      <Callout entry={entry} frameKey={frameKey} />
+      <Callout entry={entry} frameKey={frameKey} appliedControl={appliedControl} />
     </div>
   )
 }
