@@ -253,7 +253,17 @@ defenseK: 0.5,
   },
   roles: {
     tauntBonus: 1000,       // additive threat that makes a live Tank the focus
-    attackerArmorPen: 0.4,  // fraction of target DEF an Attaccante ignores
+    // Halved 0.4→0.2 (2026-07-02, role-identity pass): Attaccante's flat armor pen was
+    // too dominant even against Tanks; halving keeps the identity (ignores some DEF)
+    // without letting it trivialize the highest-DEF role.
+    attackerArmorPen: 0.2,  // fraction of target DEF an Attaccante ignores
+    // Controllo role damage multiplier (2026-07-02, role-identity pass): Controllo
+    // already TARGETS the backline (backlineTarget in targeting.ts) — these numbers
+    // make that identity real in damage too: strong vs squishy backliners, weak vs a
+    // sturdy Tank (the one target Controllo avoids by choice but may be forced into
+    // when nothing else survives, or when a spell explicitly targets it).
+    controlVsBackline: 1.3, // Controllo damage multiplier vs non-Tank targets
+    controlVsTank: 0.6,     // Controllo damage multiplier vs a Tank target
   },
   // Themed-battle synergy intensity. themeStrength(area,kind) =
   //   clamp01(areaBase + area*areaStep) * nodeMult[kind].

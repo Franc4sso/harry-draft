@@ -81,6 +81,88 @@ describe('armor penetration', () => {
     const f: LogFlag[] = []
     expect(computeDamage(noChance, atkWiz, target, 0.1, f)).toBeGreaterThanOrEqual(1)
   })
+
+  it('Attaccante armor pen is 0.2 (halved from the old 0.4)', () => {
+    const atkWiz = unit({ side: 'left' })
+    const noPenActor = unit({ side: 'left' })
+    noPenActor.wizard = { ...noPenActor.wizard, role: 'Tank' }
+    const target = unit({ side: 'right', buffedStats: { hp: 120, atk: 80, def: 60, spd: 40 } })
+    const f1: LogFlag[] = []; const f2: LogFlag[] = []
+
+    const dmgPen = computeDamage(noChance, atkWiz, target, 1, f1)
+    const dmgNoPen = computeDamage(noChance, noPenActor, target, 1, f2)
+
+    // pen amount = def * pen * defenseK; expected extra damage over the no-pen case
+    // equals def * 0.2 * defenseK (rounded), NOT def * 0.4 * defenseK (the old value).
+    const def = 60
+    const defenseK = 0.5
+    const expectedExtraAt0_2 = Math.round(def * 0.2 * defenseK)
+    const expectedExtraAt0_4 = Math.round(def * 0.4 * defenseK)
+    expect(dmgPen - dmgNoPen).toBe(expectedExtraAt0_2)
+    expect(dmgPen - dmgNoPen).not.toBe(expectedExtraAt0_4)
+  })
+})
+
+describe('Controllo role damage multiplier', () => {
+  it('a Controllo deals less damage to a Tank than to a non-tank backliner (same stats)', () => {
+    const ctrl = unit({ side: 'left' })
+    ctrl.wizard = { ...ctrl.wizard, role: 'Controllo' }
+    const tank = unit({ side: 'right', buffedStats: { hp: 120, atk: 80, def: 30, spd: 40 } })
+    tank.wizard = { ...tank.wizard, role: 'Tank' }
+    const backliner = unit({ side: 'right', buffedStats: { hp: 120, atk: 80, def: 30, spd: 40 } })
+    backliner.wizard = { ...backliner.wizard, role: 'Supporto' }
+
+    const f1: LogFlag[] = []; const f2: LogFlag[] = []
+    const dmgVsTank = computeDamage(noChance, ctrl, tank, 1, f1)
+    const dmgVsBackline = computeDamage(noChance, ctrl, backliner, 1, f2)
+
+    expect(dmgVsTank).toBeLessThan(dmgVsBackline)
+  })
+
+  it('a non-Controllo attacker deals equal damage regardless of the Controllo role multiplier', () => {
+    const atkWiz = unit({ side: 'left' }) // Attaccante
+    const tank = unit({ side: 'right', buffedStats: { hp: 120, atk: 80, def: 30, spd: 40 } })
+    tank.wizard = { ...tank.wizard, role: 'Tank' }
+    const backliner = unit({ side: 'right', buffedStats: { hp: 120, atk: 80, def: 30, spd: 40 } })
+    backliner.wizard = { ...backliner.wizard, role: 'Supporto' }
+
+    const f1: LogFlag[] = []; const f2: LogFlag[] = []
+    const dmgVsTank = computeDamage(noChance, atkWiz, tank, 1, f1)
+    const dmgVsBackline = computeDamage(noChance, atkWiz, backliner, 1, f2)
+
+    expect(dmgVsTank).toBe(dmgVsBackline)
+  })
+})
+
+describe('Controllo debuffs are weaker against a Tank', () => {
+  it('a Controllo applying a stat debuff to a Tank does not land it (or lands it weaker)', () => {
+    const ctrl = unit({ side: 'left' })
+    ctrl.wizard = { ...ctrl.wizard, role: 'Controllo' }
+    const tank = unit({ side: 'right' })
+    tank.wizard = { ...tank.wizard, role: 'Tank' }
+    const nonTank = unit({ side: 'right' })
+    nonTank.wizard = { ...nonTank.wizard, role: 'Supporto' }
+
+    EFFECT_HANDLERS.applyStatus(
+      { rng: noChance, turn: 1, actor: ctrl, target: tank, flags: [] },
+      { kind: 'applyStatus', target: 'enemy', statusId: 'weaken2' },
+    )
+    EFFECT_HANDLERS.applyStatus(
+      { rng: noChance, turn: 1, actor: ctrl, target: nonTank, flags: [] },
+      { kind: 'applyStatus', target: 'enemy', statusId: 'weaken2' },
+    )
+
+    const tankDebuff = tank.statusEffects.find(e => e.statusId === 'weaken2')
+    const nonTankDebuff = nonTank.statusEffects.find(e => e.statusId === 'weaken2')
+
+    expect(nonTankDebuff).toBeDefined()
+    // Either the debuff never lands on the Tank, or it lands with a shorter duration.
+    if (tankDebuff) {
+      expect(tankDebuff.remaining).toBeLessThan(nonTankDebuff!.remaining)
+    } else {
+      expect(tankDebuff).toBeUndefined()
+    }
+  })
 })
 
 describe('freeze shatter', () => {
@@ -114,5 +196,23 @@ describe('freeze shatter', () => {
     applyStatus(u, 'burn')
     tickStatuses(1, u)
     expect(u.statusEffects.some(e => e.kind === 'freeze')).toBe(true)
+  })
+})
+
+describe('protego wards the carry', () => {
+  it('wards the highest-ATK threatened ally over a more-wounded but low-value ally', () => {
+    const caster = unit({ side: 'left' })
+    // Carry: high ATK, took some damage (threatened, not full hp).
+    const carry = unit({ side: 'left', hp: 100, buffedStats: { hp: 120, atk: 150, def: 30, spd: 40 } })
+    // Low-value ally: much more wounded, but low ATK.
+    const chaff = unit({ side: 'left', hp: 10, buffedStats: { hp: 120, atk: 20, def: 30, spd: 40 } })
+
+    EFFECT_HANDLERS.protego(
+      { rng: noChance, turn: 1, actor: caster, target: caster, flags: [], allies: [caster, carry, chaff] },
+      { kind: 'protego', count: 1 },
+    )
+
+    expect(carry.statusEffects.some(e => e.statusId === 'protego')).toBe(true)
+    expect(chaff.statusEffects.some(e => e.statusId === 'protego')).toBe(false)
   })
 })

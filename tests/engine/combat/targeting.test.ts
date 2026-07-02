@@ -44,4 +44,28 @@ describe('threat targeting', () => {
     const hurt = u('hurt', 'Tank', 'left'); hurt.hp = 10
     expect(selectTarget(me, [me, hurt], [u('e', 'Attaccante', 'right')])?.wizard.id).toBe('hurt')
   })
+
+  it('Supporto protects a damaged high-ATK carry over a more-wounded but low-value ally', () => {
+    const me = u('sup', 'Supporto', 'left')
+    // Carry: high ATK, took some damage but isn't the lowest-HP-fraction ally.
+    const carry = u('carry', 'Attaccante', 'left', { atk: 150 }); carry.hp = 100
+    // Chaff: much more wounded (lower hp fraction), but low value (low ATK).
+    const chaff = u('chaff', 'Supporto', 'left', { atk: 10 }); chaff.hp = 10
+    expect(selectTarget(me, [me, carry, chaff], [u('e', 'Attaccante', 'right')])?.wizard.id).toBe('carry')
+  })
+
+  it('Supporto falls back to most-wounded when no carry is in danger', () => {
+    const me = u('sup', 'Supporto', 'left')
+    const hurt = u('hurt', 'Tank', 'left'); hurt.hp = 10
+    const fine = u('fine', 'Attaccante', 'left', { atk: 150 })
+    expect(selectTarget(me, [me, fine, hurt], [u('e', 'Attaccante', 'right')])?.wizard.id).toBe('hurt')
+  })
+
+  it('Supporto falls back to lowest-HP enemy when no ally needs help', () => {
+    const me = u('sup', 'Supporto', 'left')
+    const fine = u('fine', 'Attaccante', 'left', { atk: 150 })
+    const weakEnemy = u('weak', 'Attaccante', 'right'); weakEnemy.hp = 5
+    const strongEnemy = u('strong', 'Attaccante', 'right')
+    expect(selectTarget(me, [me, fine], [strongEnemy, weakEnemy])?.wizard.id).toBe('weak')
+  })
 })

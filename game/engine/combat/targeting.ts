@@ -36,6 +36,21 @@ export function mostWounded(units: BattleUnit[]): BattleUnit | undefined {
   )[0]
 }
 
+// Supporto identity: protect the CARRY, not just the most-wounded body. Among allies
+// who are actually damaged (in danger), rank by effective ATK — the team's highest
+// damage dealer is the highest-value target to keep alive — tiebreak by lowest HP
+// fraction (more threatened first), then id for determinism. Returns undefined if no
+// damaged ally exists (caller falls back to mostWounded, then the enemy pool).
+export function carryToProtect(units: BattleUnit[]): BattleUnit | undefined {
+  const damaged = units.filter(u => u.alive && u.hp < u.maxHp)
+  if (!damaged.length) return undefined
+  return damaged.sort((a, b) =>
+    effectiveStats(b).atk - effectiveStats(a).atk ||
+    (a.hp / a.maxHp) - (b.hp / b.maxHp) ||
+    a.wizard.id.localeCompare(b.wizard.id),
+  )[0]
+}
+
 export function threatScore(u: BattleUnit, ignoresTaunt = false): number {
   const s = effectiveStats(u)
   const taunt = !ignoresTaunt && u.wizard.role === 'Tank' ? BALANCE.roles.tauntBonus : 0
@@ -81,7 +96,7 @@ export function selectTarget(
 
   switch (actor.wizard.role) {
     case 'Supporto':
-      return mostWounded(liveAllies) ?? lowestHp(enemyPool)
+      return carryToProtect(liveAllies) ?? mostWounded(liveAllies) ?? lowestHp(enemyPool)
     case 'Controllo':
       return backlineTarget(enemyPool)
     case 'Tank':

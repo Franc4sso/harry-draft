@@ -15,6 +15,9 @@ export function computeDamage(rng: Rng, actor: BattleUnit, target: BattleUnit, p
   if (pen > 0) flags.push('pen')
   const def = effectiveStats(target).def * (1 - pen)
   let dmg = atk * power - def * c.defenseK
+  if (actor.wizard.role === 'Controllo') {
+    dmg *= target.wizard.role === 'Tank' ? BALANCE.roles.controlVsTank : BALANCE.roles.controlVsBackline
+  }
   dmg = Math.max(c.minDamage, dmg)
   const cb = actor.critBonus
   const critChance = c.critBase + effectiveStats(actor).spd * c.critSpdScale + (cb?.chance ?? 0)
@@ -104,8 +107,15 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
     const unit = eff.target === 'self' ? ctx.actor : ctx.target
     if (eff.statusId) {
       const maxStacks = eff.statusId === 'veleno' && ctx.actor.velenoUncapped ? Infinity : undefined
-      applyStatus(unit, eff.statusId, { duration: eff.duration, sourceId: sourceId(ctx.actor), maxStacks })
       const def = STATUS_BY_ID[eff.statusId]
+      // Controllo identity: "weak vs sturdy front-line" — a Tank shrugs off half the
+      // duration of a Controllo's stat debuff (control-kind statuses like stun/freeze
+      // are untouched; this only softens the graded weaken/expose/slow debuffs).
+      const isControlloVsTank = ctx.actor.wizard.role === 'Controllo' && unit.wizard.role === 'Tank'
+      const duration = isControlloVsTank && def?.kind === 'debuff'
+        ? Math.ceil((eff.duration ?? def.defaultDuration) / 2)
+        : eff.duration
+      applyStatus(unit, eff.statusId, { duration, sourceId: sourceId(ctx.actor), maxStacks })
       if (def?.kind === 'stun' || def?.kind === 'freeze') ctx.flags.push('stun')
       if (def?.kind === 'dot') ctx.flags.push('dot')
     } else if (eff.effect) {
@@ -119,10 +129,11 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
     if (eff.kind !== 'protego') return {}
     const count = eff.count ?? 1
     const pool = (ctx.allies ?? [ctx.actor]).filter(u => u.alive)
-    // most-threatened first: lowest HP fraction, tiebreak higher ATK, then id for determinism
+    // Protect the carry: highest effective ATK first (the team's damage source),
+    // tiebreak by lowest HP fraction (most threatened), then id for determinism.
     const ranked = [...pool].sort((a, b) =>
+      effectiveStats(b).atk - effectiveStats(a).atk ||
       (a.hp / a.maxHp) - (b.hp / b.maxHp) ||
-      b.buffedStats.atk - a.buffedStats.atk ||
       a.wizard.id.localeCompare(b.wizard.id))
     for (const u of ranked.slice(0, count)) {
       applyStatus(u, 'protego', { sourceId: `${ctx.actor.side}:${ctx.actor.wizard.id}` })
