@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/Button'
 import { SynergyRibbon } from '@/components/battle/SynergyRibbon'
 import { lastRealEntryAt } from '@/lib/initiative'
 import { BattleEndModal } from '@/components/battle/BattleEndModal'
+import { recapTotals } from '@/lib/battleRecap'
 
 export function BattleScreen({
   result, playerTeam, playerSyn, playerRelics, enemy, enemySyn, title, rightTitle, onFinish, enemyLevel = 1,
@@ -62,6 +63,23 @@ export function BattleScreen({
   // comes first) so the banner never lags behind the log/HP bars.
   const fatigueActive = r.currentTurn > BALANCE.combat.fatigueStart
     || replay.frames.slice(0, r.index + 1).some(f => f.entry?.action === 'Fatica')
+
+  // End-of-battle payoff: the player's top damage dealer (MVP) + the single biggest hit.
+  const summary = useMemo(() => {
+    const rows = recapTotals(replay.frames, replay.units, 'left')
+    const top = [...rows].sort((a, b) => (b.dealt + b.healed) - (a.dealt + a.healed))[0]
+    let bigHit: { name: string; value: number } | undefined
+    for (const f of replay.frames) {
+      const e = f.entry
+      if (e && e.actorSide === 'left' && typeof e.value === 'number' && e.value > 0 && !e.flags.includes('heal')) {
+        if (!bigHit || e.value > bigHit.value) {
+          const actor = replay.units.find(u => u.id === e.actorId && u.side === e.actorSide)
+          bigHit = { name: actor?.name ?? e.actorId ?? '—', value: e.value }
+        }
+      }
+    }
+    return { mvpName: top?.name ?? '—', mvpDealt: top?.dealt ?? 0, bigHit }
+  }, [replay])
 
   const controlAt = useMemo(() => {
     const kinds = ['stun', 'freeze', 'silence', 'disarm'] as const
@@ -159,6 +177,7 @@ export function BattleScreen({
           timedOut={result.timedOut}
           onConfirm={onFinish}
           onClose={() => setDismissed(true)}
+          summary={summary}
         />
       )}
 

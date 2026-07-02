@@ -11,13 +11,21 @@ import { Button } from '@/components/ui/Button'
  * provided the modal is also dismissable (to review the settled board), and
  * Esc dismisses instead of confirming.
  */
+export interface BattleSummary {
+  mvpName: string
+  mvpDealt: number
+  bigHit?: { name: string; value: number }
+}
+
 export function BattleEndModal({
-  outcome, timedOut, onConfirm, onClose,
+  outcome, timedOut, onConfirm, onClose, summary,
 }: {
   outcome: 'win' | 'loss'
   timedOut?: boolean
   onConfirm: () => void
   onClose?: () => void
+  /** Optional end-of-battle payoff: MVP + biggest hit. */
+  summary?: BattleSummary
 }) {
   const reduce = useReducedMotion()
   const wrapRef = useRef<HTMLDivElement>(null)
@@ -61,6 +69,20 @@ export function BattleEndModal({
             ? 'Tempo scaduto — vinci per PV residui.'
             : win ? 'La squadra avversaria è stata sconfitta.' : 'La tua squadra è caduta.'}
         </p>
+        {summary && summary.mvpDealt > 0 && (
+          <div data-testid="battle-summary" className="mt-5 space-y-1.5 rounded-xl border border-[#C9A24B]/20 bg-black/25 px-4 py-3 text-left text-xs">
+            <div className="flex items-center justify-between gap-3">
+              <span className="uppercase tracking-wider text-white/45">MVP</span>
+              <span className="truncate font-semibold text-[#F0D98A]">{summary.mvpName} · {summary.mvpDealt} danni</span>
+            </div>
+            {summary.bigHit && summary.bigHit.value > 0 && (
+              <div className="flex items-center justify-between gap-3">
+                <span className="uppercase tracking-wider text-white/45">Colpo più forte</span>
+                <span className="truncate font-semibold text-rose-300">{summary.bigHit.name} · {summary.bigHit.value}</span>
+              </div>
+            )}
+          </div>
+        )}
         <div ref={wrapRef} className="mt-6">
           <Button onClick={onConfirm}>
             {win ? 'Continua' : 'Vedi esito'}
