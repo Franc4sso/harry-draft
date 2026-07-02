@@ -29,6 +29,8 @@ export function PixiArena({
   const screenRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<PixiStage | null>(null)
   const lastFiredRef = useRef(0)
+  // Active GSAP timelines, killed on unmount so none keep ticking on destroyed Pixi objects.
+  const activeTls = useRef<Set<NonNullable<ReturnType<typeof choreograph>>>>(new Set())
 
   // Latest values, read inside the frameKey-keyed effect so it doesn't need
   // to depend on (and re-fire for) from/to/entry/speed changing mid-frame.
@@ -57,6 +59,8 @@ export function PixiArena({
     })
     return () => {
       disposed = true
+      activeTls.current.forEach((t) => t.kill())
+      activeTls.current.clear()
       stage?.destroy()
       stageRef.current = null
     }
@@ -80,9 +84,14 @@ export function PixiArena({
     if (reduced || !stage) return
     const speed = speedRef.current
     const budgetMs = Math.max(700, Math.round(1200 / speed))
-    choreograph(stage, {
+    const tl = choreograph(stage, {
       entry, from: fromRef.current, to: toRef.current, budgetMs, reduced, audio: null, onScreen,
     })
+    if (tl) {
+      const set = activeTls.current
+      set.add(tl)
+      tl.eventCallback('onComplete', () => set.delete(tl))
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [frameKey])
 
