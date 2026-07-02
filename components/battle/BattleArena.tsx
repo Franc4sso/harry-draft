@@ -40,7 +40,9 @@ export function BattleArena({
   const right = replay.units.filter(u => u.side === 'right')
 
   const anyAction = !!actingKey
-  const renderSide = (units: ReplayUnit[], mirrored: boolean) =>
+  // A lone enemy reads as a boss encounter → ominous treatment on that bust.
+  const bossFight = right.length === 1
+  const renderSide = (units: ReplayUnit[], mirrored: boolean, boss = false) =>
     units.map(u => {
       const involved = u.key === actingKey || u.key === targetKey
       return (
@@ -51,6 +53,7 @@ export function BattleArena({
             acting={u.key === actingKey}
             targeted={u.key === targetKey}
             mirrored={mirrored}
+            boss={boss}
             float={u.key === targetKey ? float : null}
             floatKey={frameKey}
             effects={statusEffects[u.key] ?? []}
@@ -62,21 +65,24 @@ export function BattleArena({
     })
 
   return (
-    <div data-testid="battle-arena" className="relative flex flex-col items-center gap-4 w-full">
+    <div data-testid="battle-arena" className="relative w-full rounded-3xl px-2 py-3">
       <ArenaBackdrop />
-      <section className="flex flex-col items-center gap-2 w-full">
-        <h3 className="text-xs uppercase tracking-widest text-white/40">{leftTitle}</h3>
-        <div data-testid="row-player" className="flex flex-nowrap justify-center gap-2 sm:gap-3">{renderSide(left, false)}</div>
-      </section>
+      {/* Two teams as facing vertical columns (Slay-the-Spire style). */}
+      <div className="flex items-center justify-center gap-3 sm:gap-6">
+        <section className="flex min-w-0 flex-col items-center gap-2">
+          <h3 className="text-xs uppercase tracking-widest text-white/40">{leftTitle}</h3>
+          <div data-testid="row-player" className="flex flex-col items-center gap-2 sm:gap-3">{renderSide(left, false)}</div>
+        </section>
 
-      <div className="self-center min-h-[1.5rem] w-full flex items-center justify-center">
-        {center ?? <span className="font-display text-2xl text-white/30 select-none">VS</span>}
+        <div className="flex shrink-0 items-center justify-center self-center min-w-[3rem] px-1">
+          {center ?? <span className="font-display text-2xl text-white/30 select-none">VS</span>}
+        </div>
+
+        <section className="flex min-w-0 flex-col items-center gap-2">
+          <h3 className="text-xs uppercase tracking-widest text-white/40">{rightTitle}</h3>
+          <div data-testid="row-enemies" className="flex flex-col items-center gap-2 sm:gap-3">{renderSide(right, true, bossFight)}</div>
+        </section>
       </div>
-
-      <section className="flex flex-col items-center gap-2 w-full">
-        <div data-testid="row-enemies" className="flex flex-nowrap justify-center gap-2 sm:gap-3">{renderSide(right, true)}</div>
-        <h3 className="text-xs uppercase tracking-widest text-white/40">{rightTitle}</h3>
-      </section>
 
       <PixiArena entry={entry} frameKey={frameKey} speed={speed} />
       <Callout entry={entry} frameKey={frameKey} />

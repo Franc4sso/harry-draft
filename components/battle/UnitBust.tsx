@@ -122,13 +122,15 @@ function effectCount(e: ActiveEffect): number {
  * floating damage/heal number. Reduced-motion → static final state.
  */
 export function UnitBust({
-  unit, hp, acting, targeted, mirrored, float, floatKey, effects = [], cooldown = 0, level,
+  unit, hp, acting, targeted, mirrored, boss, float, floatKey, effects = [], cooldown = 0, level,
 }: {
   unit: ReplayUnit
   hp: number
   acting?: boolean
   targeted?: boolean
   mirrored?: boolean
+  /** Ominous boss treatment (bigger bust + arcane aura), e.g. a lone final-boss enemy. */
+  boss?: boolean
   float?: FloatDescriptor | null
   floatKey?: number | string
   /** Real active status effects on this unit for the current frame. */
@@ -142,7 +144,8 @@ export function UnitBust({
   const shownLevel = level ?? unit.level ?? 1
   const reduce = useReducedMotion()
   const dead = hp <= 0
-  const aura = acting ? '0 0 22px rgba(124,252,155,0.55)' : targeted ? '0 0 22px rgba(255,107,107,0.6)' : undefined
+  const bossAura = boss ? '0 0 34px rgba(124,58,237,0.55), 0 0 12px rgba(124,58,237,0.4)' : undefined
+  const aura = acting ? '0 0 22px rgba(124,252,155,0.55)' : targeted ? '0 0 22px rgba(255,107,107,0.6)' : bossAura
   const impact = targeted && !!float
   const isCrit = float?.tone === 'crit'
 
@@ -164,7 +167,7 @@ export function UnitBust({
         scaleY: impact ? { type: 'tween', duration: isCrit ? 0.44 : 0.32, ease: [0.22, 1, 0.36, 1] } : { type: 'spring', stiffness: 360, damping: 22 },
         x: { type: 'spring', stiffness: 360, damping: 22 },
       }}
-      className={cn('relative w-28 sm:w-32 rounded-2xl border border-[#C9A24B]/15 bg-[rgba(20,16,33,0.45)] p-1.5 backdrop-blur-sm', mirrored && 'text-right')}
+      className={cn('relative rounded-2xl border bg-[rgba(20,16,33,0.45)] p-1.5 backdrop-blur-sm', boss ? 'w-32 sm:w-40 border-[#7c3aed]/40' : 'w-28 sm:w-32 border-[#C9A24B]/15', mirrored && 'text-right')}
       style={{ boxShadow: aura, filter: dead ? 'grayscale(0.85)' : undefined }}
     >
       <RarityFrame tier={unit.tier}>
