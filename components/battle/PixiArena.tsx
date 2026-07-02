@@ -3,7 +3,6 @@ import { useEffect, useRef } from 'react'
 import { useReducedMotion } from 'framer-motion'
 import type { LogEntry } from '@/types'
 import { createPixiStage, type PixiStage } from '@/lib/vfx/PixiStage'
-import { createAudio, type AudioBus } from '@/lib/vfx/audio'
 import { choreograph } from '@/lib/vfx/choreograph'
 
 /**
@@ -28,7 +27,6 @@ export function PixiArena({
   const mountRef = useRef<HTMLDivElement>(null)
   const screenRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<PixiStage | null>(null)
-  const audioRef = useRef<AudioBus | null>(null)
   const lastFiredRef = useRef(0)
   // Active GSAP timelines, killed on unmount so none keep ticking on destroyed Pixi objects.
   const activeTls = useRef<Set<NonNullable<ReturnType<typeof choreograph>>>>(new Set())
@@ -63,19 +61,6 @@ export function PixiArena({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reduced])
-
-  // Audio bus (Howler). Independent of reduced-motion (motion ≠ sound).
-  useEffect(() => {
-    let disposed = false
-    let bus: AudioBus | null = null
-    createAudio().then((a) => {
-      if (disposed) { a.dispose(); return }
-      bus = a
-      a.setMuted(false)
-      audioRef.current = a
-    }).catch(() => { /* audio unavailable */ })
-    return () => { disposed = true; bus?.dispose(); audioRef.current = null }
-  }, [])
 
   const onScreen = (color: number) => {
     const el = screenRef.current
@@ -113,7 +98,7 @@ export function PixiArena({
 
     const speed = speedRef.current
     const budgetMs = Math.max(700, Math.round(1200 / speed))
-    const tl = choreograph(stage, { entry, from, to, budgetMs, reduced, audio: audioRef.current, onScreen })
+    const tl = choreograph(stage, { entry, from, to, budgetMs, reduced, audio: null, onScreen })
     if (tl) {
       const set = activeTls.current
       set.add(tl)

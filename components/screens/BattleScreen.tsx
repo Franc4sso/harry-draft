@@ -115,7 +115,7 @@ export function BattleScreen({
         </div>
       )}
 
-      <div className="grid w-full max-w-5xl grid-cols-1 lg:grid-cols-[7rem_1fr_13rem] gap-4 items-start">
+      <div className="grid w-full max-w-7xl grid-cols-1 lg:grid-cols-[7rem_1fr_13rem] gap-4 items-start">
         <div className="hidden lg:block">
           <InitiativeBar replay={replay} index={r.index} />
         </div>

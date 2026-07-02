@@ -65,21 +65,26 @@ export function BattleArena({
     })
 
   return (
-    <div data-testid="battle-arena" className="relative w-full rounded-3xl px-2 py-3">
+    <div
+      data-testid="battle-arena"
+      className="relative mx-auto flex w-full max-w-6xl items-center justify-center rounded-3xl px-2 py-4"
+      style={{ minHeight: 480 }}
+    >
       <ArenaBackdrop />
-      {/* Two teams as facing vertical columns (Slay-the-Spire style). */}
-      <div className="flex items-center justify-center gap-3 sm:gap-6">
-        <section className="flex min-w-0 flex-col items-center gap-2">
-          <h3 className="text-xs uppercase tracking-widest text-white/40">{leftTitle}</h3>
+      {/* Two teams as facing vertical columns (Slay-the-Spire style). Column & center
+          widths are FIXED so the varying ActionPanel content never reflows the field. */}
+      <div className="flex items-center justify-center gap-4 sm:gap-10">
+        <section className="flex w-32 shrink-0 flex-col items-center gap-2 sm:w-40">
+          <h3 className="max-w-full truncate text-xs uppercase tracking-widest text-white/40">{leftTitle}</h3>
           <div data-testid="row-player" className="flex flex-col items-center gap-2 sm:gap-3">{renderSide(left, false)}</div>
         </section>
 
-        <div className="flex shrink-0 items-center justify-center self-center min-w-[3rem] px-1">
+        <div className="flex w-64 shrink-0 items-center justify-center self-center sm:w-80">
           {center ?? <span className="font-display text-2xl text-white/30 select-none">VS</span>}
         </div>
 
-        <section className="flex min-w-0 flex-col items-center gap-2">
-          <h3 className="text-xs uppercase tracking-widest text-white/40">{rightTitle}</h3>
+        <section className="flex w-32 shrink-0 flex-col items-center gap-2 sm:w-40">
+          <h3 className="max-w-full truncate text-xs uppercase tracking-widest text-white/40">{rightTitle}</h3>
           <div data-testid="row-enemies" className="flex flex-col items-center gap-2 sm:gap-3">{renderSide(right, true, bossFight)}</div>
         </section>
       </div>
