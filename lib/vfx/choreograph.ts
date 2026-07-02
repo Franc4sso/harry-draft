@@ -61,7 +61,7 @@ export function choreograph(stage: PixiStage, o: ChoreoOpts): gsap.core.Timeline
   let nominal = 0.9
 
   if (cfg.kind === 'heal' && to) {
-    runFlourish(ctx, 'heal', 0, to.x, to.y, cfg.color, { dir, power, crit })
+    runFlourish(ctx, cfg.impact, 0, to.x, to.y, cfg.color, { dir, power, crit })
     if (tier >= 2) { Screen.fxGodrays(ctx, 0.1, 0.6, 0.4); FX.fxBloomPulse(ctx, 0.1, 0.8, 0.5) }
     at(0.15, () => { o.audio?.play(cfg.audioHit ?? 'heal'); o.onImpact?.(side, 'heal') })
     nominal = tier >= 2 ? 1.2 : 1.05

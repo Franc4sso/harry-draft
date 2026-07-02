@@ -8,6 +8,8 @@ import type { FxCtx } from './effects'
 export type Flourish =
   | 'burst' | 'explosion' | 'flames' | 'slash' | 'skull' | 'ice' | 'snake'
   | 'lightning' | 'stun' | 'lift' | 'swirl' | 'patronus' | 'hex' | 'buff' | 'heal'
+  | 'disarm' | 'volley' | 'shove' | 'stone' | 'confusion' | 'silence' | 'dance'
+  | 'mind' | 'revive' | 'bubbles' | 'bandage' | 'wall' | 'absorb' | 'rally' | 'wind'
 
 export type Motion = 'bolt' | 'orb' | 'lob'
 
@@ -53,7 +55,7 @@ const C = {
 const SPELL_VFX: Record<string, SpellVfxConfig> = {
   // ── Attacco ──
   'colpo base': { kind: 'projectile', color: C.gold, motion: 'bolt', sigil: false, impact: 'burst' },
-  'expelliarmus': { kind: 'projectile', color: C.gold, motion: 'bolt', impact: 'burst' },
+  'expelliarmus': { kind: 'projectile', color: C.gold, motion: 'bolt', impact: 'disarm' },
   'stupeficium': { kind: 'projectile', color: C.crimson, motion: 'bolt', impact: 'stun' },
   'sectumsempra': { kind: 'projectile', color: C.darkCrimson, motion: 'bolt', impact: 'slash', tier: 2 },
   'bombarda': { kind: 'projectile', color: C.concussive, motion: 'lob', impact: 'explosion', tier: 2 },
@@ -62,39 +64,39 @@ const SPELL_VFX: Record<string, SpellVfxConfig> = {
   'reducto': { kind: 'projectile', color: C.concussive, motion: 'bolt', impact: 'explosion', tier: 2 },
   'diffindo': { kind: 'projectile', color: C.silver, motion: 'bolt', sigil: false, impact: 'slash' },
   'confringo': { kind: 'projectile', color: C.fire, motion: 'lob', impact: 'explosion', tier: 2 },
-  'flipendo': { kind: 'projectile', color: C.concussive, motion: 'bolt', sigil: false, impact: 'burst' },
-  'oppugno': { kind: 'projectile', color: C.gold, motion: 'bolt', sigil: false, impact: 'burst' },
+  'flipendo': { kind: 'projectile', color: C.concussive, motion: 'bolt', sigil: false, impact: 'shove' },
+  'oppugno': { kind: 'projectile', color: C.gold, motion: 'bolt', sigil: false, impact: 'volley' },
   'ardemonio': { kind: 'projectile', color: C.cursedFire, motion: 'orb', impact: 'explosion', tier: 3, screen: 0xff6a2a },
   'serpensortia': { kind: 'projectile', color: C.venom, motion: 'lob', impact: 'snake' },
 
   // ── Controllo ──
   'crucio': { kind: 'projectile', color: C.crimson, motion: 'bolt', impact: 'lightning', tier: 2 },
-  'imperio': { kind: 'projectile', color: C.purple, motion: 'orb', impact: 'swirl' },
-  'petrificus totalus': { kind: 'projectile', color: C.bone, motion: 'bolt', impact: 'stun' },
+  'imperio': { kind: 'projectile', color: C.purple, motion: 'orb', impact: 'mind' },
+  'petrificus totalus': { kind: 'projectile', color: C.bone, motion: 'bolt', impact: 'stone' },
   'levicorpus': { kind: 'projectile', color: C.purple, motion: 'bolt', impact: 'lift' },
-  'confundo': { kind: 'projectile', color: C.teal, motion: 'orb', impact: 'swirl' },
-  'langlock': { kind: 'projectile', color: C.dark, motion: 'bolt', sigil: false, impact: 'burst' },
-  'tarantallegra': { kind: 'projectile', color: C.yellow, motion: 'bolt', impact: 'stun' },
+  'confundo': { kind: 'projectile', color: C.teal, motion: 'orb', impact: 'confusion' },
+  'langlock': { kind: 'projectile', color: C.dark, motion: 'bolt', sigil: false, impact: 'silence' },
+  'tarantallegra': { kind: 'projectile', color: C.yellow, motion: 'bolt', impact: 'dance' },
   'glacius': { kind: 'projectile', color: C.ice, motion: 'bolt', impact: 'ice' },
-  'silencio': { kind: 'projectile', color: C.purple, motion: 'bolt', impact: 'swirl' },
+  'silencio': { kind: 'projectile', color: C.purple, motion: 'bolt', impact: 'silence' },
 
   // ── Cura ──
   'episkey': { kind: 'heal', color: C.heal, impact: 'heal' },
   'vulnera sanentur': { kind: 'heal', color: C.heal, impact: 'heal', tier: 2 },
-  'rennervate': { kind: 'heal', color: C.heal, impact: 'heal' },
-  'anapneo': { kind: 'heal', color: C.heal, impact: 'heal' },
-  'ferula': { kind: 'heal', color: C.heal, impact: 'heal' },
+  'rennervate': { kind: 'heal', color: C.heal, impact: 'revive' },
+  'anapneo': { kind: 'heal', color: C.heal, impact: 'bubbles' },
+  'ferula': { kind: 'heal', color: C.heal, impact: 'bandage' },
   'colletivo scudo': { kind: 'self', color: C.shield, sigil: true, impact: 'buff' },
-  'incitamento': { kind: 'self', color: C.gold, sigil: true, impact: 'buff' },
+  'incitamento': { kind: 'self', color: C.gold, sigil: true, impact: 'rally' },
 
   // ── Difesa ──
   'protego': { kind: 'self', color: C.shield, sigil: true, impact: 'hex' },
   'protego maxima': { kind: 'self', color: C.shield, sigil: true, impact: 'hex' },
-  'fianto duri': { kind: 'self', color: C.gold, sigil: true, impact: 'hex' },
-  'salvio hexia': { kind: 'self', color: C.shield, sigil: true, impact: 'buff' },
-  'riddikulus': { kind: 'self', color: C.gold, sigil: true, impact: 'buff' },
+  'fianto duri': { kind: 'self', color: C.gold, sigil: true, impact: 'wall' },
+  'salvio hexia': { kind: 'self', color: C.shield, sigil: true, impact: 'wind' },
+  'riddikulus': { kind: 'self', color: C.gold, sigil: true, impact: 'rally' },
   'expecto patronum': { kind: 'self', color: C.silver, sigil: true, impact: 'patronus', tier: 3, screen: 0xdaf0ff },
-  'aegis': { kind: 'self', color: C.shield, sigil: true, impact: 'hex' },
+  'aegis': { kind: 'self', color: C.shield, sigil: true, impact: 'absorb' },
 }
 
 export function spellVfxFor(action: string): SpellVfxConfig | null {
@@ -134,6 +136,21 @@ export function runFlourish(ctx: FxCtx, key: Flourish, at: number, x: number, y:
     case 'hex': FX.fxHexBarrier(ctx, at, x, y, color); break
     case 'buff': FX.fxBuffAura(ctx, at, x, y, color); break
     case 'heal': FX.fxRuneColumn(ctx, at, x, y, color); break
+    case 'disarm': FX.fxDisarm(ctx, at, x, y, color); break
+    case 'volley': FX.fxVolley(ctx, at, x, y, color); break
+    case 'shove': FX.fxShove(ctx, at, x, y, color, dir); break
+    case 'stone': FX.fxStone(ctx, at, x, y); break
+    case 'confusion': FX.fxFlash(ctx, at, x, y, color, 26); FX.fxConfusion(ctx, at, x, y, color); break
+    case 'silence': FX.fxSilence(ctx, at, x, y, color); break
+    case 'dance': FX.fxFlash(ctx, at, x, y, color, 24); FX.fxDance(ctx, at, x, y, color); break
+    case 'mind': FX.fxFlash(ctx, at, x, y, color, 26); FX.fxMind(ctx, at, x, y, color); break
+    case 'revive': FX.fxRevive(ctx, at, x, y, color); break
+    case 'bubbles': FX.fxBubbles(ctx, at, x, y, color); break
+    case 'bandage': FX.fxBandage(ctx, at, x, y, color); break
+    case 'wall': FX.fxWall(ctx, at, x, y, color); break
+    case 'absorb': FX.fxAbsorb(ctx, at, x, y, color); break
+    case 'rally': FX.fxRally(ctx, at, x, y, color); break
+    case 'wind': FX.fxWind(ctx, at, x, y, color); break
     case 'burst':
     default: FX.fxBurstImpact(ctx, at, x, y, color, dir, power, crit)
   }

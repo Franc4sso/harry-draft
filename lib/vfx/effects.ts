@@ -575,3 +575,243 @@ export function fxSmoke(ctx: FxCtx, at: number, x: number, y: number, count = 8)
     tl.to(g, { alpha: 0, duration: 1.1, ease: 'power1.in', onComplete: () => g.destroy() }, t)
   }
 }
+
+/* ------------------------------------------------------------------ */
+/* Signature flourishes for the rest of the roster                     */
+/* ------------------------------------------------------------------ */
+
+/** Expelliarmus: the target's wand spins away + gold sparks. */
+export function fxDisarm(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor): void {
+  const { stage, tl } = ctx
+  fxFlash(ctx, at, x, y, color, 30)
+  const wand = new Graphics().roundRect(-2, -14, 4, 28, 2).fill({ color: 0xcaa24a }).stroke({ width: 1, color: 0xf6e6a8, alpha: 0.8 })
+  wand.position.set(x, y)
+  wand.filters = [glow(0xf6e6a8, 8, 1.6)]
+  stage.fx.addChild(wand)
+  tl.to(wand, { duration: 0.8, physics2D: { velocity: 320, angle: -55, gravity: 380 }, ease: 'none' }, at)
+  tl.to(wand, { rotation: 14, duration: 0.8, ease: 'none' }, at)
+  tl.to(wand, { alpha: 0, duration: 0.8, ease: 'power1.in', onComplete: () => wand.destroy() }, at)
+  fxPhysicsBurst(ctx, at, x, y, [0xf6e6a8, 0xcaa24a], 10, { speed: 220, gravity: 300 })
+}
+
+/** Oppugno: a rapid volley of flung objects, each a small pop. */
+export function fxVolley(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor): void {
+  for (let k = 0; k < 4; k++) {
+    const t = at + k * 0.06
+    const ox = (Math.random() * 2 - 1) * 16, oy = (Math.random() * 2 - 1) * 16
+    fxFlash(ctx, t, x + ox, y + oy, color, 18)
+    fxPhysicsBurst(ctx, t, x + ox, y + oy, color.spark, 5, { speed: 190, gravity: 420 })
+  }
+  fxShockwave(ctx, at + 0.18, x, y, color, 2.6, 2)
+}
+
+/** Flipendo: a concussive crescent shove that knocks the target back. */
+export function fxShove(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor, dir: number): void {
+  const { stage, tl } = ctx
+  const arc = new Graphics().arc(0, 0, 30, dir - 0.9, dir + 0.9).stroke({ width: 6, color: color.core, alpha: 0.85 })
+  arc.position.set(x, y)
+  arc.filters = [glow(color.glow, 12, 2)]
+  arc.scale.set(0.5)
+  arc.alpha = 0
+  stage.fx.addChild(arc)
+  tl.to(arc, { alpha: 1, duration: 0.06 }, at)
+  tl.to(arc.scale, { x: 1.7, y: 1.7, duration: 0.4, ease: 'power3.out' }, at)
+  tl.to(arc.position, { x: x + Math.cos(dir) * 26, y: y + Math.sin(dir) * 26, duration: 0.4, ease: 'power3.out' }, at)
+  tl.to(arc, { alpha: 0, duration: 0.4, ease: 'power2.out', onComplete: () => arc.destroy() }, at)
+  const deg = (dir * 180) / Math.PI
+  fxPhysicsBurst(ctx, at, x, y, color.spark, 12, { speed: 320, gravity: 200, angleMin: deg - 40, angleRange: 80 })
+}
+
+/** Petrificus Totalus: grey cracks spread + stone dust. */
+export function fxStone(ctx: FxCtx, at: number, x: number, y: number): void {
+  const { stage, tl } = ctx
+  const grey: VfxColor = { core: 0xcfc8be, glow: 0x8a8278, spark: [0x8a8278, 0xcfc8be] }
+  fxFlash(ctx, at, x, y, grey, 34)
+  for (let k = 0; k < 6; k++) {
+    const g = new Graphics()
+    const ang = (Math.PI * 2 * k) / 6 + Math.random() * 0.4
+    g.moveTo(0, 0)
+    for (let s = 1; s <= 3; s++) g.lineTo(Math.cos(ang) * ((26 * s) / 3) + (Math.random() * 2 - 1) * 6, Math.sin(ang) * ((26 * s) / 3) + (Math.random() * 2 - 1) * 6)
+    g.stroke({ width: 2, color: 0x5a544c, alpha: 0.9 })
+    g.position.set(x, y)
+    stage.fx.addChild(g)
+    tl.to(g, { alpha: 0, duration: 0.5, ease: 'power2.out', onComplete: () => g.destroy() }, at + 0.12)
+  }
+  fxPhysicsBurst(ctx, at, x, y, [0x8a8278, 0x5a544c], 10, { speed: 140, gravity: 600, angleMin: 200, angleRange: 140 })
+}
+
+/** Confundo: dizzy stars orbit the target's head. */
+export function fxConfusion(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor): void {
+  const { stage, tl } = ctx
+  for (let i = 0; i < 5; i++) {
+    const st = new Graphics().star(0, 0, 5, 6, 3).fill({ color: color.core, alpha: 0.9 })
+    const a0 = (Math.PI * 2 * i) / 5
+    st.position.set(x + Math.cos(a0) * 24, y - 24 + Math.sin(a0) * 8)
+    st.filters = [glow(color.glow, 8, 1.4)]
+    st.scale.set(0)
+    stage.fx.addChild(st)
+    const t = at + i * 0.05
+    tl.to(st.scale, { x: 1, y: 1, duration: 0.2, ease: 'back.out(2)' }, t)
+    tl.to(st, { rotation: Math.PI * 2, duration: 0.75, ease: 'none' }, t)
+    tl.to(st.position, { x: x + Math.cos(a0 + 2.2) * 26, duration: 0.75, ease: 'sine.inOut' }, t)
+    tl.to(st, { alpha: 0, duration: 0.55, ease: 'power1.in', onComplete: () => st.destroy() }, t + 0.35)
+  }
+}
+
+/** Silencio / Langlock: a ring snaps shut over the target. */
+export function fxSilence(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor): void {
+  const { stage, tl } = ctx
+  const ring = new Graphics().circle(0, 0, 44).stroke({ width: 4, color: color.core, alpha: 0.9 })
+  ring.position.set(x, y)
+  ring.filters = [glow(color.glow, 10, 1.6)]
+  stage.fx.addChild(ring)
+  tl.to(ring.scale, { x: 0.1, y: 0.1, duration: 0.3, ease: 'power3.in' }, at)
+  tl.to(ring, { alpha: 0, duration: 0.2, ease: 'power2.in', onComplete: () => ring.destroy() }, at + 0.26)
+  fxFlash(ctx, at + 0.28, x, y, color, 22)
+}
+
+/** Tarantallegra: playful bouncing motes. */
+export function fxDance(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor): void {
+  const { stage, tl } = ctx
+  for (let i = 0; i < 8; i++) {
+    const n = new Graphics().circle(0, 0, 3).fill({ color: color.core })
+    n.position.set(x + (Math.random() * 2 - 1) * 22, y + 20)
+    n.blendMode = 'add'
+    n.filters = [glow(color.glow, 6, 1.2)]
+    stage.fx.addChild(n)
+    const t = at + i * 0.04
+    tl.to(n.position, { x: n.position.x + (Math.random() * 2 - 1) * 40, y: y - 32 - Math.random() * 16, duration: 0.6, ease: 'sine.inOut' }, t)
+    tl.to(n, { alpha: 0, duration: 0.6, ease: 'power1.in', onComplete: () => n.destroy() }, t)
+  }
+}
+
+/** Imperio: an eerie eye opens with reaching tendrils. */
+export function fxMind(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor): void {
+  const { stage, tl } = ctx
+  const eye = new Container()
+  eye.position.set(x, y - 4)
+  const sclera = new Graphics().ellipse(0, 0, 20, 11).fill({ color: color.core, alpha: 0.9 })
+  const pupil = new Graphics().circle(0, 0, 5).fill({ color: 0x1a0a2a })
+  eye.addChild(sclera, pupil)
+  eye.filters = [glow(color.glow, 12, 2)]
+  eye.scale.set(0.3, 0)
+  eye.alpha = 0
+  stage.fx.addChild(eye)
+  tl.to(eye, { alpha: 1, duration: 0.12 }, at)
+  tl.to(eye.scale, { x: 1, y: 1, duration: 0.3, ease: 'back.out(1.6)' }, at)
+  tl.to(eye, { alpha: 0, duration: 0.4, ease: 'power2.in', onComplete: () => eye.destroy() }, at + 0.5)
+  for (let k = 0; k < 5; k++) {
+    const g = new Graphics()
+    const ang = (Math.PI * 2 * k) / 5
+    g.moveTo(0, 0).bezierCurveTo(Math.cos(ang) * 14, Math.sin(ang) * 14 - 8, Math.cos(ang) * 26, Math.sin(ang) * 26 + 8, Math.cos(ang) * 36, Math.sin(ang) * 36)
+    g.stroke({ width: 2, color: color.glow, alpha: 0.7 })
+    g.position.set(x, y)
+    g.alpha = 0
+    stage.fx.addChild(g)
+    tl.to(g, { alpha: 0.8, duration: 0.15 }, at + 0.05)
+    tl.to(g, { alpha: 0, duration: 0.4, ease: 'power2.out', onComplete: () => g.destroy() }, at + 0.35)
+  }
+}
+
+/** Rennervate: a bright revive pulse + rising light. */
+export function fxRevive(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor): void {
+  fxFlash(ctx, at, x, y, color, 42)
+  fxShockwave(ctx, at, x, y, color, 3.4, 3)
+  fxRuneColumn(ctx, at + 0.05, x, y, color)
+}
+
+/** Anapneo: airy bubbles rise and pop. */
+export function fxBubbles(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor): void {
+  const { stage, tl } = ctx
+  for (let i = 0; i < 12; i++) {
+    const b = new Graphics().circle(0, 0, 3 + Math.random() * 4).fill({ color: color.glow, alpha: 0.12 }).stroke({ width: 1.5, color: color.core, alpha: 0.7 })
+    b.position.set(x + (Math.random() * 2 - 1) * 26, y + 22)
+    b.filters = [glow(color.glow, 6, 1)]
+    stage.fx.addChild(b)
+    const t = at + i * 0.04
+    tl.to(b.position, { y: y - 44 - Math.random() * 20, x: b.position.x + (Math.random() * 2 - 1) * 14, duration: 0.9, ease: 'power1.out' }, t)
+    tl.to(b, { alpha: 0, duration: 0.9, ease: 'power1.in', onComplete: () => b.destroy() }, t)
+  }
+}
+
+/** Ferula: bandages sweep across the target. */
+export function fxBandage(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor): void {
+  const { stage, tl } = ctx
+  fxFlash(ctx, at, x, y, color, 24)
+  for (let k = 0; k < 3; k++) {
+    const band = new Graphics().rect(-30, -4, 60, 8).fill({ color: 0xf0e6d0, alpha: 0.85 })
+    band.position.set(x - 42, y - 16 + k * 14)
+    band.rotation = -0.15
+    band.alpha = 0
+    stage.fx.addChild(band)
+    const t = at + k * 0.08
+    tl.to(band, { alpha: 0.85, duration: 0.1 }, t)
+    tl.to(band.position, { x: x + 42, duration: 0.5, ease: 'power2.inOut' }, t)
+    tl.to(band, { alpha: 0, duration: 0.3, ease: 'power2.out', onComplete: () => band.destroy() }, t + 0.4)
+  }
+}
+
+/** Fianto Duri: a brick wall rises in front of the caster. */
+export function fxWall(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor): void {
+  const { stage, tl } = ctx
+  const wall = new Graphics().rect(-30, -34, 60, 68).fill({ color: 0x6a5a44, alpha: 0.88 }).stroke({ width: 2, color: color.core, alpha: 0.8 })
+  for (let r = -2; r <= 2; r++) wall.moveTo(-30, r * 14).lineTo(30, r * 14)
+  wall.stroke({ width: 1, color: 0x3a3020, alpha: 0.6 })
+  wall.position.set(x, y + 64)
+  wall.alpha = 0
+  wall.filters = [glow(color.glow, 10, 1.4)]
+  stage.fx.addChild(wall)
+  tl.to(wall, { alpha: 1, duration: 0.1 }, at)
+  tl.to(wall.position, { y, duration: 0.32, ease: 'back.out(1.4)' }, at)
+  tl.to(wall, { alpha: 0, duration: 0.4, ease: 'power2.in', onComplete: () => wall.destroy() }, at + 0.6)
+  fxPhysicsBurst(ctx, at + 0.3, x, y + 34, [0x6a5a44, 0x8a7a5a], 8, { speed: 130, gravity: 500, angleMin: 200, angleRange: 140 })
+}
+
+/** Aegis: a barrier that pulls surrounding energy inward. */
+export function fxAbsorb(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor): void {
+  const { stage, tl } = ctx
+  fxHexBarrier(ctx, at, x, y, color)
+  for (let i = 0; i < 10; i++) {
+    const ang = (Math.PI * 2 * i) / 10
+    const p = new Graphics().circle(0, 0, 3).fill({ color: color.glow })
+    p.position.set(x + Math.cos(ang) * 60, y + Math.sin(ang) * 60)
+    p.blendMode = 'add'
+    stage.fx.addChild(p)
+    tl.to(p.position, { x, y, duration: 0.45, ease: 'power2.in' }, at)
+    tl.to(p, { alpha: 0, duration: 0.45, ease: 'power2.in', onComplete: () => p.destroy() }, at + 0.2)
+  }
+}
+
+/** Riddikulus / Incitamento: rallying chevrons rise. */
+export function fxRally(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor): void {
+  const { stage, tl } = ctx
+  for (let k = 0; k < 3; k++) {
+    const ch = new Graphics().moveTo(-12, 6).lineTo(0, -6).lineTo(12, 6).stroke({ width: 3, color: color.core, alpha: 0.9 })
+    ch.position.set(x, y + 10 + k * 6)
+    ch.filters = [glow(color.glow, 8, 1.4)]
+    ch.alpha = 0
+    stage.fx.addChild(ch)
+    const t = at + k * 0.08
+    tl.to(ch, { alpha: 1, duration: 0.1 }, t)
+    tl.to(ch.position, { y: y - 30 - k * 6, duration: 0.6, ease: 'power2.out' }, t)
+    tl.to(ch, { alpha: 0, duration: 0.6, ease: 'power1.in', onComplete: () => ch.destroy() }, t)
+  }
+  fxShockwave(ctx, at, x, y, color, 2.4, 2)
+}
+
+/** Salvio Hexia: swirling wind gusts deflect around the caster. */
+export function fxWind(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor): void {
+  const { stage, tl } = ctx
+  for (let k = 0; k < 4; k++) {
+    const g = new Graphics().arc(0, 0, 24 + k * 6, -0.8, 1.4).stroke({ width: 2.5, color: color.core, alpha: 0.7 })
+    g.position.set(x, y)
+    g.rotation = (k * Math.PI) / 2
+    g.filters = [glow(color.glow, 8, 1.2)]
+    g.alpha = 0
+    stage.fx.addChild(g)
+    const t = at + k * 0.05
+    tl.to(g, { alpha: 0.8, duration: 0.1 }, t)
+    tl.to(g, { rotation: g.rotation + Math.PI * 1.2, duration: 0.6, ease: 'power1.out' }, t)
+    tl.to(g, { alpha: 0, duration: 0.5, ease: 'power2.out', onComplete: () => g.destroy() }, t + 0.2)
+  }
+}
