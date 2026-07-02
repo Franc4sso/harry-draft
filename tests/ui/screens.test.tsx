@@ -13,7 +13,8 @@ import { EFFECT_META, SPELL_TYPE_META } from '@/lib/glossary'
 describe('MenuScreen', () => {
   it('shows the title and three actions', () => {
     render(<MenuScreen />)
-    expect(screen.getByText('Harry Draft')).toBeInTheDocument()
+    // Title letters are split into animated spans; the accessible name lives on the h1.
+    expect(screen.getByRole('heading', { name: 'Harry Draft' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /gioca/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /compendio/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /credits/i })).toBeInTheDocument()

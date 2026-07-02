@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, useReducedMotion } from 'framer-motion'
+import { TiltCard } from '@/components/ui/motion'
 import { WizardCard } from '@/components/cards/WizardCard'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
@@ -51,20 +52,20 @@ export function MenuScreen() {
         transition={{ duration: 0.6, ease: 'easeOut' }}
         className="relative space-y-3"
       >
-        <p className="font-display text-[11px] uppercase tracking-[0.42em] text-gold/80">
-          Roguelite di maghi
-        </p>
-        <h1
-          className="font-display text-6xl font-extrabold tracking-wide sm:text-7xl"
-          style={{
-            backgroundImage: 'linear-gradient(180deg, #f6ecc4 0%, #d9b65f 48%, #a9802f 100%)',
-            WebkitBackgroundClip: 'text',
-            backgroundClip: 'text',
-            color: 'transparent',
-            filter: 'drop-shadow(0 4px 24px rgba(202,162,74,0.35))',
-          }}
-        >
-          Harry Draft
+        <p className="kicker">Roguelite di maghi</p>
+        <h1 className="font-display text-6xl font-extrabold tracking-wide sm:text-7xl" aria-label="Harry Draft">
+          {'Harry Draft'.split('').map((ch, i) => (
+            <motion.span
+              key={i}
+              aria-hidden
+              className="title-gradient inline-block"
+              initial={reduce ? false : { opacity: 0, y: 22, filter: 'blur(8px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              transition={{ duration: 0.55, delay: 0.08 + i * 0.045, ease: [0.22, 1, 0.36, 1] }}
+            >
+              {ch === ' ' ? ' ' : ch}
+            </motion.span>
+          ))}
         </h1>
         <p className="mx-auto max-w-md text-white/60">
           Componi una squadra di cinque maghi, supera cinque sfidanti e affronta il Boss Finale.
@@ -86,7 +87,9 @@ export function MenuScreen() {
         }
         className="relative"
       >
-        <WizardCard drafted={teaser} />
+        <TiltCard className="relative">
+          <WizardCard drafted={teaser} />
+        </TiltCard>
       </motion.div>
 
       <motion.div
@@ -109,13 +112,11 @@ export function MenuScreen() {
           <button
             type="button"
             onClick={play}
-            className="group relative rounded-2xl px-12 py-4 font-display text-base font-bold uppercase tracking-[0.22em] text-[#1a1206] transition-transform duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f3e6a0] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
-            style={{
-              backgroundImage: 'linear-gradient(180deg, #f3e0a0 0%, #caa24a 55%, #b0853a 100%)',
-              boxShadow: '0 0 0 1px rgba(243,230,160,0.5) inset, 0 10px 30px rgba(176,133,58,0.4)',
-            }}
+            className="btn-sheen-host elev-gold relative overflow-hidden rounded-2xl px-12 py-4 font-display text-base font-bold uppercase tracking-[0.22em] text-[#1a1206] transition-transform duration-200 hover:-translate-y-0.5 active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f3e6a0] focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+            style={{ backgroundImage: 'linear-gradient(180deg, #f3e0a0 0%, #caa24a 55%, #b0853a 100%)' }}
           >
-            Gioca
+            <span aria-hidden className="btn-sheen" />
+            <span className="relative">Gioca</span>
           </button>
 
           {hasSavedRun && (
