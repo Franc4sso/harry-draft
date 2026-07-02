@@ -43,7 +43,7 @@ export function MenuScreen() {
         />
         <div
           className="absolute left-1/2 bottom-[-25%] h-[34rem] w-[44rem] -translate-x-1/2 rounded-full blur-[130px]"
-          style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.12), transparent 60%)' }}
+          style={{ background: 'radial-gradient(circle, rgba(140,90,40,0.14), transparent 60%)' }}
         />
       </div>
 

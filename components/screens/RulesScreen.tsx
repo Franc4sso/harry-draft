@@ -1,6 +1,8 @@
 'use client'
 import { useState } from 'react'
 import Link from 'next/link'
+import { Frame } from '@/components/ui/Frame'
+import { Insegna } from '@/components/ui/Insegna'
 import { GlowPanel } from '@/components/ui/GlowPanel'
 import { Chip } from '@/components/ui/Chip'
 import { SynergyGraph, KIND_COLOR } from '@/components/screens/compendium/SynergyGraph'
@@ -58,10 +60,10 @@ function GlossaryRow({ chip, blurb }: { chip: React.ReactNode; blurb: string }) 
 /** A titled glossary card; sits inside the masonry column flow. */
 function GlossaryCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <GlowPanel className="p-4 sm:p-5 mb-4 sm:mb-5 break-inside-avoid">
+    <Frame variant="panel" className="mb-4 sm:mb-5 break-inside-avoid" innerClassName="p-4 sm:p-5">
       <p className="text-xs uppercase tracking-wider text-white/40 mb-3">{title}</p>
       <ul className="space-y-2.5">{children}</ul>
-    </GlowPanel>
+    </Frame>
   )
 }
 
@@ -71,9 +73,7 @@ export function RulesScreen() {
   return (
     <main className="flex-1 flex flex-col items-center gap-6 sm:gap-8 px-4 py-6 sm:p-8 max-w-4xl mx-auto w-full">
       <header className="text-center mt-2 sm:mt-6">
-        <p className="kicker">Il grimorio del gioco</p>
-        <h1 className="title-gradient mt-1 font-display text-3xl font-bold sm:text-4xl">Compendio</h1>
-        <div aria-hidden className="mx-auto mt-2 h-px w-48" style={{ background: 'linear-gradient(90deg, transparent, rgba(202,162,74,0.6), transparent)' }} />
+        <Insegna kicker="Il grimorio del gioco" title="Compendio" />
         <p className="mt-2 text-white/60 text-sm max-w-xl mx-auto">
           Tutto ciò che serve sapere: come si gioca, cosa fanno le magie, le reliquie e le sinergie.
         </p>

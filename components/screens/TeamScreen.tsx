@@ -4,6 +4,8 @@ import { detectSynergies } from '@/game/engine/synergy'
 import { synergyBonusText } from '@/lib/glossary'
 import { WizardCardRow } from '@/components/cards/WizardCardRow'
 import { Button } from '@/components/ui/Button'
+import { Frame } from '@/components/ui/Frame'
+import { Insegna } from '@/components/ui/Insegna'
 import { displayName } from '@/lib/displayName'
 
 export function TeamScreen({
@@ -18,10 +20,8 @@ export function TeamScreen({
 
   return (
     <main className="flex-1 flex flex-col items-center gap-7 p-6">
-      <div className="mt-2 text-center">
-        <p className="kicker">Il tuo schieramento</p>
-        <h1 className="title-gradient mt-1 font-display text-4xl font-bold">La tua squadra</h1>
-        <div aria-hidden className="mx-auto mt-2 h-px w-48" style={{ background: 'linear-gradient(90deg, transparent, rgba(202,162,74,0.6), transparent)' }} />
+      <div className="mt-2">
+        <Insegna kicker="Il tuo schieramento" title="La tua squadra" />
       </div>
 
       {/* Synergies first — a modern gold band at the top, before the roster. */}
@@ -34,9 +34,9 @@ export function TeamScreen({
         </div>
 
         {synergies.length === 0 ? (
-          <p className="rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/55">
-            Nessuna sinergia attiva.
-          </p>
+          <Frame variant="panel" innerClassName="p-4">
+            <p className="text-sm text-white/55">Nessuna sinergia attiva.</p>
+          </Frame>
         ) : (
           <div className="flex flex-wrap gap-2.5">
             {synergies.map((s) => {

@@ -2,6 +2,7 @@
 import type { ReactNode } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { screenVariants } from '@/components/ui/motion'
+import { Frame } from '@/components/ui/Frame'
 import { useRunB } from '@/hooks/useRunB'
 import { DraftScreen } from './DraftScreen'
 import { MapScreen } from './MapScreen'
@@ -45,10 +46,10 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
           orientation="vertical"
           onSetSpell={c.setWizardSpell}
         />
-        <div className="panel-premium p-3">
+        <Frame variant="panel" innerClassName="p-3">
           <span className="font-display text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Reliquie</span>
           <RelicBar relics={c.run.relics} className="mt-2" onUse={c.useConsumableRelic} team={c.run.team} />
-        </div>
+        </Frame>
       </motion.aside>
       <div className="min-w-0 flex-1">{content}</div>
     </div>
