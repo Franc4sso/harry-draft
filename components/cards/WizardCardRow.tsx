@@ -147,6 +147,25 @@ export function WizardCardRow({
           )}
         </div>
 
+        {/* Persisted health (currentHp) — shown only for the real run roster (draft/recruit
+            offers leave currentHp undefined). Makes wounds VISIBLE between fights: HP does
+            NOT reset except at the Infirmary / via relics. */}
+        {drafted.currentHp !== undefined && (() => {
+          const maxHp = drafted.maxHp || drafted.stats.hp || 1
+          const cur = Math.max(0, Math.min(maxHp, drafted.currentHp))
+          const ratio = maxHp > 0 ? cur / maxHp : 0
+          const col = ratio > 0.5 ? '#7CFC9B' : ratio > 0.25 ? '#FFD37D' : '#FF6B6B'
+          return (
+            <div data-testid="roster-hp" className="flex items-center gap-2">
+              <span className="w-6 shrink-0 text-[8px] font-semibold uppercase tracking-wide text-white/45">PV</span>
+              <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/45">
+                <span className="block h-full rounded-full" style={{ width: `${ratio * 100}%`, background: col }} />
+              </span>
+              <span className="shrink-0 text-[10px] tabular-nums text-white/80">{cur}/{maxHp}</span>
+            </div>
+          )
+        })()}
+
         {/* Signature — amber/gold, rounded-md, ★ glyph, "Abilità" label.
             Sits above Traits as the headline unique ability. */}
         {signature && (
