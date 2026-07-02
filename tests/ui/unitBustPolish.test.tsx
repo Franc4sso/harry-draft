@@ -17,10 +17,12 @@ it('does not throw on an impact shake (spring + multi-keyframe guard)', () => {
   ).not.toThrow()
 })
 
-it('does NOT render a pill for a buff or debuff effect', () => {
+it('renders a pill for a buff/debuff effect (stat name + magnitude)', () => {
   const buff = { kind: 'buff', statusId: 'atkUp', remaining: 2, stat: 'atk', amount: 10 } as unknown as ActiveEffect
   const { container } = render(<UnitBust unit={unit} hp={100} effects={[buff]} />)
-  expect(container.querySelector('[data-status-kind="buff"]')).toBeNull()
+  const pill = container.querySelector('[data-status-kind="buff"]')
+  expect(pill).not.toBeNull()
+  expect(pill?.textContent).toMatch(/atk/i)
 })
 
 it('DOES render a pill for a control/dot effect', () => {

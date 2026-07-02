@@ -10,10 +10,12 @@ const unit = {
   spell: { id: 's', name: 'Incantesimo', cooldown: 0 },
 } as unknown as ReplayUnit
 
-// Buff/debuff no longer render a status pill — the stat bars (▲/▼ + color) show the
-// change instead. A weaken (debuff) must therefore produce NO pill.
-it('weaken (debuff) does not render a status pill', () => {
+// Buff/debuff now render a status pill (stat name + magnitude) IN ADDITION to the live
+// stat bar, so the player can read the modifier and its duration — e.g. a weaken.
+it('weaken (debuff) renders a status pill with the stat name', () => {
   const eff = { kind: 'debuff', statusId: 'weaken2', remaining: 2, stat: 'atk', amount: 25 } as unknown as ActiveEffect
   const { container } = render(<UnitBust unit={unit} hp={100} effects={[eff]} />)
-  expect(container.querySelector('[data-status-kind="debuff"]')).toBeNull()
+  const pill = container.querySelector('[data-status-kind="debuff"]')
+  expect(pill).not.toBeNull()
+  expect(pill?.textContent).toMatch(/atk/i)
 })

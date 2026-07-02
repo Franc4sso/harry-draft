@@ -118,6 +118,36 @@ function effectCount(e: ActiveEffect): number {
   return e.remaining
 }
 
+type LiveStat = 'atk' | 'def' | 'spd'
+type StatTriple = Record<LiveStat, number>
+
+/** Mirrors the engine's effectiveStats `statModOf` (game/engine/status.ts) for display. */
+function uiStatMod(e: ActiveEffect): { stat: LiveStat; delta: number; pct: boolean } | null {
+  const ok = (s: string): s is LiveStat => s === 'atk' || s === 'def' || s === 'spd'
+  if (e.statusId) {
+    const def = STATUS_BY_ID[e.statusId]
+    if (def?.statMod && ok(def.statMod.stat)) {
+      const sign = def.kind === 'debuff' ? -1 : 1
+      return { stat: def.statMod.stat, delta: sign * def.statMod.amount, pct: def.statMod.pct ?? false }
+    }
+    return null
+  }
+  if ((e.kind === 'buff' || e.kind === 'debuff') && e.stat && e.amount && ok(e.stat)) {
+    return { stat: e.stat, delta: e.kind === 'buff' ? e.amount : -e.amount, pct: false }
+  }
+  return null
+}
+
+/** Effective atk/def/spd for the CURRENT frame — same math as the engine's effectiveStats
+ *  (flat mods first, then pct, floor at 1), so the bars reflect live buffs/debuffs. */
+function liveStats(base: StatTriple, effects: ActiveEffect[]): StatTriple {
+  const s: StatTriple = { ...base }
+  const mods = effects.map(uiStatMod).filter((m): m is { stat: LiveStat; delta: number; pct: boolean } => m !== null)
+  for (const m of mods) if (!m.pct) s[m.stat] = Math.max(1, s[m.stat] + m.delta)
+  for (const m of mods) if (m.pct) s[m.stat] = Math.max(1, Math.round(s[m.stat] * (1 + m.delta / 100)))
+  return s
+}
+
 /**
  * Battle bust: rarity frame + face-cropped portrait + house crest + HP, with an
  * acting (green) / targeted (red) aura, status icons, KO tombstone, and a
@@ -152,6 +182,9 @@ export function UnitBust({
   const aura = acting ? '0 0 22px rgba(124,252,155,0.55)' : targeted ? '0 0 22px rgba(255,107,107,0.6)' : bossAura
   const impact = targeted && !!float
   const isCrit = float?.tone === 'crit'
+  // Live effective stats for THIS frame (reflect active buffs/debuffs) — so the bars
+  // match the damage the unit actually deals/takes now.
+  const live = liveStats({ atk: unit.atk, def: unit.def, spd: unit.spd }, effects)
 
   return (
     <motion.div
@@ -232,9 +265,9 @@ export function UnitBust({
 
       {!compact && (
         <div className="mt-1.5 flex flex-col gap-1">
-          <StatBar label="ATT" value={unit.atk} base={unit.baseAtk} color="bg-rose-400" icon={Sword} />
-          <StatBar label="DIF" value={unit.def} base={unit.baseDef} color="bg-sky-400" icon={Shield} />
-          <StatBar label="VEL" value={unit.spd} base={unit.baseSpd} color="bg-amber-400" icon={Zap} />
+          <StatBar label="ATT" value={live.atk} base={unit.baseAtk} color="bg-rose-400" icon={Sword} />
+          <StatBar label="DIF" value={live.def} base={unit.baseDef} color="bg-sky-400" icon={Shield} />
+          <StatBar label="VEL" value={live.spd} base={unit.baseSpd} color="bg-amber-400" icon={Zap} />
         </div>
       )}
 
@@ -263,10 +296,11 @@ export function UnitBust({
         })()}
       </div>
 
-      {effects.some(e => e.kind !== 'buff' && e.kind !== 'debuff') && (
+      {effects.length > 0 && (
         <div className={cn('absolute top-1 flex flex-wrap gap-0.5', mirrored ? 'left-1' : 'right-1')}>
-          {effects.filter(e => e.kind !== 'buff' && e.kind !== 'debuff').map((e, i) => {
+          {effects.map((e, i) => {
             const Icon = STATUS_ICON[e.kind] ?? Flame
+            const isMod = e.kind === 'buff' || e.kind === 'debuff'
             return (
               <span
                 key={`${e.kind}-${e.statusId ?? 'n'}-${i}`}
@@ -275,7 +309,7 @@ export function UnitBust({
                 className={cn('inline-flex items-center gap-0.5 rounded bg-black/55 px-0.5 text-[9px] font-semibold tabular-nums', STATUS_CLASS[e.kind])}
               >
                 <Icon size={11} aria-hidden />
-                {effectCount(e)}
+                {isMod ? `${e.stat ? STAT_LABEL[e.stat] ?? e.stat : ''}${magnitudeLabel(e)}` : effectCount(e)}
               </span>
             )
           })}
