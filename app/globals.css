@@ -142,3 +142,66 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
   .group:hover > .btn-sheen, .btn-sheen-host:hover > .btn-sheen { animation: none; opacity: 0; }
 }
+
+/* ==== Sala Comune materials (Slay-the-Spire look) ==== */
+:root {
+  --ink: #1a1410;
+  --leather: #241c15;
+  --gold-1: #f6e6a8;
+  --gold-2: #caa24a;
+  --gold-3: #8a6420;
+  --arcane: #7c5cff;
+  --crimson: #a12a2a;
+}
+/* Thick painted double-gold frame. Wrap content in a solid-dark child so text stays legible. */
+.frame-thick {
+  position: relative;
+  border-radius: 14px;
+  padding: 3px;
+  background:
+    linear-gradient(160deg, var(--gold-1) 0%, var(--gold-2) 42%, var(--gold-3) 100%);
+  box-shadow:
+    0 2px 0 rgba(255,255,255,0.18) inset,
+    0 18px 44px -18px rgba(0,0,0,0.85),
+    0 0 22px -6px rgba(202,162,74,0.35);
+}
+.frame-thick > .frame-inner {
+  position: relative;
+  border-radius: 11px;
+  background:
+    radial-gradient(120% 90% at 50% 0%, rgba(255,255,255,0.04), transparent 55%),
+    var(--leather);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.6) inset, 0 10px 30px -16px rgba(0,0,0,0.9) inset;
+  overflow: hidden;
+}
+/* Parchment ambience — dim, textural, sits BEHIND content (never behind live text). */
+.parchment {
+  background-color: #2a2016;
+  background-image:
+    radial-gradient(140% 120% at 50% -10%, rgba(90,66,36,0.35), transparent 60%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='0.35'/%3E%3C/svg%3E");
+  background-blend-mode: overlay;
+}
+.emboss { text-shadow: 0 1px 0 rgba(0,0,0,0.7), 0 -1px 0 rgba(255,255,255,0.06); }
+/* Round wax-seal surface for CTAs / map nodes. */
+.seal {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255,255,255,0.18), transparent 45%),
+    linear-gradient(180deg, var(--gold-1) 0%, var(--gold-2) 52%, var(--gold-3) 100%);
+  box-shadow:
+    0 2px 0 rgba(255,255,255,0.35) inset,
+    0 -6px 14px -6px rgba(0,0,0,0.5) inset,
+    0 12px 28px -10px rgba(0,0,0,0.8),
+    0 0 18px -4px rgba(202,162,74,0.5);
+}
+@keyframes foilSweep { from { background-position: -180% 0; } to { background-position: 280% 0; } }
+@keyframes dividerDraw { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes dividerNode { 0% { left: 8%; opacity: 0; } 15% { opacity: 1; } 85% { opacity: 1; } 100% { left: 92%; opacity: 0; } }
+@keyframes warmDrift {
+  0% { transform: translate3d(-3%, 0, 0) scale(1); }
+  50% { transform: translate3d(3%, -2%, 0) scale(1.06); }
+  100% { transform: translate3d(-3%, 0, 0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .frame-thick, .seal { }
+}
