@@ -1,10 +1,14 @@
 import type { ActionGate, ActiveEffect, BattleUnit, LogEntry, Stat, Stats } from '@/types'
 import { STATUS_BY_ID } from '@/data/statuses'
+import { MAX_STAT_STACKS } from '@/data/constants'
 
 /** Shared cap on cumulative stat buff/debuff instances (per unit, per stat) — applies to
  *  both the statusId path (applyStatus, via StatusDef.maxStacks) and the inline-effect
- *  path (applyInlineEffect) so neither can stack permanent stat mods without limit. */
-export const MAX_STAT_STACKS = 3
+ *  path (applyInlineEffect) so neither can stack permanent stat mods without limit.
+ *  Defined in data/constants.ts (data/ can't import game/engine/, and data/statuses.ts
+ *  needs the same constant for its StatusDef.maxStacks literals); re-exported here since
+ *  this is where engine code has historically imported it from. */
+export { MAX_STAT_STACKS }
 
 /** statMod for an active effect: prefer its StatusDef, fall back to legacy inline fields. */
 function statModOf(e: ActiveEffect): { stat: Stat; delta: number; pct: boolean } | null {

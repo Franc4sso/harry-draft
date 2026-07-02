@@ -1,5 +1,14 @@
 import type { Tier, RelicRarity } from '@/types'
 
+/** Shared cap on cumulative stat buff/debuff instances (per unit, per stat). Stat
+ *  buffs/debuffs are permanent (never expire — see game/engine/status.ts tickStatuses),
+ *  so both places that can compound them must agree on one ceiling:
+ *   - the statusId path (data/statuses.ts StatusDef.maxStacks, e.g. atkUp/weaken2/expose1)
+ *   - the inline-effect path (game/engine/status.ts applyInlineEffect)
+ *  Lives in data/ (not game/engine/) because data/statuses.ts needs it and data/ must not
+ *  import from game/engine/ (dependency direction is game/engine → data, never reverse). */
+export const MAX_STAT_STACKS = 3
+
 export const BALANCE = {
   combat: {
     turnCap: 100,

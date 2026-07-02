@@ -1,5 +1,12 @@
 import type { Trait } from '@/types'
 
+// NOTE on `duration` fields below: statuses are either control/dot/regen/shield (kind
+// 'stun'|'freeze'|'silence'|'disarm'|'dot'|'regen'|'shield') — these DO expire, and a
+// `duration` is live — or stat buff/debuff (kind 'buff'|'debuff', e.g. atkUp/weaken2/
+// expose2, or the inline `{ kind: 'buff', ... }` effect) — these are PERMANENT by design
+// (game/engine/status.ts tickStatuses never decrements a buff/debuff's `remaining`), so no
+// `duration` is passed for those effects below (there is nothing to tune).
+
 const EXECUTE_THRESHOLD = 0.3
 const EXECUTE_MULT = 1.5
 const FURY_MAX_BONUS = 0.6     // up to +60% at 1 HP
@@ -14,18 +21,12 @@ const SILENCE_DURATION = 2
 const DISARM_DURATION = 2
 
 const ATTRITION_CHANCE = 0.4
-const ATTRITION_DURATION = 2
-
-const FEROCITY_DURATION = 2
 
 const REGEN_DURATION = 3
 const ANTICIPATE_SPD = 10
-const ANTICIPATE_DURATION = 1
 
 const CRESCENDO_ATK = 6
-const CRESCENDO_DURATION = 3
 const VENDETTA_ATK = 30
-const VENDETTA_DURATION = 3
 
 export const TRAITS: Trait[] = [
   {
@@ -114,7 +115,7 @@ export const TRAITS: Trait[] = [
     epithet: { m: 'lo Sfiancante', f: 'la Sfiancante' },
     trigger: {
       kind: 'reactive', hook: 'onHit', owner: 'actor',
-      effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'weaken2', chance: ATTRITION_CHANCE, duration: ATTRITION_DURATION }],
+      effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'weaken2', chance: ATTRITION_CHANCE }],
     },
   },
   {
@@ -123,7 +124,7 @@ export const TRAITS: Trait[] = [
     epithet: { m: 'il Feroce', f: 'la Feroce' },
     trigger: {
       kind: 'reactive', hook: 'onHit', owner: 'actor',
-      effects: () => [{ kind: 'applyStatus', target: 'self', statusId: 'atkUp', duration: FEROCITY_DURATION }],
+      effects: () => [{ kind: 'applyStatus', target: 'self', statusId: 'atkUp' }],
     },
   },
   {
@@ -141,7 +142,7 @@ export const TRAITS: Trait[] = [
     epithet: { m: 'il Fulmineo', f: 'la Fulminea' },
     trigger: {
       kind: 'reactive', hook: 'onTurnStart', owner: 'actor',
-      effects: () => [{ kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'spd', amount: ANTICIPATE_SPD, duration: ANTICIPATE_DURATION } }],
+      effects: () => [{ kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'spd', amount: ANTICIPATE_SPD } }],
     },
   },
   {
@@ -150,7 +151,7 @@ export const TRAITS: Trait[] = [
     epithet: { m: "l'Inarrestabile", f: "l'Inarrestabile" },
     trigger: {
       kind: 'reactive', hook: 'onTurnStart', owner: 'actor',
-      effects: () => [{ kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'atk', amount: CRESCENDO_ATK, duration: CRESCENDO_DURATION } }],
+      effects: () => [{ kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'atk', amount: CRESCENDO_ATK } }],
     },
   },
   {
@@ -159,7 +160,7 @@ export const TRAITS: Trait[] = [
     epithet: { m: 'il Vendicatore', f: 'la Vendicatrice' },
     trigger: {
       kind: 'reactive', hook: 'onAllyDeath', owner: 'actor',
-      effects: () => [{ kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'atk', amount: VENDETTA_ATK, duration: VENDETTA_DURATION } }],
+      effects: () => [{ kind: 'applyStatus', target: 'self', effect: { kind: 'buff', stat: 'atk', amount: VENDETTA_ATK } }],
     },
   },
   {
@@ -168,7 +169,7 @@ export const TRAITS: Trait[] = [
     epithet: { m: 'il Devastatore', f: 'la Devastatrice' },
     trigger: {
       kind: 'reactive', hook: 'onHit', owner: 'actor',
-      effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'expose2', chance: 0.5, duration: 2 }],
+      effects: () => [{ kind: 'applyStatus', target: 'enemy', statusId: 'expose2', chance: 0.5 }],
     },
   },
   {
