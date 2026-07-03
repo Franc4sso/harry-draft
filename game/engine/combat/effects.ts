@@ -37,6 +37,10 @@ function sourceId(u: BattleUnit): string { return `${u.side}:${u.wizard.id}` }
 export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: EffectSpec) => EffectResult> = {
   damage: (ctx, eff) => {
     if (eff.kind !== 'damage') return {}
+    // NO FRIENDLY FIRE (structural guarantee): a damage effect can never strike a same-side
+    // unit, whatever target the selection layer passed. Self-inflicted damage (recoil/fatigue)
+    // runs through dedicated paths, not this handler.
+    if (ctx.target.side === ctx.actor.side) return { value: 0 }
     if (eff.canDodge && !ctx.actor.alwaysHit && dodged(ctx.rng, ctx.actor, ctx.target)) {
       ctx.flags.push('dodge'); return { value: 0, dodged: true }
     }
@@ -114,6 +118,11 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
     // Cura-type spells, which already routes to the most-wounded ally). 'enemy' keeps using
     // ctx.target directly (the resolved enemy). 'self' always means the caster.
     const unit = eff.target === 'self' ? ctx.actor : ctx.target
+    // NO FRIENDLY FIRE (structural guarantee): a harmful 'enemy' status must land on an
+    // opponent; a friendly 'ally' status must stay on our side. Never cross the line even
+    // if the selection layer handed us the wrong unit.
+    if (eff.target === 'enemy' && unit.side === ctx.actor.side) return {}
+    if (eff.target === 'ally' && unit.side !== ctx.actor.side) return {}
     if (eff.statusId) {
       const maxStacks = eff.statusId === 'veleno' && ctx.actor.velenoUncapped ? Infinity : undefined
       const def = STATUS_BY_ID[eff.statusId]
