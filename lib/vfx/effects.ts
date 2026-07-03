@@ -444,6 +444,43 @@ export function fxSnake(ctx: FxCtx, at: number, x: number, y: number, color: Vfx
   fxImpactSpray(ctx, at + 0.1, x + 24, y, color.spark, 8, Math.PI / 2, 1.4, 40)
 }
 
+/** A coiling fire-serpent that lunges through the target — Fiendfyre (Ardemonio) set-piece. */
+export function fxFiendfyre(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor, dir: number): void {
+  const { stage, tl } = ctx
+  const d = dir >= 0 ? 1 : -1
+  // Eruption: cursed-fire flash + shockwave as the beast bursts out.
+  fxFlash(ctx, at, x, y, color, 46)
+  fxShockwave(ctx, at, x, y, color, 3, 3)
+
+  // The beast: a snaking spine with a fanged head, lunging in along the attack direction.
+  const beast = new Container()
+  const spine = new Graphics()
+    .moveTo(-52, 12).bezierCurveTo(-26, -24, -2, 24, 20, -8).bezierCurveTo(34, -24, 46, -6, 58, -16)
+    .stroke({ width: 11, color: color.glow, alpha: 0.9 })
+  const core = new Graphics()
+    .moveTo(-52, 12).bezierCurveTo(-26, -24, -2, 24, 20, -8).bezierCurveTo(34, -24, 46, -6, 58, -16)
+    .stroke({ width: 4.5, color: color.core, alpha: 0.95 })
+  core.blendMode = 'add'
+  const head = new Graphics().poly([48, -24, 72, -16, 48, -8]).fill({ color: color.core, alpha: 0.95 })
+  const eye = new Graphics().circle(56, -16, 2.6).fill({ color: 0xfff2d8 })
+  eye.blendMode = 'add'
+  beast.addChild(spine, core, head, eye)
+  beast.position.set(x - d * 44, y)
+  beast.scale.set(d, 1)
+  beast.alpha = 0
+  beast.filters = [glow(color.glow, 20, 2.8)]
+  stage.fx.addChild(beast)
+  tl.to(beast, { alpha: 1, duration: 0.1 }, at)
+  tl.to(beast.position, { x, duration: 0.24, ease: 'power3.out' }, at)
+  tl.to(beast.scale, { x: d * 1.18, y: 1.18, duration: 0.24, ease: 'power2.out' }, at)
+  tl.to(beast, { alpha: 0, duration: 0.36, ease: 'power2.in', onComplete: () => beast.destroy() }, at + 0.28)
+
+  // Fire trailing the coil + embers thrown on impact.
+  fxFlames(ctx, at + 0.06, x - d * 22, y + 6, color)
+  fxFlames(ctx, at + 0.14, x + d * 14, y - 8, color)
+  fxImpactSpray(ctx, at + 0.16, x, y, color.spark, 16, d > 0 ? 0 : Math.PI, 1.8, 64)
+}
+
 /** Rotating disorienting spiral — Confundo / Silencio / Imperio. */
 export function fxSwirl(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor): void {
   const { stage, tl } = ctx

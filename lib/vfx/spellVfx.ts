@@ -6,7 +6,7 @@ import type { FxCtx } from './effects'
 
 /** The impact/self signature an effect resolves to. */
 export type Flourish =
-  | 'burst' | 'explosion' | 'flames' | 'slash' | 'skull' | 'ice' | 'snake'
+  | 'burst' | 'explosion' | 'flames' | 'fiendfyre' | 'slash' | 'skull' | 'ice' | 'snake'
   | 'lightning' | 'stun' | 'lift' | 'swirl' | 'patronus' | 'hex' | 'buff' | 'heal'
   | 'disarm' | 'volley' | 'shove' | 'stone' | 'confusion' | 'silence' | 'dance'
   | 'mind' | 'revive' | 'bubbles' | 'bandage' | 'wall' | 'absorb' | 'rally' | 'wind'
@@ -66,7 +66,7 @@ const SPELL_VFX: Record<string, SpellVfxConfig> = {
   'confringo': { kind: 'projectile', color: C.fire, motion: 'lob', impact: 'explosion', tier: 2 },
   'flipendo': { kind: 'projectile', color: C.concussive, motion: 'bolt', sigil: false, impact: 'shove' },
   'oppugno': { kind: 'projectile', color: C.gold, motion: 'bolt', sigil: false, impact: 'volley' },
-  'ardemonio': { kind: 'projectile', color: C.cursedFire, motion: 'orb', impact: 'explosion', tier: 3, screen: 0xff6a2a },
+  'ardemonio': { kind: 'projectile', color: C.cursedFire, motion: 'orb', impact: 'fiendfyre', tier: 3, screen: 0xff6a2a },
   'serpensortia': { kind: 'projectile', color: C.venom, motion: 'lob', impact: 'snake' },
 
   // ── Controllo ──
@@ -128,6 +128,7 @@ export function runFlourish(ctx: FxCtx, key: Flourish, at: number, x: number, y:
     case 'ice': FX.fxIceShards(ctx, at, x, y, color); break
     case 'snake': FX.fxSnake(ctx, at, x, y, color); break
     case 'flames': FX.fxFlash(ctx, at, x, y, color, 34); FX.fxShockwave(ctx, at, x, y, color, 2.6, 3); FX.fxFlames(ctx, at, x, y, color); break
+    case 'fiendfyre': FX.fxFiendfyre(ctx, at, x, y, color, dir); break
     case 'lightning': FX.fxFlash(ctx, at, x, y, color, 36); FX.fxLightning(ctx, at, x, y, color); FX.fxShockwave(ctx, at, x, y, color, 2.6, 2); break
     case 'stun': FX.fxFlash(ctx, at, x, y, color, 34); FX.fxStunRings(ctx, at, x, y, color); FX.fxShockwave(ctx, at, x, y, color, 2.4, 2); break
     case 'lift': FX.fxLift(ctx, at, x, y, color); break
