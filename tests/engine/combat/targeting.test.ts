@@ -39,6 +39,23 @@ describe('threat targeting', () => {
     expect(selectTarget(me, [me], enemies)?.wizard.id).toBe('wall')
   })
 
+  it('a Supporto casting an OFFENSIVE attack spell aims at an enemy, never an ally (Serpensortia-on-ally bug)', () => {
+    const me = u('narcissa', 'Supporto', 'left')
+    const woundedAlly = u('cedric', 'Attaccante', 'left'); woundedAlly.hp = 10
+    const enemy = u('foe', 'Attaccante', 'right')
+    const t = selectTarget(me, [me, woundedAlly], [enemy], SPELL_BY_ID['serpensortia']!)
+    expect(t?.side).toBe('right')
+    expect(t?.wizard.id).toBe('foe')
+  })
+
+  it('a Supporto casting a Controllo spell aims at an enemy, never an ally', () => {
+    const me = u('sup', 'Supporto', 'left')
+    const woundedAlly = u('ally', 'Attaccante', 'left'); woundedAlly.hp = 10
+    const enemy = u('foe', 'Attaccante', 'right')
+    const t = selectTarget(me, [me, woundedAlly], [enemy], SPELL_BY_ID['silencio']!)
+    expect(t?.side).toBe('right')
+  })
+
   it('Supporto heals the most wounded ally', () => {
     const me = u('sup', 'Supporto', 'left')
     const hurt = u('hurt', 'Tank', 'left'); hurt.hp = 10

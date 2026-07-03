@@ -106,6 +106,12 @@ export function selectTarget(
 
   switch (actor.wizard.role) {
     case 'Supporto':
+      // A Supporto equipped with an OFFENSIVE spell (Attacco/Controllo) must aim at an ENEMY.
+      // Its role default is to protect an ally, which would otherwise turn the attack — or a
+      // control effect — onto its own team (e.g. Narcissa casting Serpensortia on a teammate).
+      if (spell && (spell.type === 'Attacco' || spell.type === 'Controllo')) {
+        return spell.type === 'Controllo' ? backlineTarget(enemyPool) : highestThreat(enemyPool)
+      }
       return carryToProtect(liveAllies) ?? mostWounded(liveAllies) ?? lowestHp(enemyPool)
     case 'Controllo':
       return backlineTarget(enemyPool)
