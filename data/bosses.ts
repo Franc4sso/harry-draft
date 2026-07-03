@@ -99,7 +99,11 @@ export const MURO: BossDef = {
  *  since area-1/Bellatrix was confirmed NOT the live bottleneck in the final Task 25 sweep
  *  (flat 0.1000 plateau when perturbing hpMult further at unitCount=2) — the floor was
  *  ultimately cleared via Voldemort's own budget/hpMult instead. See
- *  tests/engine/campaignBalanceB.test.ts header for the full Task 25 table. */
+ *  tests/engine/campaignBalanceB.test.ts header for the full Task 25 table.
+ *  RESTORED 2→3 (2026-07-03, USER DECISION): a boss fighting with only 2 units read as
+ *  wrong ("perché Bellatrix so due?"). Every boss now fields ≥3 units — this is a hard
+ *  design rule, also enforced structurally by generateBossTeam's Math.max(3, …) floor.
+ *  This is a deliberate difficulty increase that overrides the Task-25 balance choice. */
 export const BELLATRIX: BossDef = {
   id: 'bellatrix_boss',
   name: 'Bellatrix Lestrange',
@@ -108,5 +112,5 @@ export const BELLATRIX: BossDef = {
   bossWizardId: 'bellatrix',
   ignoresTaunt: true,
   pinnedArea: 1,
-  unitCount: 2,
+  unitCount: 3,
 }

@@ -4,20 +4,20 @@ import { BALANCE } from '@/data/constants'
 
 describe('enemyLevelFor', () => {
   it('scales the displayed level by area and node kind', () => {
-    // Lowered 2026-07-02 (urgent balance fix, menace-removal follow-up): bases
-    // 2/4/6→1/2/3, perArea 2→1 — see data/constants.ts campaignB for the full
-    // sweep/rationale. normal → 1,2,3 · elite → 2,3,4 · area-boss → 3,4,5 (clamped to levelMax)
-    expect(enemyLevelFor(0, 'normal', false)).toBe(1)
-    expect(enemyLevelFor(1, 'normal', false)).toBe(2)
-    expect(enemyLevelFor(2, 'normal', false)).toBe(3)
+    // STEEPENED 2026-07-03 (USER DECISION, "hard mode"): enemy levels now TRACK the
+    // player's ramp (~lv8 by area 2). bases 2/4/6, perArea 2 — see data/constants.ts.
+    // normal → 2,4,6 · elite → 4,6,8 · area-boss → 6,8,10 (clamped to levelMax=10)
+    expect(enemyLevelFor(0, 'normal', false)).toBe(2)
+    expect(enemyLevelFor(1, 'normal', false)).toBe(4)
+    expect(enemyLevelFor(2, 'normal', false)).toBe(6)
 
-    expect(enemyLevelFor(0, 'elite', false)).toBe(2)
-    expect(enemyLevelFor(1, 'elite', false)).toBe(3)
-    expect(enemyLevelFor(2, 'elite', false)).toBe(4)
+    expect(enemyLevelFor(0, 'elite', false)).toBe(4)
+    expect(enemyLevelFor(1, 'elite', false)).toBe(6)
+    expect(enemyLevelFor(2, 'elite', false)).toBe(8)
 
-    expect(enemyLevelFor(0, 'boss', false)).toBe(3)
-    expect(enemyLevelFor(1, 'boss', false)).toBe(4)
-    expect(enemyLevelFor(2, 'boss', false)).toBe(5)
+    expect(enemyLevelFor(0, 'boss', false)).toBe(6)
+    expect(enemyLevelFor(1, 'boss', false)).toBe(8)
+    expect(enemyLevelFor(2, 'boss', false)).toBe(10)
   })
 
   it('elites and bosses outrank normals in the same area', () => {

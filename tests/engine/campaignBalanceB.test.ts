@@ -383,7 +383,15 @@ describe('campaign balance (new loop)', () => {
   console.log(`[campaignBalanceB overall] winRate=${winRate.toFixed(4)}`)
 
   it('is winnable but not trivial for a near-optimal player', () => {
-    expect(winRate).toBeGreaterThan(0.15)
+    // Floor lowered 0.15→0.07 (2026-07-03, USER DECISION, "hard mode"): the user's roster
+    // ramps to ~lv8 by area 2, so lv3/4/5 elites felt absurdly weak. Enemy levels were
+    // steepened to TRACK the player: elite 4/6/8, boss 6/8/10 (area-2 elite now matches a
+    // lv8 team; area bosses reach the cap). Measured near-optimal-bot winRate = 0.10.
+    // This assertion measures a near-OPTIMAL BOT; a skilled human wins far more, so ~0.10
+    // for the bot is a hard-but-fair setting for the player. The floor is kept (not
+    // removed) as a winnability tripwire: below ~0.07 the game is likely genuinely
+    // unwinnable and must be revisited rather than pushed further.
+    expect(winRate).toBeGreaterThan(0.07)
     expect(winRate).toBeLessThan(0.45)
   })
   it('is deterministic (same seeds → same outcomes)', () => {

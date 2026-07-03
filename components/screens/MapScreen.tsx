@@ -29,6 +29,9 @@ const ACCENT: Record<RunNodeType, string> = {
 
 // Layout grid: each floor is a row (entry at the bottom, boss at the top).
 const COL = 168, ROW = 148, NODE = 60, BOSS = 80
+// Headroom above the top floor so the boss node's above-node telegraph label
+// (`bottom-full`, always visible) doesn't overflow into the header title.
+const TOP_PAD = 44
 
 export function MapScreen({
   map, currentNodeId, reachableIds, onChoose, area, areasTotal,
@@ -56,13 +59,13 @@ export function MapScreen({
   const floors = Array.from({ length: maxFloor + 1 }, (_, f) => map.filter(n => floorOf(n.id) === f))
   const maxW = Math.max(1, ...floors.map(fl => fl.length))
   const width = maxW * COL
-  const height = (maxFloor + 1) * ROW
+  const height = (maxFloor + 1) * ROW + TOP_PAD
 
   // Node centres: x spread evenly across the floor, y by floor (floor 0 at the bottom).
   const pos = new Map<string, { x: number; y: number }>()
   floors.forEach((nodes, f) => {
     nodes.forEach((n, i) => {
-      pos.set(n.id, { x: (width * (i + 1)) / (nodes.length + 1), y: (maxFloor - f) * ROW + ROW / 2 })
+      pos.set(n.id, { x: (width * (i + 1)) / (nodes.length + 1), y: (maxFloor - f) * ROW + ROW / 2 + TOP_PAD })
     })
   })
 

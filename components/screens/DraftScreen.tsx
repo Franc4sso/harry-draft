@@ -98,7 +98,7 @@ export function DraftScreen({
 
         {/* Synergy tracker: right rail on desktop, stacks below candidates on mobile */}
         <aside>
-          <Frame variant="panel" className="sticky top-28" innerClassName="relative p-3">
+          <Frame variant="panel" className="sticky top-28 max-h-[calc(100dvh-8rem)] overflow-y-auto" innerClassName="relative p-3">
             <Parchment className="absolute inset-0" />
             <div className="relative">
               <SynergyTracker rows={rows} candidateName={considered ? displayName(considered) : undefined} />

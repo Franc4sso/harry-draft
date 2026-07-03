@@ -132,7 +132,13 @@ defenseK: 0.5,
     // the floor (vs the old ~1-seed razor's edge), veleno counter intact (0.300>0.208), full
     // 979-test suite green. Both levers (this + the end-of-area heal) are now floor-sensitive.
     normalEnemyCount: 2,
-    enemyCountByArea: [2, 3, 3] as readonly number[],
+    // RAISED 2026-07-03 (USER DECISION, "livelli e quantità elite/boss troppo bassi"):
+    // one extra elite in the final area, [2,3,3]→[2,3,4]. Paired with the elite/boss
+    // level bump below, this pushes campaignBalanceB's near-optimal-bot winRate to
+    // ~0.125 — a deliberate difficulty increase; the test floor was lowered 0.15→0.10
+    // to match (see tests/engine/campaignBalanceB.test.ts). Adding a 3rd area-0 elite or
+    // a 2nd extra elite drops it further (measured 0.108-0.133) — do NOT stack blindly.
+    enemyCountByArea: [2, 3, 4] as readonly number[],
     // --- Displayed enemy LEVEL by (area, kind) ---
     // Honest, area-scaled threat tiers so an Elite/Boss reads as a real level (no
     // more "Lv.1" elites). level = base + perArea*area, clamped to leveling.levelMax.
@@ -178,9 +184,16 @@ defenseK: 0.5,
     // floors are met — see tests/engine/campaignBalanceB.test.ts's header for the full
     // calibration history and the follow-up recommendation (raise starting roster size or
     // area-0 enemy unit count, or guarantee an Infermeria between every area-0 fight).
-    normalLevelBase: 1, normalLevelPerArea: 1,
-    eliteLevelBase: 2, eliteLevelPerArea: 1,
-    bossLevelBase: 3, bossLevelPerArea: 1,
+    // STEEPENED 2026-07-03 (USER DECISION, "hard mode"): the player's roster ramps to
+    // ~lv8 by area 2 (levelsPerBattle/Elite/Boss below), so the old lv3/4/5 elites read
+    // as absurdly weak. Enemy levels now TRACK that ramp: bases 2/4/6, perArea 2 →
+    // normal 2/4/6, elite 4/6/8, area-boss 6/8/10 (area-2 elite matches a lv8 team; area
+    // bosses reach the cap; final boss already levelMax). This is a large deliberate
+    // difficulty increase — near-optimal-bot winRate measured 0.10; the campaignBalanceB
+    // floor was lowered to 0.07 to match (see that test's header).
+    normalLevelBase: 2, normalLevelPerArea: 2,
+    eliteLevelBase: 4, eliteLevelPerArea: 2,
+    bossLevelBase: 6, bossLevelPerArea: 2,
     // --- Enemy budget (stat-selection) by global depth d = area*floorsPerArea + floor ---
     //   normal = baseBudget + d*budgetStep, ×eliteBudgetMult on elite, ×bossBudgetMult on area boss.
     // Re-tuned 2026-07-01 (menace removal, urgent balance fix): 300/70/1.15/1.3 was

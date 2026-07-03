@@ -1,9 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { generateEnemyTeam, generateBossTeam, budgetForStage, powerOf } from '@/game/engine/combat/teamGen'
+import { generateEnemyTeam, generateBossTeam, themedEnemyTeam, budgetForStage, powerOf } from '@/game/engine/combat/teamGen'
 import { createRng } from '@/game/engine/rng'
 import { BALANCE } from '@/data/constants'
-import { BOSSES, MURO } from '@/data/bosses'
+import { BOSSES, MURO, BELLATRIX } from '@/data/bosses'
 import type { BossDef } from '@/data/bosses'
+import { detectSynergies } from '@/game/engine/synergy'
+import { draftWizard, spellIsOffensive } from '@/game/engine/statRoll'
+import { WIZARD_BY_ID } from '@/data/wizards'
+import { SPELL_BY_ID } from '@/data/spells'
 
 describe('teamGen', () => {
   it('builds a 5-wizard enemy team deterministically', () => {
@@ -51,5 +55,46 @@ describe('teamGen', () => {
     const team = generateBossTeam(createRng(1), noOverrideBoss)
     expect(team).toHaveLength(BALANCE.draft.teamSize)
     expect(BALANCE.draft.teamSize).toBe(5)
+  })
+})
+
+// Design rules the user pinned (2026-07-03): every boss fields ≥3 units, and every
+// elite pack carries an active synergy. Locked in so a future balance sweep can't
+// silently trim a boss back to 2 or leave an elite themeless.
+describe('boss/elite pack rules', () => {
+  it('Bellatrix (and every boss) fields at least 3 units', () => {
+    const team = generateBossTeam(createRng(3), BELLATRIX)
+    expect(team.length).toBeGreaterThanOrEqual(3)
+  })
+  it('enforces the ≥3 floor even when a boss.unitCount is set to 2', () => {
+    const tiny: BossDef = { id: 't', name: 'T', budget: 600, hpMult: 1, unitCount: 2 }
+    expect(generateBossTeam(createRng(1), tiny)).toHaveLength(3)
+  })
+  it('elite packs always field at least one active synergy (all areas, many seeds)', () => {
+    const cb = BALANCE.campaignB
+    for (let area = 0; area < BALANCE.map.areas; area++) {
+      const count = cb.enemyCountByArea[area] ?? cb.enemyCountByArea[cb.enemyCountByArea.length - 1]!
+      for (let s = 0; s < 40; s++) {
+        const { team } = themedEnemyTeam(createRng(`elite-${area}-${s}`), {
+          area, kind: 'elite', budget: 800, count, excludeThemes: [],
+        })
+        expect(detectSynergies(team).length, `area ${area} seed ${s}`).toBeGreaterThan(0)
+      }
+    }
+  })
+})
+
+describe('enemy offense bias', () => {
+  it('preferOffense always equips a damaging spell when the pool has one', () => {
+    const harry = WIZARD_BY_ID['harry']!
+    // Precondition: harry's pool actually mixes offensive and non-offensive spells,
+    // so the bias is doing real work (not passing trivially).
+    const offensiveInPool = harry.spellPool.filter(id => spellIsOffensive(SPELL_BY_ID[id]))
+    expect(offensiveInPool.length).toBeGreaterThan(0)
+    expect(offensiveInPool.length).toBeLessThan(harry.spellPool.length)
+    for (let s = 0; s < 25; s++) {
+      const dw = draftWizard(createRng(`o-${s}`), harry, false, true)
+      expect(spellIsOffensive(dw.spell), `seed ${s} → ${dw.spell.id}`).toBe(true)
+    }
   })
 })

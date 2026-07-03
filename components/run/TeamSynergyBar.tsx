@@ -1,6 +1,6 @@
 'use client'
-import { useState } from 'react'
-import type { DraftedWizard, ActiveSynergy } from '@/types'
+import { useState, type ReactNode } from 'react'
+import type { DraftedWizard, ActiveSynergy, Synergy, House, Role } from '@/types'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { Chip } from '@/components/ui/Chip'
 import { Tooltip } from '@/components/ui/Tooltip'
@@ -10,6 +10,65 @@ import { displayName } from '@/lib/displayName'
 import { synergyBonusText, spellTypeChip } from '@/lib/glossary'
 import { roleTooltip } from '@/lib/roleInfo'
 import { SPELL_BY_ID } from '@/data/spells'
+
+/** Role accent colours mirror the spell-type palette (Attaccante↔Attacco, etc.),
+ *  so a role synergy reads with the same colour language as the wizard's kit. */
+const ROLE_COLOR: Record<Role, string> = {
+  Attaccante: '#FF8A7A', Tank: '#7DB7FF', Supporto: '#7CFC9B', Controllo: '#C98BFF',
+}
+const GOLD = '#caa24a'
+
+/** The accent colour + emblem for a synergy, encoding WHAT bonds the group:
+ *  a House shows its crest colour + initial, a Role shows its icon, a group/origin
+ *  (Golden Trio, Mangiamorte, Tossicità…) falls back to the arcane gold star. */
+function synergyVisual(syn: Synergy): { accent: string; marker: ReactNode } {
+  const req = syn.requires
+  if (syn.kind === 'house' && req?.house) {
+    const h = req.house as House
+    const accent = houseTheme(h).color
+    return { accent, marker: <span className="font-display text-[11px] font-bold leading-none">{h[0]}</span> }
+  }
+  if (syn.kind === 'role' && req?.role) {
+    const r = req.role as Role
+    return { accent: ROLE_COLOR[r], marker: <RoleIcon role={r} size={12} /> }
+  }
+  return { accent: GOLD, marker: <span aria-hidden className="text-[11px] leading-none">✦</span> }
+}
+
+/** One active synergy as a full-width row: accent emblem · name · member count,
+ *  with the bonus on its own line so nothing competes for space (the old wrapped
+ *  pills crushed the name and bonus together and were unreadable in the sidebar). */
+function SynergyRow({ s }: { s: ActiveSynergy }) {
+  const { accent, marker } = synergyVisual(s.synergy)
+  const name = s.synergy.name.replace(/^\d+\s+/, '')
+  const count = s.memberIds?.length ?? s.synergy.requires?.count ?? 0
+  const bonus = synergyBonusText(s.synergy).join(' · ')
+  return (
+    <li
+      data-synergy={s.synergy.id}
+      className="flex items-start gap-2.5 rounded-lg border border-white/10 bg-black/25 px-2 py-1.5"
+    >
+      <span
+        aria-hidden
+        className="mt-px grid h-6 w-6 shrink-0 place-items-center rounded-md border"
+        style={{ color: accent, borderColor: `${accent}66`, background: `${accent}1f` }}
+      >
+        {marker}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-baseline gap-1.5">
+          <span className="truncate text-[13px] font-semibold leading-tight" style={{ color: '#f3e6c4' }}>{name}</span>
+          {count > 0 && (
+            <span className="shrink-0 rounded-full bg-white/10 px-1.5 text-[10px] font-semibold text-[#e8dcb6]" title={`${count} maghi in squadra`}>
+              ×{count}
+            </span>
+          )}
+        </div>
+        {bonus && <p className="mt-0.5 text-[11px] leading-snug text-[#c9bfa0]">{bonus}</p>}
+      </div>
+    </li>
+  )
+}
 
 function SynergyChip({ s }: { s: ActiveSynergy }) {
   const bonus = synergyBonusText(s.synergy).join(' · ')
@@ -64,7 +123,7 @@ function MemberRow({
         <span className="h-11 w-11 shrink-0 overflow-hidden rounded-lg">
           <PortraitImage id={m.wizard.id} house={m.wizard.house} alt={m.wizard.name} variant="bust" />
         </span>
-        <span className="min-w-0 flex-1 truncate text-sm font-semibold text-white/90">{displayName(m)}</span>
+        <span className="min-w-0 flex-1 text-sm font-semibold leading-tight text-white/90">{displayName(m)}</span>
         {m.wizard.role && (
           <Tooltip
             triggerClassName="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-white/25 bg-black/40"
@@ -147,14 +206,23 @@ export function TeamSynergyBar({
           {team.map((m) => <MemberRow key={m.wizard.id} m={m} onSetSpell={onSetSpell} />)}
         </div>
 
-        {synergies.length > 0 && (
-          <div className="flex flex-col gap-1.5 border-t border-white/10 pt-2.5">
+        <div className="flex flex-col gap-1.5 border-t border-white/10 pt-2.5">
+          <div className="flex items-center justify-between">
             <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Sinergie attive</span>
-            <div className="flex flex-wrap gap-1.5">
-              {synergies.map((s) => <SynergyChip key={s.synergy.id} s={s} />)}
-            </div>
+            {synergies.length > 0 && (
+              <span className="rounded-full bg-[#caa24a]/20 px-1.5 text-[10px] font-semibold text-[#e8dcb6]">{synergies.length}</span>
+            )}
           </div>
-        )}
+          {synergies.length > 0 ? (
+            <ul className="flex flex-col gap-1.5">
+              {synergies.map((s) => <SynergyRow key={s.synergy.id} s={s} />)}
+            </ul>
+          ) : (
+            <p className="rounded-lg border border-dashed border-white/10 px-2 py-2 text-[11px] leading-snug text-white/40">
+              Nessuna sinergia attiva. Recluta maghi della stessa Casa o dello stesso ruolo per accendere i bonus.
+            </p>
+          )}
+        </div>
       </div>
     )
   }

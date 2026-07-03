@@ -42,11 +42,11 @@ export function budgetWindow(targetPer: number, count: number): Wizard[] {
   return sorted.slice(start, start + count * 3) as Wizard[]
 }
 
-function pickTowardBudget(rng: Rng, targetPer: number, count: number): DraftedWizard[] {
+function pickTowardBudget(rng: Rng, targetPer: number, count: number, preferOffense = false): DraftedWizard[] {
   const window = budgetWindow(targetPer, count)
   const pool = rng.shuffle(window)
   const out: DraftedWizard[] = []
-  for (const w of pool) out.push(draftWizard(rng, w as Wizard))
+  for (const w of pool) out.push(draftWizard(rng, w as Wizard, false, preferOffense))
   return out.sort((a, b) => powerOf(b) - powerOf(a)).slice(0, count)
 }
 
@@ -56,9 +56,11 @@ export function generateEnemyTeam(rng: Rng, targetBudget: number): DraftedWizard
 }
 
 export function generateBossTeam(rng: Rng, boss: BossDef): DraftedWizard[] {
-  const size = boss.unitCount ?? BALANCE.draft.teamSize
+  // Every boss fights with at least 3 units (hard design rule — a boss squad must
+  // never feel scrawnier than a regular pack). `boss.unitCount` may raise it further.
+  const size = Math.max(3, boss.unitCount ?? BALANCE.draft.teamSize)
   const perUnit = boss.budget / size
-  const team = pickTowardBudget(rng, perUnit, size)
+  const team = pickTowardBudget(rng, perUnit, size, true)
   let leader: DraftedWizard
   if (boss.bossWizardId) {
     const named = WIZARDS.find(w => w.id === boss.bossWizardId)
@@ -67,7 +69,7 @@ export function generateBossTeam(rng: Rng, boss: BossDef): DraftedWizard[] {
     if (idx < 0) {
       // replace the weakest unit with the guaranteed boss
       const weakest = team.reduce((w, d, i) => (powerOf(d) < powerOf(team[w]!) ? i : w), 0)
-      team[weakest] = draftWizard(rng, named as Wizard)
+      team[weakest] = draftWizard(rng, named as Wizard, false, true)
       idx = weakest
     }
     leader = team[idx]!
@@ -109,17 +111,27 @@ export function themedEnemyTeam(rng: Rng, opts: {
   const strength = themeStrengthFor(area, kind)
   const themeRng = rng.fork(1)
 
+  // Elite packs must ALWAYS field an active synergy (design rule: elite = a themed,
+  // coordinated squad). Force ≥2 themed members drawn from a HOUSE or ROLE theme —
+  // those activate at their 2-member tier, unlike tag themes (weasley/order/… need 3).
+  // Regular/boss packs keep the softer, strength-scaled theming.
+  const forceSynergy = kind === 'elite'
+  const eligible = (t: Theme) => !forceSynergy || t.id.startsWith('house:') || t.id.startsWith('role:')
+  const minMembers = forceSynergy ? 2 : 0
+
   // Pick a realizable theme: try themes in turn until one has ≥2 members in the
   // budget window (so the synergy promise is always fulfillable). Fall back to
   // mixed if no theme can be realized (strength 0 or tiny pool at this budget).
   let realized: Theme | null = null
-  if (strength > 0) {
+  if (strength > 0 || forceSynergy) {
     const triedIds: string[] = [...excludeThemes]
-    for (let attempt = 0; attempt < 10; attempt++) {
+    const maxAttempts = forceSynergy ? 24 : 10
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
       const candidate = pickTheme(themeRng, triedIds)
       if (!candidate) break
+      if (!eligible(candidate)) { triedIds.push(candidate.id); continue }
       const candidateThemed = window.filter(w => candidate.matches(w))
-      const candidateWant = Math.min(targetThemeMembers(strength, count), candidateThemed.length)
+      const candidateWant = Math.min(Math.max(minMembers, targetThemeMembers(strength, count)), candidateThemed.length)
       if (candidateWant >= 2) { realized = candidate; break }
       triedIds.push(candidate.id)
     }
@@ -127,7 +139,7 @@ export function themedEnemyTeam(rng: Rng, opts: {
 
   // Members of the window that realize the theme.
   const themed = realized ? window.filter(w => realized!.matches(w)) : []
-  const wantThemed = realized ? Math.min(targetThemeMembers(strength, count), themed.length) : 0
+  const wantThemed = realized ? Math.min(Math.max(minMembers, targetThemeMembers(strength, count)), themed.length) : 0
 
   const chosen: Wizard[] = []
   const used = new Set<string>()
@@ -150,6 +162,8 @@ export function themedEnemyTeam(rng: Rng, opts: {
     rest = rest.filter(x => x.id !== w.id)
   }
 
-  const team = chosen.map(w => draftWizard(drawRng, w))
+  // Enemy packs prefer offensive spells so they actually deal damage (a squad of
+  // passive supports/controllers that never attacks feels toothless).
+  const team = chosen.map(w => draftWizard(drawRng, w, false, true))
   return { team, themeId: realized ? realized.id : null }
 }
