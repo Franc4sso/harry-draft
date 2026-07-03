@@ -11,6 +11,10 @@ import { createRng } from '@/game/engine/rng'
 import { saveRun, loadRun, clearRun } from '@/lib/runStore'
 import { BALANCE } from '@/data/constants'
 import { prepareCombat, combatRng, type ActiveBattleB } from './useRunB.combat'
+import { loadProfile, saveProfile, markSeen } from '@/lib/metaStore'
+import { STARTER_WIZARDS, STARTER_RELICS } from '@/data/unlocks'
+import { setDraftPoolRestriction } from '@/game/engine/draft'
+import { setRelicPoolRestriction } from '@/game/engine/relics'
 
 registerCoreResolvers()
 
@@ -64,6 +68,15 @@ export function useRunB(seed: string): RunBController {
   )
   const [lastFallen, setLastFallen] = useState<string[]>([])
   const runRef = useRef(run); runRef.current = run
+  const profileRef = useRef(loadProfile())
+  // Restrict the player-facing pools to the starter set + whatever the profile has
+  // unlocked so far. Runs synchronously during render, before any offer (draft/
+  // recruit/relic) is computed downstream — mirrors the loadRun() client-read pattern.
+  useMemo(() => {
+    const p = profileRef.current
+    setDraftPoolRestriction([...STARTER_WIZARDS, ...p.unlockedWizards])
+    setRelicPoolRestriction([...STARTER_RELICS, ...p.unlockedRelics])
+  }, [])
 
   const commit = useCallback((next: RunState, v?: RunBView) => {
     runRef.current = next; setRunState(next); saveRun(next)
@@ -72,6 +85,9 @@ export function useRunB(seed: string): RunBController {
 
   const completeDraft = useCallback((picked: DraftedWizard[]) => {
     const next = confirmDraftPicks(runRef.current, picked, createRng(runRef.current.seed))
+    let p = profileRef.current
+    for (const d of next.team) p = markSeen(p, 'wizard', d.wizard.id)
+    profileRef.current = p; saveProfile(p)
     commit(next, 'map')
   }, [commit])
 
@@ -79,7 +95,12 @@ export function useRunB(seed: string): RunBController {
     const moved = moveTo(runRef.current, nodeId)
     if (moved.phase === 'battle') {
       runRef.current = moved
-      setBattle(prepareCombat(moved))
+      const preparedBattle = prepareCombat(moved)
+      setBattle(preparedBattle)
+      let p = profileRef.current
+      for (const d of preparedBattle.enemy) p = markSeen(p, 'wizard', d.wizard.id)
+      for (const a of moved.activeSynergies ?? []) p = markSeen(p, 'synergy', a.synergy.id)
+      profileRef.current = p; saveProfile(p)
       commit(moved, 'battle')
     } else {
       commit(moved) // recruit-node | relic-node
@@ -98,6 +119,9 @@ export function useRunB(seed: string): RunBController {
 
   const chooseRecruit = useCallback((wizardId: string, replaceId?: string) => {
     const next = resolveCurrent(runRef.current, { kind: 'recruit-pick', wizardId, replaceId }, createRng(runRef.current.seed))
+    let p = profileRef.current
+    for (const d of next.team) p = markSeen(p, 'wizard', d.wizard.id)
+    profileRef.current = p; saveProfile(p)
     commit({ ...next, phase: 'map' }, 'map') // non-combat node: straight back to map
   }, [commit])
 
