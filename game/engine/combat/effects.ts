@@ -109,9 +109,14 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
   shield: (ctx, eff) => {
     if (eff.kind !== 'shield') return {}
     if (ctx.target.side !== ctx.actor.side) return {} // never shield the enemy
+    const src = sourceId(ctx.actor)
+    // Refresh, not accumulate: a re-cast replaces THIS caster's own prior shield pool (matching
+    // the shield status's declared stack:'refresh' policy and the overflow path). Shields from
+    // different casters still coexist (source-keyed).
+    ctx.target.statusEffects = ctx.target.statusEffects.filter(e => !(e.statusId === 'shield' && e.sourceId === src))
     ctx.target.statusEffects.push({
       kind: 'shield', statusId: 'shield', remaining: eff.duration ?? STATUS_BY_ID['shield']!.defaultDuration,
-      stacks: 1, sourceId: sourceId(ctx.actor), absorbLeft: eff.amount,
+      stacks: 1, sourceId: src, absorbLeft: eff.amount,
     })
     ctx.flags.push('block')
     return {}
