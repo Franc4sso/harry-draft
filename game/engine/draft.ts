@@ -3,8 +3,16 @@ import type { Rng } from './rng'
 import { BALANCE } from '@/data/constants'
 import { WIZARDS } from '@/data/wizards'
 
+let poolRestriction: ReadonlySet<string> | null = null
+
+/** Restrict the PLAYER's draft/recruit pool to a subset of wizard ids (or null to
+ *  clear). Enemy generation reads WIZARDS directly and is unaffected. */
+export function setDraftPoolRestriction(ids: Iterable<string> | null): void {
+  poolRestriction = ids ? new Set(ids) : null
+}
+
 export function createDraftPool(): Wizard[] {
-  return [...WIZARDS]
+  return poolRestriction ? WIZARDS.filter(w => poolRestriction!.has(w.id)) : [...WIZARDS]
 }
 
 function weightedPick(rng: Rng, candidates: Wizard[]): Wizard {
