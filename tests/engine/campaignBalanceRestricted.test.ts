@@ -91,6 +91,14 @@ describe('restricted starter pool is winnable (Reservation 1 gate)', () => {
   console.log(`[campaignBalanceRestricted] winRate=${winRate.toFixed(4)}`)
 
   it('clears the same 0.07 floor as the full-pool harness', () => {
+    // RE-TUNED 2026-07-04 ("too easy" hard re-tune): this is the PRIMARY difficulty
+    // gate (the meta-layer restricts drafting to this curated starter pool, so this
+    // harness — not the full-60-wizard campaignBalanceB — measures what the player
+    // actually experiences). Was 0.3083 (too easy) with campaignB.normalEnemyCount=1 /
+    // enemyCountByArea=[1,2,4]; raised to normalEnemyCount=3 / enemyCountByArea=[3,4,5]
+    // (see data/constants.ts campaignB's comments for the full sweep table), landing
+    // at 0.1500 — hard, inside the (0.07, 0.45) guardrail band and close to the
+    // 0.10-0.13 aim. Any future campaignB enemy-count change must re-measure this.
     expect(winRate).toBeGreaterThan(0.07)
     expect(winRate).toBeLessThan(0.45)
   })

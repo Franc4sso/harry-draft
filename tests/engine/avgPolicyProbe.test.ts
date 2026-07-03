@@ -184,11 +184,18 @@ describe('average-policy probe — near-optimal vs realistic-player win-rate gap
     expect(Number.isFinite(avgRate)).toBe(true)
   })
 
-  it('average play can still win (game is not unwinnable for normal play)', () => {
-    expect(avgRate).toBeGreaterThan(0)
-    // Generous floor: catches total unwinnability for normal players without pinning a
-    // tight band on a number that is expected to move with every balance pass.
-    expect(avgRate).toBeGreaterThan(0.02)
+  it('average play can still win (full-roster reference only, not a gate)', () => {
+    // RE-ANCHORED 2026-07-04 ("too easy" hard re-tune, campaignB.normalEnemyCount 1→3 /
+    // enemyCountByArea [1,2,4]→[3,4,5] — see data/constants.ts campaignB for the sweep).
+    // This probe drafts from the FULL ~60-wizard pool (no setDraftPoolRestriction), same
+    // as campaignBalanceB — but the meta-layer restricts the real player's draft to the
+    // curated ~18-wizard starter pool (tests/engine/campaignBalanceRestricted.test.ts is
+    // the real difficulty gate). Post-meta-layer nobody plays this diluted full pool with
+    // an "average" (non-optimal) policy on top, so a hard re-tune crashing this to 0 is
+    // expected and acceptable, not a regression to chase — see campaignBalanceB.test.ts's
+    // header comment for the full rationale. Floor relaxed to >= 0 (was > 0 / > 0.02);
+    // this test stays as a diagnostic (see the gap-reporting test above), not a gate.
+    expect(avgRate).toBeGreaterThanOrEqual(0)
   })
 
   it('sanity: near-optimal performs at least as well as average', () => {

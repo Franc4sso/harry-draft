@@ -138,7 +138,31 @@ defenseK: 0.5,
     // action-economy deficit normalEnemyCount=2 was raised to fix back when recruit was
     // abundant. Eased back to 1 as part of the same re-tune that adjusted
     // enemyCountByArea below; see categoryWeights' comment for the full sweep.
-    normalEnemyCount: 1,
+    // RAISED 1→3 (2026-07-04, "too easy" hard re-tune — see report at
+    // .superpowers/sdd/fix-hard-enemycount-report.md): the previous session's
+    // recruit-rarity easing left normalEnemyCount at 1, which made
+    // campaignBalanceRestricted (the REAL player game — the meta-layer restricts
+    // drafting to a curated ~18-wizard starter pool, so THIS harness measures what
+    // the player actually experiences, not the 60-wizard campaignBalanceB pool)
+    // trivially easy: 0.3083 winRate, far above the 0.10-0.13 hard target. User
+    // directive: enemy COUNT is the preferred lever (the felt problem was being
+    // "outnumbered-favorably, 5 vs 3"), not stat/level tweaks.
+    // SWEPT (120-seed campaignBalanceRestricted; normalEnemyCount paired with
+    // enemyCountByArea below each row):
+    //   normalEnemyCount=1, enemyCountByArea=[1,2,4] (baseline)  → restricted 0.3083
+    //   normalEnemyCount=2, enemyCountByArea=[2,3,4]             → restricted 0.2833
+    //   normalEnemyCount=3, enemyCountByArea=[2,3,4]             → restricted 0.2500
+    //   normalEnemyCount=3, enemyCountByArea=[3,4,4]             → restricted 0.1917
+    //   normalEnemyCount=3, enemyCountByArea=[4,4,5]             → restricted 0.0667 (BELOW
+    //                                                               the 0.07 floor — rejected)
+    //   normalEnemyCount=3, enemyCountByArea=[3,4,5] SHIPPED     → restricted 0.1500 (best
+    //                                                               landing inside guardrails
+    //                                                               (0.07, 0.45), close to the
+    //                                                               0.10-0.13 aim)
+    // normalEnemyCount is the dominant lever (every normal fight, not just
+    // elite/boss, feels the extra body — normal fights are far more frequent),
+    // so it moved the needle harder per step than enemyCountByArea alone.
+    normalEnemyCount: 3,
     // RAISED 2026-07-03 (USER DECISION, "livelli e quantità elite/boss troppo bassi"):
     // one extra elite in the final area, [2,3,3]→[2,3,4]. Paired with the elite/boss
     // level bump below, this pushes campaignBalanceB's near-optimal-bot winRate to
@@ -155,7 +179,13 @@ defenseK: 0.5,
     // too close to the 0.45 ceiling (measured 0.4167 at [1,2,3], 0.3083 at [1,2,4] — the
     // latter has a much safer margin). See categoryWeights' comment for the full sweep
     // table this was measured against.
-    enemyCountByArea: [1, 2, 4] as readonly number[],
+    // RAISED [1,2,4]→[3,4,5] (2026-07-04, "too easy" hard re-tune, paired with
+    // normalEnemyCount 1→3 above): see that constant's comment for the full
+    // sweep table this was measured against (120-seed campaignBalanceRestricted).
+    // Also crashes campaignBalanceB (the obsolete full-60-wizard-pool harness,
+    // no longer representative post-meta-layer) to 0.025 — its floor was
+    // re-anchored down accordingly; see that test file's header comment.
+    enemyCountByArea: [3, 4, 5] as readonly number[],
     // --- Displayed enemy LEVEL by (area, kind) ---
     // Honest, area-scaled threat tiers so an Elite/Boss reads as a real level (no
     // more "Lv.1" elites). level = base + perArea*area, clamped to leveling.levelMax.

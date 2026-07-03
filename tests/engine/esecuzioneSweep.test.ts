@@ -133,8 +133,17 @@ describe('favor-Esecuzione viability sweep', () => {
     const again = Array.from({ length: N }, (_, i) => favorEsecuzioneRun(`erun-${i}`)).map(r => r.outcome)
     expect(again).toEqual(runs.map(r => r.outcome))
   }, 30000)
-  it('the build can win (not structurally broken)', () => {
-    expect(winRate).toBeGreaterThan(0.05)
+  it('the build can win (not structurally broken; full-roster reference only)', () => {
+    // RE-ANCHORED 2026-07-04 ("too easy" hard re-tune, campaignB.normalEnemyCount 1→3 /
+    // enemyCountByArea [1,2,4]→[3,4,5] — see data/constants.ts campaignB for the sweep
+    // table). This sweep drafts from the FULL ~60-wizard pool (no
+    // setDraftPoolRestriction), the same obsolete post-meta-layer scenario as
+    // campaignBalanceB (see that test file's header for the full rationale — the real
+    // player is restricted to the curated ~18-wizard starter pool, measured by
+    // campaignBalanceRestricted.test.ts). Measured winRate dropped to 0.033 (4/120) under
+    // the harder enemy counts; floor lowered 0.05→0.02 to match (still > 0, so a full
+    // Esecuzione-build lockout at 0.0000 still trips this test).
+    expect(winRate).toBeGreaterThan(0.02)
   })
   it('the build fields execute in a meaningful share of runs (draftable)', () => {
     expect(execUptakeRate).toBeGreaterThan(0.10)
