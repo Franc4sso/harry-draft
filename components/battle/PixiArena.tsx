@@ -4,6 +4,7 @@ import { useReducedMotion } from 'framer-motion'
 import type { LogEntry } from '@/types'
 import { createPixiStage, type PixiStage } from '@/lib/vfx/PixiStage'
 import { choreograph } from '@/lib/vfx/choreograph'
+import { spellVfxFor } from '@/lib/vfx/spellVfx'
 
 /**
  * Mounts the Pixi WebGL VFX layer inside the real BattleArena and drives it
@@ -26,6 +27,7 @@ export function PixiArena({
   const reduced = !!useReducedMotion()
   const mountRef = useRef<HTMLDivElement>(null)
   const screenRef = useRef<HTMLDivElement>(null)
+  const tintRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<PixiStage | null>(null)
   const lastFiredRef = useRef(0)
   // Active GSAP timelines, killed on unmount so none keep ticking on destroyed Pixi objects.
@@ -69,14 +71,31 @@ export function PixiArena({
     el.animate([{ opacity: 0 }, { opacity: 0.5, offset: 0.12 }, { opacity: 0 }], { duration: 600, easing: 'ease-out' })
   }
 
+  // Gentle reactive lighting: the room catches a soft tint of the spell's colour and lets it
+  // go — eases in ~0.3s, out ~0.6s, peak opacity 0.10, NEVER a flash. Deliberately quieter than
+  // the tier-3 `onScreen` wash (which is reserved for ultimates and skips this).
+  const onTint = (color: number) => {
+    const el = tintRef.current
+    if (!el || reduced || typeof el.animate !== 'function') return // no-op where WAAPI is absent (jsdom)
+    el.style.background = `radial-gradient(120% 100% at 50% 52%, #${color.toString(16).padStart(6, '0')}, transparent 76%)`
+    el.animate([{ opacity: 0 }, { opacity: 0.1, offset: 0.33 }, { opacity: 0.1, offset: 0.5 }, { opacity: 0 }], { duration: 900, easing: 'ease-in-out' })
+  }
+
   useEffect(() => {
     if (frameKey === 0) return
     if (lastFiredRef.current === frameKey) return
     lastFiredRef.current = frameKey
-    const stage = stageRef.current
     const entry = entryRef.current
+    if (!entry || reduced) return
+    // Gentle reactive tint — a DOM overlay, so it plays even where WebGL is unavailable.
+    // Skip basic attacks (keeps the room from tinting on every jab) and tier-3 spells (they
+    // already cast the bright `onScreen` wash).
+    const cfg = spellVfxFor(entry.action)
+    if (cfg && !cfg.screen && entry.action.trim().toLowerCase() !== 'colpo base') onTint(cfg.color.glow)
+
+    const stage = stageRef.current
     const mount = mountRef.current
-    if (!entry || reduced || !stage || !mount) return
+    if (!stage || !mount) return
 
     // Sync the renderer to the live arena size, then measure caster/target bust
     // centers from the DOM as % of the canvas box — effects align to the cards.
@@ -110,6 +129,7 @@ export function PixiArena({
   return (
     <>
       <div ref={mountRef} className="pointer-events-none absolute inset-0 z-[5]" />
+      <div ref={tintRef} aria-hidden className="pointer-events-none absolute inset-0 z-[3] opacity-0" style={{ mixBlendMode: 'screen' }} />
       <div ref={screenRef} aria-hidden className="pointer-events-none absolute inset-0 z-[4] opacity-0" style={{ mixBlendMode: 'screen' }} />
     </>
   )
