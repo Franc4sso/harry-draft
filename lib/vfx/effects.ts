@@ -517,12 +517,34 @@ export function fxLift(ctx: FxCtx, at: number, x: number, y: number, color: VfxC
   fxShockwave(ctx, at, x, y + 20, color, 2.4, 2)
 }
 
-/** Silver holy light burst — Expecto Patronum. */
+/** Silver holy light burst with a leaping stag — Expecto Patronum set-piece. */
 export function fxPatronus(ctx: FxCtx, at: number, x: number, y: number): void {
   const { stage, tl } = ctx
   const silver: VfxColor = { core: 0xffffff, glow: 0xbfe0ff, spark: [0xffffff, 0xdaf0ff, 0xbfe0ff] }
   fxFlash(ctx, at, x, y, silver, 64)
   fxShockwave(ctx, at, x, y, silver, 4.4, 4)
+
+  // The stag of light: a stylised antlered silhouette that materialises and bounds forward.
+  const stag = new Graphics()
+  stag.moveTo(-26, -6).bezierCurveTo(-14, -12, 6, -12, 18, -8) // topline (rump→shoulder)
+  stag.moveTo(-24, -4).lineTo(16, -2)                          // belly
+  stag.moveTo(18, -8).lineTo(27, -20).lineTo(31, -25)          // neck→head
+  stag.moveTo(31, -25).lineTo(36, -36).moveTo(33, -31).lineTo(39, -33) // antler A
+  stag.moveTo(31, -25).lineTo(27, -36).moveTo(29, -31).lineTo(24, -34) // antler B
+  stag.moveTo(14, -2).lineTo(23, 15).moveTo(9, -2).lineTo(13, 13)      // front legs (reaching)
+  stag.moveTo(-20, -5).lineTo(-31, 11).moveTo(-15, -4).lineTo(-21, 13) // back legs (extended)
+  stag.moveTo(-26, -6).lineTo(-33, -11)                                // tail
+  stag.stroke({ width: 3, color: 0xffffff, alpha: 0.95 })
+  stag.blendMode = 'add'
+  stag.filters = [glow(silver.glow, 16, 2.4)]
+  stag.position.set(x - 10, y)
+  stag.scale.set(1.15)
+  stag.alpha = 0
+  stage.fx.addChild(stag)
+  tl.to(stag, { alpha: 0.95, duration: 0.14, ease: 'power2.out' }, at)
+  tl.to(stag.position, { x: x + 54, y: y - 14, duration: 0.5, ease: 'power2.out' }, at + 0.05)
+  tl.to(stag, { alpha: 0, duration: 0.32, ease: 'power2.in', onComplete: () => stag.destroy() }, at + 0.42)
+
   // radiating soft rays
   for (let i = 0; i < 12; i++) {
     const ang = (Math.PI * 2 * i) / 12
