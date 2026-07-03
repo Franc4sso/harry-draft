@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
-import { Lock } from 'lucide-react'
+import { Lock, Skull } from 'lucide-react'
 import { Frame } from '@/components/ui/Frame'
 import { Insegna } from '@/components/ui/Insegna'
 import { GlowPanel } from '@/components/ui/GlowPanel'
@@ -13,19 +13,67 @@ import { RELIC_RARITY_COLOR } from '@/lib/relicRarity'
 import { cn } from '@/lib/cn'
 import { WIZARDS } from '@/data/wizards'
 import { RELICS } from '@/data/relics'
+import { BOSSES_BY_AREA } from '@/data/bosses'
+import { SYNERGIES } from '@/data/synergies'
 import { STARTER_WIZARDS, STARTER_RELICS, UNLOCK_COSTS, MILESTONES } from '@/data/unlocks'
 import {
   loadProfile, saveProfile, spendCioccorane, unlockWizard, unlockRelic,
 } from '@/lib/metaStore'
 import type { MetaProfile } from '@/lib/metaStore'
-import type { Wizard, Tier } from '@/types'
+import type { Wizard, Tier, Synergy } from '@/types'
 import type { Relic, RelicRarity } from '@/types/relic'
+import type { BossDef } from '@/data/bosses'
 
 type Status = 'unlocked' | 'seen' | 'hidden'
+/** Boss/synergy codex entries have no purchase path — they're discovery-only. */
+type DiscoveryStatus = 'seen' | 'hidden'
 type Kind = 'wizard' | 'relic'
 
 const TIER_ORDER: Tier[] = [1, 2, 3, 4]
 const RARITY_ORDER: RelicRarity[] = ['comune', 'non-comune', 'rara', 'epica']
+
+/** BOSSES_BY_AREA is BossDef[][] indexed by area — flattened once, keeping the area index. */
+const ALL_BOSSES: { boss: BossDef; area: number }[] = BOSSES_BY_AREA.flatMap(
+  (bosses, area) => bosses.map((boss) => ({ boss, area })),
+)
+
+/** The 10 "named" (thematic) synergies — excludes the mechanical house-count/role-count ones,
+ *  which aren't meant to be collected/discovered. Order matches data/synergies.ts. */
+const NAMED_SYNERGY_IDS = [
+  'goldenTrio', 'weasley', 'order', 'deatheater', 'tossicita',
+  'spietatezza', 'bastione', 'oscurita', 'marauder', 'da',
+] as const
+const NAMED_SYNERGY_ID_SET: ReadonlySet<string> = new Set(NAMED_SYNERGY_IDS)
+const NAMED_SYNERGIES: Synergy[] = SYNERGIES.filter((s) => NAMED_SYNERGY_ID_SET.has(s.id))
+
+const TAG_LABEL: Record<string, string> = {
+  weasley: 'Weasley',
+  order: 'Ordine della Fenice',
+  deatheater: 'Mangiamorte',
+  veleno: 'Veleno',
+  esecuzione: 'Esecuzione',
+  scudirigen: 'Scudo Rigenerante',
+  magieOscure: 'Magie Oscure',
+  marauder: 'Malandrini',
+  da: 'Esercito di Silente',
+}
+
+/** Renders a synergy's unlock condition as a short discovery hint, e.g. "3 Mangiamorte"
+ *  or "Harry Potter + Ron Weasley + Hermione Granger". */
+function synergyHint(synergy: Synergy): string {
+  const { requires } = synergy
+  if (requires.ids) {
+    return requires.ids
+      .map((id) => WIZARDS.find((w) => w.id === id)?.name ?? id)
+      .join(' + ')
+  }
+  if (requires.tag && requires.count) {
+    return `${requires.count} ${TAG_LABEL[requires.tag] ?? requires.tag}`
+  }
+  if (requires.house && requires.count) return `${requires.count} ${requires.house}`
+  if (requires.role && requires.count) return `${requires.count} ${requires.role}`
+  return ''
+}
 
 function statusFor(id: string, unlocked: Set<string>, seen: Set<string>): Status {
   if (unlocked.has(id)) return 'unlocked'
@@ -148,6 +196,43 @@ function RelicTile({
   )
 }
 
+function BossTile({ boss, area, status }: { boss: BossDef; area: number; status: DiscoveryStatus }) {
+  const hidden = status === 'hidden'
+  return (
+    <div
+      className={cn(
+        'flex flex-col items-center gap-1.5 rounded-xl border p-3 text-center',
+        hidden ? 'border-white/10 bg-white/5' : 'border-rose-400/40 bg-rose-500/10',
+      )}
+    >
+      {hidden
+        ? <Lock size={18} className="text-white/25" />
+        : <Skull size={18} className="text-rose-300" style={{ filter: 'drop-shadow(0 0 6px rgba(244,63,94,0.5))' }} />}
+      <p className={cn('font-display text-xs leading-tight', hidden ? 'text-white/40' : 'text-white/90')}>
+        {hidden ? '???' : boss.name}
+      </p>
+      <p className="text-[10px] uppercase tracking-wider text-white/30">Area {area + 1}</p>
+    </div>
+  )
+}
+
+function SynergyTile({ synergy, status, hint }: { synergy: Synergy; status: DiscoveryStatus; hint: string }) {
+  const hidden = status === 'hidden'
+  return (
+    <div
+      className={cn(
+        'flex flex-col gap-1 rounded-xl border p-3 text-left',
+        hidden ? 'border-white/10 bg-white/5' : 'border-gold/40 bg-gold/10',
+      )}
+    >
+      <p className={cn('font-display text-xs font-medium', hidden ? 'text-white/40' : 'text-[#f3e6c4]')}>
+        {hidden ? '???' : synergy.name}
+      </p>
+      {hint && <p className="text-[10px] leading-snug text-white/35">{hint}</p>}
+    </div>
+  )
+}
+
 export function CollectionScreen() {
   const [profile, setProfile] = useState<MetaProfile | null>(null)
 
@@ -167,6 +252,8 @@ export function CollectionScreen() {
     [profile],
   )
   const seenRelics = useMemo(() => new Set(profile?.codex.relicsSeen ?? []), [profile])
+  const seenBosses = useMemo(() => new Set(profile?.codex.bossesSeen ?? []), [profile])
+  const seenSynergies = useMemo(() => new Set(profile?.codex.synergiesSeen ?? []), [profile])
 
   const buy = (kind: Kind, id: string) => {
     if (!profile) return
@@ -263,6 +350,44 @@ export function CollectionScreen() {
             </div>
           )
         })}
+      </section>
+
+      <section className="w-full space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-sm uppercase tracking-wider text-white/50">Boss</h2>
+          <span className="text-[10px] uppercase tracking-wider text-white/35">
+            {seenBosses.size}/{ALL_BOSSES.length} scoperti
+          </span>
+        </div>
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-6">
+          {ALL_BOSSES.map(({ boss, area }) => (
+            <BossTile
+              key={boss.id}
+              boss={boss}
+              area={area}
+              status={seenBosses.has(boss.name) ? 'seen' : 'hidden'}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section className="w-full space-y-3">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-sm uppercase tracking-wider text-white/50">Sinergie</h2>
+          <span className="text-[10px] uppercase tracking-wider text-white/35">
+            {seenSynergies.size}/{NAMED_SYNERGIES.length} scoperte
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          {NAMED_SYNERGIES.map((synergy) => (
+            <SynergyTile
+              key={synergy.id}
+              synergy={synergy}
+              status={seenSynergies.has(synergy.id) ? 'seen' : 'hidden'}
+              hint={synergyHint(synergy)}
+            />
+          ))}
+        </div>
       </section>
 
       <Link href="/" className="font-display text-sm uppercase tracking-wider text-white/70 hover:text-white">← Indietro al menu</Link>
