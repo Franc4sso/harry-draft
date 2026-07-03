@@ -88,6 +88,15 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
     ctx.flags.push('heal')
     return { value: amount }
   },
+  revive: (ctx, eff) => {
+    if (eff.kind !== 'revive') return {}
+    if (ctx.target.alive) return { value: 0 } // revive only raises the FALLEN, never tops up the living
+    const hp = Math.max(1, Math.round(ctx.target.maxHp * eff.fraction))
+    ctx.target.hp = hp
+    ctx.target.alive = true
+    ctx.flags.push('revive')
+    return { value: hp }
+  },
   shield: (ctx, eff) => {
     if (eff.kind !== 'shield') return {}
     ctx.target.statusEffects.push({

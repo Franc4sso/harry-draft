@@ -4,7 +4,7 @@ import { simulateBattle } from '@/game/engine/combat/simulate'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
 import { WIZARD_BY_ID } from '@/data/wizards'
-import type { DraftedWizard } from '@/types'
+import type { BattleResult, DraftedWizard } from '@/types'
 
 function team(ids: string[], seed = 1): DraftedWizard[] {
   const r = createRng(seed)
@@ -50,6 +50,22 @@ describe('buildReplay', () => {
         expect(hp).toBeLessThanOrEqual(u.maxHp)
       }
     }
+  })
+
+  it('raises a fallen unit on a revive entry (revive adds HP, is not read as damage)', () => {
+    const l = left(), r = right()
+    const key = unitKey('left', 'harry')
+    const result = {
+      winner: 'left', mvpId: 'harry', turns: 2, snapshots: [],
+      log: [
+        { turn: 1, actorId: 'draco', actorSide: 'right', action: 'Avada Kedavra', targetId: 'harry', targetSide: 'left', type: 'Attacco', value: 9999, flags: ['kill'] },
+        { turn: 2, actorId: 'ron', actorSide: 'left', action: 'Rennervate', targetId: 'harry', targetSide: 'left', type: 'Cura', value: 20, flags: ['revive'] },
+      ],
+    } as unknown as BattleResult
+    const replay = buildReplay(result, l, r)
+    // After the kill harry is at 0; the revive must bring the replay HP back up, not subtract.
+    expect(replay.frames[1]!.hp[key]).toBe(0)
+    expect(replay.frames[2]!.hp[key]).toBe(20)
   })
 
   it("final frame matches the engine's losing side being wiped or behind", () => {

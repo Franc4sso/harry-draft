@@ -66,7 +66,7 @@ export interface BattleUnit extends DraftedWizard {
   ignoresTaunt?: boolean
 }
 
-export type LogFlag = 'crit' | 'dodge' | 'kill' | 'heal' | 'block' | 'stun' | 'dot' | 'pen' | 'shatter' | 'wait' | 'recoil'
+export type LogFlag = 'crit' | 'dodge' | 'kill' | 'heal' | 'block' | 'stun' | 'dot' | 'pen' | 'shatter' | 'wait' | 'recoil' | 'revive'
 
 export interface LogEntry {
   turn: number

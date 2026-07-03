@@ -4,6 +4,7 @@ import { draftWizard } from '@/game/engine/statRoll'
 import { detectSynergies } from '@/game/engine/synergy'
 import { createRng } from '@/game/engine/rng'
 import { WIZARDS } from '@/data/wizards'
+import { SPELL_BY_ID } from '@/data/spells'
 
 function team(rng = createRng(1), n = 5) {
   return WIZARDS.slice(0, 200).filter((_, i) => i % 2 === 0).slice(0, n).map(w => draftWizard(rng, w))
@@ -84,6 +85,24 @@ describe('simulate', () => {
     const res = simulateBattle(team(createRng(1)), team(createRng(2)), createRng(3))
     expect(res.turns).toBeLessThan(30)
     expect(res.log.some(e => e.action === 'Fatica')).toBe(false)
+  })
+
+  it('a reviver brings a fallen ally back into the fight (Rennervate fires on a corpse)', () => {
+    // Left: a fragile ally that will die + a Supporto forced to cast Rennervate (the revive).
+    // Right: two heavy attackers to guarantee a kill. Search seeds for a battle where the
+    // ally actually falls and gets raised — proving the end-to-end revive path fires.
+    const reviverBase = WIZARDS.find(w => w.id === 'lupin')!
+    const fragileBase = WIZARDS.find(w => w.role === 'Supporto' && w.id !== 'lupin')!
+    const heavyBase = WIZARDS.find(w => w.id === 'voldemort')!
+    let sawRevive = false
+    for (let s = 1; s <= 80 && !sawRevive; s++) {
+      const reviver = { ...draftWizard(createRng(s), reviverBase), spell: SPELL_BY_ID['rennervate']! }
+      const fragile = draftWizard(createRng(s + 100), fragileBase)
+      const right = [draftWizard(createRng(s + 200), heavyBase), draftWizard(createRng(s + 300), heavyBase)]
+      const res = simulateBattle([fragile, reviver], right, createRng(s + 400))
+      if (res.log.some(e => e.action === 'Rennervate' && (e.flags ?? []).includes('revive'))) sawRevive = true
+    }
+    expect(sawRevive).toBe(true)
   })
 
   it('regeneration synergy emits a heal log entry so the replay reflects it', () => {

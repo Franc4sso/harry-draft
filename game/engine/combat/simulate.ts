@@ -19,7 +19,8 @@ import { canAct } from '../status'
 import { EFFECT_HANDLERS } from './effects'
 import { effectiveStats, resolveAction, tickStatuses } from './resolve'
 import { selectSpell } from './selectSpell'
-import { mostWounded, selectTarget } from './targeting'
+import { deadToRaise, mostWounded, selectTarget } from './targeting'
+import { SPELL_BY_ID } from '@/data/spells'
 
 export function toBattleUnits(
   team: DraftedWizard[], side: Side, synergies: ActiveSynergy[], relics: ActiveRelic[] = [], menacePct = 0, damageReduction = 0,
@@ -210,7 +211,7 @@ export function simulateBattle(
         fireReactive('onTurnEnd', actor, turn)
         continue
       }
-      const spell = selectSpell(actor)
+      let spell = selectSpell(actor)
       if (!spell) {
         // Spell recharging: the unit waits (no action). Cooldown still ticks at end-of-turn.
         pushLog({ turn, actorId: actor.wizard.id, actorSide: actor.side, action: 'Ricarica', type: 'system', flags: ['wait'] })
@@ -219,12 +220,21 @@ export function simulateBattle(
       }
       const allies = actor.side === 'left' ? L : R
       const enemies = actor.side === 'left' ? R : L
-      const healIntent = spell.type === 'Cura'
+      // Revive spell: raise a fallen ally. With no one to raise it fizzles into a basic
+      // attack so the caster's turn isn't wasted (and its cooldown is NOT spent).
+      let fallen: BattleUnit | undefined
+      if (spell.revive != null) {
+        fallen = deadToRaise(allies)
+        if (!fallen) spell = SPELL_BY_ID['base_attack']!
+      }
+      const healIntent = spell.type === 'Cura' && spell.revive == null
       const target = selectTarget(actor, allies, enemies, spell)
-      if (!target) { fireReactive('onTurnEnd', actor, turn); continue }
-      const realTarget = healIntent
-        ? (mostWounded(allies.filter(a => a.alive)) ?? actor)
-        : (spell.type === 'Difesa' ? actor : target)
+      if (!target && !fallen) { fireReactive('onTurnEnd', actor, turn); continue }
+      const realTarget = fallen
+        ? fallen
+        : healIntent
+          ? (mostWounded(allies.filter(a => a.alive)) ?? actor)
+          : (spell.type === 'Difesa' ? actor : target!)
       const entry = resolveAction(rng, turn, actor, realTarget, spell, allies, bus)
       pushLog(entry)
       // onHit: after an actor resolves a spell against an ENEMY target.

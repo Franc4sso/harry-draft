@@ -45,6 +45,7 @@ export type EffectTarget = 'enemy' | 'self' | 'ally'
 export type EffectSpec =
   | { kind: 'damage'; power: number; canCrit?: boolean; canDodge?: boolean }
   | { kind: 'heal'; amount: number }
+  | { kind: 'revive'; fraction: number }
   | { kind: 'shield'; amount: number; duration?: number }
   | {
       kind: 'applyStatus'; target: EffectTarget; chance?: number

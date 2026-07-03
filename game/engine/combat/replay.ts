@@ -131,8 +131,9 @@ export function buildReplay(
       const key = unitKey(entry.targetSide, entry.targetId)
       if (key in hp) {
         const cap = maxHp[key] ?? Infinity
-        const healed = entry.flags.includes('heal')
-        const next = healed ? hp[key]! + value : hp[key]! - value
+        // heal and revive both ADD HP (a revive raises the fallen back up); everything else subtracts.
+        const restores = entry.flags.includes('heal') || entry.flags.includes('revive')
+        const next = restores ? hp[key]! + value : hp[key]! - value
         hp[key] = Math.max(0, Math.min(cap, next))
       }
     }

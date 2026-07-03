@@ -51,6 +51,16 @@ export function carryToProtect(units: BattleUnit[]): BattleUnit | undefined {
   )[0]
 }
 
+// The fallen ally a revive spell should raise: the highest-value body (effective ATK) —
+// bring the strongest dealer back into the fight — tiebroken by id for determinism.
+// Undefined if no ally has fallen (the caller then fizzles the revive into a basic attack).
+export function deadToRaise(units: BattleUnit[]): BattleUnit | undefined {
+  const fallen = units.filter(u => !u.alive)
+  return fallen.sort((a, b) =>
+    effectiveStats(b).atk - effectiveStats(a).atk || a.wizard.id.localeCompare(b.wizard.id),
+  )[0]
+}
+
 export function threatScore(u: BattleUnit, ignoresTaunt = false): number {
   const s = effectiveStats(u)
   const taunt = !ignoresTaunt && u.wizard.role === 'Tank' ? BALANCE.roles.tauntBonus : 0

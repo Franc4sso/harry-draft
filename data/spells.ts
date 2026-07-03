@@ -26,7 +26,7 @@ export const SPELLS: Spell[] = [
   // Cura
   { id: 'episkey', name: 'Episkey', desc: 'Cura ferite minori.', type: 'Cura', heal: 28, hitChance: 1, cooldown: 1 },
   { id: 'vulnera', name: 'Vulnera Sanentur', desc: 'Cura profonda.', type: 'Cura', heal: 48, hitChance: 1, cooldown: 1 },
-  { id: 'rennervate', name: 'Rennervate', desc: 'Rianima e cura.', type: 'Cura', heal: 34, hitChance: 1, cooldown: 1 },
+  { id: 'rennervate', name: 'Rennervate', desc: 'Rianima un alleato caduto al 20% della vita.', type: 'Cura', revive: 0.2, hitChance: 1, cooldown: 2 },
   { id: 'anapneo', name: 'Anapneo', desc: 'Libera e ristora.', type: 'Cura', heal: 22, hitChance: 1, cooldown: 1 },
   // Def rider rerouted (2026-07-02) to the capped defUp status; heal is unchanged (kept as
   // a spec since heal-type spells target the caster here — self cast, same as before).

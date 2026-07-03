@@ -20,9 +20,11 @@ describe('spells data', () => {
         expect(hasPower || hasSpecDamage).toBe(true)
       }
       if (s.type === 'Cura') {
+        // A Cura spell either heals or revives a fallen ally (e.g. Rennervate).
         const hasHeal = (s.heal ?? 0) > 0
         const hasSpecHeal = s.spec?.some(e => e.kind === 'heal' && e.amount > 0) ?? false
-        expect(hasHeal || hasSpecHeal).toBe(true)
+        const hasRevive = (s.revive ?? 0) > 0
+        expect(hasHeal || hasSpecHeal || hasRevive).toBe(true)
       }
     }
   })

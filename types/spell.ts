@@ -18,6 +18,8 @@ export interface Spell {
   type: SpellType
   power?: number
   heal?: number
+  /** Fraction of max HP a fallen ally is raised to (a Cura spell that revives, not heals). */
+  revive?: number
   hitChance: number
   cooldown?: number
   effects?: SpellEffect[]

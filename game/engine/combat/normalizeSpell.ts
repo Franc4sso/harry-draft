@@ -3,6 +3,10 @@ import type { EffectSpec, Spell } from '@/types'
 export function normalizeSpell(spell: Spell): EffectSpec[] {
   if (spell.spec) return spell.spec
 
+  if (spell.revive != null) {
+    return [{ kind: 'revive', fraction: spell.revive }]
+  }
+
   if (spell.type === 'Cura') {
     return [{ kind: 'heal', amount: spell.heal ?? 0 }]
   }
