@@ -50,9 +50,9 @@ function ls(): Storage | null {
 export function loadProfile(): MetaProfile {
   const store = ls()
   if (!store) return defaultProfile()
-  const raw = store.getItem(PROFILE_KEY)
-  if (!raw) return defaultProfile()
   try {
+    const raw = store.getItem(PROFILE_KEY)
+    if (!raw) return defaultProfile()
     const parsed = JSON.parse(raw) as Partial<MetaProfile>
     if (!parsed || parsed.version !== 1) return defaultProfile()
     // Merge onto a default so a partial/older record never yields undefined fields.

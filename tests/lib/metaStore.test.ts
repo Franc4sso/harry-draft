@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, vi } from 'vitest'
 import {
   PROFILE_KEY, defaultProfile, loadProfile, saveProfile,
   grantCioccorane, spendCioccorane, unlockWizard, markSeen,
@@ -24,6 +24,13 @@ describe('metaStore', () => {
   it('returns a default (never throws) on corrupt JSON', () => {
     localStorage.setItem(PROFILE_KEY, '{not json')
     expect(loadProfile().cioccorane).toBe(0)
+  })
+
+  it('returns a default (never throws) when storage access throws', () => {
+    const spy = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('blocked') })
+    expect(() => loadProfile()).not.toThrow()
+    expect(loadProfile().cioccorane).toBe(0)
+    spy.mockRestore()
   })
 
   it('spendCioccorane returns null when insufficient and never goes negative', () => {
