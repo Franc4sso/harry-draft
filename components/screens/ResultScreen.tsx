@@ -5,12 +5,13 @@ import { Sparkles, Skull, Copy, Check } from 'lucide-react'
 import { Frame } from '@/components/ui/Frame'
 import { Button } from '@/components/ui/Button'
 import { FoilText, EASE_CINEMATIC } from '@/components/ui/motion'
+import type { RunReward } from '@/hooks/useRunB'
 
 /** Terminal campaign screen: triumphant win or run-ending defeat.
  *  Two distinct moods: win is warm gold and quick; defeat is cold,
  *  desaturated and deliberately slower. */
 export function ResultScreen({
-  outcome, seed, stageReached, enemyCount, onRestart,
+  outcome, seed, stageReached, enemyCount, onRestart, reward, onCollection,
 }: {
   outcome: 'win' | 'defeat'
   seed: string
@@ -18,6 +19,12 @@ export function ResultScreen({
   stageReached: number
   enemyCount: number
   onRestart: () => void
+  /** Currency/unlock/lifetime-stat payoff for this run's end, from useRunB. Absent
+   *  (null/undefined) renders exactly like the pre-reward screen — callers that don't
+   *  wire meta-progression yet see no change. */
+  reward?: RunReward | null
+  /** Opens the collection/hub screen. Omitted callers get no second button (Task 9 wires it). */
+  onCollection?: () => void
 }) {
   const won = outcome === 'win'
   const reduce = useReducedMotion()
@@ -105,12 +112,67 @@ export function ResultScreen({
         </Frame>
       </motion.div>
 
+      {reward && (
+        <motion.div
+          initial={reduce ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 * beat, delay: 0.6 * beat, ease: EASE_CINEMATIC }}
+        >
+          <Frame variant="panel" className={won ? '' : 'saturate-50'} innerClassName="flex min-w-[300px] flex-col items-center gap-3 px-6 py-4">
+            <motion.p
+              initial={reduce ? false : { opacity: 0, scale: 0.7 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={
+                won
+                  ? { type: 'spring', stiffness: 220, damping: 14, delay: 0.75 * beat }
+                  : { duration: 0.6, ease: EASE_CINEMATIC, delay: 0.75 * beat }
+              }
+              className={`font-display text-2xl font-bold ${won ? 'text-amber-300' : 'text-slate-300/85'}`}
+            >
+              +{reward.earned} 🍫
+            </motion.p>
+            <p className="text-[11px] uppercase tracking-widest text-white/40">
+              Saldo: <span className="text-white/70">{reward.profile.cioccorane} 🍫</span>
+            </p>
+
+            {reward.unlocked.length > 0 && (
+              <div className="flex flex-col items-center gap-1.5 border-t border-white/10 pt-3">
+                {won ? (
+                  <FoilText as="h2" className="font-display text-sm font-bold uppercase tracking-widest">
+                    Nuovo sblocco!
+                  </FoilText>
+                ) : (
+                  <h2 className="font-display text-sm font-bold uppercase tracking-widest text-slate-300/80">
+                    Nuovo sblocco!
+                  </h2>
+                )}
+                <ul className="flex flex-col items-center gap-0.5">
+                  {reward.unlocked.map(u => (
+                    <li key={`${u.kind}-${u.id}`} className="text-sm text-white/80">{u.label}</li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 border-t border-white/10 pt-3 text-[11px] uppercase tracking-widest text-white/40">
+              <span>run #{reward.profile.stats.runsPlayed}</span>
+              <span>boss sconfitti {reward.profile.stats.bossesKilled}</span>
+              <span>miglior area {reward.profile.stats.bestStageReached}</span>
+            </div>
+          </Frame>
+        </motion.div>
+      )}
+
       <motion.div
         initial={reduce ? false : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45 * beat, delay: 0.65 * beat, ease: EASE_CINEMATIC }}
+        transition={{ duration: 0.45 * beat, delay: (reward ? 0.85 : 0.65) * beat, ease: EASE_CINEMATIC }}
+        className="flex items-center gap-3"
       >
         <Button onClick={onRestart}>Nuova run</Button>
+        {onCollection && (
+          <Button variant="ghost" onClick={onCollection}>Collezione</Button>
+        )}
       </motion.div>
     </main>
   )

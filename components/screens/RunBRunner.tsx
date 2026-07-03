@@ -163,6 +163,7 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
             stageReached={c.area + 1}
             enemyCount={c.areasTotal}
             onRestart={c.restart}
+            reward={c.runReward}
           />
         )
 
@@ -174,6 +175,7 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
             stageReached={c.area + 1}
             enemyCount={c.areasTotal}
             onRestart={c.restart}
+            reward={c.runReward}
           />
         )
 
