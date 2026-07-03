@@ -12,8 +12,10 @@ import { saveRun, loadRun, clearRun } from '@/lib/runStore'
 import { BALANCE } from '@/data/constants'
 import { prepareCombat, combatRng, type ActiveBattleB } from './useRunB.combat'
 import { loadProfile, saveProfile, markSeen } from '@/lib/metaStore'
+import type { MetaProfile } from '@/lib/metaStore'
+import { buildRunEndSummary, recordRunEnd } from '@/lib/metaProgress'
 import { relicOffer } from '@/game/engine/resolvers/recruit'
-import { STARTER_WIZARDS, STARTER_RELICS } from '@/data/unlocks'
+import { STARTER_WIZARDS, STARTER_RELICS, type UnlockTarget } from '@/data/unlocks'
 import { setDraftPoolRestriction } from '@/game/engine/draft'
 import { setRelicPoolRestriction } from '@/game/engine/relics'
 
@@ -23,10 +25,13 @@ export type RunBView =
   | 'draft' | 'map' | 'battle' | 'victory'
   | 'recruit' | 'relic' | 'infirmary' | 'area-cleared' | 'win' | 'defeat'
 
+export interface RunReward { earned: number; unlocked: UnlockTarget[]; profile: MetaProfile }
+
 export interface RunBController {
   run: RunState; view: RunBView
   battle: ActiveBattleB | null; reachable: RunNode[]; currentNode: RunNode | undefined
   area: number; areasTotal: number; lastFallen: string[]
+  runReward: RunReward | null
   completeDraft: (picked: DraftedWizard[]) => void
   chooseNode: (nodeId: string) => void
   commitBattle: () => void
@@ -68,6 +73,8 @@ export function useRunB(seed: string): RunBController {
     run.phase === 'battle' || run.phase === 'victory' ? prepareCombat(run) : null,
   )
   const [lastFallen, setLastFallen] = useState<string[]>([])
+  const [runReward, setRunReward] = useState<RunReward | null>(null)
+  const rewardFiredRef = useRef(false)
   const runRef = useRef(run); runRef.current = run
   const profileRef = useRef(loadProfile())
   // Restrict the player-facing pools to the starter set + whatever the profile has
@@ -81,7 +88,15 @@ export function useRunB(seed: string): RunBController {
 
   const commit = useCallback((next: RunState, v?: RunBView) => {
     runRef.current = next; setRunState(next); saveRun(next)
-    setView(v ?? viewForPhase(next.phase))
+    const view = v ?? viewForPhase(next.phase)
+    setView(view)
+    if ((view === 'win' || view === 'defeat') && !rewardFiredRef.current) {
+      rewardFiredRef.current = true
+      const summary = buildRunEndSummary(next)
+      const res = recordRunEnd(profileRef.current, summary)
+      profileRef.current = res.profile; saveProfile(res.profile)
+      setRunReward({ earned: res.earned, unlocked: res.unlocked, profile: res.profile })
+    }
   }, [])
 
   const completeDraft = useCallback((picked: DraftedWizard[]) => {
@@ -164,6 +179,7 @@ export function useRunB(seed: string): RunBController {
 
   const restart = useCallback(() => {
     clearRun(); const fresh = startRunB(seed)
+    rewardFiredRef.current = false; setRunReward(null)
     setBattle(null); setLastFallen([]); commit(fresh, 'draft')
   }, [seed, commit])
 
@@ -172,7 +188,7 @@ export function useRunB(seed: string): RunBController {
 
   return {
     run, view, battle, reachable, currentNode,
-    area: run.area ?? 0, areasTotal: BALANCE.map.areas, lastFallen,
+    area: run.area ?? 0, areasTotal: BALANCE.map.areas, lastFallen, runReward,
     completeDraft, chooseNode, commitBattle, acknowledgeVictory,
     chooseRecruit, skipRecruit, chooseRelic, ackInfirmary, setWizardSpell: setWizardSpellCb,
     useConsumableRelic: useConsumableRelicCb,

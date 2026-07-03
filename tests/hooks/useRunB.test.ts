@@ -119,4 +119,29 @@ describe('useRunB FSM', () => {
     expect(result.current.view).toBe('draft')
     expect(result.current.run.team).toHaveLength(0)
   })
+
+  // Reaching the true 'win' phase through a full campaign would require playing out
+  // every area's combat; instead splice the run onto the final area (clearAreaAndAdvance
+  // is pure and only reads state.area/seed) so advanceArea() drives the REAL engine
+  // transition into 'win' through the controller's public API.
+  it('reaching win records currency + unlocks exactly once, even if re-triggered', () => {
+    const first = renderHook(() => useRunB('seed-c'))
+    act(() => first.result.current.completeDraft(twoPicks('seed-c')))
+    const runsBefore = loadProfile().stats.runsPlayed
+
+    saveRun({ ...first.result.current.run, area: 2 }) // last area index (BALANCE.map.areas - 1)
+    const second = renderHook(() => useRunB('seed-c'))
+    act(() => second.result.current.advanceArea())
+
+    expect(second.result.current.view).toBe('win')
+    expect(loadProfile().stats.runsPlayed).toBe(runsBefore + 1)
+    expect(second.result.current.runReward).not.toBeNull()
+    expect(second.result.current.runReward!.earned).toBeGreaterThan(0)
+
+    // Re-triggering the terminal transition (e.g. an extra re-render/commit) must NOT
+    // double-count: the rewardFiredRef guard blocks a second recordRunEnd call.
+    act(() => second.result.current.advanceArea())
+    expect(second.result.current.view).toBe('win')
+    expect(loadProfile().stats.runsPlayed).toBe(runsBefore + 1)
+  })
 })
