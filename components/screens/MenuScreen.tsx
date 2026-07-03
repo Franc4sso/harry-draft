@@ -135,6 +135,8 @@ export function MenuScreen() {
         <div className="mt-2 flex items-center gap-5">
           <Link href="/rules" className="font-display text-xs uppercase tracking-wider text-white/45 transition-colors hover:text-gold">Compendio</Link>
           <span aria-hidden className="text-white/15">·</span>
+          <Link href="/collection" className="font-display text-xs uppercase tracking-wider text-white/45 transition-colors hover:text-gold">Collezione</Link>
+          <span aria-hidden className="text-white/15">·</span>
           <Link href="/credits" className="font-display text-xs uppercase tracking-wider text-white/45 transition-colors hover:text-gold">Credits</Link>
         </div>
       </motion.div>

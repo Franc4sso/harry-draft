@@ -8,6 +8,10 @@ import { render, screen } from '@testing-library/react'
 import React from 'react'
 import { clearRun } from '@/lib/runStore'
 
+// RunBRunner (mounted by PlayFlow) routes its "Collezione" button via useRouter —
+// stub it since this test renders outside the Next.js App Router tree.
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
+
 // Render Framer Motion synchronously without AnimatePresence's exit-deferral.
 vi.mock('framer-motion', () => {
   const cache = new Map<string, (p: Record<string, unknown> & { children?: React.ReactNode }) => React.ReactNode>()

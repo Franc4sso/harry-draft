@@ -1,5 +1,6 @@
 'use client'
 import type { ReactNode } from 'react'
+import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { screenVariants } from '@/components/ui/motion'
 import { Frame } from '@/components/ui/Frame'
@@ -25,6 +26,7 @@ import { parseAreaNodeId } from '@/game/engine/map'
 
 export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: () => void }) {
   const c = useRunB(seed)
+  const router = useRouter()
   const reduce = useReducedMotion()
   const animKey = `${c.view}-${c.run.currentNodeId ?? c.area}`
 
@@ -164,6 +166,7 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
             enemyCount={c.areasTotal}
             onRestart={c.restart}
             reward={c.runReward}
+            onCollection={() => router.push('/collection')}
           />
         )
 
@@ -176,6 +179,7 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
             enemyCount={c.areasTotal}
             onRestart={c.restart}
             reward={c.runReward}
+            onCollection={() => router.push('/collection')}
           />
         )
 
