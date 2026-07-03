@@ -155,6 +155,11 @@ export function clearAreaAndAdvance(state: RunState, _rng: Rng): RunState {
   const map = generateArea(areaRng(state.seed, nextArea), state.seed, nextArea,
     { teamSize: state.team.length, teamMax: state.teamMax ?? 5 })
   const entry = map.find(n => parseAreaNodeId(n.id).floor === 0)!
-  return { ...state, area: nextArea, map, currentNodeId: entry.id, phase: 'map' }
+  // Guaranteed end-of-area recovery: clearing an area's boss fully restores the roster
+  // (heals wounded AND revives dead) before the next area begins, matching the Infermeria's
+  // full-recovery semantics. This caps HP-persistence bleed at a single area so accumulated
+  // wounds never compound across the whole run.
+  const team = state.team.map(dw => ({ ...dw, currentHp: dw.maxHp }))
+  return { ...state, team, area: nextArea, map, currentNodeId: entry.id, phase: 'map' }
 }
 

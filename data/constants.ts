@@ -122,8 +122,16 @@ defenseK: 0.5,
     // BALANCE.draft.teamSize" test was updated to use a synthetic BossDef (no real scripted
     // boss now exercises the bare-default path — all three carry explicit overrides).
     // Area-0/1/2-elite and the 3 scripted-boss unitCounts are now ALL floor-sensitive levers:
-    // any future change must re-measure campaignBalanceB (headroom ≈ 0.0083, 1 seed).
-    normalEnemyCount: 1,
+    // any future change must re-measure campaignBalanceB.
+    // RESTORED 2→1→2 (2026-07-03): normal fights had felt trivially easy at 1 enemy ("burro").
+    // Raising 1→2 alone dropped winRate 0.1583→0.1333 (BELOW the 0.15 floor) because HP
+    // persists across sequential fights and the extra normal-fight damage bled into the
+    // elite/boss walls. FIXED by adding a GUARANTEED end-of-area full-recovery heal
+    // (runEngine.ts clearAreaAndAdvance) which caps HP bleed at one area: with the heal,
+    // winRate = 0.2083 (25/120) at normalEnemyCount=2 — a comfortable ~7-seed margin above
+    // the floor (vs the old ~1-seed razor's edge), veleno counter intact (0.300>0.208), full
+    // 979-test suite green. Both levers (this + the end-of-area heal) are now floor-sensitive.
+    normalEnemyCount: 2,
     enemyCountByArea: [2, 3, 3] as readonly number[],
     // --- Displayed enemy LEVEL by (area, kind) ---
     // Honest, area-scaled threat tiers so an Elite/Boss reads as a real level (no

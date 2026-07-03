@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest'
 import {
   startRunB, starterOffer, chooseStarters, confirmDraftPicks, STARTER_PICKS,
   reachable, moveTo, resolveCurrent,
-  registerCoreResolvers, phaseAfterNode,
+  registerCoreResolvers, phaseAfterNode, clearAreaAndAdvance,
 } from '@/game/engine/runEngine'
 import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
 import { createRng } from '@/game/engine/rng'
@@ -127,5 +127,32 @@ describe('phaseAfterNode', () => {
   })
   it('non-boss node → victory', () => {
     expect(phaseAfterNode({ isBoss: false, area: 1, areas: 3, wiped: false })).toBe('victory')
+  })
+})
+
+describe('run engine — end-of-area heal', () => {
+  it('clearAreaAndAdvance fully restores the team (heals wounded, revives dead) when advancing to the next area', () => {
+    const seed = 'heal-area-adv'
+    const offer = starterOffer(seed, 'Grifondoro')
+    let s = chooseStarters(startRunB(seed), 'Grifondoro', offer.slice(0, 2).map(d => d.wizard.id), createRng(seed))
+    // Clear area 0's boss into a battered roster: one dead (hp 0), the rest at 1 hp.
+    s = { ...s, area: 0, team: s.team.map((d, i) => ({ ...d, currentHp: i === 0 ? 0 : 1 })) }
+
+    const advanced = clearAreaAndAdvance(s, createRng(seed))
+
+    expect(advanced.area).toBe(1)
+    expect(advanced.phase).toBe('map')
+    expect(advanced.team.every(d => (d.currentHp ?? d.maxHp) === d.maxHp)).toBe(true)
+  })
+
+  it('does not heal when there is no next area (final boss → win)', () => {
+    const seed = 'heal-area-final'
+    const offer = starterOffer(seed, 'Grifondoro')
+    let s = chooseStarters(startRunB(seed), 'Grifondoro', offer.slice(0, 2).map(d => d.wizard.id), createRng(seed))
+    s = { ...s, area: BALANCE.map.areas - 1, team: s.team.map(d => ({ ...d, currentHp: 1 })) }
+
+    const won = clearAreaAndAdvance(s, createRng(seed))
+
+    expect(won.phase).toBe('win')
   })
 })

@@ -11,4 +11,9 @@ describe('AreaClearedScreen', () => {
     await userEvent.click(screen.getByRole('button', { name: /Prosegui/ }))
     expect(onContinue).toHaveBeenCalled()
   })
+
+  it('tells the player their team has fully recovered', () => {
+    render(<AreaClearedScreen area={0} areasTotal={3} summary={{ areasCleared: 1, teamSize: 3, avgLevel: 2, relics: 1 }} onContinue={vi.fn()} />)
+    expect(screen.getByText(/piena salute/i)).toBeInTheDocument()
+  })
 })

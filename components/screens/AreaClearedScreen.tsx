@@ -29,6 +29,14 @@ export function AreaClearedScreen({
         >
           Prossima area: {Math.min(area + 2, areasTotal)} / {areasTotal}
         </motion.p>
+        <motion.p
+          initial={reduce ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.5, ease: EASE_CINEMATIC }}
+          className="text-emerald-300/90"
+        >
+          La squadra si è ripresa: tutti tornano in piena salute.
+        </motion.p>
         <motion.div
           initial={reduce ? false : { opacity: 0, y: 14, filter: 'blur(5px)' }}
           animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
