@@ -291,7 +291,15 @@ export function simulateBattle(
     for (const u of [...L, ...R]) {
       if (!u.alive) continue
       const dots = tickStatuses(turn, u, { velenoMult: u.side === 'left' ? rightVelenoMult : leftVelenoMult })
-      for (const d of dots) pushLog(d)
+      for (const d of dots) {
+        pushLog(d)
+        // Credit the poisoner: a DoT tick attributed cross-side (caster != victim) counts toward
+        // the caster's MVP score, so a veleno/burn build is scored for the damage it deals.
+        if (d.flags.includes('dot') && (d.value ?? 0) > 0 && d.actorSide !== d.targetSide) {
+          const dk = `${d.actorSide}:${d.actorId}`
+          score[dk] = (score[dk] ?? 0) + (d.value ?? 0)
+        }
+      }
       sync(u)
       // onDeath / onAllyDeath when a dot tick kills any unit.
       if (!u.alive) {

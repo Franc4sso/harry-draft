@@ -1,4 +1,4 @@
-import type { ActionGate, ActiveEffect, BattleUnit, LogEntry, Stat, Stats } from '@/types'
+import type { ActionGate, ActiveEffect, BattleUnit, LogEntry, Side, Stat, Stats } from '@/types'
 import { STATUS_BY_ID } from '@/data/statuses'
 import { MAX_STAT_STACKS } from '@/data/constants'
 
@@ -96,7 +96,12 @@ export function tickStatuses(turn: number, unit: BattleUnit, opts: { velenoMult?
       const pct = def?.tickPctMaxHp ? pctStacks * def.tickPctMaxHp * unit.maxHp : 0
       const total = Math.round(flat + pct)
       unit.hp -= total
-      logs.push({ turn, actorId: unit.wizard.id, actorSide: unit.side, action: def?.name ?? 'Veleno',
+      // Attribute the tick to the CASTER (sourceId "side:id") so poison/burn damage credits the
+      // poisoner — not the victim — for MVP and the log. Fall back to the bearer if source-less.
+      const ci = e.sourceId?.indexOf(':') ?? -1
+      const srcSide = ci > 0 ? (e.sourceId!.slice(0, ci) as Side) : unit.side
+      const srcId = ci > 0 ? e.sourceId!.slice(ci + 1) : unit.wizard.id
+      logs.push({ turn, actorId: srcId, actorSide: srcSide, action: def?.name ?? 'Veleno',
         targetId: unit.wizard.id, targetSide: unit.side, type: 'Controllo', value: total, flags: ['dot'] })
     }
     if (tickHeal && unit.alive) {
