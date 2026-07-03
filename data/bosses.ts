@@ -121,12 +121,19 @@ export const BELLATRIX: BossDef = {
 // only id/name/bossWizardId (a thematic villain reskin) differ.
 
 /** Area-0 alt: Il Muro reskinned as a monstrous personal wall — same wall mechanic
- *  (unitDamageReduction) and calibrated budget/hpMult/unitCount as MURO. */
+ *  (unitDamageReduction) and calibrated budget/hpMult/unitCount as MURO.
+ *  Leader FIXED 2026-07-03 (balance review): was 'greyback' (powerOf ≈221.5, roster
+ *  rank ~54/59 — a top-10% outlier), which broke the "alts are power-neutral reskins"
+ *  rule and dropped campaignBalanceB 0.1000→0.0833 by making area-0 (the run's first,
+ *  least-forgiving boss) markedly harder than default MURO (leaderless, ≈power 140).
+ *  Replaced with 'pettigrew' (powerOf ≈145.5, tagged deatheater) — proportionate to
+ *  the MURO baseline and in line with the other alts' pattern (dolohov ≈150.8,
+ *  lucius ≈163). See tests/engine/campaignBalanceB.test.ts for the recovered win rate. */
 export const MURO_ALT: BossDef = {
   ...MURO,
-  id: 'greyback_boss',
-  name: 'Fenrir Greyback',
-  bossWizardId: 'greyback',
+  id: 'pettigrew_boss',
+  name: 'Peter Minus',
+  bossWizardId: 'pettigrew',
 }
 
 /** Area-1 alt: same ignoresTaunt mechanic and calibrated numbers as BELLATRIX, reskinned
