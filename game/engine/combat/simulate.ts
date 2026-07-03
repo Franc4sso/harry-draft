@@ -237,8 +237,12 @@ export function simulateBattle(
           : (spell.type === 'Difesa' ? actor : target!)
       const entry = resolveAction(rng, turn, actor, realTarget, spell, allies, bus)
       pushLog(entry)
-      // onHit: after an actor resolves a spell against an ENEMY target.
-      if (realTarget.side !== actor.side) {
+      // onHit: after an actor's spell CONNECTS against an ENEMY target. A dodged or
+      // Protego-negated attack did not land, so its on-hit riders (poison/stun/weaken
+      // added by traits/signatures) must NOT fire — "dodged but still poisoned" makes no
+      // sense, and mirrors how a spell's own rider is skipped on a dodge (resolve.ts).
+      const connected = !entry.flags.includes('dodge') && !entry.flags.includes('block')
+      if (realTarget.side !== actor.side && connected) {
         const hitCtx: HookCtx = { turn, actor, target: realTarget, side: actor.side, flags: [] }
         for (const eff of bus.collectReactive('onHit', hitCtx)) {
           EFFECT_HANDLERS[eff.kind]({ rng, turn, actor, target: realTarget, flags: hitCtx.flags }, eff)

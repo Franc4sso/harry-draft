@@ -46,9 +46,15 @@ describe('Scudi-Rigen counter-web', () => {
     // 'right' on 15/16 additional random seeds — i.e. it restores the counter-relationship
     // ("shield conversion beats attrition") without touching the baseline matchup or Sirius's
     // separate 'atkUp' signature (which keeps its original chance/magnitude/cap).
+    // RE-TUNED SEED (2026-07-03): the on-hit-connect fix (riders no longer fire on a dodged/
+    // blocked attack) slightly reduced Cedric's 'Gioco Leale' proc frequency, so his attrition
+    // no longer out-damages the plain regen wall on the old 'seed4' (plain flipped to 'left').
+    // Re-swept atk∈[60..80] × 24 seeds: the counter-relationship (plain→right, withConvert→left)
+    // now holds on 'seed12' at the unchanged atk=60 — same knife-edge nature as before, only the
+    // demonstrating seed moved.
     const attrition = [mk('cedric', { hp: 300, atk: 60, def: 16, spd: 16 })]
-    const plain = simulateBattle(wall(), attrition, createRng('seed4'), { leftSyn: [regenSyn(60)] })
-    const withConvert = simulateBattle(wall(), attrition, createRng('seed4'), { leftSyn: [regenSyn(60)], leftRelics: convert })
+    const plain = simulateBattle(wall(), attrition, createRng('seed12'), { leftSyn: [regenSyn(60)] })
+    const withConvert = simulateBattle(wall(), attrition, createRng('seed12'), { leftSyn: [regenSyn(60)], leftRelics: convert })
     expect(plain.winner).toBe('right')  // baseline: chip out-damages a non-converting wall
     expect(withConvert.winner).toBe('left')  // conversion flips it: shield-conversion beats attrition
   })
