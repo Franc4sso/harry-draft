@@ -114,3 +114,44 @@ export const BELLATRIX: BossDef = {
   pinnedArea: 1,
   unitCount: 3,
 }
+
+// --- Seeded boss pool (Task 6, Reservation 2): one alternate per area, picked per-run by
+// seed (battlePackage.ts bossPick). Each alt REUSES its area default's calibrated
+// budget/hpMult/unitCount/mechanic (spread from the default) so the balance floor holds —
+// only id/name/bossWizardId (a thematic villain reskin) differ.
+
+/** Area-0 alt: Il Muro reskinned as a monstrous personal wall — same wall mechanic
+ *  (unitDamageReduction) and calibrated budget/hpMult/unitCount as MURO. */
+export const MURO_ALT: BossDef = {
+  ...MURO,
+  id: 'greyback_boss',
+  name: 'Fenrir Greyback',
+  bossWizardId: 'greyback',
+}
+
+/** Area-1 alt: same ignoresTaunt mechanic and calibrated numbers as BELLATRIX, reskinned
+ *  as a fellow Death Eater. */
+export const BELLATRIX_ALT: BossDef = {
+  ...BELLATRIX,
+  id: 'dolohov_boss',
+  name: 'Antonin Dolohov',
+  bossWizardId: 'dolohov',
+}
+
+/** Final-area alt: same budget/hpMult/unitCount/forcedSpellIds/exclusiveSynergy as
+ *  BOSSES[0] (Voldemort), reskinned as his lieutenant. */
+export const VOLDEMORT_ALT: BossDef = {
+  ...BOSSES[0]!,
+  id: 'lucius_boss',
+  name: 'Lucius Malfoy',
+  bossWizardId: 'lucius',
+}
+
+/** Seeded pool per area — default boss first (always selectable), alt second.
+ *  battlePackage.ts's bossPick() forks the combat seed to choose an index into the
+ *  matching sub-array; this stays pure/deterministic and is NEVER gated on unlock state. */
+export const BOSSES_BY_AREA: BossDef[][] = [
+  [MURO, MURO_ALT],
+  [BELLATRIX, BELLATRIX_ALT],
+  [BOSSES[0]!, VOLDEMORT_ALT],
+]

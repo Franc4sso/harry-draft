@@ -5,7 +5,8 @@ import { enemyLevelFor, globalDepth, budgetB } from './threat'
 import { detectSynergies } from '../synergy'
 import { selectEnemyRelics } from '../relics'
 import { BALANCE } from '@/data/constants'
-import { BOSSES, MURO, BELLATRIX } from '@/data/bosses'
+import type { BossDef } from '@/data/bosses'
+import { BOSSES, MURO, BELLATRIX, BOSSES_BY_AREA } from '@/data/bosses'
 
 type Kind = 'battle' | 'elite' | 'boss'
 const enemyKind = (k: Kind): 'normal' | 'elite' | 'boss' => (k === 'battle' ? 'normal' : k)
@@ -30,6 +31,15 @@ export function buildBattlePackage(
   const combatFork = createRng(seed).fork(2).fork(area).fork(floor)
   const enemyRng = combatFork.fork(depth + 1)
 
+  // Seeded boss pick (Task 6): dedicated fork (salt 9001) so the choice is stable and
+  // independent of the enemy/relic forks above. Pure/deterministic — never gated on
+  // profile/unlock state; every pool member is always selectable by seed.
+  const bossPick = (): BossDef => {
+    const pool = BOSSES_BY_AREA[area] ?? [BOSSES[0]!]
+    const idx = combatFork.fork(9001).int(0, pool.length - 1)
+    return pool[idx]!
+  }
+
   const budgetMult = ek === 'elite' ? cb.eliteBudgetMult : isBoss ? cb.bossBudgetMult : 1
   const count = ek === 'normal'
     ? cb.normalEnemyCount
@@ -38,23 +48,30 @@ export function buildBattlePackage(
   let enemyTeam, themeId: string | null = null, bossSynergy: ActiveSynergy | undefined
   let unitDamageReduction: number | undefined
   let ignoresTaunt: boolean | undefined
+  let pickedBoss: BossDef | undefined
   if (isFinalBoss) {
-    enemyTeam = generateBossTeam(enemyRng, BOSSES[0]!)
-    bossSynergy = BOSSES[0]!.exclusiveSynergy
-      ? { synergy: BOSSES[0]!.exclusiveSynergy, memberIds: enemyTeam.map(d => d.wizard.id) }
+    const boss = bossPick()
+    pickedBoss = boss
+    enemyTeam = generateBossTeam(enemyRng, boss)
+    bossSynergy = boss.exclusiveSynergy
+      ? { synergy: boss.exclusiveSynergy, memberIds: enemyTeam.map(d => d.wizard.id) }
       : undefined
   } else if (isFirstBoss) {
-    enemyTeam = generateBossTeam(enemyRng, MURO)
-    bossSynergy = MURO.exclusiveSynergy
-      ? { synergy: MURO.exclusiveSynergy, memberIds: enemyTeam.map(d => d.wizard.id) }
+    const boss = bossPick()
+    pickedBoss = boss
+    enemyTeam = generateBossTeam(enemyRng, boss)
+    bossSynergy = boss.exclusiveSynergy
+      ? { synergy: boss.exclusiveSynergy, memberIds: enemyTeam.map(d => d.wizard.id) }
       : undefined
-    unitDamageReduction = MURO.unitDamageReduction
+    unitDamageReduction = boss.unitDamageReduction
   } else if (isBellatrixBoss) {
-    enemyTeam = generateBossTeam(enemyRng, BELLATRIX)
-    bossSynergy = BELLATRIX.exclusiveSynergy
-      ? { synergy: BELLATRIX.exclusiveSynergy, memberIds: enemyTeam.map(d => d.wizard.id) }
+    const boss = bossPick()
+    pickedBoss = boss
+    enemyTeam = generateBossTeam(enemyRng, boss)
+    bossSynergy = boss.exclusiveSynergy
+      ? { synergy: boss.exclusiveSynergy, memberIds: enemyTeam.map(d => d.wizard.id) }
       : undefined
-    ignoresTaunt = BELLATRIX.ignoresTaunt
+    ignoresTaunt = boss.ignoresTaunt
   } else {
     const out = themedEnemyTeam(enemyRng, {
       area, kind: ek, budget: Math.round(budgetB(depth) * budgetMult), count, excludeThemes,
@@ -80,10 +97,10 @@ export function buildBattlePackage(
   const battle: NodeBattle = { enemyTeam, enemyRelics, enemyLevel, bossSynergy, unitDamageReduction, ignoresTaunt }
   const preview: NodePreview = {
     synergyIds,
-    bossName: isFinalBoss ? BOSSES[0]!.name : isFirstBoss ? MURO.name : isBellatrixBoss ? BELLATRIX.name : undefined,
-    bossHint: isFirstBoss
+    bossName: pickedBoss?.name,
+    bossHint: pickedBoss?.unitDamageReduction != null
       ? 'Incassa i colpi diretti — il veleno lo ignora.'
-      : isBellatrixBoss
+      : pickedBoss?.ignoresTaunt
         ? 'Ignora la provocazione — colpisce le retrovie.'
         : undefined,
   }

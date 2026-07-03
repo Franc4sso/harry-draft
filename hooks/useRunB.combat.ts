@@ -12,6 +12,10 @@ export interface ActiveBattleB {
   enemySyn: ActiveSynergy[]
   isBoss: boolean
   isFinalBoss: boolean
+  /** The picked boss's display name (boss nodes only) — read from the node's pre-generated
+   *  preview so the title always matches the seeded pool pick (Task 6), never a hardcoded
+   *  singleton. */
+  bossName?: string
   playerTeam: DraftedWizard[]
   playerSyn: ActiveSynergy[]
   /** Level shown on enemy busts (menace was removed 2026-07-01; this is the explicit area+kind threat tier). */
@@ -40,7 +44,8 @@ export function prepareCombat(run: RunState): ActiveBattleB {
   const ready = battleReadyTeam(run.team)
   return {
     result: out.result, enemy: out.enemy, enemySyn: out.enemySyn, isBoss: out.isBoss,
-    isFinalBoss: out.isFinalBoss, playerTeam: ready, playerSyn: detectSynergies(ready),
+    isFinalBoss: out.isFinalBoss, bossName: node.preview?.bossName,
+    playerTeam: ready, playerSyn: detectSynergies(ready),
     enemyLevel: out.enemyLevel,
     rightMenace: out.rightMenace, rightRelics: out.rightRelics,
     rightDamageReduction: out.rightDamageReduction, rightIgnoresTaunt: out.rightIgnoresTaunt,
