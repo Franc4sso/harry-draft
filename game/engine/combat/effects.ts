@@ -77,7 +77,9 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
       ctx.actor.hp -= Math.round(residual * dm.recoil)
       ctx.flags.push('recoil')
     }
-    return { value: dmg }
+    // Report the HP actually removed (post-shield), NOT the gross hit: the log `value` must
+    // equal the real HP delta so buildReplay (which has no shield model) stays in sync.
+    return { value: residual }
   },
   heal: (ctx, eff) => {
     if (eff.kind !== 'heal') return {}
@@ -89,9 +91,11 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
       const hc: HookCtx = { turn: ctx.turn, actor: ctx.actor, target: ctx.target, side: ctx.target.side, flags: ctx.flags }
       amount = Math.round(ctx.bus.emitModifier('modifyHealing', amount, hc))
     }
-    ctx.target.hp = Math.min(ctx.target.maxHp, ctx.target.hp + amount)
+    const before = ctx.target.hp
+    ctx.target.hp = Math.min(ctx.target.maxHp, before + amount)
     ctx.flags.push('heal')
-    return { value: amount }
+    // Report HP actually restored (a heal on a near-full unit shouldn't over-report).
+    return { value: ctx.target.hp - before }
   },
   revive: (ctx, eff) => {
     if (eff.kind !== 'revive') return {}

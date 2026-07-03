@@ -84,7 +84,7 @@ exports[`onBattleStart applies effects effect-outer/unit-inner (rng order locked
       "targetSide": "left",
       "turn": 1,
       "type": "Attacco",
-      "value": 26,
+      "value": 0,
     },
     {
       "action": "Jinx",

@@ -64,12 +64,13 @@ describe('dark amplify + recoil', () => {
     const target = unit('harry', 1000, { side: 'right',
       statusEffects: [{ kind: 'shield', statusId: 'shield', remaining: 3, stacks: 1, sourceId: 's', absorbLeft: 30 }] })
     const entry = resolveAction(createRng('dr1'), 1, caster, target, darkSpell)
-    const dealt = entry.value ?? 0
-    expect(dealt).toBeGreaterThan(0)
+    // entry.value now reports HP actually removed (post-shield residual = 116), not the gross hit.
+    const residual = entry.value ?? 0
+    expect(residual).toBeGreaterThan(0)
     expect(entry.flags).toContain('recoil')
-    // recoil = round(residual * 0.2) where residual = dealt - 30 (absorbed by shield)
-    expect(caster.hp).toBe(300 - Math.round((dealt - 30) * 0.2))
-    // recoil with partial shield is strictly less than without shield
-    expect(300 - caster.hp).toBeLessThan(Math.round(dealt * 0.2))
+    // recoil = round(residual * 0.2)
+    expect(caster.hp).toBe(300 - Math.round(residual * 0.2))
+    // recoil with partial shield is strictly less than without shield (gross = residual + 30 absorbed)
+    expect(300 - caster.hp).toBeLessThan(Math.round((residual + 30) * 0.2))
   })
 })
