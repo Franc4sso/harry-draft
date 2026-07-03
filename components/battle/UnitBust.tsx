@@ -225,6 +225,20 @@ export function UnitBust({
         </div>
       </RarityFrame>
 
+      {targeted && !dead && (
+        // Camera-focus reticle framing the CHOSEN target — a crisp "this is who's hit now"
+        // read that the diffuse red aura alone can't give. Corner brackets, no positional shake.
+        <div
+          data-testid="target-reticle"
+          className="pointer-events-none absolute inset-x-0 top-0 z-10 aspect-[3/4] rounded-xl motion-safe:animate-pulse"
+        >
+          <span className="absolute left-1 top-1 h-3 w-3 rounded-tl-sm border-l-2 border-t-2 border-rose-400/90 drop-shadow-[0_0_4px_rgba(255,107,107,0.7)]" />
+          <span className="absolute right-1 top-1 h-3 w-3 rounded-tr-sm border-r-2 border-t-2 border-rose-400/90 drop-shadow-[0_0_4px_rgba(255,107,107,0.7)]" />
+          <span className="absolute bottom-1 left-1 h-3 w-3 rounded-bl-sm border-b-2 border-l-2 border-rose-400/90 drop-shadow-[0_0_4px_rgba(255,107,107,0.7)]" />
+          <span className="absolute bottom-1 right-1 h-3 w-3 rounded-br-sm border-b-2 border-r-2 border-rose-400/90 drop-shadow-[0_0_4px_rgba(255,107,107,0.7)]" />
+        </div>
+      )}
+
       {(() => {
         if (dead) return null // a dead unit shows the "Morto" tombstone, not a control overlay
         const ctrl = effects.find(e => CONTROL_OVERLAY[e.kind])
