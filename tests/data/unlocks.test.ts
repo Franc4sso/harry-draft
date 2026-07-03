@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { STARTER_WIZARDS, MILESTONES, UNLOCK_COSTS } from '@/data/unlocks'
+import { STARTER_WIZARDS, MILESTONES, WIZARD_COST_BY_TIER, RELIC_COST_BY_RARITY } from '@/data/unlocks'
 import { WIZARDS } from '@/data/wizards'
 
 const byId = new Map(WIZARDS.map(w => [w.id, w]))
@@ -43,9 +43,25 @@ describe('reachability: nothing is permanently unreachable', () => {
       MILESTONES.filter(m => m.unlock.kind === 'wizard').map(m => m.unlock.id),
     )
     for (const w of WIZARDS) {
-      const reachable = STARTER_WIZARDS.includes(w.id) || milestoneWizards.has(w.id) || UNLOCK_COSTS.wizard > 0
+      const reachable = STARTER_WIZARDS.includes(w.id) || milestoneWizards.has(w.id) || WIZARD_COST_BY_TIER[w.tier] > 0
       expect(reachable).toBe(true) // purchasable fallback (cost>0) guarantees reachability
     }
+  })
+  it('every wizard tier and relic rarity has a positive unlock cost', () => {
+    for (const tier of [1, 2, 3, 4] as const) {
+      expect(WIZARD_COST_BY_TIER[tier]).toBeGreaterThan(0)
+    }
+    for (const rarity of ['comune', 'non-comune', 'rara', 'epica'] as const) {
+      expect(RELIC_COST_BY_RARITY[rarity]).toBeGreaterThan(0)
+    }
+  })
+  it('cost strictly increases with rarity', () => {
+    expect(WIZARD_COST_BY_TIER[4]).toBeLessThan(WIZARD_COST_BY_TIER[3])
+    expect(WIZARD_COST_BY_TIER[3]).toBeLessThan(WIZARD_COST_BY_TIER[2])
+    expect(WIZARD_COST_BY_TIER[2]).toBeLessThan(WIZARD_COST_BY_TIER[1])
+    expect(RELIC_COST_BY_RARITY['comune']).toBeLessThan(RELIC_COST_BY_RARITY['non-comune'])
+    expect(RELIC_COST_BY_RARITY['non-comune']).toBeLessThan(RELIC_COST_BY_RARITY['rara'])
+    expect(RELIC_COST_BY_RARITY['rara']).toBeLessThan(RELIC_COST_BY_RARITY['epica'])
   })
   it('every milestone unlock id is a real, non-starter id', () => {
     for (const m of MILESTONES) {

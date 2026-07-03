@@ -15,7 +15,9 @@ import { WIZARDS } from '@/data/wizards'
 import { RELICS } from '@/data/relics'
 import { BOSSES_BY_AREA } from '@/data/bosses'
 import { SYNERGIES } from '@/data/synergies'
-import { STARTER_WIZARDS, STARTER_RELICS, UNLOCK_COSTS, MILESTONES } from '@/data/unlocks'
+import {
+  STARTER_WIZARDS, STARTER_RELICS, MILESTONES, wizardUnlockCost, relicUnlockCost,
+} from '@/data/unlocks'
 import {
   loadProfile, saveProfile, spendCioccorane, unlockWizard, unlockRelic,
 } from '@/lib/metaStore'
@@ -81,10 +83,10 @@ function statusFor(id: string, unlocked: Set<string>, seen: Set<string>): Status
   return 'hidden'
 }
 
-function unlockHint(kind: Kind, id: string): string {
+function unlockHint(kind: Kind, id: string, cost: number): string {
   const milestone = MILESTONES.find((m) => m.unlock.kind === kind && m.unlock.id === id)
   if (milestone) return milestone.unlock.label
-  return `compra: ${UNLOCK_COSTS[kind]} 🍫`
+  return `compra: ${cost} 🍫`
 }
 
 /** Small pill button distinct from the app's chunkier Button/SealButton — grid tiles
@@ -255,9 +257,8 @@ export function CollectionScreen() {
   const seenBosses = useMemo(() => new Set(profile?.codex.bossesSeen ?? []), [profile])
   const seenSynergies = useMemo(() => new Set(profile?.codex.synergiesSeen ?? []), [profile])
 
-  const buy = (kind: Kind, id: string) => {
+  const buy = (kind: Kind, id: string, cost: number) => {
     if (!profile) return
-    const cost = UNLOCK_COSTS[kind]
     const spent = spendCioccorane(profile, cost)
     if (!spent) return
     const next = kind === 'wizard' ? unlockWizard(spent, id) : unlockRelic(spent, id)
@@ -303,15 +304,16 @@ export function CollectionScreen() {
               <div className="grid grid-cols-4 gap-3 sm:grid-cols-6 md:grid-cols-8">
                 {wizards.map((w) => {
                   const status = statusFor(w.id, unlockedWizards, seenWizards)
+                  const cost = wizardUnlockCost(w)
                   return (
                     <WizardTile
                       key={w.id}
                       wizard={w}
                       status={status}
-                      hint={unlockHint('wizard', w.id)}
-                      cost={UNLOCK_COSTS.wizard}
-                      canAfford={cioccorane >= UNLOCK_COSTS.wizard}
-                      onBuy={() => buy('wizard', w.id)}
+                      hint={unlockHint('wizard', w.id, cost)}
+                      cost={cost}
+                      canAfford={cioccorane >= cost}
+                      onBuy={() => buy('wizard', w.id, cost)}
                     />
                   )
                 })}
@@ -334,15 +336,16 @@ export function CollectionScreen() {
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {relics.map((r) => {
                   const status = statusFor(r.id, unlockedRelics, seenRelics)
+                  const cost = relicUnlockCost(r)
                   return (
                     <RelicTile
                       key={r.id}
                       relic={r}
                       status={status}
-                      hint={unlockHint('relic', r.id)}
-                      cost={UNLOCK_COSTS.relic}
-                      canAfford={cioccorane >= UNLOCK_COSTS.relic}
-                      onBuy={() => buy('relic', r.id)}
+                      hint={unlockHint('relic', r.id, cost)}
+                      cost={cost}
+                      canAfford={cioccorane >= cost}
+                      onBuy={() => buy('relic', r.id, cost)}
                     />
                   )
                 })}

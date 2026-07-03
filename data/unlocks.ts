@@ -1,4 +1,6 @@
 import type { RunEndSummary } from '@/lib/metaProgress'
+import type { Tier, Wizard } from '@/types/wizard'
+import type { Relic, RelicRarity } from '@/types/relic'
 
 // Authored per the meta-progression plan; enforced by tests/data/unlocks.test.ts.
 // Mirrors the natural 60-wizard roster curve (tier1:3, tier2:10, tier3:20, tier4:27)
@@ -37,7 +39,30 @@ export const STARTER_RELICS: string[] = [
   'medaglione-serpeverde', 'diadema-corvonero', 'coppa-tassorosso', 'ampolla-veleno', 'sigillo-carnefice', 'diadema-corrotto',
 ]
 
-export const UNLOCK_COSTS = { wizard: 100, relic: 60 } as const
+// Rarity-scaled unlock costs: rarer = pricier. Tier 1 (Leggendario) is the rarest
+// wizard tier (see types/wizard.ts Tier comment order), so it costs the most; the
+// relic table mirrors the same 4-step curve over RelicRarity.
+export const WIZARD_COST_BY_TIER: Record<Tier, number> = {
+  1: 500, // Leggendario
+  2: 250, // Epico
+  3: 120, // Raro
+  4: 60,  // Comune
+}
+
+export const RELIC_COST_BY_RARITY: Record<RelicRarity, number> = {
+  epica: 300,
+  rara: 150,
+  'non-comune': 80,
+  comune: 40,
+}
+
+export function wizardUnlockCost(wizard: Wizard): number {
+  return WIZARD_COST_BY_TIER[wizard.tier]
+}
+
+export function relicUnlockCost(relic: Relic): number {
+  return RELIC_COST_BY_RARITY[relic.rarity]
+}
 
 export const EARN = { perAreaCleared: 15, perBossDefeated: 20, firstWinBonus: 60, lossFloor: 10 } as const
 
