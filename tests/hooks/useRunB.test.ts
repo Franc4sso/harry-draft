@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useRunB } from '@/hooks/useRunB'
 import { startDraft, pickFrom } from '@/game/engine/draftSession'
@@ -6,6 +6,8 @@ import { clearRun, saveRun } from '@/lib/runStore'
 import { loadProfile } from '@/lib/metaStore'
 import { relicOffer } from '@/game/engine/resolvers/recruit'
 import { createRng } from '@/game/engine/rng'
+import { createDraftPool, setDraftPoolRestriction } from '@/game/engine/draft'
+import { STARTER_WIZARDS } from '@/data/unlocks'
 import type { RunState } from '@/types'
 
 /** Two deterministic starter picks from the draft session for a given seed. */
@@ -17,6 +19,7 @@ function twoPicks(seed: string) {
 }
 
 beforeEach(() => { try { clearRun() } catch {} ; localStorage.clear() })
+afterEach(() => setDraftPoolRestriction(null))
 
 describe('useRunB FSM', () => {
   it('starts in the draft phase with an empty team', () => {
@@ -118,6 +121,38 @@ describe('useRunB FSM', () => {
     act(() => result.current.restart())
     expect(result.current.view).toBe('draft')
     expect(result.current.run.team).toHaveLength(0)
+  })
+
+  // Regression: a wizard unlocked by the reward ceremony at the end of a run must be
+  // usable in the very next same-session run. Before the fix, the draft/relic pool
+  // restriction was only computed once (mount-time useMemo) and restart() never
+  // recomputed it, so a freshly-unlocked wizard stayed invisible to createDraftPool()
+  // until a full page reload remounted the hook.
+  it('restart refreshes the draft pool restriction with unlocks earned by the run that just ended', () => {
+    const first = renderHook(() => useRunB('seed-c'))
+    act(() => first.result.current.completeDraft(twoPicks('seed-c')))
+
+    // Splice onto the final area (clearAreaAndAdvance is pure, reads state.area/seed
+    // only) so advanceArea() drives the real engine transition into 'win', which
+    // triggers recordRunEnd and unlocks 'dolohov'/'neville' etc. via the first-win
+    // milestone (data/unlocks.ts) — a wizard NOT in STARTER_WIZARDS.
+    saveRun({ ...first.result.current.run, area: 2 }) // last area index (BALANCE.map.areas - 1)
+    const second = renderHook(() => useRunB('seed-c'))
+    act(() => second.result.current.advanceArea())
+    expect(second.result.current.view).toBe('win')
+
+    const unlockedWizardIds = second.result.current.runReward!.unlocked
+      .filter(u => u.kind === 'wizard')
+      .map(u => u.id)
+    expect(unlockedWizardIds.length).toBeGreaterThan(0)
+    expect(unlockedWizardIds.some(id => !STARTER_WIZARDS.includes(id))).toBe(true)
+
+    act(() => second.result.current.restart())
+
+    const pool = createDraftPool()
+    for (const id of unlockedWizardIds) {
+      if (!STARTER_WIZARDS.includes(id)) expect(pool.some(w => w.id === id)).toBe(true)
+    }
   })
 
   // Reaching the true 'win' phase through a full campaign would require playing out

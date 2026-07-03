@@ -80,11 +80,14 @@ export function useRunB(seed: string): RunBController {
   // Restrict the player-facing pools to the starter set + whatever the profile has
   // unlocked so far. Runs synchronously during render, before any offer (draft/
   // recruit/relic) is computed downstream — mirrors the loadRun() client-read pattern.
-  useMemo(() => {
+  // Also re-applied on restart() so unlocks earned at the just-finished run's reward
+  // ceremony are usable immediately in the next same-session run (no remount needed).
+  const applyPoolRestrictions = useCallback(() => {
     const p = profileRef.current
     setDraftPoolRestriction([...STARTER_WIZARDS, ...p.unlockedWizards])
     setRelicPoolRestriction([...STARTER_RELICS, ...p.unlockedRelics])
   }, [])
+  useMemo(() => { applyPoolRestrictions() }, [applyPoolRestrictions])
 
   const commit = useCallback((next: RunState, v?: RunBView) => {
     runRef.current = next; setRunState(next); saveRun(next)
@@ -180,8 +183,9 @@ export function useRunB(seed: string): RunBController {
   const restart = useCallback(() => {
     clearRun(); const fresh = startRunB(seed)
     rewardFiredRef.current = false; setRunReward(null)
+    applyPoolRestrictions() // profileRef.current now holds unlocks earned by the run just ended
     setBattle(null); setLastFallen([]); commit(fresh, 'draft')
-  }, [seed, commit])
+  }, [seed, commit, applyPoolRestrictions])
 
   const reachable = useMemo(() => engineReachable(run), [run])
   const currentNode = run.map?.find(n => n.id === run.currentNodeId)
