@@ -19,7 +19,6 @@ export interface MetaProfile {
   cioccorane: number
   unlockedWizards: string[]
   unlockedRelics: string[]
-  unlockedBosses: string[]
   milestones: Record<string, boolean>
   stats: MetaStats
   codex: MetaCodex
@@ -33,7 +32,6 @@ export function defaultProfile(): MetaProfile {
     cioccorane: 0,
     unlockedWizards: [],
     unlockedRelics: [],
-    unlockedBosses: [],
     milestones: {},
     stats: {
       runsPlayed: 0, runsWon: 0, bossesKilled: 0,
@@ -94,10 +92,6 @@ export function unlockWizard(p: MetaProfile, id: string): MetaProfile {
 
 export function unlockRelic(p: MetaProfile, id: string): MetaProfile {
   return { ...p, unlockedRelics: addUnique(p.unlockedRelics, id) }
-}
-
-export function unlockBoss(p: MetaProfile, id: string): MetaProfile {
-  return { ...p, unlockedBosses: addUnique(p.unlockedBosses, id) }
 }
 
 export function markSeen(
