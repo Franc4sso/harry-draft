@@ -1,5 +1,8 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import { startDraft, pickFrom } from '@/game/engine/draftSession'
+import { setDraftPoolRestriction } from '@/game/engine/draft'
+import { STARTER_WIZARDS } from '@/data/unlocks'
+import { STARTER_PICKS } from '@/game/engine/runEngine'
 import { BALANCE } from '@/data/constants'
 
 const TEAM = BALANCE.draft.teamSize
@@ -55,5 +58,19 @@ describe('draftSession', () => {
     expect(viaA.screenIndex).toBe(1)
     expect(viaB.screenIndex).toBe(1)
     expect(firstScreenIds).toEqual(s0.current.map(c => c.wizard.id))
+  })
+})
+
+describe('starter draft never exhausts the restricted pool', () => {
+  afterEach(() => setDraftPoolRestriction(null))
+  it('completes STARTER_PICKS picks without throwing across many seeds', () => {
+    setDraftPoolRestriction(STARTER_WIZARDS)
+    for (let i = 0; i < 80; i++) {
+      let s = startDraft(`seed-${i}`, STARTER_PICKS)
+      expect(() => {
+        while (!s.done) s = pickFrom(s, 0) // always pick candidate 0
+      }).not.toThrow()
+      expect(s.picks.length).toBe(STARTER_PICKS)
+    }
   })
 })

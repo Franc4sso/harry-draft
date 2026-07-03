@@ -20,7 +20,7 @@ export function DraftScreen({
   target?: number
   onComplete: (team: DraftedWizard[]) => void
 }) {
-  const { current, picks, pick } = useDraft(seed)
+  const { current, picks, pick } = useDraft(seed, target)
   const [considered, setConsidered] = useState<DraftedWizard | null>(null)
   const fired = useRef(false)
   // The shared draft session "completes" only after the full team size; this

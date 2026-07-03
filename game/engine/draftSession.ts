@@ -12,6 +12,7 @@ export interface DraftSession {
   current: DraftedWizard[]
   screenIndex: number
   done: boolean
+  targetPicks: number
 }
 
 function rollScreen(seed: string, pool: Wizard[], pickedTiers: Tier[], screenIndex: number): DraftedWizard[] {
@@ -22,10 +23,10 @@ function rollScreen(seed: string, pool: Wizard[], pickedTiers: Tier[], screenInd
   return shown.map((w) => draftWizard(rollRng, w, true))
 }
 
-export function startDraft(seed: string): DraftSession {
+export function startDraft(seed: string, targetPicks: number = BALANCE.draft.teamSize): DraftSession {
   const pool = createDraftPool()
   const current = rollScreen(seed, pool, [], 0)
-  return { seed, pool, picks: [], current, screenIndex: 0, done: false }
+  return { seed, pool, picks: [], current, screenIndex: 0, done: false, targetPicks }
 }
 
 export function pickFrom(session: DraftSession, candidateIndex: number): DraftSession {
@@ -37,7 +38,7 @@ export function pickFrom(session: DraftSession, candidateIndex: number): DraftSe
   const picks = [...session.picks, chosen]
   const screenIndex = session.screenIndex + 1
 
-  if (picks.length >= BALANCE.draft.teamSize) {
+  if (picks.length >= session.targetPicks) {
     return { ...session, pool: nextPool, picks, current: [], screenIndex, done: true }
   }
   const pickedTiers = picks.map((p) => p.wizard.tier)

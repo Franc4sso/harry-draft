@@ -4,7 +4,7 @@ import type { DraftedWizard } from '@/types'
 import { startDraft, pickFrom, type DraftSession } from '@/game/engine/draftSession'
 import { BALANCE } from '@/data/constants'
 
-export function useDraft(seed: string): {
+export function useDraft(seed: string, targetPicks: number = BALANCE.draft.teamSize): {
   current: DraftedWizard[]
   picks: DraftedWizard[]
   screenIndex: number
@@ -12,11 +12,11 @@ export function useDraft(seed: string): {
   done: boolean
   pick: (candidateIndex: number) => void
 } {
-  const [session, setSession] = useState<DraftSession>(() => startDraft(seed))
+  const [session, setSession] = useState<DraftSession>(() => startDraft(seed, targetPicks))
 
   useEffect(() => {
-    setSession(startDraft(seed))
-  }, [seed])
+    setSession(startDraft(seed, targetPicks))
+  }, [seed, targetPicks])
 
   const pick = useCallback((candidateIndex: number) => {
     setSession((s) => (s.done ? s : pickFrom(s, candidateIndex)))
