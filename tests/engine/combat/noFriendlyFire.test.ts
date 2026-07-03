@@ -49,3 +49,31 @@ describe('no friendly fire (structural guard)', () => {
     expect(enemy.statusEffects.length).toBeGreaterThan(0)
   })
 })
+
+// The mirror of friendly fire: a beneficial effect must never help the ENEMY.
+describe('no helping the enemy (effects stay on the correct side)', () => {
+  it('a heal does nothing to an enemy', () => {
+    const actor = u('sup', 'left')
+    const enemy = u('foe', 'right', 40)
+    const ctx = { rng: noRng, turn: 1, actor, target: enemy, flags: [] as any }
+    const r = EFFECT_HANDLERS.heal(ctx as any, { kind: 'heal', amount: 30 } as any)
+    expect(enemy.hp).toBe(40)
+    expect(r.value ?? 0).toBe(0)
+  })
+
+  it('a shield is never granted to an enemy', () => {
+    const actor = u('sup', 'left')
+    const enemy = u('foe', 'right')
+    const ctx = { rng: noRng, turn: 1, actor, target: enemy, flags: [] as any }
+    EFFECT_HANDLERS.shield(ctx as any, { kind: 'shield', amount: 20 } as any)
+    expect(enemy.statusEffects).toHaveLength(0)
+  })
+
+  it('still heals a wounded ally', () => {
+    const actor = u('sup', 'left')
+    const ally = u('mate', 'left', 40)
+    const ctx = { rng: noRng, turn: 1, actor, target: ally, flags: [] as any }
+    EFFECT_HANDLERS.heal(ctx as any, { kind: 'heal', amount: 30 } as any)
+    expect(ally.hp).toBe(70)
+  })
+})

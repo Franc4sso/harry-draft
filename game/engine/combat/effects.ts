@@ -81,6 +81,7 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
   },
   heal: (ctx, eff) => {
     if (eff.kind !== 'heal') return {}
+    if (ctx.target.side !== ctx.actor.side) return { value: 0 } // never heal the enemy (mirror of no-friendly-fire)
     if (!ctx.target.alive) return { value: 0 } // never heal/revive a dead unit
     let amount = eff.amount
     if (ctx.bus) {
@@ -103,6 +104,7 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
   },
   shield: (ctx, eff) => {
     if (eff.kind !== 'shield') return {}
+    if (ctx.target.side !== ctx.actor.side) return {} // never shield the enemy
     ctx.target.statusEffects.push({
       kind: 'shield', statusId: 'shield', remaining: eff.duration ?? STATUS_BY_ID['shield']!.defaultDuration,
       stacks: 1, sourceId: sourceId(ctx.actor), absorbLeft: eff.amount,
