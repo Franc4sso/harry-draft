@@ -210,17 +210,22 @@ export function UnitBust({
         compact && !boss ? 'p-1' : 'p-1.5',
         boss ? 'w-32 sm:w-40 border-[#7c3aed]/40' : compact ? 'w-[4.75rem] sm:w-24 border-[#C9A24B]/15' : 'w-28 sm:w-32 border-[#C9A24B]/15',
         mirrored && 'text-right')}
-      style={{ boxShadow: aura, filter: dead ? 'grayscale(0.85)' : undefined }}
+      style={{ boxShadow: aura, filter: dead ? 'grayscale(0.9) brightness(0.72)' : 'none', transition: 'filter 0.55s ease' }}
     >
       <RarityFrame tier={unit.tier}>
         <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl">
           <PortraitImage id={unit.id} house={unit.house} alt={unit.name} variant="bust" />
           {dead && (
-            <div className="absolute inset-0 grid place-items-center bg-black/45">
+            <motion.div
+              className="absolute inset-0 grid place-items-center bg-black/45"
+              initial={reduce ? false : { opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.45, delay: 0.1 }}
+            >
               <span className="rounded border border-rose-400/50 bg-black/70 px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.18em] text-rose-300">
                 Morto
               </span>
-            </div>
+            </motion.div>
           )}
         </div>
       </RarityFrame>
