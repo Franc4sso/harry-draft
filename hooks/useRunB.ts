@@ -12,6 +12,7 @@ import { saveRun, loadRun, clearRun } from '@/lib/runStore'
 import { BALANCE } from '@/data/constants'
 import { prepareCombat, combatRng, type ActiveBattleB } from './useRunB.combat'
 import { loadProfile, saveProfile, markSeen } from '@/lib/metaStore'
+import { relicOffer } from '@/game/engine/resolvers/recruit'
 import { STARTER_WIZARDS, STARTER_RELICS } from '@/data/unlocks'
 import { setDraftPoolRestriction } from '@/game/engine/draft'
 import { setRelicPoolRestriction } from '@/game/engine/relics'
@@ -100,9 +101,18 @@ export function useRunB(seed: string): RunBController {
       let p = profileRef.current
       for (const d of preparedBattle.enemy) p = markSeen(p, 'wizard', d.wizard.id)
       for (const a of moved.activeSynergies ?? []) p = markSeen(p, 'synergy', a.synergy.id)
+      const node = moved.map!.find(n => n.id === nodeId)
+      if (node?.type === 'boss' && node.preview?.bossName) p = markSeen(p, 'boss', node.preview.bossName)
       profileRef.current = p; saveProfile(p)
       commit(moved, 'battle')
     } else {
+      if (moved.phase === 'relic-node') {
+        const node = moved.map!.find(n => n.id === nodeId)!
+        const offer = relicOffer(moved, node, createRng(moved.seed))
+        let p = profileRef.current
+        for (const r of offer) p = markSeen(p, 'relic', r.id)
+        profileRef.current = p; saveProfile(p)
+      }
       commit(moved) // recruit-node | relic-node
     }
   }, [commit])

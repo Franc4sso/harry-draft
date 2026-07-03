@@ -2,7 +2,11 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
 import { useRunB } from '@/hooks/useRunB'
 import { startDraft, pickFrom } from '@/game/engine/draftSession'
-import { clearRun } from '@/lib/runStore'
+import { clearRun, saveRun } from '@/lib/runStore'
+import { loadProfile } from '@/lib/metaStore'
+import { relicOffer } from '@/game/engine/resolvers/recruit'
+import { createRng } from '@/game/engine/rng'
+import type { RunState } from '@/types'
 
 /** Two deterministic starter picks from the draft session for a given seed. */
 function twoPicks(seed: string) {
@@ -61,6 +65,51 @@ describe('useRunB FSM', () => {
       expect(reloaded2.result.current.view).toBe('victory')
       expect(reloaded2.result.current.battle).not.toBeNull()
     }
+  })
+
+  // The generated area's graph only links adjacent floors, so reaching the boss/relic
+  // node (always present — see nodeGen.ts guarantees) can require several intermediate
+  // floors. Rather than driving a full playthrough, splice a direct edge from the
+  // current node to the target node: this exercises chooseNode's real boss/relic-codex
+  // branch against the target node's REAL pre-generated battle/preview/offer data,
+  // without depending on the random floor-by-floor path a seed happens to produce.
+  function withDirectEdgeTo(run: RunState, targetId: string): RunState {
+    return {
+      ...run,
+      map: run.map!.map(n => (n.id === run.currentNodeId ? { ...n, next: [...n.next, targetId] } : n)),
+    }
+  }
+
+  it('entering a boss battle marks the boss as seen in the codex', () => {
+    const first = renderHook(() => useRunB('seed-c'))
+    act(() => first.result.current.completeDraft(twoPicks('seed-c')))
+    const bossNode = first.result.current.run.map!.find(n => n.type === 'boss')!
+    expect(bossNode.preview?.bossName).toBeTruthy()
+    expect(loadProfile().codex.bossesSeen).not.toContain(bossNode.preview!.bossName)
+
+    saveRun(withDirectEdgeTo(first.result.current.run, bossNode.id))
+    const second = renderHook(() => useRunB('seed-c'))
+    act(() => second.result.current.chooseNode(bossNode.id))
+
+    expect(second.result.current.view).toBe('battle')
+    expect(loadProfile().codex.bossesSeen).toContain(bossNode.preview!.bossName)
+  })
+
+  it('entering a relic node marks every offered relic as seen in the codex', () => {
+    const first = renderHook(() => useRunB('seed-c'))
+    act(() => first.result.current.completeDraft(twoPicks('seed-c')))
+    const relicNode = first.result.current.run.map!.find(n => n.type === 'relic')!
+    const offer = relicOffer(first.result.current.run, relicNode, createRng(first.result.current.run.seed))
+    expect(offer.length).toBeGreaterThan(0)
+    expect(loadProfile().codex.relicsSeen).toHaveLength(0)
+
+    saveRun(withDirectEdgeTo(first.result.current.run, relicNode.id))
+    const second = renderHook(() => useRunB('seed-c'))
+    act(() => second.result.current.chooseNode(relicNode.id))
+
+    expect(second.result.current.view).toBe('relic')
+    const seen = loadProfile().codex.relicsSeen
+    for (const r of offer) expect(seen).toContain(r.id)
   })
 
   it('restart clears the save and returns to the draft', () => {
