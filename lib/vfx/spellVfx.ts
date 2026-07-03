@@ -6,7 +6,7 @@ import type { FxCtx } from './effects'
 
 /** The impact/self signature an effect resolves to. */
 export type Flourish =
-  | 'burst' | 'explosion' | 'flames' | 'fiendfyre' | 'slash' | 'skull' | 'ice' | 'snake'
+  | 'burst' | 'explosion' | 'flames' | 'fiendfyre' | 'slash' | 'skull' | 'avada' | 'ice' | 'snake'
   | 'lightning' | 'stun' | 'lift' | 'swirl' | 'patronus' | 'hex' | 'buff' | 'heal'
   | 'disarm' | 'volley' | 'shove' | 'stone' | 'confusion' | 'silence' | 'dance'
   | 'mind' | 'revive' | 'bubbles' | 'bandage' | 'wall' | 'absorb' | 'rally' | 'wind'
@@ -60,7 +60,7 @@ const SPELL_VFX: Record<string, SpellVfxConfig> = {
   'sectumsempra': { kind: 'projectile', color: C.darkCrimson, motion: 'bolt', impact: 'slash', tier: 2 },
   'bombarda': { kind: 'projectile', color: C.concussive, motion: 'lob', impact: 'explosion', tier: 2 },
   'incendio': { kind: 'projectile', color: C.fire, motion: 'lob', impact: 'flames' },
-  'avada kedavra': { kind: 'projectile', color: C.green, motion: 'orb', impact: 'skull', tier: 3, screen: 0x2ecc40 },
+  'avada kedavra': { kind: 'projectile', color: C.green, motion: 'orb', impact: 'avada', tier: 3, screen: 0x2ecc40 },
   'reducto': { kind: 'projectile', color: C.concussive, motion: 'bolt', impact: 'explosion', tier: 2 },
   'diffindo': { kind: 'projectile', color: C.silver, motion: 'bolt', sigil: false, impact: 'slash' },
   'confringo': { kind: 'projectile', color: C.fire, motion: 'lob', impact: 'explosion', tier: 2 },
@@ -125,6 +125,7 @@ export function runFlourish(ctx: FxCtx, key: Flourish, at: number, x: number, y:
     case 'explosion': FX.fxExplosion(ctx, at, x, y, color); break
     case 'slash': FX.fxSlash(ctx, at, x, y, color); FX.fxShockwave(ctx, at, x, y, color, 2.4, 2); break
     case 'skull': FX.fxSkull(ctx, at, x, y); break
+    case 'avada': FX.fxAvada(ctx, at, x, y, dir); break
     case 'ice': FX.fxIceShards(ctx, at, x, y, color); break
     case 'snake': FX.fxSnake(ctx, at, x, y, color); break
     case 'flames': FX.fxFlash(ctx, at, x, y, color, 34); FX.fxShockwave(ctx, at, x, y, color, 2.6, 3); FX.fxFlames(ctx, at, x, y, color); break

@@ -405,6 +405,46 @@ export function fxSkull(ctx: FxCtx, at: number, x: number, y: number): void {
   }
 }
 
+/** The killing curse: a green death's-head that rushes the target — Avada Kedavra set-piece. */
+export function fxAvada(ctx: FxCtx, at: number, x: number, y: number, dir: number): void {
+  const { stage, tl } = ctx
+  const green: VfxColor = { core: 0x9dff9f, glow: 0x2ecc40, spark: [0x2ecc40, 0xbfffb0] }
+  const d = dir >= 0 ? 1 : -1
+  // Two hard flashes of the curse's cold green light.
+  fxFlash(ctx, at, x, y, green, 52)
+  fxFlash(ctx, at + 0.14, x, y, green, 74)
+  fxShockwave(ctx, at + 0.14, x, y, green, 3.4, 3)
+
+  // A death's-head that rushes into the target along the attack direction, then bursts.
+  const s = new Container()
+  const head = new Graphics().circle(0, 0, 16).fill({ color: 0xdfffe4, alpha: 0.95 })
+  const jaw = new Graphics().roundRect(-9, 9, 18, 11, 4).fill({ color: 0xdfffe4, alpha: 0.95 })
+  const eyeL = new Graphics().circle(-6, -1, 4.5).fill({ color: 0x0a2a10 })
+  const eyeR = new Graphics().circle(6, -1, 4.5).fill({ color: 0x0a2a10 })
+  const nose = new Graphics().poly([0, 3, -3, 9, 3, 9]).fill({ color: 0x0a2a10 })
+  s.addChild(head, jaw, eyeL, eyeR, nose)
+  s.filters = [glow(0x2ecc40, 22, 3)]
+  s.position.set(x - d * 70, y - 6)
+  s.scale.set(0.5)
+  s.alpha = 0
+  stage.fx.addChild(s)
+  tl.to(s, { alpha: 1, duration: 0.1 }, at)
+  tl.to(s.position, { x, duration: 0.2, ease: 'power3.in' }, at) // rush in, accelerating
+  tl.to(s.scale, { x: 1.25, y: 1.25, duration: 0.24, ease: 'power2.out' }, at)
+  tl.to(s, { alpha: 0, duration: 0.5, ease: 'power2.in', onComplete: () => s.destroy() }, at + 0.34)
+
+  // green wisps rising on impact
+  for (let i = 0; i < 14; i++) {
+    const m = new Graphics().circle(0, 0, 2 + Math.random() * 2).fill({ color: 0x2ecc40 })
+    m.position.set(x + (Math.random() * 2 - 1) * 28, y + 12)
+    m.blendMode = 'add'
+    stage.fx.addChild(m)
+    const t = at + 0.12 + Math.random() * 0.2
+    tl.to(m.position, { y: y - 44 - Math.random() * 30, duration: 0.95, ease: 'power1.out' }, t)
+    tl.to(m, { alpha: 0, duration: 0.95, ease: 'power1.in', onComplete: () => m.destroy() }, t)
+  }
+}
+
 /** Crystalline ice shards bursting outward + frost ring. Glacius. */
 export function fxIceShards(ctx: FxCtx, at: number, x: number, y: number, color: VfxColor): void {
   const { stage, tl } = ctx
