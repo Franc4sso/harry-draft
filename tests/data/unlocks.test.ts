@@ -23,9 +23,17 @@ describe('starter wizard set invariants', () => {
     const veleno = STARTER_WIZARDS.filter(id => (byId.get(id)!.tags ?? []).includes('veleno'))
     expect(veleno.length).toBeGreaterThanOrEqual(3)
   })
-  it('includes all tier-1 and tier-2 wizards (power-representative pool)', () => {
-    const tier12 = WIZARDS.filter(w => w.tier === 1 || w.tier === 2).map(w => w.id)
-    for (const id of tier12) expect(STARTER_WIZARDS).toContain(id)
+  it('mirrors the natural rarity curve instead of flooding with high-rarity picks', () => {
+    const tierOf = (id: string) => byId.get(id)!.tier
+    const tier1 = STARTER_WIZARDS.filter(id => tierOf(id) === 1)
+    const tier4 = STARTER_WIZARDS.filter(id => tierOf(id) === 4)
+    const highRarity = STARTER_WIZARDS.filter(id => tierOf(id) === 1 || tierOf(id) === 2)
+    // Not all 3 legendaries forced in — the draft should still surface tier-1s rarely.
+    expect(tier1.length).toBeLessThanOrEqual(2)
+    // The old set had ZERO commons; guard against regressing back to that.
+    expect(tier4.length).toBeGreaterThanOrEqual(5)
+    // High-rarity (tier1+tier2) share was 65% before this fix; keep it well under half.
+    expect(highRarity.length / STARTER_WIZARDS.length).toBeLessThanOrEqual(0.4)
   })
 })
 

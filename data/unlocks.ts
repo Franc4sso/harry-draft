@@ -1,17 +1,33 @@
 import type { RunEndSummary } from '@/lib/metaProgress'
 
 // Authored per the meta-progression plan; enforced by tests/data/unlocks.test.ts.
-// All tier-1 (dumbledore, voldemort, harry) + all tier-2 (snape, bellatrix, mcgonagall,
-// sirius, lupin, moody, lucius, kingsley, fleur, viktor) wizards, plus a tier-3 sample
-// covering all 4 houses and all 4 roles, the Golden Trio (harry/ron/hermione), and
-// >=3 veleno-tagged wizards (bellatrix, sprout, narcissa).
+// Mirrors the natural 60-wizard roster curve (tier1:3, tier2:10, tier3:20, tier4:27)
+// instead of force-including every tier-1/tier-2 wizard (that produced a 65%
+// legendary/epic, zero-common starter pool and an epic-flooded opening draft).
+// Final composition: 1 tier-1, 2 tier-2, 6 tier-3, 9 tier-4 (18 total; ~17% high
+// -rarity share, 9 commons) — the highest-power natural-feeling mix that still
+// clears the campaignBalanceRestricted.test.ts win-rate band; see that file's sweep
+// notes in this repo's fix report for the tradeoffs tried (T2=3-4 pushed winRate
+// back up to/over the 0.45 ceiling).
+// Covers all 4 houses and all 4 roles, the Golden Trio (harry/ron/hermione), and
+// >=3 veleno-tagged wizards (bellatrix, narcissa, sprout). Milestone-unlock ids
+// (dolohov, greyback, neville, molly) are deliberately left out so they stay
+// reachable-but-locked.
+// NOTE: `chooseStarters` draws the opening 3 from a Grifondoro-only offer sorted by
+// raw power. Grifondoro membership is kept to exactly harry/ron/hermione so that
+// offer collapses to the Golden Trio itself (thematic, and empirically the balance-
+// stable choice) rather than accidentally auto-selecting an all-tank or all-attacker
+// trio from a larger Grifondoro slice (that swung the restricted-pool win rate from
+// 0.15 to 0.63 in an earlier draft of this list — see campaignBalanceRestricted.test.ts).
 export const STARTER_WIZARDS: string[] = [
   // Tier 1
-  'dumbledore', 'voldemort', 'harry',
+  'harry',
   // Tier 2
-  'snape', 'bellatrix', 'mcgonagall', 'sirius', 'lupin', 'moody', 'lucius', 'kingsley', 'fleur', 'viktor',
+  'bellatrix', 'kingsley',
   // Tier 3 (trio + house/role coverage + veleno)
-  'ron', 'hermione', 'sprout', 'narcissa', 'hagrid', 'cedric', 'luna',
+  'ron', 'hermione', 'narcissa', 'sprout', 'draco', 'cedric',
+  // Tier 4 (commons — the key regression guard against the old zero-common set)
+  'goyle', 'marcus', 'michael', 'padma', 'hannah', 'ernie', 'pettigrew', 'terry', 'roger',
 ]
 
 // ~12 real relic ids from data/relics.ts, all comune + a half of the non-comune tier
