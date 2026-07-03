@@ -78,8 +78,15 @@ export const MURO: BossDef = {
   // eliteBudgetMult/bossBudgetMult — see tests/engine/campaignBalanceB.test.ts header)
   // — this alone does not restore the 0.15 floor; see that file's header for the honest
   // sweep table and the structural (non-budget) blocker.
-  budget: 250,
-  hpMult: 0.5,
+  // Softened further 250/0.5→150/0.35 (2026-07-04, recruit-rarity re-tune): tried while
+  // hunting for the campaignBalanceB floor after the recruit-node cap change (see
+  // data/constants.ts campaignB.categoryWeights comment for the full story). Measured
+  // FLAT (no winRate change) — consistent with this file's established pattern that
+  // Muro's budget/hpMult plateau once already low; the real lever turned out to be
+  // categoryWeights + enemyCountByArea. Left at the softer value anyway (same direction
+  // as the difficulty intent, harmless either way).
+  budget: 150,
+  hpMult: 0.35,
   unitDamageReduction: 0.4, // unchanged: wall-archetype mechanic, not a budget/power lever.
   pinnedArea: 0,
   unitCount: 3,

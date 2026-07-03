@@ -32,12 +32,27 @@ describe('assignAreaCategories', () => {
       expect(eliteFloor).toBeLessThanOrEqual(w.length - 2)
     }
   })
-  it('guarantees at least one recruit and one relic among middle nodes', () => {
+  it('guarantees at least one relic among middle nodes; recruit is rare and capped at 1', () => {
+    // Recruit is DELIBERATELY not guaranteed (USER DIRECTIVE: recruit nodes must be
+    // rare, some areas zero) — only relic remains a hard guarantee. Recruit is capped
+    // at most 1 per area regardless of how many seeds roll it.
     for (let s = 0; s < 40; s++) {
       const cats = flat(assignAreaCategories(createRng(s), widths(), bias))
-      expect(cats.filter(c => c === 'recruit').length).toBeGreaterThanOrEqual(1)
+      expect(cats.filter(c => c === 'recruit').length).toBeLessThanOrEqual(1)
       expect(cats.filter(c => c === 'relic').length).toBeGreaterThanOrEqual(1)
     }
+  })
+  it('recruit nodes are rare across many areas (some zero, none exceed the cap)', () => {
+    let areasWithRecruit = 0
+    const N = 200
+    for (let s = 0; s < N; s++) {
+      const n = flat(assignAreaCategories(createRng(s), widths(), bias)).filter(c => c === 'recruit').length
+      expect(n).toBeLessThanOrEqual(1)
+      if (n === 1) areasWithRecruit++
+    }
+    // Some areas must have ZERO recruit nodes (rarity requirement).
+    expect(areasWithRecruit).toBeLessThan(N)
+    expect(areasWithRecruit).toBeGreaterThan(0)
   })
   it('is deterministic per seed', () => {
     const a = assignAreaCategories(createRng(9), widths(), bias)
@@ -57,7 +72,8 @@ describe('assignAreaCategories', () => {
       expect(cats[cats.length - 1]).toEqual(['boss'])
       const all = flat(cats)
       expect(all.filter(c => c === 'elite')).toHaveLength(1)
-      expect(all.filter(c => c === 'recruit').length).toBeGreaterThanOrEqual(1)
+      // Recruit bias raises the ODDS of a recruit node but must never exceed the cap.
+      expect(all.filter(c => c === 'recruit').length).toBeLessThanOrEqual(1)
       expect(all.filter(c => c === 'relic').length).toBeGreaterThanOrEqual(1)
     }
   })

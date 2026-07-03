@@ -80,16 +80,24 @@ describe('area pre-boss infirmary guarantee', () => {
     }
   })
 
-  it('area guarantees still hold: 1 elite not on pre-boss floor, >=1 recruit, >=1 relic', () => {
+  it('area guarantees still hold: 1 elite not on pre-boss floor, <=1 recruit, >=1 relic', () => {
+    // Recruit is DELIBERATELY not guaranteed (USER DIRECTIVE: recruit nodes must be
+    // rare — at most 1 per area, some areas zero); only the hard cap (<=1) and the
+    // relic guarantee (>=1) still hold.
     const last = BALANCE.map.floorsPerArea - 1
+    let areasWithRecruit = 0
     for (let seed = 0; seed < 60; seed++) {
       const nodes = generateArea(createRng(`g${seed}`), `g${seed}`, 0, bias)
       const elites = nodes.filter(n => n.type === 'elite')
       expect(elites, `seed ${seed}: exactly one elite`).toHaveLength(1)
       const eliteFloor = Number(/f(\d+)n/.exec(elites[0]!.id)![1])
       expect(eliteFloor, `seed ${seed}: elite not on pre-boss floor`).not.toBe(last - 1)
-      expect(nodes.filter(n => n.type === 'recruit').length, `seed ${seed}: recruit`).toBeGreaterThanOrEqual(1)
+      const recruitCount = nodes.filter(n => n.type === 'recruit').length
+      expect(recruitCount, `seed ${seed}: recruit capped at 1`).toBeLessThanOrEqual(1)
+      if (recruitCount > 0) areasWithRecruit++
       expect(nodes.filter(n => n.type === 'relic').length, `seed ${seed}: relic`).toBeGreaterThanOrEqual(1)
     }
+    // Rarity requirement: across many seeds, some areas must have ZERO recruit nodes.
+    expect(areasWithRecruit).toBeLessThan(60)
   })
 })

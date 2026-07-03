@@ -304,6 +304,37 @@ import type { RunNode, RunState } from '@/types'
 // esecuzioneSweep/scudiRigenSweep/velenoSweep/scudiRigenCounters all pass comfortably.
 // Voldemort's budget/hpMult are now ALSO floor-sensitive levers (in addition to unitCount and
 // every lever above): any future change must re-measure campaignBalanceB (headroom ≈ 0.0083).
+//
+// *** RE-TUNED 2026-07-04 (recruit-rarity fix, USER DIRECTIVE) *** The user reported the
+// game was far too easy because recruit nodes were effectively unlimited, so the player
+// always fielded a full 5-wizard team. game/engine/nodeGen.ts was changed to DROP the
+// guaranteed >=1-recruit-per-area rule and add a hard cap of <=1 recruit/area (excess
+// converts to 'battle'); data/constants.ts's categoryWeights/recruitBiasBoost were re-tuned
+// in lockstep. Baseline before this change (measured on this exact test file): 0.1167
+// (14/120). Naively cutting just recruit's weight crashed this to 0.0083-0.0500 across a
+// wide sweep — root cause: (1) cutting recruit without also cutting 'battle' silently
+// DOUBLED average mandatory battle-filler nodes per area (the freed probability mass
+// defaulted into 'battle', the previously-largest weight), and (2) the near-optimal bot's
+// fight-first-greedy policy only ever visits recruit/relic nodes when NO battle/elite is
+// reachable, so recruit uptake stayed near zero (76% of runs recruited 0 times) even when
+// raw per-area recruit odds were pushed to ~80%+. Fix: rebalance categoryWeights so a cut
+// recruit's weight moves into 'relic' (permanent power, no extra fight) instead of
+// 'battle', then re-open enemyCountByArea/normalEnemyCount to compensate for the team
+// staying near its area-0 starting size (3) for most of a run. See
+// data/constants.ts campaignB.categoryWeights's comment for the full sweep table.
+// SHIPPED: categoryWeights {battle:25, recruit:10, relic:50}, recruitBiasBoost:10,
+// normalEnemyCount:1, enemyCountByArea:[1,2,4]. Final winRates (120 seeds):
+// campaignBalanceB overall 0.1000 (12/120, inside (0.07,0.45), centered in the requested
+// 0.08-0.13 hard-mode band), campaignBalanceRestricted 0.3083 (comfortable margin below
+// the 0.45 ceiling), withVeleno 0.133 > noVeleno 0.100 > 0 (Muro veleno-teaches-the-wall
+// still holds), esecuzioneSweep/scudiRigenSweep/velenoSweep/magieOscureSweep/
+// serpeverdeBalance all pass comfortably above their own floors. Recruit distribution is
+// now genuinely rare: most areas roll 0 recruit nodes, never more than 1, roughly 1-2
+// recruits across a whole 3-area run for a near-optimal player (real human play, which
+// doesn't always take the reachable fight over a reachable recruit, will recruit
+// somewhat more often than this bot). categoryWeights/recruitBiasBoost/normalEnemyCount/
+// enemyCountByArea are now ALL floor-sensitive: any future balance change must re-measure
+// both campaignBalanceB and campaignBalanceRestricted.
 registerCoreResolvers()
 
 // Near-optimal ("upper-bound") player policy. A pure recruit/relic-first greedy is

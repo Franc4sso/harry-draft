@@ -131,14 +131,31 @@ defenseK: 0.5,
     // winRate = 0.2083 (25/120) at normalEnemyCount=2 — a comfortable ~7-seed margin above
     // the floor (vs the old ~1-seed razor's edge), veleno counter intact (0.300>0.208), full
     // 979-test suite green. Both levers (this + the end-of-area heal) are now floor-sensitive.
-    normalEnemyCount: 2,
+    // LOWERED 2→1 (2026-07-04, recruit-rarity re-tune — see categoryWeights above): after
+    // capping recruit to <=1/area (was effectively unlimited), the near-optimal bot's team
+    // stays at its starting size of 3 for ~75% of runs (a loss-trace showed fight-first
+    // greedy play almost never detours to a recruit node), reopening the same
+    // action-economy deficit normalEnemyCount=2 was raised to fix back when recruit was
+    // abundant. Eased back to 1 as part of the same re-tune that adjusted
+    // enemyCountByArea below; see categoryWeights' comment for the full sweep.
+    normalEnemyCount: 1,
     // RAISED 2026-07-03 (USER DECISION, "livelli e quantità elite/boss troppo bassi"):
     // one extra elite in the final area, [2,3,3]→[2,3,4]. Paired with the elite/boss
     // level bump below, this pushes campaignBalanceB's near-optimal-bot winRate to
     // ~0.125 — a deliberate difficulty increase; the test floor was lowered 0.15→0.10
     // to match (see tests/engine/campaignBalanceB.test.ts). Adding a 3rd area-0 elite or
     // a 2nd extra elite drops it further (measured 0.108-0.133) — do NOT stack blindly.
-    enemyCountByArea: [2, 3, 4] as readonly number[],
+    //
+    // RE-TUNED 2026-07-04 (recruit-rarity re-tune, [2,3,4]→[1,2,4]): the team now stays
+    // near its area-0 starting size (3) for most of the run (see normalEnemyCount's note
+    // above), so area-0's elite trim (2→1) targets pressure relief where the team is
+    // weakest, while area-2's elite count is left at 4 (not trimmed) since by then a
+    // near-optimal run has usually landed its 1-2 lifetime recruits and the extra
+    // pressure is needed to hold the floor without pushing campaignBalanceRestricted
+    // too close to the 0.45 ceiling (measured 0.4167 at [1,2,3], 0.3083 at [1,2,4] — the
+    // latter has a much safer margin). See categoryWeights' comment for the full sweep
+    // table this was measured against.
+    enemyCountByArea: [1, 2, 4] as readonly number[],
     // --- Displayed enemy LEVEL by (area, kind) ---
     // Honest, area-scaled threat tiers so an Elite/Boss reads as a real level (no
     // more "Lv.1" elites). level = base + perArea*area, clamped to leveling.levelMax.
@@ -342,8 +359,57 @@ defenseK: 0.5,
     areas: 3,                   // numero di aree per run
     floorsPerArea: 5,           // piani per area incl. ingresso(0) + boss(last)
     eliteMinFloor: 2,           // l'unico Elite dell'area va in [eliteMinFloor, floorsPerArea-2]
-    categoryWeights: { battle: 50, recruit: 28, relic: 22 } as Record<'battle' | 'recruit' | 'relic', number>,
-    recruitBiasBoost: 30,       // peso aggiunto a 'recruit' quando la squadra è incompleta
+    // SLASHED 2026-07-04 (USER DIRECTIVE, "recruit nodes must be RARE — at most 1 per
+    // area, some areas ZERO; the game must be hard, more losses (esp. early) accepted").
+    // Paired with the nodeGen.ts change that DROPPED the guaranteed->=1-recruit-per-area
+    // rule and added a hard per-area cap of exactly 1 recruit (any filler roll beyond the
+    // cap downgrades to 'battle'), the OLD weights (28/30) used to yield an average of
+    // 3.19 recruit nodes PER AREA (measured — the old code had no cap, so the dominant
+    // recruit weight just kept re-rolling more copies) — this IS the bug the user
+    // reported ("always field 5 vs 3"). At the new cap, recruit dropped to ~0.5-1/area.
+    //
+    // ROOT CAUSE FOUND DURING RE-TUNE: cutting recruit's weight without ALSO cutting
+    // 'battle' redistributes the freed probability mass mostly into 'battle' (since it
+    // was already the largest weight), which SILENTLY DOUBLED the average mandatory
+    // battle-filler count per area (measured: old ≈1.96 filler battles/area → new ≈3.7-5.0
+    // depending on recruit weight). A loss-location trace (120 seeds, near-optimal bot)
+    // confirmed the real bottleneck was NOT recruit frequency itself — pushing recruit
+    // odds to near-certain (recruit=2/boost=20) still measured 0.05 flat, because the
+    // near-optimal test policy is fight-first-greedy: it only ever visits recruit/relic
+    // when NO battle/elite is reachable at that step, so recruit uptake is structurally
+    // suppressed by battle density, independent of recruit's own weight. The trace showed
+    // 76% of runs recruited ZERO times all run (vs the ~50-55%/area raw-generation odds
+    // would suggest), and losses concentrated overwhelmingly at area0-boss (Il Muro) with
+    // the team stuck at its starting size of 3.
+    // FIX: rebalance battle DOWN and relic UP (not just cut recruit) so the freed weight
+    // from a rare recruit goes to relic (permanent power, no extra fight) instead of
+    // inflating mandatory combat count, then re-open the enemy-count lever (below) to
+    // compensate for the team staying near its starting size most of the run.
+    // categoryWeights sweep (120-seed campaignBalanceB / campaignBalanceRestricted,
+    // enemyCountByArea/normalEnemyCount held at their SHIPPED post-cut values unless noted):
+    //   battle=50 recruit=28 boost=30 (old weights, NEW cap code) → 0.0083 / — (avgBattle/area
+    //                                   jumped 1.96→4.99; recruit stayed ~1/area despite P=98%)
+    //   battle=50 recruit=6  boost=3                                → 0.0250 / 0.1833
+    //   battle=35 recruit=6  boost=3  relic=35 (first relic-up attempt) → 0.0500 / 0.2167
+    //   battle=25 recruit=10 boost=10 relic=50, enemyCountByArea=[2,3,4] normal=2 (baseline
+    //                                   enemy pressure, pre-cut) → 0.0417 (recruit uptake
+    //                                   still suppressed by fight-first greedy)
+    //   SAME weights + enemyCountByArea=[1,2,3] + normalEnemyCount=1 (re-opened the
+    //                                   enemy-count lever to compensate for the
+    //                                   team-stuck-at-3 reality)     → 0.1250 / 0.4167 (both
+    //                                   pass, restricted uncomfortably close to the 0.45 ceiling)
+    //   SAME + enemyCountByArea=[1,2,4] (put the trimmed area-0 slot's slack back onto
+    //                                   area 2 instead of area 0, since area-0 is where
+    //                                   the team is smallest/weakest)  → 0.1000 / 0.3083
+    //                                   SHIPPED — both comfortably inside (0.07,0.45),
+    //                                   full-pool centered in the requested 0.08-0.13 band.
+    // budget (eliteBudgetMult/bossBudgetMult) and enemy LEVEL sweeps were also tried during
+    // this re-tune and, consistent with this file's older history, PLATEAUED (no measurable
+    // effect once already low) — not the live lever here. Il Muro's own budget/hpMult
+    // (data/bosses.ts) was also softened 250/0.5→150/0.35 during the search; also flat, but
+    // left at the softer value (harmless, consistent direction).
+    categoryWeights: { battle: 25, recruit: 10, relic: 50 } as Record<'battle' | 'recruit' | 'relic', number>,
+    recruitBiasBoost: 10,        // peso aggiunto a 'recruit' quando la squadra è incompleta
   },
   relics: {
     offerCount: 3,

@@ -5,11 +5,24 @@ import { offerRecruits, recruitVia } from '@/game/engine/recruit'
 import { generateArea } from '@/game/engine/map'
 import type { RunState } from '@/types'
 
+// Recruit nodes are now rare (at most 1 per area, often 0 — see nodeGen.ts), so a
+// single fixed seed is no longer guaranteed to contain one. This test exercises the
+// recruit resolver itself, so it genuinely needs a recruit node to exist: search a
+// small range of area-forks until one turns up (bias teamSize<teamMax keeps the odds
+// decent — see data/constants.ts categoryWeights/recruitBiasBoost).
+function mapWithRecruitNode(): { map: RunState['map']; recruitNode: NonNullable<RunState['map']>[number] } {
+  for (let i = 0; i < 50; i++) {
+    const map = generateArea(createRng(2).fork(4).fork(i), 'test', 0, { teamSize: 2, teamMax: 5 })
+    const recruitNode = map.find(n => n.type === 'recruit')
+    if (recruitNode) return { map, recruitNode }
+  }
+  throw new Error('no recruit node found in 50 area forks')
+}
+
 function baseState(): RunState {
   const team = offerRecruits(createRng(1), { exclude: new Set() })
     .slice(0, 2).map(d => recruitVia(d, 'iniziale'))
-  const map = generateArea(createRng(2).fork(4).fork(0), 'test', 0, { teamSize: 2, teamMax: 5 })
-  const recruitNode = map.find(n => n.type === 'recruit')!
+  const { map, recruitNode } = mapWithRecruitNode()
   return { seed: 's', phase: 'recruit-node', team, activeSynergies: [], stage: 0, relics: [],
     map, currentNodeId: recruitNode.id, house: 'Tassorosso', area: 0, teamMax: 5, log: [], pendingLevelUps: [] }
 }

@@ -18,9 +18,14 @@ interface Slot { floor: number; idx: number }
  * width 3) has exactly one 'infirmary' node among its 3 slots (heals the team before
  * every boss) plus 2 other filler nodes (battle/recruit/relic) — infirmary never
  * appears on any other floor; exactly one elite in a mid floor within
- * [eliteMinFloor, last-2] (never on the pre-boss floor); at least one recruit and
- * one relic among the remaining middle nodes. Remaining middle nodes are weighted
- * fillers, with a recruit bias when the team is incomplete.
+ * [eliteMinFloor, last-2] (never on the pre-boss floor); at least one relic among the
+ * remaining middle nodes.
+ * Recruit nodes are DELIBERATELY RARE (USER DIRECTIVE, "the game must be hard, recruit
+ * nodes must be rare"): recruit is NOT guaranteed (an area may have zero), and is HARD
+ * CAPPED at exactly one per area regardless of weighted rolls — any filler roll that
+ * would place a 2nd recruit in the same area becomes a battle instead. Remaining
+ * middle nodes are weighted fillers (battle/recruit/relic), with a (now small) recruit
+ * bias when the team is incomplete.
  */
 export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias): RunNodeType[][] {
   if (widths.length < 3) throw new Error(`area needs >=3 floors, got ${widths.length}`)
@@ -61,37 +66,58 @@ export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias)
   setCat(cats, eliteFloor, eliteIdx, 'elite')
   used.add(key(eliteFloor, eliteIdx))
 
-  // 3. Guarantee >=1 recruit and >=1 relic among the remaining middle slots.
+  // 3. Guarantee >=1 relic among the remaining middle slots. Recruit is NOT
+  //    guaranteed here (USER DIRECTIVE: recruit nodes must be rare, some areas zero).
   const free = () => slots.filter(s => !used.has(key(s.floor, s.idx)))
-  for (const must of ['recruit', 'relic'] as Filler[]) {
+  {
     const pool = free()
-    if (pool.length === 0) throw new Error(`not enough middle slots to guarantee a ${must} node`)
+    if (pool.length === 0) throw new Error(`not enough middle slots to guarantee a relic node`)
     const s = rng.pick(pool)
-    setCat(cats, s.floor, s.idx, must)
+    setCat(cats, s.floor, s.idx, 'relic')
     used.add(key(s.floor, s.idx))
   }
 
-  // 4. Fill the rest with weighted fillers (recruit-biased when team incomplete).
+  // 4. Fill the rest with weighted fillers (recruit-biased when team incomplete),
+  //    enforcing a HARD CAP of at most one recruit node per area: any filler roll that
+  //    would place a 2nd recruit downgrades to 'battle' instead.
   //    Dedup: never leave a floor entirely one node type when it has >1 node and an
   //    alternative filler exists. Guaranteed nodes (elite/recruit/relic) count toward
   //    the floor's type set, so most floors are already mixed; this only catches the
   //    all-filler-same case (e.g. 3-wide floor rolling battle/battle/battle).
+  let recruitCount = 0
+  const rollFiller = (): Filler => {
+    const cat = pickFiller(rng, bias)
+    if (cat === 'recruit') {
+      if (recruitCount >= 1) return 'battle'
+      recruitCount++
+    }
+    return cat
+  }
   const freeByFloor = new Map<number, Slot[]>()
   for (const s of free()) freeByFloor.set(s.floor, [...(freeByFloor.get(s.floor) ?? []), s])
   for (const [floor, floorSlots] of freeByFloor) {
     for (const s of floorSlots) {
-      setCat(cats, s.floor, s.idx, pickFiller(rng, bias))
+      setCat(cats, s.floor, s.idx, rollFiller())
       used.add(key(s.floor, s.idx))
     }
     // If the whole floor collapsed to one type, re-roll the last slot until it differs.
+    // A weighted re-roll can (rarely) miss 8 tries in a row when one category now
+    // dominates the weights (e.g. relic at 50 vs battle 25/recruit 10) — guarantee the
+    // dedup by falling back to an explicit different category rather than leaving the
+    // floor all-same.
     const types = cats[floor]!
     const width = types.length
     if (width > 1 && types.every(t => t === types[0])) {
       const last = floorSlots[floorSlots.length - 1]
       if (last) {
+        let broke = false
         for (let tries = 0; tries < 8; tries++) {
-          const alt = pickFiller(rng, bias)
-          if (alt !== types[0]) { setCat(cats, last.floor, last.idx, alt); break }
+          const alt = rollFiller()
+          if (alt !== types[0]) { setCat(cats, last.floor, last.idx, alt); broke = true; break }
+        }
+        if (!broke) {
+          const fallback: Filler = types[0] === 'battle' ? 'relic' : 'battle'
+          setCat(cats, last.floor, last.idx, fallback)
         }
       }
     }
