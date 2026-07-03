@@ -5,6 +5,19 @@ import type { EventBus } from './combat/eventBus'
 import { RELICS } from '@/data/relics'
 import { BALANCE } from '@/data/constants'
 
+let relicRestriction: ReadonlySet<string> | null = null
+
+/** Restrict the PLAYER's relic offer pool to a subset of relic ids (or null to
+ *  clear). Enemy relic selection (`selectEnemyRelics`) reads RELICS directly
+ *  and is unaffected. */
+export function setRelicPoolRestriction(ids: Iterable<string> | null): void {
+  relicRestriction = ids ? new Set(ids) : null
+}
+
+function restrictedRelicPool(all: Relic[]): Relic[] {
+  return relicRestriction ? all.filter(r => relicRestriction!.has(r.id)) : all
+}
+
 export function relicMatchesCondition(team: DraftedWizard[], condition?: RelicCondition): boolean {
   if (!condition) return true
   const count = condition.count ?? 3
@@ -126,7 +139,7 @@ export function selectEnemyRelics(rng: Rng, count: number): ActiveRelic[] {
 
 export function offerRelics(rng: Rng, owned: ActiveRelic[], _stage: number): Relic[] {
   const ownedIds = new Set(owned.map(o => o.relic.id))
-  const available = RELICS.filter(r => !ownedIds.has(r.id))
+  const available = restrictedRelicPool(RELICS).filter(r => !ownedIds.has(r.id))
   const count = Math.min(BALANCE.relics.offerCount, available.length)
   const chosen: Relic[] = []
   const remaining = [...available]
