@@ -11,6 +11,7 @@ import { isDead, livingOf } from './roster'
 import { combatResolver } from './resolvers/combat'
 import { recruitResolver, relicResolver } from './resolvers/recruit'
 import { infirmaryResolver } from './resolvers/infirmary'
+import { eventResolver } from './resolvers/event'
 import { registerResolver, resolverFor } from './resolvers'
 import type { ResolverChoice } from './resolvers/types'
 import { BALANCE } from '@/data/constants'
@@ -36,6 +37,7 @@ export function registerCoreResolvers(): void {
   registerResolver(recruitResolver)                // id 'recruit'
   registerResolver(relicResolver)                  // id 'relic'
   registerResolver(infirmaryResolver)              // id 'infirmary'
+  registerResolver(eventResolver)                  // id 'event'
   registered = true
 }
 
@@ -87,7 +89,8 @@ export function reachable(state: RunState): RunNode[] {
 }
 
 const phaseForNode = (t: RunNode['type']): RunState['phase'] =>
-  t === 'recruit' ? 'recruit-node' : t === 'relic' ? 'relic-node' : t === 'infirmary' ? 'infirmary-node' : 'battle'
+  t === 'recruit' ? 'recruit-node' : t === 'relic' ? 'relic-node' : t === 'infirmary' ? 'infirmary-node' :
+  t === 'event' ? 'event-node' : 'battle'
 
 export function moveTo(state: RunState, nodeId: string): RunState {
   const cur = state.map?.find(n => n.id === state.currentNodeId)

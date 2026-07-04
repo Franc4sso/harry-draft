@@ -5,7 +5,7 @@ export type RunPhase =
   | 'menu' | 'draft' | 'team' | 'battle'
   | 'victory' | 'defeat' | 'win'
   // Fase 1 redesign (Plan B):
-  | 'house' | 'starter' | 'map' | 'recruit-node' | 'relic-node' | 'infirmary-node' | 'area-cleared'
+  | 'house' | 'starter' | 'map' | 'recruit-node' | 'relic-node' | 'infirmary-node' | 'event-node' | 'area-cleared'
 
 export type RunNodeType =
   // Fase 1 — generati e risolti
@@ -55,7 +55,7 @@ export interface RunNode {
 export interface RunEvent {
   area: number
   nodeId: string
-  kind: 'recruit' | 'relic' | 'elite' | 'boss' | 'levelMilestone' | 'infirmary'
+  kind: 'recruit' | 'relic' | 'elite' | 'boss' | 'levelMilestone' | 'infirmary' | 'event'
   summary: string
 }
 

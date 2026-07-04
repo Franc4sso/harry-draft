@@ -4,12 +4,15 @@ import type { Rng } from '../rng'
 export type ResolverChoice =
   | { kind: 'recruit-pick'; wizardId: string; replaceId?: string }
   | { kind: 'relic-pick'; relicId: string; assignedTo?: string }
+  | { kind: 'event-choice'; optionId: string }
   | { kind: 'combat-ack' }
   | { kind: 'skip' }
 
 export interface ResolverEntry {
   offers: { wizardIds?: string[]; relicIds?: string[] }
   isCombat: boolean
+  /** Present for 'event' nodes: the picked event's display summary. */
+  event?: { id: string; title: string; text: string; choices: { id: string; label: string }[] }
 }
 
 export interface NodeResolver {
