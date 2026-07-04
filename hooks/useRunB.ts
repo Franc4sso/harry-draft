@@ -12,10 +12,12 @@ import { randomSeed } from '@/lib/seed'
 import { saveRun, loadRun, clearRun } from '@/lib/runStore'
 import { BALANCE } from '@/data/constants'
 import { prepareCombat, combatRng, type ActiveBattleB } from './useRunB.combat'
-import { loadProfile, saveProfile, markSeen } from '@/lib/metaStore'
+import { loadProfile, saveProfile, markSeen, grantCioccorane, spendCioccorane } from '@/lib/metaStore'
 import type { MetaProfile } from '@/lib/metaStore'
 import { buildRunEndSummary, recordRunEnd } from '@/lib/metaProgress'
 import { relicOffer } from '@/game/engine/resolvers/recruit'
+import { eventResolver, resolveEventChoice } from '@/game/engine/resolvers/event'
+import { EVENT_BY_ID, type EventRequirement } from '@/data/events'
 import { STARTER_WIZARDS, STARTER_RELICS, type UnlockTarget } from '@/data/unlocks'
 import { setDraftPoolRestriction } from '@/game/engine/draft'
 import { setRelicPoolRestriction } from '@/game/engine/relics'
@@ -24,9 +26,12 @@ registerCoreResolvers()
 
 export type RunBView =
   | 'draft' | 'map' | 'battle' | 'victory'
-  | 'recruit' | 'relic' | 'infirmary' | 'area-cleared' | 'win' | 'defeat'
+  | 'recruit' | 'relic' | 'infirmary' | 'event' | 'area-cleared' | 'win' | 'defeat'
 
 export interface RunReward { earned: number; unlocked: UnlockTarget[]; profile: MetaProfile }
+
+export interface EventChoiceView { id: string; label: string; enabled: boolean; reason?: string }
+export interface CurrentEventView { id: string; title: string; text: string; choices: EventChoiceView[] }
 
 export interface RunBController {
   run: RunState; view: RunBView
@@ -41,6 +46,8 @@ export interface RunBController {
   skipRecruit: () => void
   chooseRelic: (relicId: string, assignedTo?: string) => void
   ackInfirmary: () => void
+  currentEvent: CurrentEventView | null
+  chooseEventOption: (optionId: string) => void
   setWizardSpell: (wizardId: string, spellId: string) => void
   useConsumableRelic: (relicId: string) => void
   advanceArea: () => void
@@ -56,11 +63,34 @@ const viewForPhase = (p: RunState['phase']): RunBView => {
     case 'recruit-node': return 'recruit'
     case 'relic-node': return 'relic'
     case 'infirmary-node': return 'infirmary'
+    case 'event-node': return 'event'
     case 'area-cleared': return 'area-cleared'
     case 'win': return 'win'
     case 'defeat': return 'defeat'
     default: return 'map'
   }
+}
+
+/** Evaluate a single event choice's `requires` against the LIVE run team + profile
+ *  Cioccorane balance. Undefined `requires` is always enabled. */
+function evalEventRequirement(
+  req: EventRequirement | undefined, team: DraftedWizard[], cioccorane: number,
+): { enabled: boolean; reason?: string } {
+  if (!req) return { enabled: true }
+  if ('minCioccorane' in req) {
+    return cioccorane >= req.minCioccorane
+      ? { enabled: true }
+      : { enabled: false, reason: `Richiede ${req.minCioccorane} 🍫 (hai ${cioccorane})` }
+  }
+  if ('minTeam' in req) {
+    return team.length >= req.minTeam
+      ? { enabled: true }
+      : { enabled: false, reason: `Richiede almeno ${req.minTeam} maghi in squadra` }
+  }
+  const count = team.filter(d => d.wizard.role === req.role).length
+  return count >= req.count
+    ? { enabled: true }
+    : { enabled: false, reason: `Richiede ${req.count}× ${req.role} in squadra` }
 }
 
 export function useRunB(seed: string): RunBController {
@@ -171,6 +201,39 @@ export function useRunB(seed: string): RunBController {
     commit({ ...next, phase: 'map' }, 'map')
   }, [commit])
 
+  // Computed from the resolver's `enter` (same eventForNode pick used by resolve/commit),
+  // with each choice's `enabled` evaluated against the LIVE team + profile Cioccorane.
+  const currentEvent = useMemo<CurrentEventView | null>(() => {
+    if (run.phase !== 'event-node') return null
+    const node = run.map?.find(n => n.id === run.currentNodeId)
+    if (!node) return null
+    const entry = eventResolver.enter(run, node, createRng(run.seed))
+    const full = entry.event ? EVENT_BY_ID[entry.event.id] : undefined
+    if (!entry.event || !full) return null
+    const cioccorane = profileRef.current.cioccorane
+    const choices = full.choices.map(c => {
+      const { enabled, reason } = evalEventRequirement(c.requires, run.team, cioccorane)
+      return { id: c.id, label: c.label, enabled, ...(reason ? { reason } : {}) }
+    })
+    return { id: full.id, title: full.title, text: full.text, choices }
+  }, [run])
+
+  // Mirrors chooseRecruit/chooseRelic: resolve via the SAME node the offer came from, then
+  // apply the run-resource effects to RunState AND the Cioccorane delta to the profile from
+  // the SAME (single) applyEventEffects call, so state and currency can never disagree —
+  // see resolveEventChoice's doc comment for why the salt/pick logic isn't duplicated here.
+  const chooseEventOption = useCallback((optionId: string) => {
+    const node = runRef.current.map!.find(n => n.id === runRef.current.currentNodeId)!
+    const { state: nextState, cioccoraneDelta } =
+      resolveEventChoice(runRef.current, node, optionId, createRng(runRef.current.seed))
+    let p = profileRef.current
+    if (cioccoraneDelta > 0) p = grantCioccorane(p, cioccoraneDelta)
+    else if (cioccoraneDelta < 0) p = spendCioccorane(p, -cioccoraneDelta) ?? p // can't happen: the choice was disabled if unaffordable
+    profileRef.current = p; saveProfile(p)
+    const map = runRef.current.map!.map(n => (n.id === node.id ? { ...n, resolved: true } : n))
+    commit({ ...nextState, map, phase: 'map' }, 'map')
+  }, [commit])
+
   const setWizardSpellCb = useCallback((wizardId: string, spellId: string) => {
     commit(setWizardSpell(runRef.current, wizardId, spellId))
   }, [commit])
@@ -201,7 +264,9 @@ export function useRunB(seed: string): RunBController {
     run, view, battle, reachable, currentNode,
     area: run.area ?? 0, areasTotal: BALANCE.map.areas, lastFallen, runReward,
     completeDraft, chooseNode, commitBattle, acknowledgeVictory,
-    chooseRecruit, skipRecruit, chooseRelic, ackInfirmary, setWizardSpell: setWizardSpellCb,
+    chooseRecruit, skipRecruit, chooseRelic, ackInfirmary,
+    currentEvent, chooseEventOption,
+    setWizardSpell: setWizardSpellCb,
     useConsumableRelic: useConsumableRelicCb,
     advanceArea, restart,
   }
