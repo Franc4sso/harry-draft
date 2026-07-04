@@ -30,9 +30,11 @@ describe('relics data', () => {
       expect(hasBonus || hasTrigger || hasKeywordMult || hasGrantsExecute || hasGrantsShieldConvert || hasGrantsDarkMagic || hasGrantsAlwaysHit || hasActive, `relic ${r.id} has nothing`).toBe(true)
     }
   })
-  it('limits trigger relics to at most 3 (v1)', () => {
+  it('limits trigger relics to at most 4 (v1)', () => {
+    // Cap raised 3 -> 4: `zanna-vorace` is an intentional 4th trigger relic
+    // (rule-breaking content, added alongside furia-iniziale/patto-di-sangue).
     const triggers = RELICS.filter(r => r.triggers?.length)
-    expect(triggers.length).toBeLessThanOrEqual(3)
+    expect(triggers.length).toBeLessThanOrEqual(4)
   })
   it('conditional relics reference real houses/roles', () => {
     const houses = ['Grifondoro', 'Serpeverde', 'Corvonero', 'Tassorosso']
