@@ -7,7 +7,7 @@ export interface AreaBias {
   teamMax: number
 }
 
-type Filler = 'battle' | 'recruit' | 'relic'
+type Filler = 'battle' | 'recruit' | 'relic' | 'event'
 
 /** Flat list of (floor, idx) coordinates for the middle floors only. */
 interface Slot { floor: number; idx: number }
@@ -129,7 +129,7 @@ export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias)
 function pickFiller(rng: Rng, bias: AreaBias): Filler {
   const cw = BALANCE.map.categoryWeights
   const recruitW = cw.recruit + (bias.teamSize < bias.teamMax ? BALANCE.map.recruitBiasBoost : 0)
-  const entries: [Filler, number][] = [['battle', cw.battle], ['recruit', recruitW], ['relic', cw.relic]]
+  const entries: [Filler, number][] = [['battle', cw.battle], ['recruit', recruitW], ['relic', cw.relic], ['event', cw.event]]
   const total = entries.reduce((a, [, v]) => a + v, 0)
   let roll = rng.next() * total
   for (const [cat, v] of entries) {

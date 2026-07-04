@@ -461,7 +461,7 @@ defenseK: 0.5,
     // effect once already low) — not the live lever here. Il Muro's own budget/hpMult
     // (data/bosses.ts) was also softened 250/0.5→150/0.35 during the search; also flat, but
     // left at the softer value (harmless, consistent direction).
-    categoryWeights: { battle: 25, recruit: 10, relic: 50 } as Record<'battle' | 'recruit' | 'relic', number>,
+    categoryWeights: { battle: 25, recruit: 10, relic: 50, event: 15 } as Record<'battle' | 'recruit' | 'relic' | 'event', number>,
     recruitBiasBoost: 10,        // peso aggiunto a 'recruit' quando la squadra è incompleta
   },
   relics: {
