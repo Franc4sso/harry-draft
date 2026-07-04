@@ -40,8 +40,14 @@ export const RELICS: Relic[] = [
   { id: 'cuore-del-tasso', name: 'Cuore del Tasso', desc: 'La conversione in Scudo della squadra è aumentata del 50%.', rarity: 'non-comune', keywords: ['scudo'], keywordMult: { scudo: 0.5 } },
   // Consumabili attivi
   { id: 'lacrime-fenice', name: 'Lacrime di Fenice', desc: 'Usa una volta: riporta in vita tutti i maghi caduti con la vita piena.', rarity: 'epica', active: 'revive' },
+  // Rule-breaking pool (event rewards) — reuse existing hooks only.
+  { id: 'zanna-vorace', name: 'Zanna Vorace', desc: 'Ogni colpo della squadra avvelena il nemico con 2 dosi invece di 1.', rarity: 'epica', keywords: ['veleno'], triggers: [{ hook: 'onHit', effects: [{ kind: 'applyStatus', target: 'enemy', statusId: 'veleno' }, { kind: 'applyStatus', target: 'enemy', statusId: 'veleno' }] }] },
+  { id: 'furia-iniziale', name: 'Furia Iniziale', desc: 'A inizio battaglia, tutta la squadra guadagna +18 Attacco.', rarity: 'epica', bonus: { atk: 18 } },
+  { id: 'patto-di-sangue', name: 'Patto di Sangue', desc: 'Assegna a un mago: i suoi colpi infliggono +60% danni, ma subisce un contraccolpo pari al 25% del danno inflitto.', rarity: 'epica', assignable: true, grantsDarkMagic: { bonus: 0.6, recoil: 0.25 } },
 ]
 
 export const RELIC_BY_ID: Record<string, Relic> = Object.fromEntries(
   RELICS.map(r => [r.id, r]),
 )
+
+export const RULE_BREAKING_RELIC_IDS: string[] = ['zanna-vorace', 'furia-iniziale', 'patto-di-sangue']
