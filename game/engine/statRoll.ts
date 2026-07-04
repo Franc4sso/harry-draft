@@ -25,6 +25,27 @@ export function fixedStats(wizard: Wizard): Stats {
   }
 }
 
+/** STRICT guarantee (enemy elite/boss only — see draftWizard's `guaranteeOffense`):
+ *  given a wizard's already-chosen active `spell`, returns it unchanged if it's
+ *  offensive. Otherwise replaces it with the strongest (highest `power`) offensive
+ *  spell in the wizard's own pool, or — if the pool has none at all (a pure-support
+ *  kit, e.g. pettigrew) — the universal `base_attack` fallback. Deterministic (no rng
+ *  draw): unlike `preferOffense`'s soft bias, this NEVER falls through to a
+ *  non-offensive spell, closing the "boss leader with a heal/shield active deals zero
+ *  damage" degenerate case. */
+export function guaranteeOffensiveSpell(wizard: Wizard, spell: Spell): Spell {
+  if (spellIsOffensive(spell)) return spell
+  const offensiveIds = wizard.spellPool.filter(id => spellIsOffensive(SPELL_BY_ID[id]))
+  if (offensiveIds.length > 0) {
+    const strongestId = offensiveIds.reduce((best, id) =>
+      (SPELL_BY_ID[id]!.power ?? 0) > (SPELL_BY_ID[best]!.power ?? 0) ? id : best)
+    return SPELL_BY_ID[strongestId]!
+  }
+  const fallback = SPELL_BY_ID['base_attack']
+  if (!fallback) throw new Error('base_attack spell missing from registry')
+  return fallback
+}
+
 export function pickSpell(rng: Rng, wizard: Wizard, preferOffense = false): Spell {
   // Venom-tagged mages always enter battle with a venom spell equipped. Restrict the
   // candidate set BEFORE the single rng.pick — one draw, restricted outcome (keeps the
@@ -53,9 +74,15 @@ export function pickSpell(rng: Rng, wizard: Wizard, preferOffense = false): Spel
   return spell
 }
 
-export function draftWizard(rng: Rng, wizard: Wizard, allowShiny = false, preferOffense = false): DraftedWizard {
+export function draftWizard(
+  rng: Rng, wizard: Wizard, allowShiny = false, preferOffense = false, guaranteeOffense = false,
+): DraftedWizard {
   const stats = fixedStats(wizard)
-  const spell = pickSpell(rng, wizard, preferOffense)
+  let spell = pickSpell(rng, wizard, preferOffense)
+  // `guaranteeOffense` (enemy elite/boss drafts ONLY, wired from teamGen.ts): unlike
+  // `preferOffense`'s bias, this can never leave a non-offensive spell equipped. Player
+  // drafts and normal-enemy drafts never opt in, so their spell choice is unaffected.
+  if (guaranteeOffense) spell = guaranteeOffensiveSpell(wizard, spell)
   // Always DRAW the roll (keeps the rng stream identical for every caller), but only
   // ATTACH shiny when the caller opts in. Enemies/boss teams never opt in → never shiny,
   // yet their draft stream (and thus composition) is unchanged. Shiny is PLAYER-DRAFT ONLY.

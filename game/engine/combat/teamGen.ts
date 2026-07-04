@@ -4,7 +4,7 @@ import type { BossDef } from '@/data/bosses'
 import { BALANCE } from '@/data/constants'
 import { WIZARDS } from '@/data/wizards'
 import { SPELL_BY_ID } from '@/data/spells'
-import { draftWizard } from '../statRoll'
+import { draftWizard, guaranteeOffensiveSpell, spellIsOffensive } from '../statRoll'
 import { pickTheme, themeStrengthFor, targetThemeMembers, type Theme } from './themes'
 
 export function powerOf(dw: DraftedWizard): number {
@@ -42,11 +42,13 @@ export function budgetWindow(targetPer: number, count: number): Wizard[] {
   return sorted.slice(start, start + count * 3) as Wizard[]
 }
 
-function pickTowardBudget(rng: Rng, targetPer: number, count: number, preferOffense = false): DraftedWizard[] {
+function pickTowardBudget(
+  rng: Rng, targetPer: number, count: number, preferOffense = false, guaranteeOffense = false,
+): DraftedWizard[] {
   const window = budgetWindow(targetPer, count)
   const pool = rng.shuffle(window)
   const out: DraftedWizard[] = []
-  for (const w of pool) out.push(draftWizard(rng, w as Wizard, false, preferOffense))
+  for (const w of pool) out.push(draftWizard(rng, w as Wizard, false, preferOffense, guaranteeOffense))
   return out.sort((a, b) => powerOf(b) - powerOf(a)).slice(0, count)
 }
 
@@ -60,7 +62,10 @@ export function generateBossTeam(rng: Rng, boss: BossDef): DraftedWizard[] {
   // never feel scrawnier than a regular pack). `boss.unitCount` may raise it further.
   const size = Math.max(3, boss.unitCount ?? BALANCE.draft.teamSize)
   const perUnit = boss.budget / size
-  const team = pickTowardBudget(rng, perUnit, size, true)
+  // Every boss unit (not just the leader) gets the strict offensive guarantee: a
+  // boss/elite enemy that can never damage the player is a free win (see
+  // guaranteeOffensiveSpell in statRoll.ts).
+  const team = pickTowardBudget(rng, perUnit, size, true, true)
   let leader: DraftedWizard
   if (boss.bossWizardId) {
     const named = WIZARDS.find(w => w.id === boss.bossWizardId)
@@ -69,7 +74,7 @@ export function generateBossTeam(rng: Rng, boss: BossDef): DraftedWizard[] {
     if (idx < 0) {
       // replace the weakest unit with the guaranteed boss
       const weakest = team.reduce((w, d, i) => (powerOf(d) < powerOf(team[w]!) ? i : w), 0)
-      team[weakest] = draftWizard(rng, named as Wizard, false, true)
+      team[weakest] = draftWizard(rng, named as Wizard, false, true, true)
       idx = weakest
     }
     leader = team[idx]!
@@ -80,6 +85,9 @@ export function generateBossTeam(rng: Rng, boss: BossDef): DraftedWizard[] {
   leader.maxHp = leader.stats.hp
   const forced = boss.forcedSpellIds?.[0]
   if (forced && SPELL_BY_ID[forced]) leader.spell = SPELL_BY_ID[forced]!
+  // The forced-spell override runs AFTER the per-unit guarantee above, so re-check:
+  // a forced spell that happens to be non-offensive must not undo the guarantee.
+  if (!spellIsOffensive(leader.spell)) leader.spell = guaranteeOffensiveSpell(leader.wizard, leader.spell)
   return team
 }
 
@@ -163,7 +171,10 @@ export function themedEnemyTeam(rng: Rng, opts: {
   }
 
   // Enemy packs prefer offensive spells so they actually deal damage (a squad of
-  // passive supports/controllers that never attacks feels toothless).
-  const team = chosen.map(w => draftWizard(drawRng, w, false, true))
+  // passive supports/controllers that never attacks feels toothless). Elite/boss packs
+  // get the STRICT guarantee on top: a degenerate zero-damage elite/boss enemy is a
+  // free win, so those kinds can never end up with a non-offensive active.
+  const guaranteeOffense = kind === 'elite' || kind === 'boss'
+  const team = chosen.map(w => draftWizard(drawRng, w, false, true, guaranteeOffense))
   return { team, themeId: realized ? realized.id : null }
 }

@@ -39,6 +39,13 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 // Post-boss-buff (2026-07-01, finalBossMenace -0.40→-0.384 + Serpeverde atk trim baked in): winRate=0.450
 //   tossicitaRate=0.650 dotShare=0.834 medianTurns=3 maxTurns=24. Kit intact (>> 0.05).
 //   Rise from weaker Voldemort/Serpeverde mid-area enemies (atk trim) offsetting the marginal boss hardening.
+// Post-attack-guarantee-fix (2026-07-04): enemy wizards in ELITE/BOSS battles are now GUARANTEED
+// an offensive active spell (guaranteeOffensiveSpell in statRoll.ts, wired from teamGen.ts) —
+// closing a degenerate bug where a boss/elite enemy (e.g. the pettigrew/MURO_ALT leader, a
+// pure-support kit with no attack spell at all) could enter combat unable to deal damage. This
+// is a genuine, expected difficulty increase: winRate dropped 0.067→0.050 (exactly 6/120, the
+// old floor's boundary). Floor relaxed 0.05→0.03 so this stays a smoke check ("not structurally
+// broken") rather than a fragile exact-boundary assertion; the kit remains clearly viable.
 registerCoreResolvers()
 
 const VELENO_RELICS = new Set(['ampolla-veleno', 'pugnale-bellatrix', 'boccino-doro'])
@@ -133,7 +140,7 @@ describe('favor-Veleno viability sweep', () => {
     expect(again).toEqual(runs.map(r => r.outcome))
   }, 30000)
   it('the build can win (not structurally broken)', () => {
-    expect(winRate).toBeGreaterThan(0.05)
+    expect(winRate).toBeGreaterThan(0.03)
   })
   it('the build is draftable (Tossicità activates in a meaningful share of runs)', () => {
     expect(tossRate).toBeGreaterThan(0.10)
