@@ -1,14 +1,17 @@
 import { describe, it, expect } from 'vitest'
 import {
   startRunB, starterOffer, chooseStarters, reachable, moveTo, resolveCurrent,
-  clearAreaAndAdvance, registerCoreResolvers, useConsumableRelic,
+  clearAreaAndAdvance, registerCoreResolvers, useConsumableRelic, setWizardSpell,
 } from '@/game/engine/runEngine'
 import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
 import { createRng } from '@/game/engine/rng'
 import { powerOf } from '@/game/engine/combat/teamGen'
 import { isDead } from '@/game/engine/roster'
+import { spellIsOffensive } from '@/game/engine/statRoll'
+import { normalizeSpell } from '@/game/engine/combat/normalizeSpell'
+import { SPELL_BY_ID } from '@/data/spells'
 import { BALANCE } from '@/data/constants'
-import type { RunNode, RunState } from '@/types'
+import type { DraftedWizard, RunNode, RunState, Spell } from '@/types'
 
 // Register at module scope (idempotent): the greedy runs below are evaluated in
 // the describe body at collection time, BEFORE any beforeAll hook would fire.
@@ -368,11 +371,62 @@ function isVeleno(dw: { wizard: { tags?: string[] } }): boolean {
   return (dw.wizard.tags ?? []).includes('veleno')
 }
 
+// *** Spell-optimization experiment (2026-07-04) ***
+// Hypothesis under test: the game is trivially easy because a HUMAN picks each
+// wizard's strongest attack spell (e.g. Avada Kedavra, power 3.2), while the harness
+// bot so far has only ever used the DEFAULT (rng-picked) spell. This section adds a
+// spell-optimizing layer on top of the existing near-optimal policy: after the team is
+// set (starters, and after every recruit), swap each member onto the single highest-
+// direct-damage spell in ITS OWN spellPool (skip wizards with no attack spell at all —
+// their default stands). Bot logic/policy otherwise UNCHANGED.
+function spellDamagePower(spell: Spell): number {
+  return normalizeSpell(spell).filter(e => e.kind === 'damage').reduce((sum, e) => sum + e.power, 0)
+}
+
+/** The strongest ATTACK (direct-damage) spell id in a wizard's own pool, or undefined
+ *  if it has none (pure-support kit — leave the default spell in place). */
+function strongestAttackSpellId(dw: DraftedWizard): string | undefined {
+  let bestId: string | undefined
+  let bestPower = -Infinity
+  for (const id of dw.wizard.spellPool) {
+    const spell = SPELL_BY_ID[id]
+    if (!spell || !spellIsOffensive(spell)) continue
+    const power = spellDamagePower(spell)
+    if (power > bestPower) { bestPower = power; bestId = id }
+  }
+  return bestId
+}
+
+// Instrumentation tallies (module-scope, shared across every runOne call in this file):
+// how many times a wizard was actually switched onto its strongest attack spell, how
+// many of those switches landed on 'avada' specifically, and the summed damage power of
+// every switch (for an average-multiplier readout).
+let spellSwitchCount = 0
+let avadaSwitchCount = 0
+let spellSwitchPowerSum = 0
+
+/** Equip every current team member with its strongest attack spell (human-like spell
+ *  optimization). No-ops (and isn't tallied) for a member already on its best spell or
+ *  with no attack spell in its pool. */
+function optimizeTeamSpells(state: RunState): RunState {
+  let s = state
+  for (const dw of s.team) {
+    const id = strongestAttackSpellId(dw)
+    if (!id || dw.spell.id === id) continue
+    s = setWizardSpell(s, dw.wizard.id, id)
+    spellSwitchCount++
+    if (id === 'avada') avadaSwitchCount++
+    spellSwitchPowerSum += spellDamagePower(SPELL_BY_ID[id]!)
+  }
+  return s
+}
+
 function runOne(seed: string, battleTurns?: number[], preferVeleno = false): 'win' | 'defeat' {
   let s = startRunB(seed)
   const offer = starterOffer(seed, 'Grifondoro')
   const starters = [...offer].sort((a, b) => powerOf(b) - powerOf(a)).slice(0, 3).map(d => d.wizard.id)
   s = chooseStarters(s, 'Grifondoro', starters, createRng(seed))
+  s = optimizeTeamSpells(s)
   let guard = 0
   while (guard++ < 200) {
     if (s.phase === 'win') return 'win'
@@ -401,6 +455,7 @@ function runOne(seed: string, battleTurns?: number[], preferVeleno = false): 'wi
       const full = s.team.length >= (s.teamMax ?? 5)
       const replaceId = full ? [...s.team].sort((a, b) => powerOf(a) - powerOf(b))[0]!.wizard.id : undefined
       s = resolveCurrent(s, { kind: 'recruit-pick', wizardId: best.wizard.id, replaceId }, createRng(seed))
+      s = optimizeTeamSpells(s)
       s = { ...s, phase: 'map' }; continue
     }
     if (s.phase === 'relic-node') {
@@ -428,6 +483,10 @@ describe('campaign balance (new loop)', () => {
 
   // eslint-disable-next-line no-console
   console.log(`[campaignBalanceB overall] winRate=${winRate.toFixed(4)}`)
+  // eslint-disable-next-line no-console
+  console.log(`[campaignBalanceB spell-opt] switches=${spellSwitchCount} avada=${avadaSwitchCount} `
+    + `(${spellSwitchCount > 0 ? (avadaSwitchCount / spellSwitchCount * 100).toFixed(1) : '0.0'}%) `
+    + `avgPower=${spellSwitchCount > 0 ? (spellSwitchPowerSum / spellSwitchCount).toFixed(3) : 'n/a'}`)
 
   it('is winnable but not trivial for a near-optimal player (full-roster reference only)', () => {
     // *** Bot upgraded to competent play 2026-07-04 (heals/infirmary/revive) — it is
