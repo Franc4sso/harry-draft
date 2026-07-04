@@ -105,4 +105,7 @@ export interface BattleResult {
   snapshots: StepSnapshot[]
   /** True when the sim hit turnCap with both sides still having living units — a "win on points", not a clean wipe. */
   timedOut: boolean
+  /** ENEMY units killed by each side this battle (direct-hit + DoT kills; excludes recoil
+   *  self-kills and fatigue deaths). Drives within-run relic scaling. */
+  kills: { left: number; right: number }
 }

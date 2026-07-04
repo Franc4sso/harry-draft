@@ -5,6 +5,7 @@ import type { BattleResult } from '@/types'
 
 const baseResult = (snap: BattleResult['finalSnapshot']): BattleResult => ({
   winner: 'left', turns: 3, log: [], mvpId: 'a', finalSnapshot: snap, snapshots: [], timedOut: false,
+  kills: { left: 0, right: 0 },
 })
 
 describe('VictoryScreen attrition', () => {

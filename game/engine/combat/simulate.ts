@@ -100,6 +100,7 @@ export function simulateBattle(
   const pushLog = (entry: LogEntry) => { log.push(entry); snapshots.push(captureSnapshot()) }
   // Score keyed by "side:wizard.id" to avoid merging same-id wizards on opposite teams
   const score: Record<string, number> = {}
+  const kills = { left: 0, right: 0 }
 
   const sync = (u: BattleUnit) => { if (u.hp <= 0) { u.hp = 0; u.alive = false } }
   const sideUnits = (s: Side) => (s === 'left' ? L : R).filter(u => u.alive)
@@ -265,6 +266,8 @@ export function simulateBattle(
       }
       // onDeath / onAllyDeath: after sync, when any unit just died.
       if (!realTarget.alive) {
+        // A kill: the victim is always an enemy of its killer here → credit the opposite side.
+        kills[realTarget.side === 'left' ? 'right' : 'left']++
         fireReactive('onDeath', realTarget, turn)
         const allyPool = realTarget.side === 'left' ? L : R
         for (const ally of allyPool) {
@@ -307,6 +310,8 @@ export function simulateBattle(
       sync(u)
       // onDeath / onAllyDeath when a dot tick kills any unit.
       if (!u.alive) {
+        // DoT kill: poison/burn on `u` was applied by u's enemy → credit the opposite side.
+        kills[u.side === 'left' ? 'right' : 'left']++
         fireReactive('onDeath', u, turn)
         const allyPool = u.side === 'left' ? L : R
         for (const ally of allyPool) {
@@ -379,5 +384,5 @@ export function simulateBattle(
     ? mvpScoreKey.split(':').slice(1).join(':')
     : (winner === 'left' ? L[0]!.wizard.id : R[0]!.wizard.id)
 
-  return { winner, turns: turn, log, mvpId, finalSnapshot: snapshot, snapshots, timedOut }
+  return { winner, turns: turn, log, mvpId, finalSnapshot: snapshot, snapshots, timedOut, kills }
 }
