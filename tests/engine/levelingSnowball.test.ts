@@ -12,6 +12,7 @@ import {
   clearAreaAndAdvance, registerCoreResolvers,
 } from '@/game/engine/runEngine'
 import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
+import { eventResolver } from '@/game/engine/resolvers/event'
 import { createRng } from '@/game/engine/rng'
 import { powerOf } from '@/game/engine/combat/teamGen'
 import { growthWeights, leveledStats } from '@/game/engine/leveling'
@@ -100,6 +101,12 @@ function runWith(seed: string, pick: (s: RunState) => RunNode): 'win' | 'defeat'
     if (s.phase === 'infirmary-node') { s = resolveCurrent(s, { kind: 'combat-ack' }, createRng(seed)); s = { ...s, phase: 'map' }; continue }
     if (s.phase === 'area-cleared') { s = clearAreaAndAdvance(s, createRng(seed)); continue }
     if (s.phase === 'victory') { s = { ...s, phase: 'map' }; continue }
+    if (s.phase === 'event-node') {
+      const entry = eventResolver.enter(s, node, createRng(seed))
+      const optionId = entry.event!.choices[0]!.id
+      s = resolveCurrent(s, { kind: 'event-choice', optionId }, createRng(seed))
+      s = { ...s, phase: 'map' }; continue
+    }
     break
   }
   return 'defeat'

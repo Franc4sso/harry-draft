@@ -4,6 +4,7 @@ import {
   clearAreaAndAdvance, registerCoreResolvers, useConsumableRelic, setWizardSpell,
 } from '@/game/engine/runEngine'
 import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
+import { eventResolver } from '@/game/engine/resolvers/event'
 import { createRng } from '@/game/engine/rng'
 import { powerOf } from '@/game/engine/combat/teamGen'
 import { isDead } from '@/game/engine/roster'
@@ -138,6 +139,12 @@ function runOne(seed: string, battleTurns?: number[], preferVeleno = false): 'wi
     }
     if (s.phase === 'area-cleared') { s = clearAreaAndAdvance(s, createRng(seed)); continue }
     if (s.phase === 'victory') { s = { ...s, phase: 'map' }; continue }
+    if (s.phase === 'event-node') {
+      const entry = eventResolver.enter(s, node, createRng(seed))
+      const optionId = entry.event!.choices[0]!.id
+      s = resolveCurrent(s, { kind: 'event-choice', optionId }, createRng(seed))
+      s = { ...s, phase: 'map' }; continue
+    }
     break
   }
   return 'defeat'
@@ -194,6 +201,14 @@ describe('restricted starter pool is winnable (Reservation 1 gate)', () => {
     // 0.45) difficulty band described the DEFAULT-spell bot only; it is relaxed here to
     // a smoke check pending a real difficulty pass (enemy stats / action economy) that
     // intentionally targets a spell-optimizing player.
+    //
+    // Event-node task (2026-07-04, T8): runOne now resolves 'event-node' phases (bot
+    // takes the first offered choice via eventResolver, deterministically) instead of
+    // falling through to an instant defeat — event nodes now GENERATE on the run map
+    // and previously had no bot handler here. Re-measured (120 seeds): winRate moved
+    // 0.2583 -> 0.2833 (31/120 -> 34/120, +3 seeds) — a modest lift, consistent with
+    // event choices being mostly neutral/positive. Still comfortably inside this
+    // relaxed smoke check.
     expect(winRate).toBeGreaterThan(0)
     expect(winRate).toBeLessThanOrEqual(1.0)
   })

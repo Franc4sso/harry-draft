@@ -4,6 +4,7 @@ import {
   clearAreaAndAdvance, registerCoreResolvers, useConsumableRelic, setWizardSpell,
 } from '@/game/engine/runEngine'
 import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
+import { eventResolver } from '@/game/engine/resolvers/event'
 import { createRng } from '@/game/engine/rng'
 import { powerOf } from '@/game/engine/combat/teamGen'
 import { isDead } from '@/game/engine/roster'
@@ -471,6 +472,12 @@ function runOne(seed: string, battleTurns?: number[], preferVeleno = false): 'wi
     }
     if (s.phase === 'area-cleared') { s = clearAreaAndAdvance(s, createRng(seed)); continue }
     if (s.phase === 'victory') { s = { ...s, phase: 'map' }; continue }
+    if (s.phase === 'event-node') {
+      const entry = eventResolver.enter(s, node, createRng(seed))
+      const optionId = entry.event!.choices[0]!.id
+      s = resolveCurrent(s, { kind: 'event-choice', optionId }, createRng(seed))
+      s = { ...s, phase: 'map' }; continue
+    }
     break
   }
   return 'defeat'
@@ -529,6 +536,16 @@ describe('campaign balance (new loop)', () => {
     // stats / action economy — see the recommendations threaded through this file's
     // history) intentionally moves the competent-bot winRate, at which point
     // re-measure and re-anchor for real.
+    //
+    // Event-node task (2026-07-04, T8): runOne now resolves 'event-node' phases (bot
+    // takes the first offered choice via eventResolver, deterministically) instead of
+    // falling through to an instant defeat — event nodes now GENERATE on the run map
+    // and previously had no bot handler here. Re-measured (120 seeds): winRate moved
+    // 0.1167 -> 0.1333 (14/120 -> 16/120, +2 seeds), a modest lift consistent with
+    // event choices being mostly neutral/positive. Muro-veleno sub-suite also
+    // re-measured: withVeleno/noVeleno both 0.133 (16/120 each; was 0.125/0.117) — the
+    // "coin flip, not a stable ordering" finding documented above still holds. Still
+    // comfortably inside this relaxed smoke check.
     expect(winRate).toBeGreaterThan(0)
     expect(winRate).toBeLessThanOrEqual(1.0)
   })

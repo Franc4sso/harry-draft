@@ -4,6 +4,7 @@ import {
   clearAreaAndAdvance, registerCoreResolvers,
 } from '@/game/engine/runEngine'
 import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
+import { eventResolver } from '@/game/engine/resolvers/event'
 import { detectSynergies } from '@/game/engine/synergy'
 import { teamShieldConvert } from '@/game/engine/shieldConvert'
 import { createRng } from '@/game/engine/rng'
@@ -101,6 +102,12 @@ function favorScudiRigenRun(seed: string): RunMetrics {
     }
     if (s.phase === 'area-cleared') { s = clearAreaAndAdvance(s, createRng(seed)); continue }
     if (s.phase === 'victory') { s = { ...s, phase: 'map' }; continue }
+    if (s.phase === 'event-node') {
+      const entry = eventResolver.enter(s, node, createRng(seed))
+      const optionId = entry.event!.choices[0]!.id
+      s = resolveCurrent(s, { kind: 'event-choice', optionId }, createRng(seed))
+      s = { ...s, phase: 'map' }; continue
+    }
     break
   }
   const synergies = detectSynergies(s.team)
