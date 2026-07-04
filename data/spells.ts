@@ -20,7 +20,7 @@ export const SPELLS: Spell[] = [
   { id: 'petrificus', name: 'Petrificus Totalus', desc: 'Paralisi totale.', type: 'Controllo', hitChance: 0.85, cooldown: 1, effects: [{ kind: 'stun', duration: 1 }] },
   { id: 'levicorpus', name: 'Levicorpus', desc: 'Solleva e indebolisce la difesa.', type: 'Controllo', hitChance: 0.9, cooldown: 1, effects: [{ kind: 'debuff', stat: 'def', amount: 20, duration: 2 }] },
   { id: 'confundo', name: 'Confundo', desc: 'Confonde, riduce la velocità.', type: 'Controllo', hitChance: 0.9, cooldown: 1, effects: [{ kind: 'debuff', stat: 'spd', amount: 15, duration: 2 }] },
-  { id: 'langlock', name: 'Langlock', desc: "Riduce l'attacco nemico.", type: 'Controllo', hitChance: 0.92, cooldown: 1, effects: [{ kind: 'debuff', stat: 'atk', amount: 18, duration: 2 }] },
+  { id: 'langlock', name: 'Langlock', desc: "Riduce l'attacco nemico.", type: 'Controllo', hitChance: 0.92, cooldown: 1, effects: [{ kind: 'debuff', stat: 'atk', amount: 8, duration: 2 }] },
   { id: 'tarantallegra', name: 'Tarantallegra', desc: 'Gambe fuori controllo: rallenta e può inciampare il bersaglio.', type: 'Controllo', hitChance: 0.88, cooldown: 1, effects: [{ kind: 'debuff', stat: 'spd', amount: 30, duration: 2 }, { kind: 'stun', duration: 1 }] },
 
   // Cura

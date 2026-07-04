@@ -378,7 +378,7 @@ export function CollectionScreen() {
         <div className="flex items-center justify-between">
           <h2 className="font-display text-sm uppercase tracking-wider text-white/50">Sinergie</h2>
           <span className="text-[10px] uppercase tracking-wider text-white/35">
-            {seenSynergies.size}/{NAMED_SYNERGIES.length} scoperte
+            {NAMED_SYNERGIES.filter((s) => seenSynergies.has(s.id)).length}/{NAMED_SYNERGIES.length} scoperte
           </span>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
