@@ -24,6 +24,17 @@ export interface RelicTrigger {
   threshold?: number
 }
 
+export interface RelicScaling {
+  /** What event increments the run counter. Only 'kill' for now. */
+  trigger: 'kill'
+  /** Which stat the counter feeds. */
+  stat: 'attack' | 'maxHp' | 'velenoMult'
+  /** Bonus added per counter unit. */
+  per: number
+  /** Absolute cap on the cumulative bonus (applied at read time). */
+  cap: number
+}
+
 export interface Relic {
   id: string
   name: string
@@ -50,10 +61,14 @@ export interface Relic {
   assignable?: boolean
   /** Consumable active-use relic (not a passive combat descriptor). 'revive' = Lacrime di Fenice. */
   active?: 'revive'
+  /** Within-run scaling ("joker"): grows a stat as the run counter climbs. Reset each run. */
+  scaling?: RelicScaling
 }
 
 export interface ActiveRelic {
   relic: Relic
   stageObtained: number
   assignedTo?: string   // wizardId of the carrier (for `assignable` relics); undefined = unassigned
+  /** Within-run cumulative trigger count for `relic.scaling`. Undefined == 0. Never persisted to MetaProfile. */
+  runCounter?: number
 }
