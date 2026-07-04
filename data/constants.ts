@@ -185,7 +185,30 @@ defenseK: 0.5,
     // Also crashes campaignBalanceB (the obsolete full-60-wizard-pool harness,
     // no longer representative post-meta-layer) to 0.025 — its floor was
     // re-anchored down accordingly; see that test file's header comment.
-    enemyCountByArea: [3, 4, 5] as readonly number[],
+    //
+    // RAISED [3,4,5]→[3,5,8] (2026-07-04, difficulty pass vs the SPELL-OPTIMIZED bot).
+    // The harness bot now equips each wizard's strongest attack spell (commits
+    // f065bd7/f063cae) — the real skilled-player proxy — and at [3,4,5] it won a
+    // trivial 0.4917. This is the measured difficulty pass that answers that. Area 0
+    // is LEFT at 3 (raising it historically crashes the opener — action-economy floor,
+    // see the level-lever conclusion below); only area 1 (4→5) and area 2 (5→8) elite
+    // counts rise, the "victory lap" areas where a lv10-capped player faced lv4-8 foes.
+    // 120-seed campaignBalanceRestricted (spell-optimized bot) sweep:
+    //   normalEnemyCount, enemyCountByArea → restricted winRate
+    //   3, [3,4,5] (prev)  → 0.4917 (trivial)
+    //   4, [3,4,5]         → 0.1750 (normalEnemyCount is coarse: one step ≈ -0.32)
+    //   3, [3,5,7]         → 0.3250
+    //   3, [3,6,7]         → 0.3083
+    //   3, [3,5,8] SHIPPED → 0.2583 (in the 0.25-0.30 target band, leans slightly hard)
+    // Elite-count is the fine lever here (~1 fight/area, each unit ≈ -0.055) vs
+    // normalEnemyCount's coarse per-normal-fight swing; budget (eliteBudgetMult/
+    // baseBudget) was verified INERT in this regime (targetPer saturates the
+    // strongest roster slice — raising it moved winRate 0.0000). campaignBalanceB
+    // (obsolete full-60 harness) tracks to 0.225 overall; its muro-veleno whole-run
+    // ordering assertion was retired (effect collapsed to seed noise post-spell-opt —
+    // see that test file). USER PLAYTEST is ground truth; iterate the target lower if
+    // it still feels easy (the user outplays the bot by an unknown margin).
+    enemyCountByArea: [3, 5, 8] as readonly number[],
     // --- Displayed enemy LEVEL by (area, kind) ---
     // Honest, area-scaled threat tiers so an Elite/Boss reads as a real level (no
     // more "Lv.1" elites). level = base + perArea*area, clamped to leveling.levelMax.

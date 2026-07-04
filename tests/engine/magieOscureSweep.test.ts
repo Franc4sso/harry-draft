@@ -141,10 +141,26 @@ describe('favor-Magie Oscure viability sweep', () => {
     expect(again).toEqual(runs.map(r => r.outcome))
   }, 30000)
   it('the build can win (not structurally broken)', () => {
-    expect(winRate).toBeGreaterThan(0.05)
+    // RE-ANCHORED 2026-07-04 (spell-optimized-bot difficulty pass, campaignB
+    // enemyCountByArea [3,4,5] -> [3,5,8]; see data/constants.ts). This is the FULL-60
+    // reference sweep (no setDraftPoolRestriction) — the obsolete post-meta-layer
+    // scenario, same as campaignBalanceB / esecuzioneSweep. The favor-X sweeps here
+    // inherently sit at 0.03-0.08 even at baseline (measured winRate 0.083 -> 0.033
+    // under the harder counts, 10/120 -> 4/120), so any difficulty increase large
+    // enough to bring the real (restricted-pool) bot from ~0.49 to ~0.26 trips a 0.05
+    // floor. This assertion is a STRUCTURAL-LOCKOUT guard (catches a build that can
+    // NEVER win), not a difficulty gate: floor set to > 0. Real player experience is
+    // campaignBalanceRestricted.test.ts (0.2583, healthy).
+    expect(winRate).toBeGreaterThan(0)
   })
   it('the build fields dark magic in a meaningful share of runs (draftable)', () => {
-    expect(darkUptakeRate).toBeGreaterThan(0.10)
+    // RE-ANCHORED 2026-07-04 (same difficulty pass). darkUptakeRate conflates
+    // draftability with survival — harder enemies end some runs before the team has
+    // drafted+fielded its dark wizards, so this dipped 0.117 -> 0.100 (14/120 ->
+    // 12/120) purely from the difficulty bump, not a draftability regression. Floor
+    // lowered 0.10 -> 0.05 to stay a real "archetype is actually draftable" guard
+    // (trips only on a near-total no-show) without tracking difficulty noise.
+    expect(darkUptakeRate).toBeGreaterThan(0.05)
   })
   it('fights resolve before the turn cap (no stalls)', () => {
     expect(maxTurns).toBeLessThan(BALANCE.combat.turnCap)

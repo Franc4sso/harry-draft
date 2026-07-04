@@ -557,8 +557,25 @@ describe('Muro wall — veleno is the counter', () => {
   // above): measured withVeleno=0.042 (5/120), noVeleno=0.008 (1/120) — both moved
   // down from the pre-upgrade 0.033/0.025 but the RELATIVE ordering this suite checks
   // (withVeleno > noVeleno > 0) still holds, so both assertions are unchanged.
-  it('veleno players win more than non-veleno players (the wall teaches)', () => {
-    expect(wr(withVeleno)).toBeGreaterThan(wr(noVeleno))
+  //
+  // 2026-07-04 spell-optimization + difficulty pass: the harness now spell-optimizes
+  // every wizard (see campaignBalanceRestricted.test.ts) AND enemy elite counts were
+  // raised ([3,4,5]→[3,5,8] in campaignB) to bring the spell-optimized bot from ~0.49
+  // to ~0.26. Re-measured, the whole-run veleno-preference EDGE has collapsed into
+  // seed noise: at [3,4,5] withVeleno=0.325 vs noVeleno=0.308 (+2 seeds); at [3,5,8]
+  // withVeleno=0.217 vs noVeleno=0.225 (-1 seed). The effect is ±1-2 seeds / 120 in
+  // EITHER direction — a coin flip, not a stable ordering. This is a real game truth,
+  // not a regression: once a player equips each wizard's strongest attack spell, raw
+  // damage beats the Muro wall directly, so veleno's damageReduction-bypass no longer
+  // swings the RUN outcome (only the fight against a full wall, which optimized attacks
+  // also win). The strict-ordering assertion was therefore retired — it overfits a
+  // coin flip and would flip on any future difficulty tweak. The counter-web mechanic
+  // it was proxying is proven DIRECTLY and deterministically in
+  // velenoBypassesWall.test.ts (poison tick identical with/without the wall) and
+  // velenoCounters.test.ts. This suite now only smoke-checks that veleno play stays
+  // viable (below), consistent with the relaxed winRate band in the describe above.
+  it('veleno play stays viable against the wall (not softlocked)', () => {
+    expect(wr(withVeleno)).toBeGreaterThan(0)
   })
   it('soft wall: non-veleno play is still winnable (above zero)', () => {
     expect(wr(noVeleno)).toBeGreaterThan(0)
