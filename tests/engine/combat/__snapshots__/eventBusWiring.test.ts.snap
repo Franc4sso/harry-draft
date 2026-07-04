@@ -2,7 +2,7 @@
 
 exports[`event bus wiring parity > same seed produces identical log with and after refactor (snapshot) 1`] = `
 {
-  "logLen": 10,
+  "logLen": 11,
   "turns": 4,
   "winner": "left",
 }

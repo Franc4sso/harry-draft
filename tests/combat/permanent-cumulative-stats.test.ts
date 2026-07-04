@@ -53,15 +53,19 @@ describe('permanent + cumulative stat buffs/debuffs', () => {
     expect(u.statusEffects.filter(e => e.statusId === 'stun')).toHaveLength(0)
   })
 
-  it('(e) dot (veleno) still ticks and expires as before', () => {
+  it('(e) dot (veleno) is PERMANENT — ticks every turn and never expires (USER DESIGN 2026-07-04)', () => {
     const u = unit()
     applyStatus(u, 'veleno', { duration: 2 })
     const hpBeforeTick = u.hp
     tickStatuses(1, u)
-    expect(u.hp).toBeLessThan(hpBeforeTick)
-    expect(u.statusEffects.find(e => e.statusId === 'veleno')?.remaining).toBe(1)
-    tickStatuses(2, u)
-    expect(u.statusEffects.filter(e => e.statusId === 'veleno')).toHaveLength(0)
+    expect(u.hp).toBeLessThan(hpBeforeTick) // ticks
+    // permanent: `remaining` does NOT decrement (unlike other dots/control)
+    expect(u.statusEffects.find(e => e.statusId === 'veleno')?.remaining).toBe(2)
+    // still present and ticking many turns later — it lasts until death / end of combat
+    const hpMidway = u.hp
+    for (let turn = 2; turn <= 20; turn++) tickStatuses(turn, u)
+    expect(u.statusEffects.filter(e => e.statusId === 'veleno')).toHaveLength(1)
+    expect(u.hp).toBeLessThan(hpMidway) // kept losing HP every turn
   })
 
   it('(f) an inline debuff (e.g. confundo-shaped atk -15) applied 5x caps at 3 stacks', () => {

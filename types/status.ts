@@ -31,6 +31,10 @@ export interface StatusDef {
   maxStacks?: number
   priority: number
   removable: boolean
+  /** When true, the status never decrements its `remaining` — it lasts the whole battle
+   *  (like buffs/debuffs). Veleno uses this: once applied, it ticks every turn until the
+   *  target dies or combat ends, instead of falling off after `defaultDuration`. */
+  permanent?: boolean
 }
 
 export interface EffectInline {

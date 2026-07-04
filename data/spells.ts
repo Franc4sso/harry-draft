@@ -60,7 +60,7 @@ export const SPELLS: Spell[] = [
   { id: 'flipendo', name: 'Flipendo', desc: 'Spinta concussiva.', type: 'Attacco', power: 1.1, hitChance: 0.93, cooldown: 0 },
   { id: 'oppugno', name: 'Oppugno', desc: 'Scaglia oggetti contro il nemico.', type: 'Attacco', power: 1.5, hitChance: 0.87, cooldown: 1 },
   { id: 'fiendfyre', name: 'Ardemonio', desc: 'Fuoco maledetto devastante.', type: 'Attacco', power: 2.8, hitChance: 0.7, cooldown: 2, effects: [{ kind: 'dot', amount: 12, duration: 2 }], keywords: ['magieOscure'] },
-  { id: 'serpensortia', name: 'Serpensortia', desc: 'Evoca un serpente velenoso che morde.', type: 'Attacco', hitChance: 0.85, cooldown: 1, spec: [{ kind: 'damage', power: 1.4, canCrit: true, canDodge: true }, { kind: 'applyStatus', target: 'enemy', statusId: 'veleno', duration: 2 }] },
+  { id: 'serpensortia', name: 'Serpensortia', desc: 'Evoca un serpente velenoso che morde.', type: 'Attacco', hitChance: 0.85, cooldown: 1, spec: [{ kind: 'damage', power: 0.45, canCrit: true, canDodge: true }, { kind: 'applyStatus', target: 'enemy', statusId: 'veleno', duration: 2 }] },
 
   // demo: data-driven statuses (Status & Effect engine)
   { id: 'glacius', name: 'Glacius', desc: 'Congela il bersaglio.', type: 'Controllo', hitChance: 0.85, cooldown: 1,

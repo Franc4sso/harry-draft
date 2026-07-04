@@ -7,7 +7,14 @@ export const STATUS_DEFS: StatusDef[] = [
   { id: 'silence', name: 'Silenziato', kind: 'silence', family: 'control', prevents: ['spell'], defaultDuration: 2, stack: 'refresh', priority: 90, removable: true },
   { id: 'disarm', name: 'Disarmato', kind: 'disarm', family: 'control', prevents: ['attack'], defaultDuration: 2, stack: 'refresh', priority: 90, removable: true },
   { id: 'burn', name: 'Bruciatura', kind: 'dot', family: 'dot', tickDamage: 8, defaultDuration: 2, stack: 'stack', maxStacks: MAX_STAT_STACKS, priority: 50, removable: true },
-  { id: 'veleno', name: 'Veleno', kind: 'dot', family: 'dot', keywords: ['veleno'], tickDamage: 4, tickPctMaxHp: 0.005, tickStackCapForPct: 8, defaultDuration: 2, stack: 'accumulate', maxStacks: 8, priority: 50, removable: true },
+  // Veleno is PERMANENT (USER DESIGN 2026-07-04): once applied it ticks EVERY turn until
+  // the target dies or combat ends — it never falls off (see status.ts tickStatuses, which
+  // skips the `remaining` decrement for permanent statuses). Stacks accumulate up to 8; the
+  // per-turn loss = tickDamage*stacks + min(stacks,8)*tickPctMaxHp*maxHp. `defaultDuration`
+  // is now moot (kept for the type) since permanent overrides expiry. Still `removable`, so
+  // a cleanse can strip it. The veleno ATTACK (serpensortia) does LOW direct damage — the
+  // poison is the payoff, not the hit.
+  { id: 'veleno', name: 'Veleno', kind: 'dot', family: 'dot', keywords: ['veleno'], tickDamage: 4, tickPctMaxHp: 0.005, tickStackCapForPct: 8, defaultDuration: 2, stack: 'accumulate', maxStacks: 8, priority: 50, removable: true, permanent: true },
   { id: 'regen', name: 'Rigenerazione', kind: 'regen', family: 'regen', tickHeal: 12, defaultDuration: 3, stack: 'refresh', priority: 40, removable: true },
   { id: 'shield', name: 'Scudo', kind: 'shield', family: 'shield', absorb: 50, defaultDuration: 3, stack: 'refresh', priority: 10, removable: true },
   // Nerf (2026-07-02): defaultDuration 3->1 so an unused ward charge decays fast — pairs
