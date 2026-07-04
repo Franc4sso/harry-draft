@@ -20,13 +20,17 @@ import { PortraitImage } from '@/components/ui/PortraitImage'
 export function InitiativeBar({ replay, index }: { replay: Replay; index: number }) {
   const frame = replay.frames[index] ?? replay.frames[replay.frames.length - 1]
   const hp = frame?.hp ?? {}
+  // EFFECTIVE spd at this frame (base + active buffs/debuffs) — falls back to the unit's
+  // start-of-battle spd on legacy/hand-built frames that predate per-frame spd.
+  const spdAt = (u: { key: string; spd: number }) => frame?.spd?.[u.key] ?? u.spd
   const current = lastRealActorAt(replay, index)
 
-  // Stable rail: alive units sorted by spd desc, stable tiebreak by original order.
+  // Live speed rail: alive units sorted by CURRENT spd desc (so a mid-fight debuff/buff
+  // visibly re-orders the rail), stable tiebreak by original order.
   const sequence = replay.units
     .map((u, i) => ({ u, i }))
     .filter(({ u }) => (hp[u.key] ?? u.maxHp) > 0)
-    .sort((a, b) => b.u.spd - a.u.spd || a.i - b.i)
+    .sort((a, b) => spdAt(b.u) - spdAt(a.u) || a.i - b.i)
     .map(({ u }) => u.key)
   const byKey = Object.fromEntries(replay.units.map(u => [u.key, u]))
 
@@ -44,7 +48,8 @@ export function InitiativeBar({ replay, index }: { replay: Replay; index: number
         const ring = mine ? 'ring-emerald-400/70' : 'ring-rose-400/70'
         return (
           <motion.div
-            key={`${key}-${i}`}
+            key={key}
+            layout
             data-current={isCurrent || undefined}
             data-side={u.side}
             initial={{ opacity: 0, x: -8 }}
@@ -57,7 +62,7 @@ export function InitiativeBar({ replay, index }: { replay: Replay; index: number
             </div>
             <span className="flex items-center gap-0.5 text-[9px] tabular-nums text-white/60 leading-none">
               <span aria-hidden className={mine ? 'text-emerald-300' : 'text-rose-300'}>{mine ? '▲' : '▼'}</span>
-              <Zap className="h-2.5 w-2.5 text-amber-300/80" aria-hidden />{u.spd}
+              <Zap className="h-2.5 w-2.5 text-amber-300/80" aria-hidden />{spdAt(u)}
             </span>
             {isCurrent && (
               <span data-role="ora-label" className="absolute -top-1 right-0 rounded bg-white/15 px-1 text-[7px] uppercase tracking-widest text-white/80">Ora</span>

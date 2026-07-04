@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import { useBattleReplay } from '@/hooks/useBattleReplay'
+import { useBattleReplay, regenBatchEnd } from '@/hooks/useBattleReplay'
 import { buildReplay } from '@/game/engine/combat/replay'
-import type { Replay, ReplayUnit } from '@/game/engine/combat/replay'
+import type { Replay, ReplayUnit, ReplayFrame } from '@/game/engine/combat/replay'
+import type { LogEntry } from '@/types'
 import { simulateBattle } from '@/game/engine/combat/simulate'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
@@ -13,6 +14,28 @@ function team(ids: string[], seed = 1): DraftedWizard[] {
   const r = createRng(seed)
   return ids.map(id => draftWizard(r, WIZARD_BY_ID[id]!))
 }
+
+describe('regenBatchEnd', () => {
+  const regen = (turn: number, id: string): LogEntry =>
+    ({ turn, actorId: id, actorSide: 'left', action: 'Rigenerazione', targetId: id, targetSide: 'left', type: 'Cura', value: 12, flags: ['heal'] } as LogEntry)
+  const hit = (turn: number): LogEntry =>
+    ({ turn, actorId: 'x', actorSide: 'left', action: 'Colpo', targetId: 'y', targetSide: 'right', type: 'Attacco', value: 20, flags: [] } as LogEntry)
+  const f = (entry: LogEntry | null): ReplayFrame => ({ index: 0, entry, hp: {}, cooldowns: {}, statusEffects: {} })
+  // [0]null [1]hit t2 [2]regen-a t3 [3]regen-b t3 [4]regen-c t3 [5]hit t4
+  const frames: ReplayFrame[] = [f(null), f(hit(2)), f(regen(3, 'a')), f(regen(3, 'b')), f(regen(3, 'c')), f(hit(4))]
+
+  it('jumps to the last consecutive same-turn regen tick (heal all at once)', () => {
+    expect(regenBatchEnd(frames, 2)).toBe(4) // land on first regen → skip to last
+  })
+  it('leaves non-regen frames untouched', () => {
+    expect(regenBatchEnd(frames, 1)).toBe(1)
+    expect(regenBatchEnd(frames, 5)).toBe(5)
+  })
+  it('does not merge regen across different turns', () => {
+    const two = [f(regen(3, 'a')), f(regen(4, 'b'))]
+    expect(regenBatchEnd(two, 0)).toBe(0)
+  })
+})
 
 function makeReplay() {
   const l = team(['harry', 'ron', 'hermione', 'luna', 'neville'], 7)

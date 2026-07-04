@@ -26,15 +26,23 @@ function statModOf(e: ActiveEffect): { stat: Stat; delta: number; pct: boolean }
   return null
 }
 
-export function effectiveStats(unit: BattleUnit): Stats {
-  const s: Stats = { ...unit.buffedStats }
-  const mods = unit.statusEffects
+/** Apply a unit's active status stat-mods to a base Stats block. Pure — used both by
+ *  `effectiveStats` (live combat) and by the replay to derive per-frame effective stats
+ *  (e.g. the InitiativeBar's speed order must reflect mid-combat spd buffs/debuffs, not the
+ *  start-of-battle value). Flat mods first, then pct; each stat floored at 1. */
+export function statsWithMods(base: Stats, effects: ActiveEffect[]): Stats {
+  const s: Stats = { ...base }
+  const mods = effects
     .map(statModOf)
     .filter((m): m is { stat: Stat; delta: number; pct: boolean } => m !== null)
   // deterministic: flat mods first, then pct; stable by nothing else needed (commutative sums)
   for (const m of mods.filter(m => !m.pct)) s[m.stat] = Math.max(1, s[m.stat] + m.delta)
   for (const m of mods.filter(m => m.pct)) s[m.stat] = Math.max(1, Math.round(s[m.stat] * (1 + m.delta / 100)))
   return s
+}
+
+export function effectiveStats(unit: BattleUnit): Stats {
+  return statsWithMods(unit.buffedStats, unit.statusEffects)
 }
 
 export function applyStatus(

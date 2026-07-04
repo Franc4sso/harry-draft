@@ -4,6 +4,7 @@ import { simulateBattle } from '@/game/engine/combat/simulate'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
 import { WIZARD_BY_ID } from '@/data/wizards'
+import { SPELL_BY_ID } from '@/data/spells'
 import type { BattleResult, DraftedWizard } from '@/types'
 
 function team(ids: string[], seed = 1): DraftedWizard[] {
@@ -15,6 +16,19 @@ const left = () => team(['harry', 'ron', 'hermione', 'luna', 'neville'], 7)
 const right = () => team(['draco', 'crabbe', 'goyle', 'snape', 'bellatrix'], 13)
 
 describe('buildReplay', () => {
+  it('captures per-frame EFFECTIVE spd so a mid-combat spd change is visible to the order rail', () => {
+    // Force harry to cast Confundo (spd -15 debuff) so draco's effective spd drops mid-fight.
+    const l = team(['harry'], 1)
+    l[0]!.spell = SPELL_BY_ID['confundo']!
+    const r = team(['draco'], 2)
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    const dracoKey = unitKey('right', 'draco')
+    const baseSpd = replay.frames[0]!.spd![dracoKey]!
+    // frame 0 (no statuses) shows the base spd; at least one later frame shows it reduced.
+    expect(baseSpd).toBeGreaterThan(1)
+    expect(replay.frames.some(f => (f.spd?.[dracoKey] ?? baseSpd) < baseSpd)).toBe(true)
+  })
+
   it('produces an initial full-HP frame plus one frame per log entry', () => {
     const l = left(), r = right()
     const res = simulateBattle(l, r, createRng(42))

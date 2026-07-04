@@ -1,7 +1,8 @@
 import type {
-  ActiveEffect, ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard, House, LogEntry, Role, Side, Tier,
+  ActiveEffect, ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard, House, LogEntry, Role, Side, Stats, Tier,
 } from '@/types'
 import { toBattleUnits } from './simulate'
+import { statsWithMods } from '../status'
 import { displayName } from '@/lib/displayName'
 
 /** Stable identity for a unit within a single battle: side + wizard id. */
@@ -42,6 +43,11 @@ export interface ReplayFrame {
   cooldowns: Record<string, Record<string, number>>
   /** Active status effects per unit after this frame: unitKey -> effects. */
   statusEffects: Record<string, ActiveEffect[]>
+  /** EFFECTIVE speed per unit after this frame (base buffed spd + active status spd
+   *  mods), keyed by unitKey. The InitiativeBar sorts by THIS so the order reflects
+   *  mid-combat spd buffs/debuffs, not the static start-of-battle value. Optional so
+   *  legacy / hand-built frames stay valid (the UI falls back to the static unit spd). */
+  spd?: Record<string, number>
 }
 
 export interface Replay {
@@ -102,6 +108,16 @@ export function buildReplay(
   const maxHp: Record<string, number> = {}
   for (const u of units) maxHp[u.key] = u.maxHp
 
+  // Base (start-of-battle, post-synergy/relic) stats per unit, so per-frame EFFECTIVE spd
+  // can be re-derived from the frame's active statusEffects — mirrors effectiveStats.
+  const baseStats: Record<string, Stats> = {}
+  for (const u of units) baseStats[u.key] = { hp: u.maxHp, atk: u.atk, def: u.def, spd: u.spd }
+  const spdFrom = (statusEffects: Record<string, ActiveEffect[]>): Record<string, number> => {
+    const out: Record<string, number> = {}
+    for (const u of units) out[u.key] = statsWithMods(baseStats[u.key]!, statusEffects[u.key] ?? []).spd
+    return out
+  }
+
   const hp: Record<string, number> = {}
   for (const u of [...L, ...R]) hp[unitKey(u.side, u.wizard.id)] = u.hp
 
@@ -110,7 +126,7 @@ export function buildReplay(
   // Frame 0 is the pre-combat state: empty cooldowns/statusEffects.
   // Guard: older/hand-built results may lack `snapshots` — default to empty maps so nothing crashes.
   const snapshots = result.snapshots ?? []
-  const stateFrom = (i: number): Pick<ReplayFrame, 'cooldowns' | 'statusEffects'> => {
+  const stateFrom = (i: number): Pick<ReplayFrame, 'cooldowns' | 'statusEffects' | 'spd'> => {
     const snap = snapshots[i]
     const cooldowns: Record<string, Record<string, number>> = {}
     const statusEffects: Record<string, ActiveEffect[]> = {}
@@ -120,10 +136,10 @@ export function buildReplay(
         statusEffects[key] = st.statusEffects.map(e => ({ ...e }))
       }
     }
-    return { cooldowns, statusEffects }
+    return { cooldowns, statusEffects, spd: spdFrom(statusEffects) }
   }
 
-  const frames: ReplayFrame[] = [{ index: 0, entry: null, hp: { ...hp }, cooldowns: {}, statusEffects: {} }]
+  const frames: ReplayFrame[] = [{ index: 0, entry: null, hp: { ...hp }, cooldowns: {}, statusEffects: {}, spd: spdFrom({}) }]
 
   result.log.forEach((entry, i) => {
     const value = entry.value
