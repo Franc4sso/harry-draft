@@ -12,6 +12,7 @@ import { VictoryScreen } from './VictoryScreen'
 import { ResultScreen } from './ResultScreen'
 import { RecruitScreen } from './RecruitScreen'
 import { RelicNodeScreen } from './RelicNodeScreen'
+import { EventScreen } from './EventScreen'
 import { InfirmaryScreen } from './InfirmaryScreen'
 import { AreaClearedScreen } from './AreaClearedScreen'
 import { TeamSynergyBar } from '@/components/run/TeamSynergyBar'
@@ -140,6 +141,11 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
             team={c.run.team}
             onPick={(relicId, assignedTo) => c.chooseRelic(relicId, assignedTo)}
           />,
+        )
+
+      case 'event':
+        return withTeamSidebar(
+          <EventScreen event={c.currentEvent!} onChoose={c.chooseEventOption} />,
         )
 
       case 'infirmary':
