@@ -44,19 +44,22 @@ export const BOSSES: BossDef[] = [
     //
     // Task 25 (2026-07-02, USER DECISION): STARTER_PICKS reverted 4→3 ("MAI 4, 3 maghi
     // voglio"), reopening the area-2-boss action-economy deficit Task 21 had fixed via the
-    // roster raise (campaignBalanceB crashed to 0.1000). unitCount=3 is a hard user pin
-    // (untouched) — every area-0/1 lever (Muro/Bellatrix unitCount/budget/hpMult,
-    // enemyCountByArea) was re-swept and found flat or non-monotonic; area-2-boss was
-    // confirmed the dominant loss location (loss trace: area2-boss 39-42/120). Voldemort's
-    // OWN budget/hpMult (previously untouched, since unitCount was assumed the only
-    // worthwhile scripted-boss lever) turned out to be the lever that actually moves this
-    // floor: budget 1800→1080, hpMult 1.4→1.09 clears it at winRate 0.1583 (19/120, headroom
-    // 0.0083 — same 1-seed margin pattern as every other floor-adjacent lever in this file).
-    // Budget/hpMult sweep highlights (unitCount fixed at 3 throughout): 1800/1.4 (orig) →
-    // 0.1000; 900/1.0 → 0.2833 (overshoots the 0.22 ceiling); 1300/1.2 → 0.1000 (sharp cliff,
-    // not a smooth dial); 1100/1.1 → 0.1500 (fails strict >, exact boundary); 1080/1.09
-    // SHIPPED → 0.1583. See tests/engine/campaignBalanceB.test.ts header for the full table.
-    unitCount: 3,
+    // roster raise (campaignBalanceB crashed to 0.1000). Voldemort's OWN budget/hpMult
+    // turned out to be the lever that moves this floor: budget 1800→1080, hpMult 1.4→1.09.
+    //
+    // RAISED unitCount 3→5 (2026-07-04, USER DECISION): "il boss dell'ultima arena non può
+    // avere solo 3 maghi, non ha senso" — the FINAL boss must field a full army (the area
+    // bosses Muro/Bellatrix stay at 3, so the finale visibly escalates). The old
+    // "5 units is structurally uncompensable" finding (winRate ≈0.04) was measured against
+    // the weak default-spell bot on the old calibration; re-measured now against the
+    // spell-optimized bot + the [3,5,8] enemy-count pass, a 5-unit finale at the SAME
+    // per-unit power (1080/1.09) lands campaignBalanceRestricted at 0.2083 (vs 0.2583 at
+    // 3 units) — a harder, climactic finale that the user explicitly endorsed ("più
+    // cattivo, dev'essere così"). budget/hpMult were verified near-inert at unitCount=5
+    // (budget 1080→900 flat at 0.2167; hpMult 1.09→1.0 = +1 seed) — the shared team budget
+    // spreads thin over 5 bodies, so the extra ACTIONS are the difficulty, not per-unit
+    // stats. Kept at the original calibrated 1080/1.09 for the most threatening finale.
+    unitCount: 5,
     exclusiveSynergy: {
       id: 'darkLord', name: "L'Oscuro Signore", kind: 'group',
       requires: { count: 1 }, bonus: { allPct: 0.2 },
