@@ -123,6 +123,21 @@ describe('useRunB FSM', () => {
     expect(result.current.run.team).toHaveLength(0)
   })
 
+  // Regression: "Nuova run" must roll a FRESH seed, not replay the mount-time seed.
+  // The seed prop is computed once (URL ?seed= or a one-off randomSeed()) and frozen,
+  // so a restart that reused it made every new run identical — same draft, same map,
+  // same fights — and the ResultScreen/DraftScreen "seed:" readout never changed.
+  it('restart rolls a new seed (a fresh run is not a replay of the last one)', () => {
+    const { result } = renderHook(() => useRunB('seed-c'))
+    expect(result.current.run.seed).toBe('seed-c')
+    act(() => result.current.completeDraft(twoPicks('seed-c')))
+    act(() => result.current.restart())
+    // The new run must NOT reuse the initial seed (randomSeed() is 8 chars over a
+    // 36-glyph alphabet → collision with 'seed-c' is impossible, and even a random
+    // collision would be ~36^-8).
+    expect(result.current.run.seed).not.toBe('seed-c')
+  })
+
   // Regression: a wizard unlocked by the reward ceremony at the end of a run must be
   // usable in the very next same-session run. Before the fix, the draft/relic pool
   // restriction was only computed once (mount-time useMemo) and restart() never

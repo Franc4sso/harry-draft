@@ -60,7 +60,7 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
   const renderView = () => {
     switch (c.view) {
       case 'draft':
-        return <DraftScreen seed={seed} onComplete={c.completeDraft} />
+        return <DraftScreen seed={c.run.seed} onComplete={c.completeDraft} />
 
       case 'map':
         return withTeamSidebar(
@@ -161,7 +161,7 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
         return (
           <ResultScreen
             outcome="win"
-            seed={seed}
+            seed={c.run.seed}
             stageReached={c.area + 1}
             enemyCount={c.areasTotal}
             onRestart={c.restart}
@@ -174,7 +174,7 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
         return (
           <ResultScreen
             outcome="defeat"
-            seed={seed}
+            seed={c.run.seed}
             stageReached={c.area + 1}
             enemyCount={c.areasTotal}
             onRestart={c.restart}

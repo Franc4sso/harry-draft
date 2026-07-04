@@ -8,6 +8,7 @@ import {
   useConsumableRelic as useConsumableRelicEngine,
 } from '@/game/engine/runEngine'
 import { createRng } from '@/game/engine/rng'
+import { randomSeed } from '@/lib/seed'
 import { saveRun, loadRun, clearRun } from '@/lib/runStore'
 import { BALANCE } from '@/data/constants'
 import { prepareCombat, combatRng, type ActiveBattleB } from './useRunB.combat'
@@ -181,11 +182,17 @@ export function useRunB(seed: string): RunBController {
   const advanceArea = useCallback(() => { commit(clearAreaAndAdvance(runRef.current, createRng(runRef.current.seed))) }, [commit])
 
   const restart = useCallback(() => {
-    clearRun(); const fresh = startRunB(seed)
+    // "Nuova run" must be a genuinely new run, not a replay: roll a FRESH seed rather
+    // than reusing the mount-time `seed` prop (which is frozen for the component's
+    // lifetime — from the URL ?seed= or a one-off randomSeed()). The run's own
+    // `run.seed` is the single source of truth the UI reads (see RunBRunner), so the
+    // draft, map and displayed seed all follow this new value. To REPLAY a specific
+    // seed, load it via the URL instead.
+    clearRun(); const fresh = startRunB(randomSeed())
     rewardFiredRef.current = false; setRunReward(null)
     applyPoolRestrictions() // profileRef.current now holds unlocks earned by the run just ended
     setBattle(null); setLastFallen([]); commit(fresh, 'draft')
-  }, [seed, commit, applyPoolRestrictions])
+  }, [commit, applyPoolRestrictions])
 
   const reachable = useMemo(() => engineReachable(run), [run])
   const currentNode = run.map?.find(n => n.id === run.currentNodeId)
