@@ -1,11 +1,12 @@
 import { describe, it, expect } from 'vitest'
 import {
   startRunB, starterOffer, chooseStarters, reachable, moveTo, resolveCurrent,
-  clearAreaAndAdvance, registerCoreResolvers,
+  clearAreaAndAdvance, registerCoreResolvers, useConsumableRelic,
 } from '@/game/engine/runEngine'
 import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
 import { createRng } from '@/game/engine/rng'
 import { powerOf } from '@/game/engine/combat/teamGen'
+import { isDead } from '@/game/engine/roster'
 import { setDraftPoolRestriction } from '@/game/engine/draft'
 import { STARTER_WIZARDS } from '@/data/unlocks'
 import type { RunNode, RunState } from '@/types'
@@ -20,6 +21,14 @@ registerCoreResolvers()
 function pickNode(s: RunState): RunNode {
   const opts = reachable(s)
   if (s.team.length < 3) { const r = opts.find(n => n.type === 'recruit'); if (r) return r }
+  // Competent play: heal before pressing on. Any wounded or dead wizard, with an
+  // infirmary reachable, is worth visiting before another fight — and especially
+  // before a boss — the same way a human clicks "heal" instead of walking into a
+  // boss room banged up. This never fires away from the (rare, once-per-area)
+  // infirmary floor, so it does not turn into infirmary-camping.
+  const wounded = s.team.some(dw => (dw.currentHp ?? dw.maxHp) < dw.maxHp)
+  const infirmary = opts.find(n => n.type === 'infirmary')
+  if (wounded && infirmary) return infirmary
   const fight = opts.find(n => n.type === 'elite') ?? opts.find(n => n.type === 'battle')
   if (fight) return fight
   if (s.team.length < (s.teamMax ?? 5)) { const r = opts.find(n => n.type === 'recruit'); if (r) return r }
@@ -47,6 +56,13 @@ function runOne(seed: string, battleTurns?: number[], preferVeleno = false): 'wi
     const node = s.map!.find(n => n.id === s.currentNodeId)!
     const rng = createRng(seed).fork(2).fork(s.area ?? 0)
     if (s.phase === 'battle') {
+      // Competent play: a human with a dead teammate and a revive relic in their
+      // bag clicks it before walking into the next fight, not after. Mirrors the
+      // real useConsumableRelic hook (components/screens/RunBRunner.tsx's RelicBar).
+      if (s.team.some(dw => isDead(dw))) {
+        const reviveRelic = s.relics.find(a => a.relic.active === 'revive')
+        if (reviveRelic) s = useConsumableRelic(s, reviveRelic.relic.id)
+      }
       s = resolveCurrent(s, { kind: 'combat-ack' }, rng)
       if (battleTurns && s.lastBattle) battleTurns.push(s.lastBattle.turns)
       continue
@@ -99,6 +115,23 @@ describe('restricted starter pool is winnable (Reservation 1 gate)', () => {
     // (see data/constants.ts campaignB's comments for the full sweep table), landing
     // at 0.1500 — hard, inside the (0.07, 0.45) guardrail band and close to the
     // 0.10-0.13 aim. Any future campaignB enemy-count change must re-measure this.
+    //
+    // *** Bot upgraded to competent play 2026-07-04 (heals/infirmary/revive) — see
+    // campaignBalanceB.test.ts's matching test for the full writeup of the two
+    // policy changes (pickNode now prefers a reachable infirmary over more fighting
+    // while wounded/dead; runOne now calls the real useConsumableRelic before a
+    // fight when a teammate is dead and a revive relic is held). ***
+    // MEASURED on this, the real difficulty gate: winRate=0.1500 (18/120) — BIT-FOR-
+    // BIT IDENTICAL to the pre-upgrade lazy bot. Debug instrumentation (not shipped)
+    // confirms the new rule is not a no-op here either (it redirects to the
+    // infirmary 66 times across these 120 seeds, displacing an already-reachable
+    // fight 18 of those times) and that the revive-relic branch never fired (0/120 —
+    // no run ever held an active:'revive' relic at the moment a teammate was dead).
+    // So contrary to this task's hypothesis, making the bot heal/revive-aware did
+    // NOT reveal this harness — the real gate — as "too easy"; the 0.07-0.45 band
+    // below (unchanged) already accounts for a competent bot and still holds
+    // comfortably. See campaignBalanceB.test.ts for the structural explanation
+    // (guaranteed area-clear recovery + enemy stats already tuned hard).
     expect(winRate).toBeGreaterThan(0.07)
     expect(winRate).toBeLessThan(0.45)
   })
