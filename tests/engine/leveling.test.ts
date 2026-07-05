@@ -30,11 +30,13 @@ describe('leveling — exp curve', () => {
     expect(expForLevel(2)).toBeGreaterThan(expForLevel(1))
     expect(expForLevel(3)).toBeGreaterThan(expForLevel(2))
   })
-  it('levelFromExp inverts expForLevel and caps at levelMax', () => {
+  it('levelFromExp inverts expForLevel and is UNCAPPED (no player level ceiling)', () => {
     expect(levelFromExp(0)).toBe(1)
     expect(levelFromExp(expForLevel(3))).toBe(3)
     expect(levelFromExp(expForLevel(3) - 1)).toBe(2)
-    expect(levelFromExp(10_000_000)).toBe(BALANCE.leveling.levelMax)
+    // Player level is uncapped (user directive): huge exp goes well past the enemy levelMax.
+    expect(levelFromExp(10_000_000)).toBeGreaterThan(BALANCE.leveling.levelMax)
+    expect(levelFromExp(expForLevel(25))).toBe(25) // exact inversion far above levelMax
   })
   it('addExp raises the level automatically from exp (no milestones)', () => {
     const r = addExp(dw(ROSTER_MEAN, { level: 1, exp: 0 }), expForLevel(3))
@@ -43,13 +45,14 @@ describe('leveling — exp curve', () => {
     expect(r).not.toHaveProperty('milestones')
   })
 
-  it('gainLevels grants whole levels and keeps exp coherent, clamped to levelMax', () => {
+  it('gainLevels grants whole levels and keeps exp coherent, UNCAPPED (no ceiling)', () => {
     const a = gainLevels(dw(ROSTER_MEAN, { level: 1, exp: 0 }), 2)
     expect(a.dw.level).toBe(3)
     expect(a.dw.exp).toBe(expForLevel(3))
-    // clamps at the cap
-    const capped = gainLevels(dw(ROSTER_MEAN, { level: BALANCE.leveling.levelMax - 1 }), 5)
-    expect(capped.dw.level).toBe(BALANCE.leveling.levelMax)
+    // No cap: levelling past the enemy levelMax is allowed (user directive).
+    const beyond = gainLevels(dw(ROSTER_MEAN, { level: BALANCE.leveling.levelMax - 1 }), 5)
+    expect(beyond.dw.level).toBe(BALANCE.leveling.levelMax + 4)
+    expect(beyond.dw.exp).toBe(expForLevel(BALANCE.leveling.levelMax + 4))
   })
 })
 

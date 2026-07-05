@@ -36,8 +36,12 @@ export function expForLevel(level: number): number {
 }
 
 export function levelFromExp(exp: number): number {
+  // Player level is UNCAPPED (user directive: "il cap non ci dev'essere") — a wizard keeps
+  // levelling past 10 as it earns exp. `levelMax` remains the ENEMY ceiling only (see
+  // enemyLevelFor/threat.ts). The loop terminates because expForLevel grows quadratically
+  // and `exp` is always finite (expStep > 0, guarded by runConstants.test.ts).
   let lvl = 1
-  while (lvl < L.levelMax && exp >= expForLevel(lvl + 1)) lvl++
+  while (exp >= expForLevel(lvl + 1)) lvl++
   return lvl
 }
 
@@ -49,11 +53,12 @@ export function addExp(dw: DraftedWizard, amount: number): { dw: DraftedWizard }
   return { dw: { ...dw, exp: newExp, level: newLevel } }
 }
 
-/** Grant `n` whole levels at once (clamped to [1, levelMax]), keeping `exp` coherent
- *  with the new level. Win-based progression: clearing a fight levels survivors
- *  directly (normal +1, elite +2, boss +3) instead of accumulating exp. */
+/** Grant `n` whole levels at once (minimum 1, NO upper cap — player level is uncapped by
+ *  user directive; `levelMax` is the enemy ceiling only), keeping `exp` coherent with the
+ *  new level. Win-based progression: clearing a fight levels survivors directly
+ *  (normal +1, elite +2, boss +3) instead of accumulating exp. */
 export function gainLevels(dw: DraftedWizard, n: number): { dw: DraftedWizard } {
-  const newLevel = Math.min(L.levelMax, Math.max(1, (dw.level ?? 1) + Math.max(0, Math.floor(n))))
+  const newLevel = Math.max(1, (dw.level ?? 1) + Math.max(0, Math.floor(n)))
   return { dw: { ...dw, level: newLevel, exp: expForLevel(newLevel) } }
 }
 
