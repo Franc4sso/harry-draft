@@ -467,7 +467,7 @@ defenseK: 0.5,
     // effect once already low) — not the live lever here. Il Muro's own budget/hpMult
     // (data/bosses.ts) was also softened 250/0.5→150/0.35 during the search; also flat, but
     // left at the softer value (harmless, consistent direction).
-    categoryWeights: { battle: 25, recruit: 10, relic: 45, event: 15, spellForge: 12 } as Record<'battle' | 'recruit' | 'relic' | 'event' | 'spellForge', number>,
+    categoryWeights: { battle: 25, recruit: 10, relic: 45, event: 15, spellForge: 12, shop: 12 } as Record<'battle' | 'recruit' | 'relic' | 'event' | 'spellForge' | 'shop', number>,
     recruitBiasBoost: 10,        // peso aggiunto a 'recruit' quando la squadra è incompleta
   },
   relics: {
@@ -478,6 +478,12 @@ defenseK: 0.5,
       'rara': 16,
       'epica': 6,
     } as Record<RelicRarity, number>,
+  },
+  shop: {
+    relicByRarity: { 'comune': 25, 'non-comune': 45, 'rara': 75, 'epica': 120 } as Record<import('@/types').Relic['rarity'], number>,
+    heal: 35,
+    removeWizard: 20,
+    reroll: 15,
   },
   leveling: {
     autoGrowthPct: 0.07,        // yardstick: avg per-level growth = growthBudgetPerLevel × 0.25 (avg weight)

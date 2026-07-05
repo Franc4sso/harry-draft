@@ -5,7 +5,7 @@ export type RunPhase =
   | 'menu' | 'draft' | 'team' | 'battle'
   | 'victory' | 'defeat' | 'win'
   // Fase 1 redesign (Plan B):
-  | 'house' | 'starter' | 'map' | 'recruit-node' | 'relic-node' | 'infirmary-node' | 'event-node' | 'spellForge-node' | 'area-cleared'
+  | 'house' | 'starter' | 'map' | 'recruit-node' | 'relic-node' | 'infirmary-node' | 'event-node' | 'spellForge-node' | 'shop-node' | 'area-cleared'
 
 export type RunNodeType =
   // Fase 1 — generati e risolti
@@ -52,13 +52,17 @@ export interface RunNode {
   battle?: NodeBattle
   /** Telegraph data derived from `battle` (combat nodes only). */
   preview?: NodePreview
+  /** Shop node: slot ids already purchased at this node (greyed as sold). */
+  shopBought?: string[]
+  /** Shop node: how many times the relic stock has been rerolled (feeds the offer salt). */
+  shopReroll?: number
 }
 
 /** Narrative log entry — seeds the Fase 4 end-of-run story screen. */
 export interface RunEvent {
   area: number
   nodeId: string
-  kind: 'recruit' | 'relic' | 'elite' | 'boss' | 'levelMilestone' | 'infirmary' | 'event' | 'spellForge'
+  kind: 'recruit' | 'relic' | 'elite' | 'boss' | 'levelMilestone' | 'infirmary' | 'event' | 'spellForge' | 'shop'
   summary: string
 }
 
