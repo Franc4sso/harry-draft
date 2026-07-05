@@ -26,12 +26,13 @@ export function InitiativeBar({ replay, index }: { replay: Replay; index: number
   const current = lastRealActorAt(replay, index)
 
   // Live speed rail: alive units sorted by CURRENT spd desc (so a mid-fight debuff/buff
-  // visibly re-orders the rail), stable tiebreak by original order.
+  // visibly re-orders the rail). The tiebreak for equal-spd units MUST match the engine's
+  // turn-order comparator (simulate.ts: spd desc, then wizard id, then side) — otherwise the
+  // rail shows a different order than the units actually act in.
   const sequence = replay.units
-    .map((u, i) => ({ u, i }))
-    .filter(({ u }) => (hp[u.key] ?? u.maxHp) > 0)
-    .sort((a, b) => spdAt(b.u) - spdAt(a.u) || a.i - b.i)
-    .map(({ u }) => u.key)
+    .filter(u => (hp[u.key] ?? u.maxHp) > 0)
+    .sort((a, b) => spdAt(b) - spdAt(a) || a.id.localeCompare(b.id) || a.side.localeCompare(b.side))
+    .map(u => u.key)
   const byKey = Object.fromEntries(replay.units.map(u => [u.key, u]))
 
   return (

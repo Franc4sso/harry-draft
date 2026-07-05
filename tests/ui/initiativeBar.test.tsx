@@ -37,6 +37,22 @@ it('does not render the unit name in the rail', () => {
   expect(screen.queryByText('Bbb')).toBeNull()
 })
 
+it('orders equal-speed units by the engine tiebreak (wizard id), not array order', () => {
+  // Two same-speed allies; array order is [zzz, aaa] but the engine acts id-ascending,
+  // so the rail must show aaa before zzz (regression: it used raw array index → wrong order).
+  const tie = {
+    units: [
+      { key: 'left:zzz', id: 'zzz', name: 'Zzz', side: 'left', house: 'Grifondoro', role: 'Tank', tier: 3, maxHp: 100, atk: 10, def: 10, spd: 25, baseAtk: 10, baseDef: 10, baseSpd: 25, spell: { id: 's', name: 'S', cooldown: 0 } },
+      { key: 'left:aaa', id: 'aaa', name: 'Aaa', side: 'left', house: 'Serpeverde', role: 'Tank', tier: 3, maxHp: 100, atk: 10, def: 10, spd: 25, baseAtk: 10, baseDef: 10, baseSpd: 25, spell: { id: 's', name: 'S', cooldown: 0 } },
+    ],
+    frames: [{ index: 0, entry: null, hp: { 'left:zzz': 100, 'left:aaa': 100 }, cooldowns: {}, statusEffects: {} }],
+  } as unknown as Replay
+  const { container } = render(<InitiativeBar replay={tie} index={0} />)
+  const srcs = [...container.querySelectorAll('img[data-variant="bust"]')].map(i => i.getAttribute('src'))
+  expect(srcs[0]).toContain('/portraits/aaa.webp')
+  expect(srcs[1]).toContain('/portraits/zzz.webp')
+})
+
 it('lays each slot as a vertical stack (fits the narrow column, no clip)', () => {
   const { container } = render(<InitiativeBar replay={replay} index={0} />)
   const slot = container.querySelector('[data-side]') as HTMLElement
