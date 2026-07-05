@@ -23,8 +23,8 @@ A clean 4-cycle: **each role has exactly one prey and one predator.**
 
 ### Why it interlocks (the emergent depth)
 - The **Tank shields your Supporto** from the enemy Attaccante (taunt redirects the diver).
-- The enemy **Controllo cracks your Tank's taunt** — freeing *their* Attaccante to dive your Supporto.
-- Your **Supporto cleanses their Controllo** — so the taunt-break never lands.
+- The enemy **Controllo stuns your Tank** → its taunt switches off → *their* Attaccante dives your Supporto that window.
+- Your **Supporto cleanses/halves that stun** → the Tank's taunt comes back → the window closes.
 
 A full 4-role team is a chain of nested protections. Reading the enemy roster
 (already shown on the map hover card) becomes tactically meaningful.
@@ -50,10 +50,17 @@ random pool draw), mirroring how taunt works today.
 
 | Role | Signature | Behaviour |
 |---|---|---|
-| 🛡️ Tank | **Provocazione** *(unchanged)* | `threatScore` +`tauntBonus` (1000) → enemies focus the Tank. |
-| ⚔️ Attaccante | **Affondo** | Targeting: if a live enemy Tank is taunting (and not bypassed) → hit the Tank (taunt wins). Otherwise dive **enemy Supporto → Controllo → highestThreat**. |
+| 🛡️ Tank | **Provocazione** | `threatScore` +`tauntBonus` (1000) → enemies focus the Tank. **Suppressed while the Tank is under a hard-control effect** (see Global Rule below). |
+| ⚔️ Attaccante | **Affondo** | Targeting: if the enemy Tank's taunt is active → hit the Tank (taunt wins). If the enemy Tank is **disabled** (taunt suppressed) or absent → dive **enemy Supporto → Controllo → highestThreat**. |
 | ✨ Supporto | **Tenacia + Purificazione** | While ≥1 Supporto is alive on a side: (a) incoming **hard-control** durations — the `control` family only: `stun`/`freeze`/`silence` (NOT graded slows/debuffs) — on that side are **halved** (min 1); (b) at the start of each Supporto's turn, **remove one control-family effect** from the most-disabled ally (free, doesn't consume its action). |
-| 🌀 Controllo | **Spezza-Provocazione** | While ≥1 Controllo is alive on a side, that side's attackers **ignore the enemy Tank's taunt** (reuses the `ignoresTaunt` path). Plus Controllo's control effects land at **full duration on Tanks** (flip the current halving) and it keeps backline access. |
+| 🌀 Controllo | **Sabotaggio** | Its control effects land at **full duration on Tanks** (flip the current halving) + it keeps backline access. Its counter to Tank comes from the Global Rule: landing a hard-control on the enemy Tank **switches off that Tank's Provocazione** for the duration — opening the wall for the whole team. |
+
+### Global Rule — a stunned wall can't provoke
+**A Tank under a hard-control effect (`stun` / `freeze` / `silence`) loses its Provocazione for as long as the effect lasts.** This is the pivot of the cycle:
+- It is how **Controllo beats Tank** — but *conditionally*: the Controllo must actually land control on the Tank (target it + not be resisted), it's temporary (lasts as long as the stun), and it requires the Controllo to hold a control spell (guaranteed by the spell↔role bias).
+- It is what opens **Attaccante's Affondo** — the diver can slip past the wall only during that window (a coordinated combo: Controllo disables the Tank, Attaccante dives that turn).
+- It is countered by **Supporto's Tenacia** — halving/cleansing the control restores the Tank's taunt, closing the window. A genuine tug-of-war, not an on/off switch.
+- Against a team with no Controllo, the Tank is at full strength; it is never *permanently* neutralised.
 
 ## Spell ↔ Role bias (approved: strong bias)
 
@@ -88,12 +95,13 @@ Counters must be **visible** or they'll feel like Controllo does today.
 
 ### Tests to add
 - `roleMult` matrix values + that it fires only on the prey edge (unit).
-- Affondo: an Attaccante dives the enemy Supporto when no taunt; obeys taunt when a
-  Tank is alive; ignores taunt when its side has a live Controllo.
+- Affondo: an Attaccante dives the enemy Supporto when the enemy Tank is absent/disabled;
+  obeys taunt when the enemy Tank's taunt is active.
 - Tenacia: a control status applied to a side with a live Supporto has halved duration;
   cleanse removes one control effect on the Supporto's turn.
-- Spezza-Provocazione: an attacker whose side has a live Controllo bypasses the enemy
-  Tank's taunt; Controllo control lands full-duration on Tanks.
+- Global Rule: a Tank under stun/freeze/silence loses its taunt (attackers are no longer
+  forced onto it); the taunt is restored when the control expires or is cleansed. Controllo
+  control lands full-duration on Tanks.
 - Spell bias: a Controllo equips a Controllo-type spell when its pool has one; falls
   back gracefully; enemy offensive guarantee still overrides.
 
@@ -103,8 +111,8 @@ Counters must be **visible** or they'll feel like Controllo does today.
   `controlVsTank`/`controlVsBackline`; add Tenacia/Affondo tuning params.
 - `game/engine/combat/effects.ts` — matrix in `computeDamage`; flip Controllo-vs-Tank
   status duration; Tenacia duration halving on control apply.
-- `game/engine/combat/targeting.ts` — Affondo (Attaccante dive); Spezza-Provocazione
-  (taunt bypass when side has a live Controllo).
+- `game/engine/combat/targeting.ts` — Affondo (Attaccante dive); Global Rule in
+  `threatScore` (zero the taunt term when the Tank is under stun/freeze/silence).
 - `game/engine/combat/simulate.ts` — Supporto cleanse passive in the turn loop.
 - `game/engine/status.ts` — control-duration hook + cleanse helper.
 - `game/engine/statRoll.ts` — role→spell-type bias in `pickSpell`.
