@@ -16,9 +16,11 @@ import { EventScreen } from './EventScreen'
 import { SpellForgeScreen } from './SpellForgeScreen'
 import { InfirmaryScreen } from './InfirmaryScreen'
 import { AreaClearedScreen } from './AreaClearedScreen'
+import { ShopScreen } from './ShopScreen'
 import { TeamSynergyBar } from '@/components/run/TeamSynergyBar'
 import { RelicBar } from '@/components/relics/RelicBar'
 import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
+import { shopOffer } from '@/game/engine/resolvers/shop'
 import { createRng } from '@/game/engine/rng'
 import { runSummary } from '@/lib/runSummary'
 import { displayName } from '@/lib/displayName'
@@ -157,6 +159,19 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
       case 'infirmary':
         return withTeamSidebar(
           <InfirmaryScreen team={c.run.team} onContinue={c.ackInfirmary} />,
+        )
+
+      case 'shop':
+        return withTeamSidebar(
+          <ShopScreen
+            stock={shopOffer(c.run, c.currentNode!, createRng(c.run.seed))}
+            bought={c.currentNode?.shopBought ?? []}
+            cioccorane={c.cioccorane}
+            team={c.run.team}
+            onBuy={c.buyShopItem}
+            onReroll={c.rerollShop}
+            onLeave={c.leaveShop}
+          />,
         )
 
       case 'area-cleared':
