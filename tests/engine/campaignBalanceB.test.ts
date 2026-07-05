@@ -546,6 +546,16 @@ describe('campaign balance (new loop)', () => {
     // re-measured: withVeleno/noVeleno both 0.133 (16/120 each; was 0.125/0.117) — the
     // "coin flip, not a stable ordering" finding documented above still holds. Still
     // comfortably inside this relaxed smoke check.
+    //
+    // Re-anchored 2026-07-05 (Task 11, post role-counter system landing — matrix, Global
+    // Rule, Affondo/Tenacia/Purificazione passives, spell<->role bias, pool guarantee, UI).
+    // Re-measured (same 120 seeds, no bot changes): winRate=0.1333 (16/120), UNCHANGED from
+    // the last-recorded 0.1333 baseline above (0 seeds moved). The bot still picks
+    // recruits/relics/spells purely by raw power/damage, never by ROLE — so it neither
+    // exploits nor is deliberately punished by the new counter matrix; this harness's
+    // number is unaffected. Smoke check left as-is (already >0/<=1): counters are not
+    // understood by the balance bot, so the user's own playtest is the real gauge of
+    // role-counter feel/difficulty, not this harness's winRate.
     expect(winRate).toBeGreaterThan(0)
     expect(winRate).toBeLessThanOrEqual(1.0)
   })
@@ -591,6 +601,13 @@ describe('Muro wall — veleno is the counter', () => {
   // velenoBypassesWall.test.ts (poison tick identical with/without the wall) and
   // velenoCounters.test.ts. This suite now only smoke-checks that veleno play stays
   // viable (below), consistent with the relaxed winRate band in the describe above.
+  //
+  // Re-anchored 2026-07-05 (Task 11, post role-counter system landing): re-measured
+  // withVeleno=0.117 (14/120), noVeleno=0.133 (16/120) — the ordering flipped by 2 seeds
+  // vs the last-recorded 0.133/0.133, still within the "coin flip, not a stable ordering"
+  // noise band already documented above; both independent >0 smoke checks below still
+  // hold. Consistent with this file's standing finding: neither policy variant reasons
+  // about ROLE, so the new counter matrix moves this number by noise, not by design.
   it('veleno play stays viable against the wall (not softlocked)', () => {
     expect(wr(withVeleno)).toBeGreaterThan(0)
   })
