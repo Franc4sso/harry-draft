@@ -64,7 +64,10 @@ describe('armor penetration', () => {
     const atkWiz = unit({ side: 'left' })            // role Attaccante (fixture default)
     const tankRole = unit({ side: 'left' })
     tankRole.wizard = { ...tankRole.wizard, role: 'Tank' }
+    // Role 'Controllo' is neutral to both attacker roles here (Tank preys on Attaccante,
+    // Attaccante preys on Supporto) — isolates armor pen from the role matchup bonus.
     const target = unit({ side: 'right', buffedStats: { hp: 120, atk: 80, def: 60, spd: 40 } })
+    target.wizard = { ...target.wizard, role: 'Controllo' }
 
     const fa: LogFlag[] = []; const ft: LogFlag[] = []
     const dmgAtk = computeDamage(noChance, atkWiz, target, 1, fa)
@@ -86,7 +89,10 @@ describe('armor penetration', () => {
     const atkWiz = unit({ side: 'left' })
     const noPenActor = unit({ side: 'left' })
     noPenActor.wizard = { ...noPenActor.wizard, role: 'Tank' }
+    // Role 'Controllo' is neutral to both attacker roles here — isolates armor pen from
+    // the role matchup bonus (see comment in the test above).
     const target = unit({ side: 'right', buffedStats: { hp: 120, atk: 80, def: 60, spd: 40 } })
+    target.wizard = { ...target.wizard, role: 'Controllo' }
     const f1: LogFlag[] = []; const f2: LogFlag[] = []
 
     const dmgPen = computeDamage(noChance, atkWiz, target, 1, f1)
@@ -103,36 +109,10 @@ describe('armor penetration', () => {
   })
 })
 
-describe('Controllo role damage multiplier', () => {
-  it('a Controllo deals less damage to a Tank than to a non-tank backliner (same stats)', () => {
-    const ctrl = unit({ side: 'left' })
-    ctrl.wizard = { ...ctrl.wizard, role: 'Controllo' }
-    const tank = unit({ side: 'right', buffedStats: { hp: 120, atk: 80, def: 30, spd: 40 } })
-    tank.wizard = { ...tank.wizard, role: 'Tank' }
-    const backliner = unit({ side: 'right', buffedStats: { hp: 120, atk: 80, def: 30, spd: 40 } })
-    backliner.wizard = { ...backliner.wizard, role: 'Supporto' }
-
-    const f1: LogFlag[] = []; const f2: LogFlag[] = []
-    const dmgVsTank = computeDamage(noChance, ctrl, tank, 1, f1)
-    const dmgVsBackline = computeDamage(noChance, ctrl, backliner, 1, f2)
-
-    expect(dmgVsTank).toBeLessThan(dmgVsBackline)
-  })
-
-  it('a non-Controllo attacker deals equal damage regardless of the Controllo role multiplier', () => {
-    const atkWiz = unit({ side: 'left' }) // Attaccante
-    const tank = unit({ side: 'right', buffedStats: { hp: 120, atk: 80, def: 30, spd: 40 } })
-    tank.wizard = { ...tank.wizard, role: 'Tank' }
-    const backliner = unit({ side: 'right', buffedStats: { hp: 120, atk: 80, def: 30, spd: 40 } })
-    backliner.wizard = { ...backliner.wizard, role: 'Supporto' }
-
-    const f1: LogFlag[] = []; const f2: LogFlag[] = []
-    const dmgVsTank = computeDamage(noChance, atkWiz, tank, 1, f1)
-    const dmgVsBackline = computeDamage(noChance, atkWiz, backliner, 1, f2)
-
-    expect(dmgVsTank).toBe(dmgVsBackline)
-  })
-})
+// The old Controllo-only vs-Tank/vs-backline multiplier is gone — replaced by the general
+// role matchup matrix (roleMult / ROLE_PREY), which now applies to every attacker role and
+// is covered by tests/engine/combat/roleDamageMatrix.test.ts (e.g. Attaccante +25% vs its
+// prey Supporto). Controllo's asymmetric anti-Tank identity moved to its passive instead.
 
 describe('Controllo debuffs are weaker against a Tank', () => {
   it('a Controllo applying a stat debuff to a Tank does not land it (or lands it weaker)', () => {

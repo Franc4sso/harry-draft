@@ -28,10 +28,12 @@ describe('reactive traits in battle', () => {
     // onHeal fires with actor=lupin, target=lupin; shield EffectSpec lands on ctx.target=lupin.
     // A healer ally (mcgonagall) ensures heals happen regularly; harry is the right-side target.
     // Seed 6 gives Lupin the 'vulnera' healing spell (fixed-stats RNG shift changed spell picks).
+    // Battle seed re-anchored 4→1 (role-counter matrix pass): Harry (Attaccante) now deals
+    // +25% to Lupin (his prey, Supporto), so seed 4 killed Lupin before he could self-heal.
     const lupin = { ...wiz('lupin', 6), shiny: { traitId: 'benedizione' } }
     const left = [lupin, wiz('mcgonagall', 2)]
     const right = [wiz('harry', 3)]
-    const res = simulateBattle(left, right, createRng(4))
+    const res = simulateBattle(left, right, createRng(1))
     // Some snapshot must show a unit with statusId:'shield' (set by the shield handler)
     // or kind:'shield' (belt-and-suspenders match for inline shield push).
     const shielded = res.snapshots.some(s =>

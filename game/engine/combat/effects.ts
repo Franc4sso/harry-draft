@@ -4,6 +4,7 @@ import type { EventBus } from './eventBus'
 import { BALANCE } from '@/data/constants'
 import { STATUS_BY_ID } from '@/data/statuses'
 import { absorbDamage, applyInlineEffect, applyStatus, canAttack, effectiveStats } from '../status'
+import { roleMult } from './roleCounter'
 
 export interface EffectCtx { rng: Rng; turn: number; actor: BattleUnit; target: BattleUnit; flags: LogFlag[]; bus?: EventBus; allies?: BattleUnit[]; dark?: boolean }
 export interface EffectResult { value?: number; dodged?: boolean; wardTarget?: BattleUnit }
@@ -15,9 +16,9 @@ export function computeDamage(rng: Rng, actor: BattleUnit, target: BattleUnit, p
   if (pen > 0) flags.push('pen')
   const def = effectiveStats(target).def * (1 - pen)
   let dmg = atk * power - def * c.defenseK
-  if (actor.wizard.role === 'Controllo') {
-    dmg *= target.wizard.role === 'Tank' ? BALANCE.roles.controlVsTank : BALANCE.roles.controlVsBackline
-  }
+  // Role matchup: +25% vs the role you prey on (Tank→Att→Sup→Ctrl→Tank). Replaces the old
+  // Controllo-specific multiplier — Controllo's real anti-Tank power is now its passive.
+  dmg *= roleMult(actor.wizard.role, target.wizard.role)
   dmg = Math.max(c.minDamage, dmg)
   const cb = actor.critBonus
   const critChance = c.critBase + effectiveStats(actor).spd * c.critSpdScale + (cb?.chance ?? 0)
