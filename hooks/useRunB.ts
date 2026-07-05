@@ -16,6 +16,8 @@ import { loadProfile, saveProfile, markSeen, grantCioccorane, spendCioccorane } 
 import type { MetaProfile } from '@/lib/metaStore'
 import { buildRunEndSummary, recordRunEnd } from '@/lib/metaProgress'
 import { relicOffer } from '@/game/engine/resolvers/recruit'
+import { shopOffer, shopResolver } from '@/game/engine/resolvers/shop'
+import { leaveShop as leaveShopEngine, rerollShop as rerollShopEngine } from '@/game/engine/runEngine'
 import { eventResolver, resolveEventChoice } from '@/game/engine/resolvers/event'
 import { EVENT_BY_ID, type EventRequirement } from '@/data/events'
 import { STARTER_WIZARDS, STARTER_RELICS, type UnlockTarget } from '@/data/unlocks'
@@ -26,7 +28,7 @@ registerCoreResolvers()
 
 export type RunBView =
   | 'draft' | 'map' | 'battle' | 'victory'
-  | 'recruit' | 'relic' | 'infirmary' | 'event' | 'spellForge' | 'area-cleared' | 'win' | 'defeat'
+  | 'recruit' | 'relic' | 'infirmary' | 'event' | 'spellForge' | 'shop' | 'area-cleared' | 'win' | 'defeat'
 
 export interface RunReward { earned: number; unlocked: UnlockTarget[]; profile: MetaProfile }
 
@@ -51,6 +53,10 @@ export interface RunBController {
   chooseSpellUpgrade: (wizardId: string) => void
   setWizardSpell: (wizardId: string, spellId: string) => void
   useConsumableRelic: (relicId: string) => void
+  cioccorane: number
+  buyShopItem: (slotId: string, opts?: { carrierId?: string; targetWizardId?: string }) => void
+  rerollShop: () => void
+  leaveShop: () => void
   advanceArea: () => void
   restart: () => void
 }
@@ -66,6 +72,7 @@ const viewForPhase = (p: RunState['phase']): RunBView => {
     case 'infirmary-node': return 'infirmary'
     case 'event-node': return 'event'
     case 'spellForge-node': return 'spellForge'
+    case 'shop-node': return 'shop'
     case 'area-cleared': return 'area-cleared'
     case 'win': return 'win'
     case 'defeat': return 'defeat'
@@ -241,6 +248,30 @@ export function useRunB(seed: string): RunBController {
     commit({ ...next, phase: 'map' }, 'map') // non-combat node: straight back to map
   }, [commit])
 
+  const buyShopItem = useCallback((slotId: string, opts?: { carrierId?: string; targetWizardId?: string }) => {
+    const node = runRef.current.map!.find(n => n.id === runRef.current.currentNodeId)!
+    const slot = shopOffer(runRef.current, node, createRng(runRef.current.seed)).slots.find(s => s.id === slotId)
+    if (!slot) return
+    // Apply the purchase FIRST (pure); a no-op (already bought / remove-guard) must not charge.
+    const next = shopResolver.resolve(runRef.current, node,
+      { kind: 'shop-buy', slotId, carrierId: opts?.carrierId, targetWizardId: opts?.targetWizardId }, createRng(runRef.current.seed))
+    if (next === runRef.current) return
+    // Deduct the wallet; if unaffordable, abort with NO state change (discard `next`).
+    const spent = spendCioccorane(profileRef.current, slot.price)
+    if (!spent) return
+    profileRef.current = spent; saveProfile(spent)
+    commit({ ...next, phase: 'shop-node' }, 'shop')
+  }, [commit])
+
+  const rerollShop = useCallback(() => {
+    const spent = spendCioccorane(profileRef.current, BALANCE.shop.reroll)
+    if (!spent) return
+    profileRef.current = spent; saveProfile(spent)
+    commit({ ...rerollShopEngine(runRef.current), phase: 'shop-node' }, 'shop')
+  }, [commit])
+
+  const leaveShop = useCallback(() => { commit(leaveShopEngine(runRef.current), 'map') }, [commit])
+
   const setWizardSpellCb = useCallback((wizardId: string, spellId: string) => {
     commit(setWizardSpell(runRef.current, wizardId, spellId))
   }, [commit])
@@ -275,6 +306,8 @@ export function useRunB(seed: string): RunBController {
     currentEvent, chooseEventOption, chooseSpellUpgrade,
     setWizardSpell: setWizardSpellCb,
     useConsumableRelic: useConsumableRelicCb,
+    cioccorane: profileRef.current.cioccorane,
+    buyShopItem, rerollShop, leaveShop,
     advanceArea, restart,
   }
 }
