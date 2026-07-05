@@ -37,6 +37,7 @@ export const STARTER_WIZARDS: string[] = [
 export const STARTER_RELICS: string[] = [
   'giratempo', 'mantello-invisibilita', 'mappa-malandrino', 'pozione-fortuna', 'bezoar', 'ricordatutto',
   'medaglione-serpeverde', 'diadema-corvonero', 'coppa-tassorosso', 'ampolla-veleno', 'sigillo-carnefice', 'diadema-corrotto',
+  'fame-vorace', 'collezionista-anime', 'marchio-vorace',
 ]
 
 // Rarity-scaled unlock costs: rarer = pricier. Tier 1 (Leggendario) is the rarest

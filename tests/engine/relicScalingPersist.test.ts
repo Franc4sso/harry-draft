@@ -4,6 +4,8 @@ import { combatResolver } from '@/game/engine/resolvers/combat'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
 import { WIZARD_BY_ID } from '@/data/wizards'
+import { RELIC_BY_ID } from '@/data/relics'
+import { startRunB } from '@/game/engine/runEngine'
 import type { ActiveRelic, Relic, RunNode, RunState, Stats } from '@/types'
 
 const joker: Relic = {
@@ -101,5 +103,44 @@ describe('relic scaling persists through the combat resolver', () => {
     expect(out.lastBattle!.kills.left).toBe(0)
     const updated = out.relics.find(r => r.relic.id === 'test-joker')!
     expect(updated.runCounter).toBe(5) // unchanged, not reset to 0 either
+  })
+})
+
+// --- Real joker end-to-end (Task 4 landed the actual data): a carried
+// 'fame-vorace' joker persists its runCounter across the resolver and its
+// read-time attack bonus reflects the accumulated kills, capped per the
+// relic's own descriptor. Also verifies a freshly-started run's relics carry
+// no runCounter (nothing to reset — the field just isn't there yet).
+describe('a real scaling joker (fame-vorace) persists through a run', () => {
+  it("carrier's runCounter grows by kills.left and applyRelicBonuses reflects +2*runCounter attack (capped at 20)", () => {
+    const left = team(['harry', 'ron', 'hermione'], 1)
+    const right = team(['eloise'], 2)
+    const carrier: ActiveRelic = { relic: RELIC_BY_ID['fame-vorace']!, stageObtained: 0, runCounter: 0 }
+    const state: RunState = {
+      seed: 's', phase: 'battle', team: left, activeSynergies: [], stage: 0,
+      relics: [carrier],
+    }
+    const node: RunNode = {
+      id: 'a0f0n0', type: 'battle', next: [],
+      battle: { enemyTeam: right, enemyRelics: [], enemyLevel: 1 },
+    }
+
+    const out = combatResolver.resolve(state, node, { kind: 'combat-ack' }, createRng('kill-seed'))
+
+    const kills = out.lastBattle!.kills.left
+    expect(kills).toBe(right.length) // clean wipe
+
+    const updated = out.relics.find(r => r.relic.id === 'fame-vorace')!
+    expect(updated.runCounter).toBe(0 + kills)
+
+    const base: Stats = { hp: 100, atk: 50, def: 10, spd: 10 }
+    const bonused = applyRelicBonuses(base, [], out.relics)
+    const expectedBonus = Math.min(updated.runCounter! * 2, 20) // per=2, cap=20
+    expect(bonused.atk).toBe(base.atk + expectedBonus)
+  })
+
+  it('a freshly-started run has relics with no runCounter (nothing carried over)', () => {
+    const fresh = startRunB('fresh-seed')
+    expect(fresh.relics.every(r => r.runCounter === undefined)).toBe(true)
   })
 })
