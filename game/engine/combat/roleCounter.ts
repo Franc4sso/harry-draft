@@ -22,3 +22,12 @@ export function countHardControl(u: BattleUnit): number {
 export function isUnderHardControl(u: BattleUnit): boolean {
   return u.statusEffects.some(e => HARD_CONTROL_KINDS.has(e.kind))
 }
+
+/** Set `controlResist` on every unit: true iff its side has a live Supporto (Tenacia aura).
+ *  Call once per turn so the aura drops when the last Supporto dies. */
+export function applyTenaciaAura(L: BattleUnit[], R: BattleUnit[]): void {
+  const has = (side: BattleUnit[]) => side.some(u => u.alive && u.wizard.role === 'Supporto')
+  const l = has(L), r = has(R)
+  for (const u of L) u.controlResist = l
+  for (const u of R) u.controlResist = r
+}
