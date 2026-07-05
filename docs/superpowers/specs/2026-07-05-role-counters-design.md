@@ -76,6 +76,21 @@ bias** in `statRoll.pickSpell`:
   (elite/boss) is applied on top, so a biased Supporto enemy can still be forced to a
   damaging spell — no zero-damage elites.
 
+### Pool guarantee per role (approved — NOT a hard lock)
+The bias only helps if the pool actually contains a role-matching spell. So we add a
+**data invariant**, not a runtime lock:
+
+- **Every wizard's `spellPool` must contain ≥1 spell of its role's preferred type.**
+  Audit `data/wizards.ts` and add a role-appropriate spell to any pool that lacks one.
+  Off-role spells stay in the pool as flavour/variety (the bias just deprioritises them),
+  so a Tank can still surprise with an attack and Hermione keeps her wide kit.
+- This is the ONLY hard requirement the counter system places on data: three of the four
+  identities are role passives (Provocazione, Affondo, Tenacia) that fire regardless of
+  the equipped spell; only **Controllo** depends on holding a control spell to trigger the
+  Global Rule — the guarantee ensures every Controllo always can.
+- A unit test enforces the invariant across the whole roster (so future wizards can't
+  silently violate it).
+
 ## Legibility (non-negotiable — the reason taunt works)
 
 Counters must be **visible** or they'll feel like Controllo does today.
@@ -104,6 +119,8 @@ Counters must be **visible** or they'll feel like Controllo does today.
   control lands full-duration on Tanks.
 - Spell bias: a Controllo equips a Controllo-type spell when its pool has one; falls
   back gracefully; enemy offensive guarantee still overrides.
+- Pool invariant: every wizard in `data/wizards.ts` has ≥1 spell of its role's preferred
+  type in its `spellPool` (roster-wide assertion).
 
 ## Files to touch (grounded)
 
@@ -116,6 +133,7 @@ Counters must be **visible** or they'll feel like Controllo does today.
 - `game/engine/combat/simulate.ts` — Supporto cleanse passive in the turn loop.
 - `game/engine/status.ts` — control-duration hook + cleanse helper.
 - `game/engine/statRoll.ts` — role→spell-type bias in `pickSpell`.
+- `data/wizards.ts` — audit + fill pools so every wizard has ≥1 role-type spell.
 - `lib/roleInfo.ts`, wizard cards, `components/screens/MapScreen.tsx` (EnemyPreview),
   battle unit cards — legibility.
 - `tests/…` — the suite above.
