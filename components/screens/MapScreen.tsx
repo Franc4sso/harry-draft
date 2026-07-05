@@ -7,6 +7,7 @@ import { Insegna } from '@/components/ui/Insegna'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { RoleIcon } from '@/components/cards/RoleIcon'
 import { displayName } from '@/lib/displayName'
+import { rolePreyOf } from '@/lib/roleInfo'
 
 /** Floor index for any node id (area-scoped `a#f#n#` or legacy `f#n#`). */
 function floorOf(id: string): number {
@@ -72,6 +73,9 @@ function EnemyPreview({ node, accent, side }: { node: RunNode; accent: string; s
                 {e.wizard.role && <RoleIcon role={e.wizard.role} size={9} className="shrink-0 text-white/50" />}
               </span>
               <span className="block truncate text-[9px] text-white/45">{e.spell?.name ?? '—'}</span>
+              {e.wizard.role && (
+                <span className="block truncate text-[9px] text-white/40">forte vs {rolePreyOf(e.wizard.role)}</span>
+              )}
             </span>
             <span className="shrink-0 text-right text-[10px] font-semibold tabular-nums text-white/60">{e.maxHp}</span>
           </li>
