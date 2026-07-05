@@ -3,6 +3,7 @@ import { BALANCE } from '@/data/constants'
 import { effectiveStats } from '../status'
 import { normalizeSpell } from './normalizeSpell'
 import { STATUS_BY_ID } from '@/data/statuses'
+import { isUnderHardControl } from './roleCounter'
 
 const CONTROL_KINDS = new Set(['stun', 'freeze', 'silence', 'disarm'])
 
@@ -63,8 +64,10 @@ export function deadToRaise(units: BattleUnit[]): BattleUnit | undefined {
 
 export function threatScore(u: BattleUnit, ignoresTaunt = false): number {
   const s = effectiveStats(u)
-  const taunt = !ignoresTaunt && u.wizard.role === 'Tank' ? BALANCE.roles.tauntBonus : 0
-  return s.atk + s.spd + taunt
+  // Provocazione is suppressed while the Tank is under hard-control (Global Rule):
+  // a stunned/frozen/silenced wall can't provoke, so it stops drawing fire.
+  const provoking = u.wizard.role === 'Tank' && !ignoresTaunt && !isUnderHardControl(u)
+  return s.atk + s.spd + (provoking ? BALANCE.roles.tauntBonus : 0)
 }
 
 function highestThreat(units: BattleUnit[], ignoresTaunt = false): BattleUnit | undefined {

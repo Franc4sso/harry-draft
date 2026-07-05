@@ -67,6 +67,8 @@ export interface BattleUnit extends DraftedWizard {
   cunning?: { threshold: number; bonus: number }
   /** Bellatrix signature: this unit ignores the enemy Tank's taunt bonus in threat scoring (targets backline). */
   ignoresTaunt?: boolean
+  /** Set each turn: true while this unit's side has a live Supporto (Tenacia aura). */
+  controlResist?: boolean
 }
 
 export type LogFlag = 'crit' | 'dodge' | 'kill' | 'heal' | 'block' | 'stun' | 'dot' | 'pen' | 'shatter' | 'wait' | 'recoil' | 'revive'
