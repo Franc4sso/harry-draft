@@ -6,6 +6,7 @@ import {
   moveTo, resolveCurrent, clearAreaAndAdvance, registerCoreResolvers,
   setWizardSpell,
   useConsumableRelic as useConsumableRelicEngine,
+  leaveShop as leaveShopEngine, rerollShop as rerollShopEngine,
 } from '@/game/engine/runEngine'
 import { createRng } from '@/game/engine/rng'
 import { randomSeed } from '@/lib/seed'
@@ -17,7 +18,6 @@ import type { MetaProfile } from '@/lib/metaStore'
 import { buildRunEndSummary, recordRunEnd } from '@/lib/metaProgress'
 import { relicOffer } from '@/game/engine/resolvers/recruit'
 import { shopOffer, shopResolver } from '@/game/engine/resolvers/shop'
-import { leaveShop as leaveShopEngine, rerollShop as rerollShopEngine } from '@/game/engine/runEngine'
 import { eventResolver, resolveEventChoice } from '@/game/engine/resolvers/event'
 import { EVENT_BY_ID, type EventRequirement } from '@/data/events'
 import { STARTER_WIZARDS, STARTER_RELICS, type UnlockTarget } from '@/data/unlocks'

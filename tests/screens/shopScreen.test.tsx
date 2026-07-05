@@ -35,4 +35,14 @@ describe('ShopScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: /Esci/i }))
     expect(onLeave).toHaveBeenCalled()
   })
+  it('disables the heal slot when the team is already at full HP', () => {
+    const fullTeam = [{ wizard: { id: 'harry', name: 'Harry', house: 'Grifondoro', role: 'Attaccante' }, stats: { hp: 100, atk: 1, def: 1, spd: 1 }, maxHp: 100, currentHp: 100, spell: { id: 's', name: 'S', type: 'Attacco', hitChance: 1 } }] as unknown as DraftedWizard[]
+    render(<ShopScreen stock={stock} bought={[]} cioccorane={100} team={fullTeam} onBuy={() => {}} onReroll={() => {}} onLeave={() => {}} />)
+    expect(within(screen.getByTestId('shop-slot-heal')).getByRole('button')).toBeDisabled()
+  })
+  it('enables the heal slot when a team member is wounded and heal is affordable', () => {
+    const woundedTeam = [{ wizard: { id: 'harry', name: 'Harry', house: 'Grifondoro', role: 'Attaccante' }, stats: { hp: 100, atk: 1, def: 1, spd: 1 }, maxHp: 100, currentHp: 60, spell: { id: 's', name: 'S', type: 'Attacco', hitChance: 1 } }] as unknown as DraftedWizard[]
+    render(<ShopScreen stock={stock} bought={[]} cioccorane={100} team={woundedTeam} onBuy={() => {}} onReroll={() => {}} onLeave={() => {}} />)
+    expect(within(screen.getByTestId('shop-slot-heal')).getByRole('button')).not.toBeDisabled()
+  })
 })

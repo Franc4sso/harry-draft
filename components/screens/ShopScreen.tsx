@@ -17,7 +17,8 @@ function Slot({ slot, sold, wallet, team, onBuy }: {
   const [pick, setPick] = useState<string | null>(null)
   const affordable = canAfford(slot.price, wallet)
   const needsTarget = slot.kind === 'removeWizard' || (slot.kind === 'relic' && slot.relic?.assignable)
-  const disabled = sold || !affordable || Boolean(needsTarget && !pick)
+  const teamFull = team.every(d => (d.currentHp ?? d.maxHp) >= d.maxHp)
+  const disabled = sold || !affordable || Boolean(needsTarget && !pick) || (slot.kind === 'heal' && teamFull)
   const label = slot.kind === 'relic' ? (slot.relic?.name ?? 'Reliquia')
     : slot.kind === 'heal' ? 'Cura completa' : 'Rimuovi un mago'
   const color = slot.kind === 'relic' && slot.relic ? RELIC_RARITY_COLOR[slot.relic.rarity] : '#9aa3ad'
