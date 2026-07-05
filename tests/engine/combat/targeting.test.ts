@@ -20,10 +20,17 @@ describe('threat targeting', () => {
     expect(selectTarget(me, [me], enemies)?.wizard.id).toBe('wall')
   })
 
-  it('after the Tank dies the Attacker hits the highest-threat backliner', () => {
+  it('after the Tank dies the Attacker dives the enemy Supporto (Affondo) over a scarier Attaccante', () => {
     const me = u('att', 'Attaccante', 'left')
     const dead = u('wall', 'Tank', 'right'); dead.alive = false
     const enemies = [u('weak', 'Supporto', 'right', { hp: 10, atk: 10, spd: 10 }), u('scary', 'Attaccante', 'right', { atk: 40, spd: 40 }), dead]
+    expect(selectTarget(me, [me], enemies)?.wizard.id).toBe('weak')
+  })
+
+  it('after the Tank dies the Attacker falls back to highest-threat when no Supporto/Controllo remain', () => {
+    const me = u('att', 'Attaccante', 'left')
+    const dead = u('wall', 'Tank', 'right'); dead.alive = false
+    const enemies = [u('weak', 'Attaccante', 'right', { hp: 10, atk: 10, spd: 10 }), u('scary', 'Attaccante', 'right', { atk: 40, spd: 40 }), dead]
     expect(selectTarget(me, [me], enemies)?.wizard.id).toBe('scary')
   })
 

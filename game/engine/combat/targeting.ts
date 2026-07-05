@@ -89,6 +89,18 @@ function backlineTarget(enemies: BattleUnit[]): BattleUnit | undefined {
   return highestThreat(enemies) // only Tanks remain
 }
 
+// Attaccante identity (Affondo): with no active enemy taunt, hunt the enemy backline —
+// Supporto first (its prey), then Controllo, then whatever is most dangerous.
+function diveTarget(enemies: BattleUnit[], ignoresTaunt: boolean): BattleUnit | undefined {
+  const byThreat = (pool: BattleUnit[]) => pool.slice().sort((a, b) =>
+    threatScore(b, ignoresTaunt) - threatScore(a, ignoresTaunt) || a.wizard.id.localeCompare(b.wizard.id))[0]
+  const supports = enemies.filter(e => e.wizard.role === 'Supporto')
+  if (supports.length) return byThreat(supports)
+  const controllers = enemies.filter(e => e.wizard.role === 'Controllo')
+  if (controllers.length) return byThreat(controllers)
+  return highestThreat(enemies, ignoresTaunt)
+}
+
 export function selectTarget(
   actor: BattleUnit,
   allies: BattleUnit[],
@@ -121,7 +133,11 @@ export function selectTarget(
     case 'Tank':
       return lowestHp(enemyPool)
     case 'Attaccante':
-    default:
-      return highestThreat(enemyPool, actor.ignoresTaunt ?? false)
+    default: {
+      const ign = actor.ignoresTaunt ?? false
+      // If an enemy Tank is actively taunting, it wins (Tank beats Attaccante). Otherwise dive.
+      const tauntActive = !ign && enemyPool.some(e => e.wizard.role === 'Tank' && !isUnderHardControl(e))
+      return tauntActive ? highestThreat(enemyPool, ign) : diveTarget(enemyPool, ign)
+    }
   }
 }
