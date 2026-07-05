@@ -3,6 +3,7 @@ import { BALANCE } from '@/data/constants'
 import { effectiveStats } from '../status'
 import { normalizeSpell } from './normalizeSpell'
 import { STATUS_BY_ID } from '@/data/statuses'
+import { isUnderHardControl } from './roleCounter'
 
 const CONTROL_KINDS = new Set(['stun', 'freeze', 'silence', 'disarm'])
 
@@ -63,8 +64,10 @@ export function deadToRaise(units: BattleUnit[]): BattleUnit | undefined {
 
 export function threatScore(u: BattleUnit, ignoresTaunt = false): number {
   const s = effectiveStats(u)
-  const taunt = !ignoresTaunt && u.wizard.role === 'Tank' ? BALANCE.roles.tauntBonus : 0
-  return s.atk + s.spd + taunt
+  // Provocazione is suppressed while the Tank is under hard-control (Global Rule):
+  // a stunned/frozen/silenced wall can't provoke, so it stops drawing fire.
+  const provoking = u.wizard.role === 'Tank' && !ignoresTaunt && !isUnderHardControl(u)
+  return s.atk + s.spd + (provoking ? BALANCE.roles.tauntBonus : 0)
 }
 
 function highestThreat(units: BattleUnit[], ignoresTaunt = false): BattleUnit | undefined {
@@ -84,6 +87,18 @@ function backlineTarget(enemies: BattleUnit[]): BattleUnit | undefined {
       threatScore(b) - threatScore(a) || a.wizard.id.localeCompare(b.wizard.id))[0]
   }
   return highestThreat(enemies) // only Tanks remain
+}
+
+// Attaccante identity (Affondo): with no active enemy taunt, hunt the enemy backline —
+// Supporto first (its prey), then Controllo, then whatever is most dangerous.
+function diveTarget(enemies: BattleUnit[], ignoresTaunt: boolean): BattleUnit | undefined {
+  const byThreat = (pool: BattleUnit[]) => pool.slice().sort((a, b) =>
+    threatScore(b, ignoresTaunt) - threatScore(a, ignoresTaunt) || a.wizard.id.localeCompare(b.wizard.id))[0]
+  const supports = enemies.filter(e => e.wizard.role === 'Supporto')
+  if (supports.length) return byThreat(supports)
+  const controllers = enemies.filter(e => e.wizard.role === 'Controllo')
+  if (controllers.length) return byThreat(controllers)
+  return highestThreat(enemies, ignoresTaunt)
 }
 
 export function selectTarget(
@@ -118,7 +133,11 @@ export function selectTarget(
     case 'Tank':
       return lowestHp(enemyPool)
     case 'Attaccante':
-    default:
-      return highestThreat(enemyPool, actor.ignoresTaunt ?? false)
+    default: {
+      const ign = actor.ignoresTaunt ?? false
+      // If an enemy Tank is actively taunting, it wins (Tank beats Attaccante). Otherwise dive.
+      const tauntActive = !ign && enemyPool.some(e => e.wizard.role === 'Tank' && !isUnderHardControl(e))
+      return tauntActive ? highestThreat(enemyPool, ign) : diveTarget(enemyPool, ign)
+    }
   }
 }

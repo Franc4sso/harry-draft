@@ -1,9 +1,14 @@
-import type { DraftedWizard, Spell, Stats, Wizard } from '@/types'
+import type { DraftedWizard, Role, Spell, SpellType, Stats, Wizard } from '@/types'
 import type { Rng } from './rng'
 import { SPELL_BY_ID, SPELL_IS_VENOM } from '@/data/spells'
 import { BALANCE } from '@/data/constants'
 import { SHINY_TRAIT_IDS } from '@/data/traits'
 import { normalizeSpell } from './combat/normalizeSpell'
+
+/** Preferred spell type(s) per role — the soft bias applied when equipping (not a lock). */
+export const ROLE_SPELL_TYPES: Record<Role, SpellType[]> = {
+  Attaccante: ['Attacco'], Controllo: ['Controllo'], Supporto: ['Cura', 'Difesa'], Tank: ['Difesa'],
+}
 
 /** A spell "deals damage" iff its normalized effects include a damage effect
  *  (Attacco, or a Controllo/spec spell with power). Buffs/heals/pure-control → false. */
@@ -59,6 +64,15 @@ export function pickSpell(rng: Rng, wizard: Wizard, preferOffense = false): Spel
   // team COMPOSITION stays identical — only the equipped spell shifts). Falls back to the
   // full pool if the wizard has no offensive spell at all (a pure-support kit).
   let candidates = wizard.spellPool
+  // Role bias (default for player AND enemy): prefer a spell of the role's type so a role
+  // actually plays its part (esp. a Controllo needs a control spell for the Global Rule).
+  // Soft: falls back to the whole pool if the pool has none. Venom / preferOffense below
+  // still OVERRIDE this base (enemy offensive guarantee wins).
+  const roleTypes = ROLE_SPELL_TYPES[wizard.role]
+  if (roleTypes) {
+    const roleMatch = wizard.spellPool.filter(id => roleTypes.includes(SPELL_BY_ID[id]?.type as SpellType))
+    if (roleMatch.length > 0) candidates = roleMatch
+  }
   const venom = (wizard.tags ?? []).includes('veleno')
     ? wizard.spellPool.filter(id => SPELL_IS_VENOM.has(id))
     : null

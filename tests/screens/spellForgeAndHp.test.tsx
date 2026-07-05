@@ -76,6 +76,8 @@ describe('MapScreen — elite enemy-roster preview', () => {
     expect(within(card).getByText('Malfoy')).toBeInTheDocument()
     expect(within(card).getByText(/Lv 4/)).toBeInTheDocument()
     expect(within(card).getByText('88')).toBeInTheDocument()
+    // Malfoy defaults to role Attaccante (dw helper) → preys on Supporto.
+    expect(within(card).getByText(/forte vs Supporto/)).toBeInTheDocument()
   })
 
   it('shows the boss portrait (not the crown emoji) when the preview carries a bossFace', () => {

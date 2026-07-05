@@ -209,6 +209,16 @@ describe('restricted starter pool is winnable (Reservation 1 gate)', () => {
     // 0.2583 -> 0.2833 (31/120 -> 34/120, +3 seeds) — a modest lift, consistent with
     // event choices being mostly neutral/positive. Still comfortably inside this
     // relaxed smoke check.
+    //
+    // Re-anchored 2026-07-05 (Task 11, post role-counter system landing — matrix, Global
+    // Rule, Affondo/Tenacia/Purificazione passives, spell<->role bias, pool guarantee, UI).
+    // Re-measured (same 120 seeds, no bot changes): winRate=0.2750 (33/120), close to the
+    // last-recorded 0.2833 baseline above (-1 seed). The bot still picks recruits/relics/
+    // spells purely by raw power/damage, never by ROLE — so it neither exploits nor is
+    // deliberately punished by the new counter matrix; this harness's number barely moved.
+    // Smoke check left as-is (already >0/<=1): counters are not understood by the balance
+    // bot, so the user's own playtest is the real gauge of role-counter feel/difficulty,
+    // not this harness's winRate.
     expect(winRate).toBeGreaterThan(0)
     expect(winRate).toBeLessThanOrEqual(1.0)
   })

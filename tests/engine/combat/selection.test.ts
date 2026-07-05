@@ -32,12 +32,18 @@ describe('combat selection', () => {
     const t = selectTarget(actor, [actor], [tank, squishy])
     expect(t?.wizard.id).toBe('tank')
   })
-  it('attacker targets highest threat when no tank', () => {
+  it('attacker targets highest threat when no tank, no Supporto, no Controllo to dive', () => {
     const actor = unit({ id: 'atk', role: 'Attaccante' })
-    // scary has higher atk+spd than weak — highestThreat picks scary
+    // scary has higher atk+spd than weak — with nothing to dive (Affondo), highestThreat picks scary
     const scary = unit({ id: 'scary', role: 'Attaccante', side: 'right', buffedStats: { hp: 100, atk: 70, def: 30, spd: 60 } })
-    const weak = unit({ id: 'weak', role: 'Controllo', side: 'right', buffedStats: { hp: 100, atk: 20, def: 30, spd: 20 } })
+    const weak = unit({ id: 'weak', role: 'Attaccante', side: 'right', buffedStats: { hp: 100, atk: 20, def: 30, spd: 20 } })
     expect(selectTarget(actor, [actor], [scary, weak])?.wizard.id).toBe('scary')
+  })
+  it('attacker dives the enemy Controllo when no Supporto/Tank is present (Affondo)', () => {
+    const actor = unit({ id: 'atk', role: 'Attaccante' })
+    const scary = unit({ id: 'scary', role: 'Attaccante', side: 'right', buffedStats: { hp: 100, atk: 70, def: 30, spd: 60 } })
+    const ctl = unit({ id: 'ctl', role: 'Controllo', side: 'right', buffedStats: { hp: 100, atk: 20, def: 30, spd: 20 } })
+    expect(selectTarget(actor, [actor], [scary, ctl])?.wizard.id).toBe('ctl')
   })
   it('support targets most wounded ally', () => {
     const actor = unit({ id: 'sup', role: 'Supporto' })

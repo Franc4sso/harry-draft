@@ -21,6 +21,7 @@ import { effectiveStats, resolveAction, tickStatuses } from './resolve'
 import { selectSpell } from './selectSpell'
 import { deadToRaise, mostWounded, selectTarget } from './targeting'
 import { SPELL_BY_ID } from '@/data/spells'
+import { applyTenaciaAura, cleanseOneControl } from './roleCounter'
 
 export function toBattleUnits(
   team: DraftedWizard[], side: Side, synergies: ActiveSynergy[], relics: ActiveRelic[] = [], menacePct = 0, damageReduction = 0,
@@ -196,6 +197,7 @@ export function simulateBattle(
   let turn = 0
   while (turn < BALANCE.combat.turnCap && sideUnits('left').length && sideUnits('right').length) {
     turn++
+    applyTenaciaAura(L, R) // Supporto Tenacia: refresh controlResist for both sides
     const order = [...L, ...R].filter(u => u.alive).sort((a, b) =>
       effectiveStats(b).spd - effectiveStats(a).spd ||
       a.wizard.id.localeCompare(b.wizard.id) ||
@@ -211,6 +213,15 @@ export function simulateBattle(
         pushLog({ turn, actorId: actor.wizard.id, actorSide: actor.side, action: 'Stordito', type: 'system', flags: ['stun'] })
         fireReactive('onTurnEnd', actor, turn)
         continue
+      }
+      // Supporto Purificazione: a Supporto that can act cleanses one hard-control from an
+      // ally each turn (free — does not consume its spell). Part of Supporto beats Controllo.
+      if (actor.wizard.role === 'Supporto') {
+        const allyPool = (actor.side === 'left' ? L : R).filter(a => a.alive)
+        const cleansed = cleanseOneControl(allyPool)
+        if (cleansed) pushLog({ turn, actorId: actor.wizard.id, actorSide: actor.side,
+          action: 'Purificazione', targetId: cleansed.wizard.id, targetSide: cleansed.side,
+          type: 'system', flags: [] })
       }
       let spell = selectSpell(actor)
       if (!spell) {

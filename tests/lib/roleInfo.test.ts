@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Role } from '@/types'
-import { ROLE_INFO, roleTooltip } from '@/lib/roleInfo'
+import { ROLE_INFO, roleTooltip, rolePreyOf } from '@/lib/roleInfo'
 
 const ROLES: Role[] = ['Attaccante', 'Tank', 'Supporto', 'Controllo']
 
@@ -26,5 +26,10 @@ describe('roleInfo', () => {
     expect(roleTooltip('Attaccante')).toMatch(/difesa/i)
     expect(roleTooltip('Controllo')).toMatch(/retrovie|scavalca/i)
     expect(roleTooltip('Supporto')).toMatch(/cura/i)
+  })
+
+  it('rolePreyOf returns the countered role', () => {
+    expect(rolePreyOf('Attaccante')).toBe('Supporto')
+    expect(rolePreyOf('Controllo')).toBe('Tank')
   })
 })
