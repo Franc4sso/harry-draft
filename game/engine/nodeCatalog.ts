@@ -17,6 +17,7 @@ export const NODE_CATALOG: Record<RunNodeType, NodeKind> = {
   recruit:    { type: 'recruit',    label: 'Reclutamento',  emoji: '👥', theme: 'Sala Comune',      isCombat: false, resolverId: 'recruit',    generatedInPhase: 1 },
   relic:      { type: 'relic',      label: 'Reliquia',      emoji: '💎', theme: 'Stanza Segreta',   isCombat: false, resolverId: 'relic',      generatedInPhase: 1 },
   infirmary:  { type: 'infirmary',  label: 'Infermeria',    emoji: '🏥', theme: "Ala dell'Infermeria", isCombat: false, resolverId: 'infirmary',  generatedInPhase: 1 },
+  spellForge: { type: 'spellForge', label: 'Aumento Magia', emoji: '✨', theme: 'Camera degli Incantesimi', isCombat: false, resolverId: 'spellForge', generatedInPhase: 1 },
   shop:       { type: 'shop',       label: 'Negozio',       emoji: '🏪', theme: 'Diagon Alley',     isCombat: false, resolverId: 'shop',       generatedInPhase: 2 },
   event:      { type: 'event',      label: 'Evento',        emoji: '📖', theme: 'Imprevisto',       isCombat: false, resolverId: 'event',      generatedInPhase: 2 },
   commonRoom: { type: 'commonRoom', label: 'Sala Comune',   emoji: '🛏', theme: 'Sala Comune',      isCombat: false, resolverId: 'commonRoom', generatedInPhase: 2 },

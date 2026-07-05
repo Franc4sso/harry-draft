@@ -5,6 +5,7 @@ export type ResolverChoice =
   | { kind: 'recruit-pick'; wizardId: string; replaceId?: string }
   | { kind: 'relic-pick'; relicId: string; assignedTo?: string }
   | { kind: 'event-choice'; optionId: string }
+  | { kind: 'spell-upgrade'; wizardId: string }
   | { kind: 'combat-ack' }
   | { kind: 'skip' }
 

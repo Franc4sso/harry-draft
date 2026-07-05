@@ -26,7 +26,7 @@ registerCoreResolvers()
 
 export type RunBView =
   | 'draft' | 'map' | 'battle' | 'victory'
-  | 'recruit' | 'relic' | 'infirmary' | 'event' | 'area-cleared' | 'win' | 'defeat'
+  | 'recruit' | 'relic' | 'infirmary' | 'event' | 'spellForge' | 'area-cleared' | 'win' | 'defeat'
 
 export interface RunReward { earned: number; unlocked: UnlockTarget[]; profile: MetaProfile }
 
@@ -48,6 +48,7 @@ export interface RunBController {
   ackInfirmary: () => void
   currentEvent: CurrentEventView | null
   chooseEventOption: (optionId: string) => void
+  chooseSpellUpgrade: (wizardId: string) => void
   setWizardSpell: (wizardId: string, spellId: string) => void
   useConsumableRelic: (relicId: string) => void
   advanceArea: () => void
@@ -64,6 +65,7 @@ const viewForPhase = (p: RunState['phase']): RunBView => {
     case 'relic-node': return 'relic'
     case 'infirmary-node': return 'infirmary'
     case 'event-node': return 'event'
+    case 'spellForge-node': return 'spellForge'
     case 'area-cleared': return 'area-cleared'
     case 'win': return 'win'
     case 'defeat': return 'defeat'
@@ -234,6 +236,11 @@ export function useRunB(seed: string): RunBController {
     commit({ ...nextState, map, phase: 'map' }, 'map')
   }, [commit])
 
+  const chooseSpellUpgrade = useCallback((wizardId: string) => {
+    const next = resolveCurrent(runRef.current, { kind: 'spell-upgrade', wizardId }, createRng(runRef.current.seed))
+    commit({ ...next, phase: 'map' }, 'map') // non-combat node: straight back to map
+  }, [commit])
+
   const setWizardSpellCb = useCallback((wizardId: string, spellId: string) => {
     commit(setWizardSpell(runRef.current, wizardId, spellId))
   }, [commit])
@@ -265,7 +272,7 @@ export function useRunB(seed: string): RunBController {
     area: run.area ?? 0, areasTotal: BALANCE.map.areas, lastFallen, runReward,
     completeDraft, chooseNode, commitBattle, acknowledgeVictory,
     chooseRecruit, skipRecruit, chooseRelic, ackInfirmary,
-    currentEvent, chooseEventOption,
+    currentEvent, chooseEventOption, chooseSpellUpgrade,
     setWizardSpell: setWizardSpellCb,
     useConsumableRelic: useConsumableRelicCb,
     advanceArea, restart,

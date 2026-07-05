@@ -5,11 +5,11 @@ export type RunPhase =
   | 'menu' | 'draft' | 'team' | 'battle'
   | 'victory' | 'defeat' | 'win'
   // Fase 1 redesign (Plan B):
-  | 'house' | 'starter' | 'map' | 'recruit-node' | 'relic-node' | 'infirmary-node' | 'event-node' | 'area-cleared'
+  | 'house' | 'starter' | 'map' | 'recruit-node' | 'relic-node' | 'infirmary-node' | 'event-node' | 'spellForge-node' | 'area-cleared'
 
 export type RunNodeType =
   // Fase 1 — generati e risolti
-  | 'battle' | 'elite' | 'boss' | 'recruit' | 'relic' | 'infirmary'
+  | 'battle' | 'elite' | 'boss' | 'recruit' | 'relic' | 'infirmary' | 'spellForge'
   // Fasi 2-3 — catalogati ora, generati dopo
   | 'shop' | 'event' | 'commonRoom'
   | 'library' | 'potions' | 'forest'
@@ -36,6 +36,9 @@ export interface NodePreview {
   bossName?: string
   /** Telegraph copy for a scripted boss weakness (e.g. Muro → veleno). */
   bossHint?: string
+  /** The scripted boss's leader portrait id + house, so the map seal shows the boss's
+   *  face instead of the generic crown. Absent for leaderless bosses (e.g. Il Muro). */
+  bossFace?: { id: string; house: House }
 }
 
 export interface RunNode {
@@ -55,7 +58,7 @@ export interface RunNode {
 export interface RunEvent {
   area: number
   nodeId: string
-  kind: 'recruit' | 'relic' | 'elite' | 'boss' | 'levelMilestone' | 'infirmary' | 'event'
+  kind: 'recruit' | 'relic' | 'elite' | 'boss' | 'levelMilestone' | 'infirmary' | 'event' | 'spellForge'
   summary: string
 }
 

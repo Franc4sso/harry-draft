@@ -45,20 +45,24 @@ export const RELICS: Relic[] = [
   { id: 'furia-iniziale', name: 'Furia Iniziale', desc: 'A inizio battaglia, tutta la squadra guadagna +18 Attacco.', rarity: 'epica', bonus: { atk: 18 } },
   { id: 'patto-di-sangue', name: 'Patto di Sangue', desc: 'Assegna a un mago: i suoi colpi infliggono +60% danni, ma subisce un contraccolpo pari al 25% del danno inflitto.', rarity: 'epica', assignable: true, grantsDarkMagic: { bonus: 0.6, recoil: 0.25 } },
   // Scaling jokers — grow a stat with runCounter (kills), reset each run.
+  // Caps sized to keep escalating across a WHOLE run (~15-25 kills), not saturate in
+  // area 1: the snowball payoff is the whole point of a joker (playtest feedback,
+  // 2026-07-05). Safe on balance — the AI bot never drafts jokers, so these tunings
+  // don't move the balance harness; they only reward the human's kill-focused builds.
   {
     id: 'fame-vorace', name: 'Fame Vorace', rarity: 'epica',
-    desc: 'A ogni nemico sconfitto, +2 attacco per il resto della run (max +20).',
-    scaling: { trigger: 'kill', stat: 'attack', per: 2, cap: 20 },
+    desc: 'A ogni nemico sconfitto, +3 attacco per il resto della run (max +60).',
+    scaling: { trigger: 'kill', stat: 'attack', per: 3, cap: 60 },
   },
   {
     id: 'collezionista-anime', name: 'Collezionista di Anime', rarity: 'epica',
-    desc: 'A ogni nemico sconfitto, +8 salute massima per il resto della run (max +80).',
-    scaling: { trigger: 'kill', stat: 'maxHp', per: 8, cap: 80 },
+    desc: 'A ogni nemico sconfitto, +10 salute massima per il resto della run (max +200).',
+    scaling: { trigger: 'kill', stat: 'maxHp', per: 10, cap: 200 },
   },
   {
     id: 'marchio-vorace', name: 'Marchio Vorace', rarity: 'epica', keywords: ['veleno'],
-    desc: 'A ogni nemico sconfitto, +3% danno da veleno per il resto della run (max +45%).',
-    scaling: { trigger: 'kill', stat: 'velenoMult', per: 0.03, cap: 0.45 },
+    desc: 'A ogni nemico sconfitto, +4% danno da veleno per il resto della run (max +100%).',
+    scaling: { trigger: 'kill', stat: 'velenoMult', per: 0.04, cap: 1.0 },
   },
 ]
 

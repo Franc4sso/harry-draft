@@ -208,7 +208,13 @@ defenseK: 0.5,
     // ordering assertion was retired (effect collapsed to seed noise post-spell-opt —
     // see that test file). USER PLAYTEST is ground truth; iterate the target lower if
     // it still feels easy (the user outplays the bot by an unknown margin).
-    enemyCountByArea: [3, 5, 8] as readonly number[],
+    // HARD CAP: no encounter — battle, elite, OR boss — may EVER field more than
+    // `maxEnemies` units (USER DIRECTIVE 2026-07-05: "max 5 avversari, ASSOLUTAMENTE").
+    // area-2 elite was 8 (part of the earlier "più cattivo" pass); capped to 5 here and
+    // structurally clamped at generation (buildBattlePackage + generateBossTeam) so a
+    // future retune can never breach it again.
+    enemyCountByArea: [3, 5, 5] as readonly number[],
+    maxEnemies: 5,
     // --- Displayed enemy LEVEL by (area, kind) ---
     // Honest, area-scaled threat tiers so an Elite/Boss reads as a real level (no
     // more "Lv.1" elites). level = base + perArea*area, clamped to leveling.levelMax.
@@ -461,7 +467,7 @@ defenseK: 0.5,
     // effect once already low) — not the live lever here. Il Muro's own budget/hpMult
     // (data/bosses.ts) was also softened 250/0.5→150/0.35 during the search; also flat, but
     // left at the softer value (harmless, consistent direction).
-    categoryWeights: { battle: 25, recruit: 10, relic: 50, event: 15 } as Record<'battle' | 'recruit' | 'relic' | 'event', number>,
+    categoryWeights: { battle: 25, recruit: 10, relic: 45, event: 15, spellForge: 12 } as Record<'battle' | 'recruit' | 'relic' | 'event' | 'spellForge', number>,
     recruitBiasBoost: 10,        // peso aggiunto a 'recruit' quando la squadra è incompleta
   },
   relics: {

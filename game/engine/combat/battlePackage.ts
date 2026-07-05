@@ -41,9 +41,11 @@ export function buildBattlePackage(
   }
 
   const budgetMult = ek === 'elite' ? cb.eliteBudgetMult : isBoss ? cb.bossBudgetMult : 1
-  const count = ek === 'normal'
+  // Hard cap: never more than `maxEnemies` units in ANY encounter (user directive). The
+  // config values above already respect it; this clamp is the structural guarantee.
+  const count = Math.min(cb.maxEnemies, ek === 'normal'
     ? cb.normalEnemyCount
-    : (cb.enemyCountByArea[area] ?? cb.enemyCountByArea[cb.enemyCountByArea.length - 1]!)
+    : (cb.enemyCountByArea[area] ?? cb.enemyCountByArea[cb.enemyCountByArea.length - 1]!))
 
   let enemyTeam, themeId: string | null = null, bossSynergy: ActiveSynergy | undefined
   let unitDamageReduction: number | undefined
@@ -94,6 +96,13 @@ export function buildBattlePackage(
     ? [...detected.map(s => s.synergy.id), bossSynergy.synergy.id]
     : detected.map(s => s.synergy.id)
 
+  // The boss's face for the map seal: the leader unit (guaranteed present in enemyTeam by
+  // generateBossTeam when the boss has a bossWizardId). Leaderless bosses (Il Muro) have
+  // no character portrait → undefined, and the map falls back to its emblem.
+  const bossLeader = pickedBoss?.bossWizardId
+    ? enemyTeam.find(d => d.wizard.id === pickedBoss.bossWizardId)
+    : undefined
+
   const battle: NodeBattle = { enemyTeam, enemyRelics, enemyLevel, bossSynergy, unitDamageReduction, ignoresTaunt }
   const preview: NodePreview = {
     synergyIds,
@@ -103,6 +112,7 @@ export function buildBattlePackage(
       : pickedBoss?.ignoresTaunt
         ? 'Ignora la provocazione — colpisce le retrovie.'
         : undefined,
+    bossFace: bossLeader ? { id: bossLeader.wizard.id, house: bossLeader.wizard.house } : undefined,
   }
   return { battle, preview, themeId }
 }

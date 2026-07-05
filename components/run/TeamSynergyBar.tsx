@@ -94,6 +94,28 @@ function SynergyChip({ s }: { s: ActiveSynergy }) {
   )
 }
 
+/** A wizard's health as read across the run (`currentHp` persists between battles;
+ *  a fallen mage sits at 0). The fill shifts green → amber → red as HP drains so the
+ *  player can read at a glance who needs the Infermeria. Shown in the map sidebar,
+ *  where wounds carried out of a fight were previously invisible. */
+function HpBar({ current, max }: { current: number; max: number }) {
+  const ratio = max <= 0 ? 0 : Math.min(1, Math.max(0, current / max))
+  const dead = current <= 0
+  const color = dead ? '#6b7280' : ratio > 0.5 ? '#7CFC9B' : ratio > 0.25 ? '#F0D98A' : '#FF6B6B'
+  return (
+    <div className="mt-1.5 flex items-center gap-1.5" title={`${Math.max(0, Math.round(current))} / ${max} PV`}>
+      <span aria-hidden className="text-[9px] font-bold uppercase tracking-wider text-white/40">PV</span>
+      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/50 ring-1 ring-inset ring-white/5">
+        <div className="h-full rounded-full transition-[width] duration-500"
+          style={{ width: `${ratio * 100}%`, background: color, boxShadow: dead ? 'none' : `0 0 6px ${color}88` }} />
+      </div>
+      <span className="w-11 shrink-0 text-right text-[10px] font-semibold tabular-nums text-white/70">
+        {dead ? 'K.O.' : `${Math.max(0, Math.round(current))}/${max}`}
+      </span>
+    </div>
+  )
+}
+
 /**
  * A single member row in the vertical sidebar. Folds in what used to be the
  * separate LOADOUT box: role icon (tooltip), equipped spell + type chip, and
@@ -134,6 +156,8 @@ function MemberRow({
         )}
         <Chip label={`Lv. ${m.level ?? 1}`} color="#F0D98A" />
       </div>
+
+      <HpBar current={m.currentHp ?? m.maxHp} max={m.maxHp} />
 
       {spell && (
         <button

@@ -13,6 +13,7 @@ import { ResultScreen } from './ResultScreen'
 import { RecruitScreen } from './RecruitScreen'
 import { RelicNodeScreen } from './RelicNodeScreen'
 import { EventScreen } from './EventScreen'
+import { SpellForgeScreen } from './SpellForgeScreen'
 import { InfirmaryScreen } from './InfirmaryScreen'
 import { AreaClearedScreen } from './AreaClearedScreen'
 import { TeamSynergyBar } from '@/components/run/TeamSynergyBar'
@@ -146,6 +147,11 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
       case 'event':
         return withTeamSidebar(
           <EventScreen event={c.currentEvent!} onChoose={c.chooseEventOption} />,
+        )
+
+      case 'spellForge':
+        return withTeamSidebar(
+          <SpellForgeScreen team={c.run.team} onUpgrade={c.chooseSpellUpgrade} />,
         )
 
       case 'infirmary':

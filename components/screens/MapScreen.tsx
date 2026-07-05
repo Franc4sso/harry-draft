@@ -3,8 +3,10 @@ import { motion, useReducedMotion } from 'framer-motion'
 import type { RunNode, RunNodeType } from '@/types'
 import { parseAreaNodeId, nodeDepth } from '@/game/engine/map'
 import { cn } from '@/lib/theme'
-import { synergyName } from '@/lib/synergyBadge'
 import { Insegna } from '@/components/ui/Insegna'
+import { PortraitImage } from '@/components/ui/PortraitImage'
+import { RoleIcon } from '@/components/cards/RoleIcon'
+import { displayName } from '@/lib/displayName'
 
 /** Floor index for any node id (area-scoped `a#f#n#` or legacy `f#n#`). */
 function floorOf(id: string): number {
@@ -14,17 +16,69 @@ function floorOf(id: string): number {
 const ICON: Record<RunNodeType, string> = {
   battle: '⚔️', elite: '☠️', boss: '👑', relic: '💎', event: '❓', shop: '🛒',
   recruit: '🧙', commonRoom: '🏠', library: '📚', potions: '🧪', forest: '🌲', infirmary: '🏥',
+  spellForge: '✨',
 }
 const LABEL: Record<RunNodeType, string> = {
   battle: 'Battaglia', elite: 'Elite', boss: 'Boss', relic: 'Reliquia', event: 'Evento',
   shop: 'Negozio', recruit: 'Recluta', commonRoom: 'Sala Comune', library: 'Biblioteca',
-  potions: 'Pozioni', forest: 'Foresta', infirmary: 'Infermeria',
+  potions: 'Pozioni', forest: 'Foresta', infirmary: 'Infermeria', spellForge: 'Aumento Magia',
 }
 /** Per-type seal accent (ring + glow + ink tint). */
 const ACCENT: Record<RunNodeType, string> = {
   battle: '#b08d57', elite: '#e0833a', boss: '#f5c451', relic: '#a78bfa',
   event: '#c78bf0', shop: '#e6b450', recruit: '#5fbf8a', commonRoom: '#6fb1c4',
   library: '#6fb1c4', potions: '#5fbf8a', forest: '#5fbf8a', infirmary: '#10b981',
+  spellForge: '#5ad1e0',
+}
+
+/**
+ * Rich hover briefing for a combat node: the exact roster you're about to fight, read
+ * straight off the pre-generated `node.battle.enemyTeam` (single source of truth — the
+ * live combat re-derives the same package). Portrait · name · role · equipped spell · HP
+ * per enemy, plus the enemy level and any telegraphed synergies. Opens to whichever side
+ * points inward (`side`) so edge nodes don't push it off-screen. Pointer-events-none so it
+ * never blocks the click. Primarily requested for Elite nodes, but every combat node has
+ * the data, so all of them get the briefing.
+ */
+function EnemyPreview({ node, accent, side }: { node: RunNode; accent: string; side: 'left' | 'right' }) {
+  const b = node.battle
+  if (!b || b.enemyTeam.length === 0) return null
+  const enemies = b.enemyTeam
+  return (
+    <div
+      role="tooltip"
+      data-testid={`enemy-preview-${node.id}`}
+      className={cn(
+        'pointer-events-none absolute top-1/2 z-[60] w-56 -translate-y-1/2 rounded-xl border p-2.5 text-left opacity-0 shadow-2xl transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100',
+        side === 'left' ? 'right-full mr-3' : 'left-full ml-3',
+      )}
+      style={{ background: '#14101f', borderColor: `${accent}66`, boxShadow: `0 0 0 1px ${accent}33, 0 18px 44px -10px rgba(0,0,0,0.95)` }}
+    >
+      <div className="mb-2 flex items-center justify-between gap-2 border-b border-white/10 pb-1.5">
+        <span className="text-[11px] font-bold uppercase tracking-wider" style={{ color: accent }}>{LABEL[node.type]}</span>
+        <span className="shrink-0 rounded-full bg-white/10 px-1.5 text-[10px] font-semibold text-white/70">
+          {enemies.length} nemic{enemies.length === 1 ? 'o' : 'i'} · Lv {b.enemyLevel}
+        </span>
+      </div>
+      <ul className="flex flex-col gap-1">
+        {enemies.map((e, i) => (
+          <li key={`${e.wizard.id}-${i}`} className="flex items-center gap-2">
+            <span className="h-7 w-7 shrink-0 overflow-hidden rounded-md ring-1 ring-white/10">
+              <PortraitImage id={e.wizard.id} house={e.wizard.house} alt={e.wizard.name} variant="bust" />
+            </span>
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-1">
+                <span className="truncate text-[11px] font-semibold text-white/90">{displayName(e)}</span>
+                {e.wizard.role && <RoleIcon role={e.wizard.role} size={9} className="shrink-0 text-white/50" />}
+              </span>
+              <span className="block truncate text-[9px] text-white/45">{e.spell?.name ?? '—'}</span>
+            </span>
+            <span className="shrink-0 text-right text-[10px] font-semibold tabular-nums text-white/60">{e.maxHp}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
 }
 
 // Layout grid: each floor is a row (entry at the bottom, boss at the top).
@@ -32,6 +86,15 @@ const COL = 168, ROW = 148, NODE = 60, BOSS = 80
 // Headroom above the top floor so the boss node's above-node telegraph label
 // (`bottom-full`, always visible) doesn't overflow into the header title.
 const TOP_PAD = 44
+
+// Ambient embers drifting up toward the summit — a single restrained signature. Fixed
+// positions (no Math.random) to stay hydration-safe; suppressed under reduced-motion.
+const EMBERS = [
+  { left: 6, size: 3, delay: 0, dur: 10 }, { left: 18, size: 2, delay: 3.2, dur: 13 },
+  { left: 31, size: 2, delay: 6, dur: 11 }, { left: 44, size: 3, delay: 1.5, dur: 14 },
+  { left: 57, size: 2, delay: 4.5, dur: 12 }, { left: 69, size: 3, delay: 7.5, dur: 15 },
+  { left: 82, size: 2, delay: 2.2, dur: 11 }, { left: 93, size: 2, delay: 5.5, dur: 13 },
+]
 
 export function MapScreen({
   map, currentNodeId, reachableIds, onChoose, area, areasTotal,
@@ -82,11 +145,39 @@ export function MapScreen({
     }
   }
 
+  const bossAccent = ACCENT.boss
+
   return (
-    <div className="flex-1 flex flex-col items-center gap-5 overflow-auto p-6">
+    <div
+      className="relative flex-1 flex flex-col items-center gap-5 overflow-auto p-6"
+      style={{ background: 'radial-gradient(130% 80% at 50% -12%, #1b1436 0%, #100c20 52%, #09070f 100%)' }}
+    >
       {header}
 
       <div className="relative" style={{ width, height }}>
+        {/* Atmosphere: the ascent reads as a climb toward a lit summit where the boss waits.
+            A warm beacon glows behind the top floor; a cold vignette settles over the base. */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div
+            className="absolute left-1/2 top-0 h-72 w-[150%] -translate-x-1/2"
+            style={{ background: `radial-gradient(58% 100% at 50% 0%, ${bossAccent}2b, transparent 72%)` }}
+          />
+          <div
+            className="absolute inset-x-0 bottom-0 h-1/2"
+            style={{ background: 'linear-gradient(0deg, rgba(6,4,12,0.6), transparent)' }}
+          />
+          {!reduce && EMBERS.map((em, i) => (
+            <span
+              key={i}
+              className="map-ember absolute bottom-0 rounded-full"
+              style={{
+                left: `${em.left}%`, width: em.size, height: em.size,
+                background: 'rgba(246,230,168,0.7)', boxShadow: '0 0 6px rgba(246,230,168,0.8)',
+                animationDelay: `${em.delay}s`, animationDuration: `${em.dur}s`,
+              }}
+            />
+          ))}
+        </div>
         <svg
           className="pointer-events-none absolute inset-0"
           width={width} height={height} viewBox={`0 0 ${width} ${height}`}
@@ -104,12 +195,13 @@ export function MapScreen({
               // the same path.
               return (
                 <g key={e.id}>
+                  <path aria-hidden d={d} stroke="rgba(7,5,14,0.55)" strokeWidth={6} strokeLinecap="round" />
                   <path
                     data-edge-glow
                     aria-hidden
                     d={d}
-                    stroke="rgba(202,162,74,0.22)"
-                    strokeWidth={7}
+                    stroke="rgba(202,162,74,0.24)"
+                    strokeWidth={8}
                     strokeLinecap="round"
                   />
                   <motion.path
@@ -130,13 +222,14 @@ export function MapScreen({
                 </g>
               )
             }
+            // Dormant trails: a dark contrast halo under a clean solid warm line, so every
+            // connection is unmistakably readable over both the lit summit and the dark base
+            // (the earlier faint dotted version was hard to follow).
             return (
-              <path
-                key={e.id} d={d}
-                stroke="rgba(255,255,255,0.10)"
-                strokeWidth={2}
-                strokeLinecap="round"
-              />
+              <g key={e.id}>
+                <path d={d} stroke="rgba(7,5,14,0.6)" strokeWidth={5} strokeLinecap="round" />
+                <path d={d} stroke="rgba(233,219,180,0.34)" strokeWidth={2} strokeLinecap="round" />
+              </g>
             )
           })}
         </svg>
@@ -158,17 +251,25 @@ export function MapScreen({
               onClick={() => onChoose(n.id)}
               aria-label={LABEL[n.type]}
               className={cn(
-                'group absolute flex items-center justify-center rounded-full border-4 transition-all duration-200',
+                // hover/focus lifts the whole seal above its neighbours so its briefing card
+                // (which overflows the seal) is never painted under a later node. Needed
+                // because reachable seals carry a constant transform (breathe) that would
+                // otherwise trap the card inside their stacking context.
+                'group absolute z-10 flex items-center justify-center rounded-full border-4 transition-all duration-200 hover:z-50 focus-visible:z-50',
                 isReachable ? 'cursor-pointer hover:scale-110 focus-visible:scale-110' : 'cursor-not-allowed',
                 isReachable && !isCurrent && 'anim-ambient map-breathe',
-                n.resolved && 'opacity-45 saturate-50',
-                !lit && !n.resolved && 'opacity-55',
+                // Dim used/distant seals with brightness+saturation, NOT opacity — the fill
+                // stays fully opaque so the trails behind can never show through the circle.
+                n.resolved && 'saturate-[.5] brightness-[.62]',
+                !lit && !n.resolved && 'saturate-[.8] brightness-[.72]',
                 isCurrent && 'map-current',
               )}
               style={{
                 left: p.x - sz / 2, top: p.y - sz / 2, width: sz, height: sz,
                 borderColor: lit ? accent : 'rgba(255,255,255,0.18)',
-                background: `radial-gradient(circle at 50% 30%, rgba(255,255,255,0.10), transparent 42%), radial-gradient(circle at 50% 35%, ${accent}2e, #15121f 72%)`,
+                // Opaque solid base (#17122a) UNDER the decorative gradients so the seal reads
+                // as a filled coin, not a translucent ring.
+                background: `radial-gradient(circle at 50% 28%, rgba(255,255,255,0.14), transparent 46%), radial-gradient(circle at 50% 40%, ${accent}40, transparent 72%), #17122a`,
                 boxShadow: isCurrent
                   ? `0 2px 0 rgba(255,255,255,0.22) inset, inset 0 0 0 2.5px rgba(10,8,19,0.85), inset 0 0 0 3.5px ${accent}66, 0 0 0 3px ${accent}55, 0 0 26px ${accent}aa, 0 10px 24px -10px rgba(0,0,0,0.8)`
                   : isReachable
@@ -176,46 +277,68 @@ export function MapScreen({
                     : `inset 0 0 0 2.5px rgba(10,8,19,0.7), 0 6px 18px -10px rgba(0,0,0,0.7)`,
               }}
             >
+              {/* Grounding shadow: seals read as resting on the path, not floating. */}
               <span
-                className={cn('emboss leading-none', isBoss ? 'text-3xl' : 'text-xl')}
-                style={lit ? { filter: `drop-shadow(0 0 6px ${accent}88)` } : undefined}
-              >
-                {ICON[n.type]}
-              </span>
+                aria-hidden
+                className="pointer-events-none absolute left-1/2 top-[92%] h-2.5 w-[74%] -translate-x-1/2 rounded-[50%]"
+                style={{ background: 'radial-gradient(closest-side, rgba(0,0,0,0.5), transparent)' }}
+              />
+              {isBoss && n.preview?.bossFace ? (
+                // Boss seal wears the villain's own face — a medallion, not a crown glyph.
+                <span className="absolute inset-0 overflow-hidden rounded-full">
+                  <PortraitImage
+                    id={n.preview.bossFace.id}
+                    house={n.preview.bossFace.house}
+                    alt={n.preview.bossName ?? 'Boss'}
+                    variant="bust"
+                  />
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute inset-0 rounded-full"
+                    style={{ boxShadow: `inset 0 0 0 2px ${accent}77, inset 0 -14px 20px -8px ${accent}66`, background: 'radial-gradient(120% 80% at 50% 8%, transparent 55%, rgba(6,4,12,0.55))' }}
+                  />
+                </span>
+              ) : (
+                <span
+                  className={cn('emboss leading-none', isBoss ? 'text-3xl' : 'text-xl')}
+                  style={lit ? { filter: `drop-shadow(0 0 6px ${accent}88)` } : undefined}
+                >
+                  {ICON[n.type]}
+                </span>
+              )}
               <span className="pointer-events-none absolute top-full mt-1 whitespace-nowrap rounded-md border border-white/15 bg-[#15121f]/95 px-2 py-0.5 text-[10px] text-white/85 opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">
                 {LABEL[n.type]}
               </span>
-              {n.preview && (n.preview.synergyIds.length > 0 || n.preview.bossName || n.preview.bossHint) && (
+              {n.preview?.bossName && (
+                // Boss name is the only always-on telegraph. Synergies are no longer shown
+                // here or in the hover card (user directive) — the hover roster is the whole
+                // enemy briefing now.
                 <span
                   data-testid={`telegraph-${n.id}`}
-                  className="pointer-events-none absolute bottom-full mb-1 flex max-w-[120px] flex-wrap justify-center gap-0.5"
+                  className="pointer-events-none absolute bottom-full mb-1 flex max-w-[140px] flex-wrap justify-center gap-0.5"
                 >
-                  {n.preview.bossName && (
-                    <span className="group/hint relative rounded-full border px-1.5 py-0.5 text-[8px] font-bold"
-                      style={{ color: '#f5c451', borderColor: 'rgba(245,196,81,0.6)', background: 'rgba(245,196,81,0.16)' }}
-                      tabIndex={n.preview.bossHint ? 0 : undefined}
-                    >
-                      {n.preview.bossName}
-                      {n.preview.bossHint && (
-                        <span className="pointer-events-none absolute bottom-full left-1/2 mb-1 w-max max-w-[160px] -translate-x-1/2 whitespace-normal rounded-md border border-white/15 bg-[#15121f]/95 px-2 py-1 text-[9px] font-normal normal-case text-white/85 opacity-0 shadow-lg transition-opacity duration-150 group-hover/hint:opacity-100 group-focus-visible/hint:opacity-100">
-                          {n.preview.bossHint}
-                        </span>
-                      )}
-                    </span>
-                  )}
-                  {n.preview.synergyIds.length > 0 && (
-                    <span className="flex flex-wrap justify-center gap-0.5 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">
-                      {n.preview.synergyIds.map(sid => (
-                        <span key={sid} data-synergy={sid}
-                          className="rounded-full border px-1.5 py-0.5 text-[8px] font-semibold"
-                          style={{ color: '#f3e6c4', borderColor: 'rgba(202,162,74,0.6)', background: 'rgba(176,141,87,0.16)' }}>
-                          {synergyName(sid)}
-                        </span>
-                      ))}
-                    </span>
-                  )}
+                  <span className="group/hint relative rounded-full border px-1.5 py-0.5 text-[8px] font-bold"
+                    style={{ color: '#f5c451', borderColor: 'rgba(245,196,81,0.6)', background: 'rgba(245,196,81,0.16)' }}
+                    tabIndex={n.preview.bossHint ? 0 : undefined}
+                  >
+                    {n.preview.bossName}
+                    {n.preview.bossHint && (
+                      <span className="pointer-events-none absolute bottom-full left-1/2 mb-1 w-max max-w-[160px] -translate-x-1/2 whitespace-normal rounded-md border border-white/15 bg-[#15121f]/95 px-2 py-1 text-[9px] font-normal normal-case text-white/85 opacity-0 shadow-lg transition-opacity duration-150 group-hover/hint:opacity-100 group-focus-visible/hint:opacity-100">
+                        {n.preview.bossHint}
+                      </span>
+                    )}
+                  </span>
                 </span>
               )}
+              {n.resolved && (
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute -bottom-1 -right-1 grid h-4 w-4 place-items-center rounded-full bg-[#15121f] text-[9px] font-bold leading-none text-emerald-300 ring-1 ring-emerald-400/40"
+                >
+                  ✓
+                </span>
+              )}
+              <EnemyPreview node={n} accent={accent} side={p.x > width / 2 ? 'left' : 'right'} />
             </button>
           )
         })}
@@ -227,7 +350,14 @@ export function MapScreen({
         @keyframes mapBreathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
         .map-breathe { animation: mapBreathe 2.6s ease-in-out infinite; }
         .map-breathe:hover, .map-breathe:focus-visible { animation: none; }
-        @media (prefers-reduced-motion: reduce) { .map-current, .map-breathe { animation: none; } }
+        @keyframes mapEmberRise {
+          0% { transform: translateY(0); opacity: 0; }
+          12% { opacity: 0.85; }
+          85% { opacity: 0.45; }
+          100% { transform: translateY(-760px); opacity: 0; }
+        }
+        .map-ember { animation-name: mapEmberRise; animation-timing-function: linear; animation-iteration-count: infinite; }
+        @media (prefers-reduced-motion: reduce) { .map-current, .map-breathe, .map-ember { animation: none; } }
       `}</style>
     </div>
   )

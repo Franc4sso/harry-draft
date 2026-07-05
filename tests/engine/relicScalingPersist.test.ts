@@ -135,7 +135,9 @@ describe('a real scaling joker (fame-vorace) persists through a run', () => {
 
     const base: Stats = { hp: 100, atk: 50, def: 10, spd: 10 }
     const bonused = applyRelicBonuses(base, [], out.relics)
-    const expectedBonus = Math.min(updated.runCounter! * 2, 20) // per=2, cap=20
+    // Derive per/cap from the live descriptor so this survives balance retunes of the joker.
+    const sc = RELIC_BY_ID['fame-vorace']!.scaling!
+    const expectedBonus = Math.min(updated.runCounter! * sc.per, sc.cap)
     expect(bonused.atk).toBe(base.atk + expectedBonus)
   })
 

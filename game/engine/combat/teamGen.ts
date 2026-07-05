@@ -58,9 +58,10 @@ export function generateEnemyTeam(rng: Rng, targetBudget: number): DraftedWizard
 }
 
 export function generateBossTeam(rng: Rng, boss: BossDef): DraftedWizard[] {
-  // Every boss fights with at least 3 units (hard design rule — a boss squad must
-  // never feel scrawnier than a regular pack). `boss.unitCount` may raise it further.
-  const size = Math.max(3, boss.unitCount ?? BALANCE.draft.teamSize)
+  // Every boss fights with at least 3 units (hard design rule — a boss squad must never
+  // feel scrawnier than a regular pack) and NEVER more than maxEnemies (user directive:
+  // max 5 avversari, bosses included). `boss.unitCount` sits between those bounds.
+  const size = Math.min(BALANCE.campaignB.maxEnemies, Math.max(3, boss.unitCount ?? BALANCE.draft.teamSize))
   const perUnit = boss.budget / size
   // Every boss unit (not just the leader) gets the strict offensive guarantee: a
   // boss/elite enemy that can never damage the player is a free win (see
