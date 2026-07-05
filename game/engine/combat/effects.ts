@@ -4,7 +4,7 @@ import type { EventBus } from './eventBus'
 import { BALANCE } from '@/data/constants'
 import { STATUS_BY_ID } from '@/data/statuses'
 import { absorbDamage, applyInlineEffect, applyStatus, canAttack, effectiveStats } from '../status'
-import { roleMult } from './roleCounter'
+import { HARD_CONTROL_KINDS, roleMult } from './roleCounter'
 
 export interface EffectCtx { rng: Rng; turn: number; actor: BattleUnit; target: BattleUnit; flags: LogFlag[]; bus?: EventBus; allies?: BattleUnit[]; dark?: boolean }
 export interface EffectResult { value?: number; dodged?: boolean; wardTarget?: BattleUnit }
@@ -138,12 +138,14 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
     if (eff.statusId) {
       const maxStacks = eff.statusId === 'veleno' && ctx.actor.velenoUncapped ? Infinity : undefined
       const def = STATUS_BY_ID[eff.statusId]
-      // Controllo identity: "weak vs sturdy front-line" — a Tank shrugs off half the
-      // duration of a Controllo's stat debuff (control-kind statuses like stun/freeze
-      // are untouched; this only softens the graded weaken/expose/slow debuffs).
-      const isControlloVsTank = ctx.actor.wizard.role === 'Controllo' && unit.wizard.role === 'Tank'
-      const duration = isControlloVsTank && def?.kind === 'debuff'
-        ? Math.ceil((eff.duration ?? def.defaultDuration) / 2)
+      // Supporto Tenacia: while the target's side has a live Supporto (controlResist),
+      // incoming HARD control (stun/freeze/silence) lasts half as long (min 1). This is
+      // how Supporto beats Controllo. (The old Controllo-vs-Tank debuff halving is removed:
+      // Controllo's debuffs now land full-duration on Tanks — armor-shred works.)
+      const base = eff.duration ?? def?.defaultDuration
+      const resisted = eff.target === 'enemy' && unit.controlResist && def && HARD_CONTROL_KINDS.has(def.kind)
+      const duration = resisted && base != null
+        ? Math.max(1, Math.ceil(base * BALANCE.roles.tenaciaControlDurationMult))
         : eff.duration
       applyStatus(unit, eff.statusId, { duration, sourceId: sourceId(ctx.actor), maxStacks })
       if (def?.kind === 'stun' || def?.kind === 'freeze') ctx.flags.push('stun')

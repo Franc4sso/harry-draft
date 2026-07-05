@@ -114,36 +114,10 @@ describe('armor penetration', () => {
 // is covered by tests/engine/combat/roleDamageMatrix.test.ts (e.g. Attaccante +25% vs its
 // prey Supporto). Controllo's asymmetric anti-Tank identity moved to its passive instead.
 
-describe('Controllo debuffs are weaker against a Tank', () => {
-  it('a Controllo applying a stat debuff to a Tank does not land it (or lands it weaker)', () => {
-    const ctrl = unit({ side: 'left' })
-    ctrl.wizard = { ...ctrl.wizard, role: 'Controllo' }
-    const tank = unit({ side: 'right' })
-    tank.wizard = { ...tank.wizard, role: 'Tank' }
-    const nonTank = unit({ side: 'right' })
-    nonTank.wizard = { ...nonTank.wizard, role: 'Supporto' }
-
-    EFFECT_HANDLERS.applyStatus(
-      { rng: noChance, turn: 1, actor: ctrl, target: tank, flags: [] },
-      { kind: 'applyStatus', target: 'enemy', statusId: 'weaken2' },
-    )
-    EFFECT_HANDLERS.applyStatus(
-      { rng: noChance, turn: 1, actor: ctrl, target: nonTank, flags: [] },
-      { kind: 'applyStatus', target: 'enemy', statusId: 'weaken2' },
-    )
-
-    const tankDebuff = tank.statusEffects.find(e => e.statusId === 'weaken2')
-    const nonTankDebuff = nonTank.statusEffects.find(e => e.statusId === 'weaken2')
-
-    expect(nonTankDebuff).toBeDefined()
-    // Either the debuff never lands on the Tank, or it lands with a shorter duration.
-    if (tankDebuff) {
-      expect(tankDebuff.remaining).toBeLessThan(nonTankDebuff!.remaining)
-    } else {
-      expect(tankDebuff).toBeUndefined()
-    }
-  })
-})
+// The old Controllo-vs-Tank debuff-DURATION halving (tested here previously) is gone too:
+// Controllo's stat debuffs now land full-duration on Tanks (armor-shred works as intended).
+// The only remaining duration-halving is Supporto's Tenacia counter to HARD control
+// (stun/freeze/silence), covered by tests/engine/combat/tenaciaDuration.test.ts.
 
 describe('freeze shatter', () => {
   it('a direct hit removes freeze and deals ~1.5x', () => {
