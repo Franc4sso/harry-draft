@@ -17,11 +17,15 @@ export function priceForRelic(relic: Relic): number {
 }
 
 /** Deterministic stock for a shop node: 3 priced relics (re-forked by the node's reroll
- *  counter) + the fixed Cura completa and Rimuovi-mago service slots. Salt base 4000+. */
+ *  counter) + the fixed Cura completa and Rimuovi-mago service slots. Salt base 4000+.
+ *  Pure function of (node, reroll): the relic draw is offered from the FULL relic pool
+ *  (not filtered by the run's currently-owned relics), so the displayed stock stays
+ *  stable across purchases within the same shop — buying one slot must not reshuffle
+ *  the others. A shop may therefore offer a relic you already own (standard/intended). */
 export function shopOffer(state: RunState, node: RunNode, rng: Rng): ShopStock {
   const { area, floor, idx } = parseAreaNodeId(node.id)
   const r = rng.fork(4000 + area * 100 + floor * 10 + idx).fork(node.shopReroll ?? 0)
-  const relics = offerRelics(r, state.relics, 0)
+  const relics = offerRelics(r, [], 0)
   const slots: ShopSlot[] = relics.map((relic, i) => ({ id: `relic-${i}`, kind: 'relic', price: priceForRelic(relic), relic }))
   slots.push({ id: 'heal', kind: 'heal', price: BALANCE.shop.heal })
   slots.push({ id: 'removeWizard', kind: 'removeWizard', price: BALANCE.shop.removeWizard })
@@ -44,7 +48,8 @@ export const shopResolver: NodeResolver = {
     if ((node.shopBought ?? []).includes(slot.id)) return state // already sold
 
     let next = state
-    if (slot.kind === 'relic' && slot.relic) {
+    if (slot.kind === 'relic') {
+      if (!slot.relic) return state // malformed relic slot: no-op, never fall through to removeWizard
       const active = { relic: slot.relic, stageObtained: state.stage, ...(choice.carrierId ? { assignedTo: choice.carrierId } : {}) }
       next = { ...next, relics: [...next.relics, active] }
     } else if (slot.kind === 'heal') {

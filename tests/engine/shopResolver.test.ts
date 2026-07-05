@@ -46,4 +46,18 @@ describe('shopResolver', () => {
     const again = shopResolver.resolve(first, node(first), { kind: 'shop-buy', slotId: 'heal' }, rng())
     expect(again).toBe(first)
   })
+  it('buying relic-0 then relic-1 in the same shop appends the two distinct relics that were displayed (stock stays stable across purchases)', () => {
+    const s = state()
+    const originalOffer = shopOffer(s, node(s), rng())
+    const relic0 = originalOffer.slots.find(x => x.id === 'relic-0')!
+    const relic1 = originalOffer.slots.find(x => x.id === 'relic-1')!
+
+    const afterFirst = shopResolver.resolve(s, node(s), { kind: 'shop-buy', slotId: 'relic-0' }, rng())
+    const afterSecond = shopResolver.resolve(afterFirst, node(afterFirst), { kind: 'shop-buy', slotId: 'relic-1' }, rng())
+
+    const boughtIds = afterSecond.relics.map(r => r.relic.id)
+    expect(boughtIds).toContain(relic0.relic!.id)
+    expect(boughtIds).toContain(relic1.relic!.id)
+    expect(relic0.relic!.id).not.toBe(relic1.relic!.id)
+  })
 })
