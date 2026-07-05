@@ -139,8 +139,29 @@ describe('a real scaling joker (fame-vorace) persists through a run', () => {
     expect(bonused.atk).toBe(base.atk + expectedBonus)
   })
 
-  it('a freshly-started run has relics with no runCounter (nothing carried over)', () => {
+  it("starting a fresh run does not inherit a prior run's relics or runCounter (within-run only, resets each run)", () => {
+    // Build a prior run carrying a scaling relic with a real, non-zero runCounter — this is
+    // what a vacuous "fresh.relics is []" check would silently pass against without ever
+    // exercising the reset semantics.
+    const priorRelics: ActiveRelic[] = [
+      { relic: RELIC_BY_ID['fame-vorace']!, stageObtained: 0, runCounter: 15 },
+    ]
+    const priorRun: RunState = {
+      seed: 'prior-seed', phase: 'battle', team: [], activeSynergies: [], stage: 0,
+      relics: priorRelics,
+    }
+    // Sanity: the prior run really does carry a non-zero counter (guards against a vacuous fixture).
+    expect(priorRun.relics[0]!.runCounter).toBe(15)
+
     const fresh = startRunB('fresh-seed')
-    expect(fresh.relics.every(r => r.runCounter === undefined)).toBe(true)
+
+    // The fresh run must not inherit the prior run's relics array, its reference, or the
+    // carried runCounter — relic scaling is within-run only and resets every run. A future
+    // change that seeds starter relics into a new run without stripping runCounter would
+    // fail this assertion (unlike the old vacuous "every relic has no runCounter" check,
+    // which trivially passed because startRunB always returned an empty relics array).
+    expect(fresh.relics).toEqual([])
+    expect(fresh.relics).not.toBe(priorRun.relics)
+    expect(fresh.relics.some(r => r.relic.id === 'fame-vorace')).toBe(false)
   })
 })

@@ -153,11 +153,13 @@ describe('favor-Scudi-Rigen viability sweep', () => {
     // a stash baseline: reverting to the pre-jokers relics.ts reproduces the prior
     // >0.05-clearing value). Difficulty guard (campaignBalanceRestricted, the real
     // player proxy) shows no material winRate rise from this feature, so the drop
-    // here is RNG noise, not the jokers softening or hurting Scudi-Rigen. Converted to
-    // a structural smoke check, matching how the retired floors in velenoSweep.test.ts
-    // / esecuzioneSweep.test.ts are expressed.
-    expect(winRate).toBeGreaterThanOrEqual(0)
-    expect(winRate).toBeLessThanOrEqual(1)
+    // here is RNG noise, not the jokers softening or hurting Scudi-Rigen. The exact 0.05
+    // floor is retired because it's boundary-noise-sensitive after the scaling-jokers
+    // RNG-stream shift, but a true zero-win regression must still trip this test: `> 0`
+    // (the build wins at least once across the 120-seed sweep) is a real, boundary-noise-
+    // immune viability guard, matching how the retired floors in velenoSweep.test.ts /
+    // esecuzioneSweep.test.ts are expressed.
+    expect(winRate).toBeGreaterThan(0)
   })
   it('the build fields shield conversion in a meaningful share of runs (draftable)', () => {
     expect(shieldUptakeRate).toBeGreaterThan(0.05)

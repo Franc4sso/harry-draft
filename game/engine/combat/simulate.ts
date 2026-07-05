@@ -267,6 +267,10 @@ export function simulateBattle(
       // onDeath / onAllyDeath: after sync, when any unit just died.
       if (!realTarget.alive) {
         // A kill: the victim is always an enemy of its killer here → credit the opposite side.
+        // Assumption: this holds only because no spell/trait/signature self-damages or
+        // self-applies a DoT (friendly fire is structurally impossible, per effects.ts guards).
+        // If a self-damaging/self-poisoning effect is ever added, this would mis-credit the
+        // enemy and must be revisited.
         kills[realTarget.side === 'left' ? 'right' : 'left']++
         fireReactive('onDeath', realTarget, turn)
         const allyPool = realTarget.side === 'left' ? L : R
@@ -311,6 +315,8 @@ export function simulateBattle(
       // onDeath / onAllyDeath when a dot tick kills any unit.
       if (!u.alive) {
         // DoT kill: poison/burn on `u` was applied by u's enemy → credit the opposite side.
+        // Assumption: relies on the same self-damage/self-DoT impossibility noted above
+        // (effects.ts guards against friendly fire) — revisit if that ever changes.
         kills[u.side === 'left' ? 'right' : 'left']++
         fireReactive('onDeath', u, turn)
         const allyPool = u.side === 'left' ? L : R

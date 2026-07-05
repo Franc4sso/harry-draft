@@ -30,6 +30,8 @@ export function relicMatchesCondition(team: DraftedWizard[], condition?: RelicCo
 
 /** After a battle, add `killDelta` to the run counter of every scaling relic. Pure. */
 export function applyRelicScaling(relics: ActiveRelic[], killDelta: number): ActiveRelic[] {
+  // No-op: intentionally returns the input array by reference (not a copy) — safe
+  // because callers treat `relics` as immutable; callers must not mutate the result.
   if (killDelta <= 0) return relics
   return relics.map(ar =>
     ar.relic.scaling ? { ...ar, runCounter: (ar.runCounter ?? 0) + killDelta } : ar,
