@@ -4,6 +4,7 @@ import { battleReadyTeam } from '../battlePrep'
 import { simulateBattle } from '../combat/simulate'
 import { buildBattlePackage } from '../combat/battlePackage'
 import { detectSynergies } from '../synergy'
+import { applyRelicScaling } from '../relics'
 import { applyBattleToRoster } from '../run'
 import { gainLevels } from '../leveling'
 import { isDead, livingOf } from '../roster'
@@ -110,6 +111,7 @@ export const combatResolver: NodeResolver = {
     return {
       ...state,
       team: out.survivors,
+      relics: applyRelicScaling(state.relics, out.result.kills.left),
       activeSynergies: detectSynergies(livingOf(out.survivors)),
       lastBattle: out.result,
     }
