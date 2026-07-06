@@ -20,18 +20,18 @@ describe('applyRelicScaling', () => {
       { relic: joker, stageObtained: 0, runCounter: 3 },
       { relic: plain, stageObtained: 0 },
     ]
-    const out = applyRelicScaling(relics, 4)
+    const out = applyRelicScaling(relics, { kill: 4, battleWin: 0, turn: 0, allyDead: 0 })
     expect(out[0]!.runCounter).toBe(7)          // 3 + 4
     expect(out[1]!.runCounter).toBeUndefined()  // plain relic untouched
   })
 
   it('treats undefined runCounter as 0', () => {
-    const out = applyRelicScaling([{ relic: joker, stageObtained: 0 }], 2)
+    const out = applyRelicScaling([{ relic: joker, stageObtained: 0 }], { kill: 2, battleWin: 0, turn: 0, allyDead: 0 })
     expect(out[0]!.runCounter).toBe(2)
   })
 
   it('is a no-op for zero kills', () => {
-    const out = applyRelicScaling([{ relic: joker, stageObtained: 0, runCounter: 5 }], 0)
+    const out = applyRelicScaling([{ relic: joker, stageObtained: 0, runCounter: 5 }], { kill: 0, battleWin: 0, turn: 0, allyDead: 0 })
     expect(out[0]!.runCounter).toBe(5)
   })
 })

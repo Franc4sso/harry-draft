@@ -111,7 +111,12 @@ export const combatResolver: NodeResolver = {
     return {
       ...state,
       team: out.survivors,
-      relics: applyRelicScaling(state.relics, out.result.kills.left),
+      relics: applyRelicScaling(state.relics, {
+        kill: out.result.kills.left,
+        battleWin: out.result.winner === 'left' ? 1 : 0,
+        turn: out.result.turns,
+        allyDead: out.result.alliesLost,
+      }),
       activeSynergies: detectSynergies(livingOf(out.survivors)),
       lastBattle: out.result,
     }

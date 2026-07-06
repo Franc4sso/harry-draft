@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { applyRelicBonuses, keywordDamageMult, scalingStatBonus } from '@/game/engine/relics'
+import { applyRelicBonuses, applyRelicScaling, keywordDamageMult, scalingStatBonus } from '@/game/engine/relics'
 import type { ActiveRelic, Relic, Stats, DraftedWizard } from '@/types'
 
 const atkJoker: Relic = {
@@ -59,5 +59,24 @@ describe('relic scaling', () => {
     }
     const out = applyRelicBonuses({ hp: 100, atk: 10, def: 10, spd: 10 }, [], [defJoker])
     expect(out.def).toBe(10 + 50)
+  })
+
+  it('routes each scaling relic to its own trigger delta', () => {
+    const mk = (id: string, trigger: any): ActiveRelic => ({
+      relic: { id, name: id, desc: '', rarity: 'epica', scaling: { trigger, stat: 'attack', per: 1, cap: 999 } },
+      stageObtained: 0, runCounter: 0,
+    })
+    const relics = [mk('k', 'kill'), mk('w', 'battleWin'), mk('t', 'turn'), mk('a', 'allyDead')]
+    const out = applyRelicScaling(relics, { kill: 3, battleWin: 1, turn: 7, allyDead: 2 })
+    expect(out.find(r => r.relic.id === 'k')!.runCounter).toBe(3)
+    expect(out.find(r => r.relic.id === 'w')!.runCounter).toBe(1)
+    expect(out.find(r => r.relic.id === 't')!.runCounter).toBe(7)
+    expect(out.find(r => r.relic.id === 'a')!.runCounter).toBe(2)
+  })
+
+  it('leaves non-scaling relics untouched', () => {
+    const flat: ActiveRelic = { relic: { id: 'f', name: 'F', desc: '', rarity: 'comune', bonus: { atk: 5 } }, stageObtained: 0 }
+    const out = applyRelicScaling([flat], { kill: 3, battleWin: 1, turn: 7, allyDead: 2 })
+    expect(out[0]!.runCounter).toBeUndefined()
   })
 })
