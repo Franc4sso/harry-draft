@@ -11,10 +11,10 @@ describe('redesigned relics remain well-formed', () => {
     expect(r.desc).toMatch(/esecuzione|sotto il/i)
   })
 
-  it('ricordatutto keeps its flat def/spd bonus and gains a small onBattleStart shield', () => {
+  it('ricordatutto pays for its onBattleStart shield with a reduced flat def/spd bonus', () => {
     const r = RELIC_BY_ID['ricordatutto']!
     expect(r).toBeTruthy()
-    expect(r.bonus).toEqual({ def: 8, spd: 8 })
+    expect(r.bonus).toEqual({ def: 6, spd: 6 })
     expect(r.triggers).toEqual([
       { hook: 'onBattleStart', effects: [{ kind: 'shield', amount: 10 }] },
     ])
