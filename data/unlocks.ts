@@ -12,7 +12,7 @@ import type { Relic, RelicRarity } from '@/types/relic'
 // notes in this repo's fix report for the tradeoffs tried (T2=3-4 pushed winRate
 // back up to/over the 0.45 ceiling).
 // Covers all 4 houses and all 4 roles, the Golden Trio (harry/ron/hermione), and
-// >=3 veleno-tagged wizards (bellatrix, narcissa, sprout). Milestone-unlock ids
+// >=3 veleno-tagged wizards (bellatrix, pansy, theodore). Milestone-unlock ids
 // (dolohov, greyback, neville, molly) are deliberately left out so they stay
 // reachable-but-locked.
 // NOTE: `chooseStarters` draws the opening 3 from a Grifondoro-only offer sorted by
@@ -26,10 +26,14 @@ export const STARTER_WIZARDS: string[] = [
   'harry',
   // Tier 2
   'bellatrix', 'kingsley',
-  // Tier 3 (trio + house/role coverage + veleno)
+  // Tier 3 (trio + house/role coverage). narcissa/sprout stay for house/role coverage
+  // (Serpeverde Supporto / Tassorosso Supporto) but are no longer venom mages after the
+  // Supporto rewrite — the veleno quota is met by pansy + theodore below (both starter-safe,
+  // NOT milestone unlocks, unlike dolohov/greyback).
   'ron', 'hermione', 'narcissa', 'sprout', 'draco', 'cedric',
-  // Tier 4 (commons — the key regression guard against the old zero-common set)
-  'goyle', 'marcus', 'michael', 'padma', 'hannah', 'ernie', 'pettigrew', 'terry', 'roger',
+  // Tier 4 (commons — the key regression guard against the old zero-common set).
+  // pansy + theodore are the venom quota (>=3 veleno with bellatrix), both starter-safe.
+  'goyle', 'marcus', 'michael', 'padma', 'hannah', 'ernie', 'pettigrew', 'terry', 'roger', 'pansy', 'theodore',
 ]
 
 // ~12 real relic ids from data/relics.ts, all comune + a half of the non-comune tier

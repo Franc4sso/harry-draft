@@ -15,7 +15,7 @@ function draft(id: string): DraftedWizard {
 
 describe('Tossicità synergy', () => {
   it('activates with 3 veleno-tagged wizards', () => {
-    const team = ['bellatrix', 'dolohov', 'slughorn'].map(draft)
+    const team = ['bellatrix', 'dolohov', 'blaise'].map(draft)
     const ids = detectSynergies(team).map(a => a.synergy.id)
     expect(ids).toContain('tossicita')
   })
