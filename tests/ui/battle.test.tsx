@@ -458,6 +458,23 @@ describe('BattleArena', () => {
     expect(dot.textContent).toContain('2')
   })
 
+  it('shows the damage float only on the targeted bust, not on every unit', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    const targetKey = unitKey('right', 'draco')
+    const e: LogEntry = {
+      turn: 1, actorId: 'harry', actorSide: 'left', action: 'Stupeficium',
+      targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 42, flags: [],
+    }
+    render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={e} frameKey={1} />)
+    // Exactly one float, on the targeted bust (floatKey is only wired to the target;
+    // other busts get a stable key so React.memo can skip them during playback).
+    const floats = document.querySelectorAll('[data-testid="damage-float"]')
+    expect(floats.length).toBe(1)
+    const targetBust = document.querySelector(`[data-unit-key="${CSS.escape(targetKey)}"]`) as HTMLElement
+    expect(targetBust.querySelector('[data-testid="damage-float"]')).not.toBeNull()
+  })
+
   it('surfaces the real per-unit cooldown for the unit primary spell from the frame', () => {
     const l = left(), r = right()
     const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)

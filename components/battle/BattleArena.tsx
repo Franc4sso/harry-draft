@@ -88,7 +88,11 @@ export function BattleArena({
             mirrored={mirrored}
             boss={boss}
             float={u.key === targetKey ? float : null}
-            floatKey={frameKey}
+            // Only the targeted bust shows a float/impact (keyed by frameKey to
+            // re-trigger its AnimatePresence). Every other bust gets a STABLE key so
+            // React.memo(UnitBust) can actually skip it — otherwise a per-tick frameKey
+            // on all busts makes the memo a no-op during playback.
+            floatKey={u.key === targetKey ? frameKey : undefined}
             effects={statusEffects[u.key] ?? EMPTY_EFFECTS}
             cooldown={cooldowns[u.key]?.[u.spell.id] ?? 0}
             level={u.side === 'right' ? enemyLevel : u.level}
