@@ -117,12 +117,6 @@ html, body {
     0 10px 30px rgba(176,133,58,0.35),
     0 22px 50px -18px rgba(0,0,0,0.8);
 }
-@keyframes emberRise {
-  0%   { transform: translate3d(0, 0, 0) scale(1); opacity: 0; }
-  8%   { opacity: var(--ember-peak, 0.7); }
-  90%  { opacity: 0.1; }
-  100% { transform: translate3d(var(--ember-drift, 20px), -85vh, 0) scale(0.4); opacity: 0; }
-}
 @keyframes fogDrift {
   0%   { transform: translate3d(-4%, 0, 0) scale(1); }
   50%  { transform: translate3d(4%, -3%, 0) scale(1.08); }
@@ -200,9 +194,4 @@ html, body {
     0 -6px 14px -6px rgba(0,0,0,0.5) inset,
     0 12px 28px -10px rgba(0,0,0,0.8),
     0 0 18px -4px rgba(202,162,74,0.5);
-}
-@keyframes warmDrift {
-  0% { transform: translate3d(-3%, 0, 0) scale(1); }
-  50% { transform: translate3d(3%, -2%, 0) scale(1.06); }
-  100% { transform: translate3d(-3%, 0, 0) scale(1); }
 }

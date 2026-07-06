@@ -12,9 +12,15 @@ describe('GameShell', () => {
     expect(root.className).toContain('fixed')
   })
 
-  it('renders ember particles and fog layers', () => {
+  it('renders a static ambient layer with fog blobs and no infinite animations', () => {
     const { container } = render(<GameShell />)
-    expect(container.querySelectorAll('[data-ember]').length).toBeGreaterThan(8)
+    // Fog blobs remain (static ambient glow).
     expect(container.querySelectorAll('[data-fog]').length).toBeGreaterThanOrEqual(2)
+    // No embers (removed for perf — static background).
+    expect(container.querySelectorAll('[data-ember]').length).toBe(0)
+    // No element carries an infinite CSS animation.
+    const animated = Array.from(container.querySelectorAll<HTMLElement>('*'))
+      .filter(el => (el.getAttribute('style') ?? '').includes('animation'))
+    expect(animated.length).toBe(0)
   })
 })
