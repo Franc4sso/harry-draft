@@ -177,7 +177,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'f',
     ranges: { hp: [87, 108], atk: [12, 18], def: [16, 22], spd: [16, 22] },
     spellPool: ['vulnera', 'episkey', 'protego', 'fianto', 'protego_maxima'],
-    tags: ['deatheater', 'veleno', 'magieOscure'],
+    tags: ['deatheater', 'magieOscure'],
   },
   {
     id: 'dolohov', name: 'Antonin Dolohov', house: 'Serpeverde', role: 'Attaccante', tier: 3,
@@ -212,7 +212,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'm',
     ranges: { hp: [93, 114], atk: [12, 18], def: [17, 23], spd: [13, 19] },
     spellPool: ['vulnera', 'episkey', 'anapneo', 'protego', 'ferula'],
-    tags: ['veleno'],
+    tags: [],
   },
   {
     id: 'hagrid', name: 'Rubeus Hagrid', house: 'Grifondoro', role: 'Tank', tier: 3,
@@ -231,7 +231,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'f',
     ranges: { hp: [91, 112], atk: [11, 17], def: [17, 23], spd: [14, 20] },
     spellPool: ['ferula', 'episkey', 'rennervate', 'protego', 'anapneo'],
-    tags: ['veleno', 'scudirigen'],
+    tags: ['scudirigen'],
   },
 
   // ===== Tier 4 (weakest / numerous) =====
@@ -394,7 +394,7 @@ export const WIZARDS: Wizard[] = [
     gender: 'f',
     ranges: { hp: [70, 91], atk: [11, 16], def: [12, 18], spd: [15, 21] },
     spellPool: ['episkey', 'anapneo', 'ferula', 'protego', 'salvio'],
-    tags: ['veleno'],
+    tags: [],
   },
   {
     id: 'penelope', name: 'Penelope Clearwater', house: 'Corvonero', role: 'Supporto', tier: 4,
