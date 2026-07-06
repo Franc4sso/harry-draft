@@ -88,7 +88,11 @@ export function registerRelicTriggers(
           || trig.hook === 'onHeal' || trig.hook === 'onDeath'
           || trig.hook === 'onAllyDeath' || trig.hook === 'onTurnStart'
           || trig.hook === 'onTurnEnd' || trig.hook === 'onHpThreshold') {
-          bus.onReactive(trig.hook, (ctx) => (ctx.side === side ? specs : []))
+          const only = trig.onlyTurn
+          bus.onReactive(trig.hook, (ctx) => {
+            if (only != null && ctx.turn !== only) return []
+            return ctx.side === side ? specs : []
+          })
         }
       }
       if (trig.modifier
