@@ -2,7 +2,7 @@ import type { ActiveRelic, ActiveSynergy, DraftedWizard, Keyword, RelicCondition
 import type { Relic } from '@/types'
 import type { Rng } from './rng'
 import type { EventBus } from './combat/eventBus'
-import { RELICS, SCALING_RELIC_IDS, JOKER_RELIC_IDS } from '@/data/relics'
+import { RELICS, JOKER_RELIC_IDS } from '@/data/relics'
 import { BALANCE } from '@/data/constants'
 import { livingOf } from './roster'
 
@@ -180,8 +180,7 @@ function weightedPick(rng: Rng, pool: Relic[]): Relic {
  * returns more than the pool size. Used to arm elite/boss enemy teams.
  */
 export function selectEnemyRelics(rng: Rng, count: number): ActiveRelic[] {
-  const scaling = new Set(SCALING_RELIC_IDS)
-  const remaining = RELICS.filter(r => !scaling.has(r.id))
+  const remaining = RELICS.filter(r => !JOKER_SET.has(r.id))
   const n = Math.min(count, remaining.length)
   const out: ActiveRelic[] = []
   for (let i = 0; i < n; i++) {
