@@ -376,6 +376,7 @@ export function simulateBattle(
           sync(u)
           if (!u.alive) {
             fireReactive('onDeath', u, turn)
+            if (u.side === 'left') alliesLost++
             const allyPool = u.side === 'left' ? L : R
             for (const ally of allyPool) {
               if (ally.alive && ally !== u) fireReactive('onAllyDeath', ally, turn)
