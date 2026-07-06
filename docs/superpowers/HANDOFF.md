@@ -1,6 +1,6 @@
 # Handoff — dove riprendere
 
-Aggiornato: **2026-07-06**. Ultimo commit su `origin/master`: `72fef36`.
+Aggiornato: **2026-07-06**. Ultimo commit su `origin/master`: `8739a3e`.
 Da un altro PC: `git pull origin master`, `npm install`, poi leggi questo file.
 
 ## Stato in una riga
@@ -9,6 +9,21 @@ Il gioco è un roguelite auto-battler (Harry Potter, Next.js/TypeScript). Il loo
 è ricco: mappa a nodi, combattimento, progressione. **Tutto il lavoro recente è su
 `origin/master` (0 commit avanti).** Prossimo: **playtest** (ora anche i joker!) + nuovi
 nodi run (campfire, modificatori di battaglia). 1179 test verdi, typecheck pulito.
+
+## Fix 2026-07-06 (dopo i joker): veleno visibile + combattimento fluido
+
+- **Veleno: gli stack ora si vedono crescere**. Bug: il pill/tooltip mostrava `remaining`
+  (durata, fissa a 2 perché il veleno è `permanent`) invece di `stacks` (le dosi, 1→8). Ora
+  mostrano le dosi (`effectCount`/`describeEffect` in `UnitBust.tsx`). La meccanica era già
+  corretta — solo il display sbagliava. Commit `47f2158`.
+- **Combattimento più fluido (pass di memoization, ZERO cambio visivo)**. Causa: nessun
+  `React.memo` nell'albero battaglia → ogni frame di replay ri-renderizzava tutto, e
+  `recapTotals` ri-scansionava tutta la storia dal frame 0 a ogni tick (O(n²), 2-4× — ecco il
+  "diventa più pesante col procedere"). Fix: memoizzati recap/log slices + derivazioni di
+  BattleArena; `React.memo` su UnitBust/BattleRecap/BattleLog/InitiativeBar/ArenaBackdrop.
+  Punto chiave: `floatKey` ora va solo al bust bersagliato (era `frameKey` su tutti → rendeva
+  il memo un no-op). Spec/piano: `docs/superpowers/plans/2026-07-06-battle-perf.md`. NON toccato
+  Pixi/GSAP (già a posto). Commit `6627586`..`8739a3e`.
 
 ## Ultima slice (2026-07-06): JOKER espansi + reliquie ridisegnate
 
