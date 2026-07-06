@@ -22,17 +22,26 @@ export interface RelicTrigger {
   condition?: RelicCondition
   /** onHpThreshold: fraction 0..1 below which it fires. */
   threshold?: number
+  /** Reactive trigger fires only when ctx.turn === onlyTurn (e.g. 1 = opening turn). */
+  onlyTurn?: number
 }
 
 export interface RelicScaling {
-  /** What event increments the run counter. Only 'kill' for now. */
-  trigger: 'kill'
+  /** What event increments the run counter. Run-cumulative, reset each run. */
+  trigger: 'kill' | 'battleWin' | 'turn' | 'allyDead'
   /** Which stat the counter feeds. */
-  stat: 'attack' | 'maxHp' | 'velenoMult'
+  stat: 'attack' | 'maxHp' | 'velenoMult' | 'defense' | 'speed'
   /** Bonus added per counter unit. */
   per: number
   /** Absolute cap on the cumulative bonus (applied at read time). */
   cap: number
+}
+
+/** Static "when X then Y" gate — team composition is fixed during a battle, so this
+ *  is evaluated once at applyRelicBonuses time (not on the bus). */
+export interface RelicConditional {
+  when: { kind: 'teamSizeBelow'; value: number }
+  then: SynergyBonus
 }
 
 export interface Relic {
@@ -63,6 +72,10 @@ export interface Relic {
   active?: 'revive'
   /** Within-run scaling ("joker"): grows a stat as the run counter climbs. Reset each run. */
   scaling?: RelicScaling
+  /** Static conditional bonus (see RelicConditional). */
+  conditional?: RelicConditional
+  /** Always-on malus (SynergyBonus with negative values). Risk/reward jokers. */
+  drawback?: SynergyBonus
 }
 
 export interface ActiveRelic {
