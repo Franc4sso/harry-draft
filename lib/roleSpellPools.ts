@@ -3,6 +3,8 @@ import type { Role } from '@/types'
 // Allowed spell IDs per role — a STRUCTURAL guard so a wizard can never carry a spell that
 // contradicts its role (e.g. a Supporto casting serpensortia). Conservative: derived from the
 // current pools, cleaned of outliers. Supporto = only Cura/Difesa (zero direct attacks).
+// serpensortia IS an Attacco → legit on Tank/Attaccante/Controllo; banned only on Supporto.
+// confundo IS a Controllo spell → banned on Attaccante (an outlier on a pure attacker).
 export const ROLE_SPELL_WHITELIST: Record<Role, ReadonlySet<string>> = {
   Supporto: new Set([
     'episkey', 'protego', 'vulnera', 'rennervate', 'anapneo', 'ferula',
@@ -11,7 +13,7 @@ export const ROLE_SPELL_WHITELIST: Record<Role, ReadonlySet<string>> = {
   ]),
   Tank: new Set([
     'bombarda', 'diffindo', 'expelliarmus', 'fianto', 'flipendo', 'oppugno',
-    'protego', 'protego_maxima', 'reducto', 'salvio', 'stupeficium',
+    'protego', 'protego_maxima', 'reducto', 'salvio', 'serpensortia', 'stupeficium',
   ]),
   Attaccante: new Set([
     'avada', 'bombarda', 'confringo', 'crucio', 'diffindo', 'expelliarmus',
@@ -20,8 +22,8 @@ export const ROLE_SPELL_WHITELIST: Record<Role, ReadonlySet<string>> = {
   ]),
   Controllo: new Set([
     'confringo', 'confundo', 'crucio', 'fiendfyre', 'flipendo', 'imperio',
-    'langlock', 'levicorpus', 'oppugno', 'petrificus', 'reducto', 'tarantallegra',
-    'glacius', 'silencio',
+    'langlock', 'levicorpus', 'oppugno', 'petrificus', 'reducto', 'serpensortia',
+    'tarantallegra', 'glacius', 'silencio',
   ]),
 }
 

@@ -23,10 +23,16 @@ describe('role spell whitelist', () => {
     expect(offenders, offenders.join('\n')).toEqual([])
   })
 
-  it('serpensortia is not allowed for Supporto, Tank, or Controllo', () => {
+  it('serpensortia (an Attacco) is banned ONLY on Supporto', () => {
     expect(isSpellAllowedForRole('Supporto', 'serpensortia')).toBe(false)
-    expect(isSpellAllowedForRole('Tank', 'serpensortia')).toBe(false)
-    expect(isSpellAllowedForRole('Controllo', 'serpensortia')).toBe(false)
+    // serpensortia is a direct Attacco → legit on the offensive/bruiser roles.
+    expect(isSpellAllowedForRole('Tank', 'serpensortia')).toBe(true)
+    expect(isSpellAllowedForRole('Controllo', 'serpensortia')).toBe(true)
     expect(isSpellAllowedForRole('Attaccante', 'serpensortia')).toBe(true)
+  })
+
+  it('confundo (a Controllo) is banned on a pure Attaccante', () => {
+    expect(isSpellAllowedForRole('Attaccante', 'confundo')).toBe(false)
+    expect(isSpellAllowedForRole('Controllo', 'confundo')).toBe(true)
   })
 })
