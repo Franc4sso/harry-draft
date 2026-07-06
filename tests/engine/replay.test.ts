@@ -87,7 +87,7 @@ describe('buildReplay populates base + buffed atk/def/spd', () => {
     expect(ru.spd).toBe(ru.baseSpd)
   })
 
-  it('a relic-buffed unit has atk strictly greater than baseAtk (+10 mappa-malandrino)', () => {
+  it('a relic-buffed unit has atk strictly greater than baseAtk (+6 mappa-malandrino, Task 10 redesign)', () => {
     const l = team(LEFT_IDS, 7)
     const r = team(RIGHT_IDS, 13)
     const relics = [ar('mappa-malandrino')]
@@ -97,9 +97,9 @@ describe('buildReplay populates base + buffed atk/def/spd', () => {
     const key = unitKey('left', dw.wizard.id)
     const ru = replay.units.find(u => u.key === key)!
 
-    // mappa-malandrino: +10 atk, no def/spd change.
+    // mappa-malandrino: +6 atk, no def/spd change (Task 10 redesign; execute grant doesn't touch stats).
     expect(ru.baseAtk).toBe(dw.stats.atk)
-    expect(ru.atk).toBe(dw.stats.atk + 10)
+    expect(ru.atk).toBe(dw.stats.atk + 6)
     expect(ru.atk).toBeGreaterThan(ru.baseAtk)
 
     // def/spd untouched by this relic.

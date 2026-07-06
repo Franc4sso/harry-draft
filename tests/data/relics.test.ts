@@ -33,12 +33,12 @@ describe('relics data', () => {
       expect(hasBonus || hasTrigger || hasKeywordMult || hasGrantsExecute || hasGrantsShieldConvert || hasGrantsDarkMagic || hasGrantsAlwaysHit || hasActive || hasScaling || hasConditional || hasDrawback, `relic ${r.id} has nothing`).toBe(true)
     }
   })
-  it('limits trigger relics to at most 7 (v2: Task 8 adds 3 reactive jokers)', () => {
-    // Cap raised 4 -> 7: furia-morente, canto-del-cigno, assalto-d-apertura are
-    // intentional new trigger-based jokers added in Task 8 (balance-safe: jokers
-    // are excluded from offerRelics' balance-sensitive pool).
+  it('limits trigger relics to at most 8 (Task 10 adds ricordatutto onBattleStart shield)', () => {
+    // Cap raised 4 -> 7 (Task 8: furia-morente, canto-del-cigno, assalto-d-apertura, all
+    // balance-safe jokers) -> 8 (Task 10: ricordatutto gains a small onBattleStart shield
+    // as part of its constant-budget redesign — base relic, but tiny/comune-scaled).
     const triggers = RELICS.filter(r => r.triggers?.length)
-    expect(triggers.length).toBeLessThanOrEqual(7)
+    expect(triggers.length).toBeLessThanOrEqual(8)
   })
   it('conditional relics reference real houses/roles', () => {
     const houses = ['Grifondoro', 'Serpeverde', 'Corvonero', 'Tassorosso']

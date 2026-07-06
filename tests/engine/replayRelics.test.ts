@@ -18,16 +18,16 @@ const LEFT_IDS = ['harry', 'ron', 'hermione', 'luna', 'neville']
 const RIGHT_IDS = ['draco', 'crabbe', 'goyle', 'snape', 'bellatrix']
 
 describe('buildReplay with relics', () => {
-  it('left units have higher buffedStats.atk with mappa-malandrino (+10 atk) relic', () => {
+  it('left units have higher buffedStats.atk with mappa-malandrino (+6 atk, Task 10 redesign) relic', () => {
     const l = team(LEFT_IDS, 7)
     const r = team(RIGHT_IDS, 13)
     const relics = [ar('mappa-malandrino')]
 
-    // assert buffedStats.atk is +10 for every left unit when the relic is active
+    // assert buffedStats.atk is +6 for every left unit when the relic is active
     const unitsNoRelic = toBattleUnits(l, 'left', [])
     const unitsWithRelic = toBattleUnits(l, 'left', [], relics)
     for (let i = 0; i < unitsNoRelic.length; i++) {
-      expect(unitsWithRelic[i]!.buffedStats.atk).toBe(unitsNoRelic[i]!.buffedStats.atk + 10)
+      expect(unitsWithRelic[i]!.buffedStats.atk).toBe(unitsNoRelic[i]!.buffedStats.atk + 6)
     }
 
     // replay: mappa-malandrino does not buff hp, so maxHp should be unchanged

@@ -4,10 +4,11 @@ export const RELICS: Relic[] = [
   // Comuni — passive piatte
   { id: 'giratempo', name: 'Giratempo', desc: '+12 Velocità a tutta la squadra.', rarity: 'comune', bonus: { spd: 12 } },
   { id: 'mantello-invisibilita', name: "Mantello dell'Invisibilità", desc: '+14 Difesa a tutta la squadra.', rarity: 'comune', bonus: { def: 14 } },
-  { id: 'mappa-malandrino', name: 'Mappa del Malandrino', desc: '+10 Attacco a tutta la squadra.', rarity: 'comune', bonus: { atk: 10 } },
+  { id: 'mappa-malandrino', name: 'Mappa del Malandrino', desc: '+6 Attacco a tutta la squadra; i colpi infliggono +12% danni ai bersagli sotto il 50% di vita (Esecuzione).', rarity: 'comune', bonus: { atk: 6 }, keywords: ['esecuzione'], grantsExecute: { threshold: 0.5, bonus: 0.12 } },
   { id: 'pozione-fortuna', name: 'Felix Felicis', desc: '+5% a tutte le statistiche.', rarity: 'comune', bonus: { allPct: 0.05 } },
   { id: 'bezoar', name: 'Bezoar', desc: 'Rigenerazione +8 a tutta la squadra.', rarity: 'comune', bonus: { regen: 8 } },
-  { id: 'ricordatutto', name: 'Ricordella', desc: '+8 Difesa e +8 Velocità.', rarity: 'comune', bonus: { def: 8, spd: 8 } },
+  { id: 'ricordatutto', name: 'Ricordella', desc: '+8 Difesa e +8 Velocità; a inizio battaglia, piccolo scudo a tutta la squadra.', rarity: 'comune', bonus: { def: 8, spd: 8 },
+    triggers: [{ hook: 'onBattleStart', effects: [{ kind: 'shield', amount: 10 }] }] },
   // Rara — esecuzione keyword
   { id: 'spada-grifondoro', name: 'Spada di Grifondoro', desc: 'I colpi della squadra infliggono +40% danni ai bersagli sotto il 30% di vita.', rarity: 'rara', keywords: ['esecuzione'], grantsExecute: { threshold: 0.3, bonus: 0.4 } },
   // Non-comuni — condizionali per casa

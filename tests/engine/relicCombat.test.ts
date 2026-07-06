@@ -28,8 +28,8 @@ describe('relics in combat', () => {
   it('toBattleUnits applies a flat relic bonus on top of synergies', () => {
     const t = team(1)
     const noRelic = toBattleUnits(t, 'left', [])
-    const withRelic = toBattleUnits(t, 'left', [], [ar('mappa-malandrino')]) // +10 atk
-    expect(withRelic[0]!.buffedStats.atk).toBe(noRelic[0]!.buffedStats.atk + 10)
+    const withRelic = toBattleUnits(t, 'left', [], [ar('mappa-malandrino')]) // +6 atk (Task 10 redesign)
+    expect(withRelic[0]!.buffedStats.atk).toBe(noRelic[0]!.buffedStats.atk + 6)
   })
 
   it('startOfBattle relic grants the left team a shield at battle start', () => {
