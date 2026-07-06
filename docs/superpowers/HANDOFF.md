@@ -1,14 +1,49 @@
 # Handoff — dove riprendere
 
-Aggiornato: **2026-07-06**. Ultimo commit su `origin/master`: `88b2d93`.
+Aggiornato: **2026-07-06**. Ultimo commit su `origin/master`: `72fef36`.
 Da un altro PC: `git pull origin master`, `npm install`, poi leggi questo file.
 
 ## Stato in una riga
 
 Il gioco è un roguelite auto-battler (Harry Potter, Next.js/TypeScript). Il loop di run
 è ricco: mappa a nodi, combattimento, progressione. **Tutto il lavoro recente è su
-`origin/master` (0 commit avanti).** Prossimo: **playtest** + nuovi nodi run (campfire,
-modificatori di battaglia). 1152 test verdi, typecheck pulito.
+`origin/master` (0 commit avanti).** Prossimo: **playtest** (ora anche i joker!) + nuovi
+nodi run (campfire, modificatori di battaglia). 1179 test verdi, typecheck pulito.
+
+## Ultima slice (2026-07-06): JOKER espansi + reliquie ridisegnate
+
+Diagnosi iniziale: i "joker" (reliquie che scalano dentro la run) c'erano ma **non si vedevano
+mai** — non un bug di applicazione (verificata la catena kill→counter→stat), ma di offerta:
+erano epica peso 6 in un pool ristretto → ~10% di comparsa. Fix + espansione (spec+piano in
+`docs/superpowers/{specs,plans}/2026-07-06-jokers-and-relics*`):
+- **Motore joker esteso**: nuovi trigger di scaling `turn`/`battleWin`/`allyDead` (oltre `kill`);
+  stat scalabili `defense`/`speed` (oltre atk/maxHp/velenoMult); `conditional` statico
+  `teamSizeBelow`; `drawback` (malus sempre attivo); `onlyTurn` (trigger reattivo solo al turno N).
+- **`BattleResult.alliesLost`**: conta i maghi del player caduti (tutti e 4 i percorsi di morte:
+  diretto/contraccolpo/veleno/**fatica**) → alimenta il joker "Eredità dei Caduti".
+- **11 joker nuovi** (`data/relics.ts`): 4 scaling (Marcia di Guerra, Fortezza Vivente, Vento
+  Crescente, Eredità dei Caduti), 2 condizionali (Ultimo Baluardo, Branco Ristretto), 2 con
+  drawback (Patto Vorace, Sete di Sangue), 3 reattivi (Furia Morente, Canto del Cigno, Assalto
+  d'Apertura — usano lo status `atkUp` +20/2turni). Tutti `epica`, tutti in `JOKER_RELIC_IDS` +
+  `STARTER_RELICS`.
+- **Pool separati**: `offerRelics` esclude i joker; nuovo `offerJokers` (pesca uniforme).
+- **Nodo reliquia → joker o reliquia**: con prob. **`BALANCE.relics.jokerNodeChance` = 0.35** il
+  nodo offre 3 joker invece di 3 reliquie base (deterministico per seed+nodo). **Questa è la leva
+  di visibilità dei joker** — se al playtest le reliquie tematiche spariscono troppo, abbassala.
+- **Joker MAI sui nemici**: `selectEnemyRelics` esclude tutti i `JOKER_RELIC_IDS` (i joker sono
+  solo del player, balance-safe per costruzione — il bot non li pesca).
+- **2 reliquie base ridisegnate a budget costante**: Mappa del Malandrino (+6 atk + esecuzione),
+  Ricordella (+6 def/spd + piccolo scudo a inizio battaglia). Giratempo lasciata invariata (la
+  conditional "mentre a HP pieno" non è esprimibile: `RelicConditional` supporta solo il gate
+  statico `teamSizeBelow`).
+- **Balance**: campaignBalanceB **0.3583**, campaignBalanceRestricted **0.3750** (sopra floor con
+  margine largo). NOTA: le assert live di questi test sono `winRate>0`; i numeri 0.15/0.275 nei
+  commenti sono storici. Due floor di sweep ri-ancorati (magieOscure, esecuzione) = artefatti di
+  *disponibilità* (i joker occupano slot), non regressioni di meccanica — verificati A/B.
+- **Nota copy (minore)**: le desc di Ultimo Baluardo / Branco Ristretto ("se restano meno di N
+  maghi vivi") suonano dinamiche ma il gate è **statico** (valutato a inizio battaglia). Semantica
+  approvata; se dà fastidio al playtest, o si riscrive la copy o si sposta il gate su un trigger
+  reattivo `onAllyDeath`.
 
 ## Cosa è stato fatto di recente (NON rifarlo) — tutto su master
 
