@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef } from 'react'
+import { memo, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { LogEntry } from '@/types'
 import type { ReplayUnit } from '@/game/engine/combat/replay'
@@ -81,7 +81,7 @@ export function describeEntry(
   return `${actor} lancia ${entry.action}${target ? ` su ${target}` : ''}`
 }
 
-export function BattleLog({
+function BattleLogImpl({
   entries, units, controlAt,
 }: {
   entries: LogEntry[]
@@ -121,3 +121,9 @@ export function BattleLog({
     </div>
   )
 }
+
+/** Memoized: `entries` is the memoized slice from BattleScreen (stable identity
+ *  unless replay/index change), `units`/`controlAt` are likewise stable — so this
+ *  skips re-renders (and the AnimatePresence/list re-render) triggered by
+ *  unrelated screen state (e.g. the end-modal dismiss toggle). */
+export const BattleLog = memo(BattleLogImpl)

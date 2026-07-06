@@ -1,4 +1,5 @@
 'use client'
+import { memo, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Zap } from 'lucide-react'
 import type { Replay } from '@/game/engine/combat/replay'
@@ -17,7 +18,7 @@ import { PortraitImage } from '@/components/ui/PortraitImage'
  * the last REAL action (most recent non-system, actor-bearing entry) and
  * persists through subsequent system frames — no flicker.
  */
-export function InitiativeBar({ replay, index }: { replay: Replay; index: number }) {
+function InitiativeBarImpl({ replay, index }: { replay: Replay; index: number }) {
   const frame = replay.frames[index] ?? replay.frames[replay.frames.length - 1]
   const hp = frame?.hp ?? {}
   // EFFECTIVE spd at this frame (base + active buffs/debuffs) — falls back to the unit's
@@ -29,11 +30,27 @@ export function InitiativeBar({ replay, index }: { replay: Replay; index: number
   // visibly re-orders the rail). The tiebreak for equal-spd units MUST match the engine's
   // turn-order comparator (simulate.ts: spd desc, then wizard id, then side) — otherwise the
   // rail shows a different order than the units actually act in.
-  const sequence = replay.units
-    .filter(u => (hp[u.key] ?? u.maxHp) > 0)
-    .sort((a, b) => spdAt(b) - spdAt(a) || a.id.localeCompare(b.id) || a.side.localeCompare(b.side))
-    .map(u => u.key)
-  const byKey = Object.fromEntries(replay.units.map(u => [u.key, u]))
+  //
+  // Memoized on [replay, frame] (not just [replay, index]): frame is the actual
+  // per-tick hp/spd snapshot this computation reads (frame.hp drives the alive
+  // filter, frame.spd drives both the sort and the displayed value), so it's the
+  // real dependency — using it directly means the memo also holds if index ever
+  // pointed at the same frame twice. It still recomputes every tick (frame changes
+  // every tick), so this doesn't freeze the order; it only stops rebuilding the
+  // array identity on re-renders where nothing here actually changed (e.g. a
+  // sibling state toggle in BattleScreen with the same index/frame).
+  const sequence = useMemo(
+    () => replay.units
+      .filter(u => (hp[u.key] ?? u.maxHp) > 0)
+      .sort((a, b) => spdAt(b) - spdAt(a) || a.id.localeCompare(b.id) || a.side.localeCompare(b.side))
+      .map(u => u.key),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- hp/spdAt are derived from `frame`, included directly
+    [replay, frame],
+  )
+  const byKey = useMemo(
+    () => Object.fromEntries(replay.units.map(u => [u.key, u])),
+    [replay],
+  )
 
   return (
     <div
@@ -74,3 +91,9 @@ export function InitiativeBar({ replay, index }: { replay: Replay; index: number
     </div>
   )
 }
+
+/** Memoized: `replay` and `index` are stable references from BattleScreen
+ *  (replay via useMemo, index a primitive), so this skips re-renders (and the
+ *  filter/sort/Object.fromEntries above) triggered by unrelated screen state
+ *  (e.g. the end-modal dismiss toggle) that don't change either prop. */
+export const InitiativeBar = memo(InitiativeBarImpl)

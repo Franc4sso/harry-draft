@@ -88,6 +88,15 @@ export function BattleScreen({
     return { mvpName: top?.name ?? '—', mvpDealt: top?.dealt ?? 0, bigHit }
   }, [replay])
 
+  // BattleLog entries: sliced fresh from replay.frames every tick so the log
+  // grows with r.index — memoized so the array identity only changes when the
+  // replay or the current index actually change, letting React.memo(BattleLog)
+  // skip re-renders triggered by unrelated state (e.g. the end-modal dismiss toggle).
+  const logEntries = useMemo(
+    () => replay.frames.slice(1, r.index + 1).map(f => f.entry!),
+    [replay, r.index],
+  )
+
   const controlAt = useMemo(() => {
     const kinds = ['stun', 'freeze', 'silence', 'disarm'] as const
     return (entry: LogEntry) => {
@@ -173,7 +182,7 @@ export function BattleScreen({
       </div>
 
       <BattleLog
-        entries={replay.frames.slice(1, r.index + 1).map(f => f.entry!)}
+        entries={logEntries}
         units={replay.units}
         controlAt={controlAt}
       />
