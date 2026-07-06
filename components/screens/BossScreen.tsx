@@ -10,16 +10,6 @@ export function BossScreen({ bossName, onBegin }: { bossName: string; onBegin: (
   const reduce = useReducedMotion()
   return (
     <main className="relative flex-1 flex flex-col items-center justify-center gap-8 p-8 text-center">
-      {/* Menace wash — a red pall bleeding down from above. */}
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        <motion.div
-          className="absolute left-1/2 top-[-15%] h-[42rem] w-[50rem] -translate-x-1/2 rounded-full blur-[130px]"
-          style={{ background: 'radial-gradient(circle, rgba(190,40,60,0.20), transparent 60%)' }}
-          animate={reduce ? undefined : { opacity: [0.6, 1, 0.6] }}
-          transition={{ duration: 3.4, repeat: Infinity, ease: 'easeInOut' }}
-        />
-      </div>
-
       <motion.div
         initial={reduce ? { opacity: 0 } : { opacity: 0, y: 26, scale: 0.94, filter: 'blur(10px)' }}
         animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}

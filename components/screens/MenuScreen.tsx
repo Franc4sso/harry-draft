@@ -35,18 +35,6 @@ export function MenuScreen() {
 
   return (
     <main className="relative flex-1 flex flex-col items-center justify-center gap-9 overflow-hidden p-8 text-center">
-      {/* Ambient candlelight — a warm gold pool above, a cold arcane wash below. */}
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div
-          className="absolute left-1/2 top-[-12%] h-[42rem] w-[42rem] -translate-x-1/2 rounded-full blur-[120px]"
-          style={{ background: 'radial-gradient(circle, rgba(202,162,74,0.16), transparent 60%)' }}
-        />
-        <div
-          className="absolute left-1/2 bottom-[-25%] h-[34rem] w-[44rem] -translate-x-1/2 rounded-full blur-[130px]"
-          style={{ background: 'radial-gradient(circle, rgba(140,90,40,0.14), transparent 60%)' }}
-        />
-      </div>
-
       <motion.div
         initial={reduce ? false : { opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}

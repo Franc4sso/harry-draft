@@ -38,18 +38,6 @@ export function ResultScreen({
 
   return (
     <main className="relative flex-1 flex flex-col items-center justify-center gap-8 p-8 text-center">
-      {/* Mood wash: warm gold halo for a win, cold blue-grey pall for a defeat. */}
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div
-          className="absolute left-1/2 top-[-10%] h-[40rem] w-[46rem] -translate-x-1/2 rounded-full blur-[130px]"
-          style={{
-            background: won
-              ? 'radial-gradient(circle, rgba(202,162,74,0.20), transparent 60%)'
-              : 'radial-gradient(circle, rgba(70,85,110,0.22), transparent 60%)',
-          }}
-        />
-      </div>
-
       <motion.div
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
