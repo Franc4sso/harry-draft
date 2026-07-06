@@ -1,10 +1,11 @@
 import type { DraftedWizard, Relic, RunEvent, RunNode, RunState } from '@/types'
 import type { Rng } from '../rng'
 import { offerRecruits, recruitVia, replaceMember } from '../recruit'
-import { offerRelics } from '../relics'
+import { offerRelics, offerJokers } from '../relics'
 import { detectSynergies } from '../synergy'
 import { livingOf } from '../roster'
 import { parseAreaNodeId } from '../map'
+import { BALANCE } from '@/data/constants'
 import type { NodeResolver, ResolverChoice } from './types'
 
 /** Deterministic per (seed, node id): the same trio every time the node is entered. */
@@ -17,7 +18,8 @@ export function recruitOffer(state: RunState, node: RunNode, rng: Rng): DraftedW
 export function relicOffer(state: RunState, node: RunNode, rng: Rng): Relic[] {
   const { area, floor, idx } = parseAreaNodeId(node.id)
   const r = rng.fork(2000 + area * 100 + floor * 10 + idx)
-  return offerRelics(r, state.relics, 0)
+  const isJoker = r.next() < BALANCE.relics.jokerNodeChance
+  return isJoker ? offerJokers(r, state.relics) : offerRelics(r, state.relics, 0)
 }
 
 export const recruitResolver: NodeResolver = {

@@ -472,6 +472,7 @@ defenseK: 0.5,
   },
   relics: {
     offerCount: 3,
+    jokerNodeChance: 0.35,
     rarityWeights: {
       'comune': 50,
       'non-comune': 28,
