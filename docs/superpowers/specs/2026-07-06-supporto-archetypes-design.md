@@ -83,6 +83,26 @@ Ogni mago porta UNA spell in battaglia (`unit.spell`); il turn-loop
 (`simulate.ts`) per un intento di cura sceglie il più ferito o cura sé stesso
 (`?? actor`) — quindi un Supporto ha sempre un'azione valida.
 
+**Vincolo anti-turno-morto (da una riserva sciolta in review).** Verificato: una
+magia di pura cura (`mostWounded` filtra i full-HP) senza alleati feriti degenera
+in una cura di sé stesso al cap — un turno sprecato. Quindi ogni pool-archetipo
+Supporto DEVE contenere ≥1 magia **proattiva** (con effetto anche a squadra piena):
+- Scudiero → protego/fianto/aegis pre-scudano (utili sempre).
+- Stratega → incitamento/riddikulus/salvio pre-buffano (utili sempre).
+- Purificatore → salvio/ferula (spdUp / regen preventivo).
+- Guaritore → il suo pool include `ferula` (regen preventivo) come opzione non-morta;
+  è l'archetipo più reattivo per natura, ma non deve avere SOLO cure istantanee.
+Un test asserisce che ogni archetipo Supporto ha almeno una magia con effetto a
+squadra piena (buff/shield/ward/regen), così nessun Supporto ha turni morti garantiti.
+
+**RPS confermato intatto (riserva sciolta).** Il counter Supporto→Controllo NON
+dipende dal danno: si regge su **Tenacia** (aura anti-controllo, passiva) +
+**Purificazione** (cleanse hard-control, passiva). Il `roleMult` ×1.25 vs la preda
+è un bonus secondario che un Supporto senza attacchi semplicemente non usa —
+nessuna rottura. Anzi, il design RIMUOVE un workaround esistente in `selectTarget`
+(il ramo "se un Supporto ha una spell offensiva, miralo al nemico"), rendendo il
+ruolo più pulito.
+
 ### C. VFX per singola magia
 
 Le VFX per-magia esistono già in `lib/vfx/spellVfx.ts` (mappa
@@ -116,6 +136,11 @@ Nessun cambio al flusso; cambiano solo i DATI (pool) + la whitelist + le entry V
    (asserzione esplicita "Supporto = zero attacchi diretti", incl. no serpensortia).
 3. Test archetipo: ogni Supporto è mappato a un archetipo e il suo pool ⊆ magie
    dell'archetipo + base.
+3b. Test anti-turno-morto: ogni archetipo Supporto ha ≥1 magia proattiva (con
+   effetto a squadra piena: buff/shield/ward/regen) — nessun turno morto garantito.
+3c. Cleanup: rimuovere il ramo `spell.type === 'Attacco' || 'Controllo'` in
+   `selectTarget` per il Supporto (diventa codice morto una volta che nessun
+   Supporto porta spell offensive) — con test che nessun Supporto le porta.
 4. VFX: ogni spell di supporto del nuovo kit ha una entry in `spellVfxFor` (nessun
    fallback generico per le magie di supporto).
 5. Regressione completa (1188 test) + `tsc`.
