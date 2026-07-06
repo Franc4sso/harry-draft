@@ -91,15 +91,6 @@ const COL = 168, ROW = 148, NODE = 60, BOSS = 80
 // (`bottom-full`, always visible) doesn't overflow into the header title.
 const TOP_PAD = 44
 
-// Ambient embers drifting up toward the summit — a single restrained signature. Fixed
-// positions (no Math.random) to stay hydration-safe; suppressed under reduced-motion.
-const EMBERS = [
-  { left: 6, size: 3, delay: 0, dur: 10 }, { left: 18, size: 2, delay: 3.2, dur: 13 },
-  { left: 31, size: 2, delay: 6, dur: 11 }, { left: 44, size: 3, delay: 1.5, dur: 14 },
-  { left: 57, size: 2, delay: 4.5, dur: 12 }, { left: 69, size: 3, delay: 7.5, dur: 15 },
-  { left: 82, size: 2, delay: 2.2, dur: 11 }, { left: 93, size: 2, delay: 5.5, dur: 13 },
-]
-
 export function MapScreen({
   map, currentNodeId, reachableIds, onChoose, area, areasTotal,
 }: {
@@ -170,17 +161,6 @@ export function MapScreen({
             className="absolute inset-x-0 bottom-0 h-1/2"
             style={{ background: 'linear-gradient(0deg, rgba(6,4,12,0.6), transparent)' }}
           />
-          {!reduce && EMBERS.map((em, i) => (
-            <span
-              key={i}
-              className="map-ember absolute bottom-0 rounded-full"
-              style={{
-                left: `${em.left}%`, width: em.size, height: em.size,
-                background: 'rgba(246,230,168,0.7)', boxShadow: '0 0 6px rgba(246,230,168,0.8)',
-                animationDelay: `${em.delay}s`, animationDuration: `${em.dur}s`,
-              }}
-            />
-          ))}
         </div>
         <svg
           className="pointer-events-none absolute inset-0"
@@ -349,19 +329,12 @@ export function MapScreen({
       </div>
 
       <style>{`
-        @keyframes mapCurrentPulse { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.35); } }
+        @keyframes mapCurrentPulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.06); opacity: 0.9; } }
         .map-current { animation: mapCurrentPulse 1.8s ease-in-out infinite; }
         @keyframes mapBreathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
         .map-breathe { animation: mapBreathe 2.6s ease-in-out infinite; }
         .map-breathe:hover, .map-breathe:focus-visible { animation: none; }
-        @keyframes mapEmberRise {
-          0% { transform: translateY(0); opacity: 0; }
-          12% { opacity: 0.85; }
-          85% { opacity: 0.45; }
-          100% { transform: translateY(-760px); opacity: 0; }
-        }
-        .map-ember { animation-name: mapEmberRise; animation-timing-function: linear; animation-iteration-count: infinite; }
-        @media (prefers-reduced-motion: reduce) { .map-current, .map-breathe, .map-ember { animation: none; } }
+        @media (prefers-reduced-motion: reduce) { .map-current, .map-breathe { animation: none; } }
       `}</style>
     </div>
   )
