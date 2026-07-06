@@ -8,7 +8,7 @@ Da un altro PC: `git pull origin master`, `npm install`, poi leggi questo file.
 Il gioco è un roguelite auto-battler (Harry Potter, Next.js/TypeScript). Il loop di run
 è ricco: mappa a nodi, combattimento, progressione. **Tutto il lavoro recente è su
 `origin/master` (0 commit avanti).** Prossimo: **playtest** (ora anche i joker!) + nuovi
-nodi run (campfire, modificatori di battaglia). 1179 test verdi, typecheck pulito.
+nodi run (campfire, modificatori di battaglia). 1183 test verdi, typecheck pulito, build ok.
 
 ## Fix 2026-07-06 (dopo i joker): veleno visibile + combattimento fluido
 
