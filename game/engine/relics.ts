@@ -105,9 +105,13 @@ export function applyRelicBonuses(stats: Stats, team: DraftedWizard[], relics: A
   let pct = 0
   let scaledHp = 0
   let scaledAtk = 0
+  let scaledDef = 0
+  let scaledSpd = 0
   for (const { relic, runCounter } of relics) {
     scaledHp += scalingStatBonus(relic, runCounter, 'maxHp')
     scaledAtk += scalingStatBonus(relic, runCounter, 'attack')
+    scaledDef += scalingStatBonus(relic, runCounter, 'defense')
+    scaledSpd += scalingStatBonus(relic, runCounter, 'speed')
     if (!relic.bonus) continue
     if (!relicMatchesCondition(team, relic.condition)) continue
     const b = relic.bonus
@@ -121,8 +125,8 @@ export function applyRelicBonuses(stats: Stats, team: DraftedWizard[], relics: A
   return {
     hp: Math.round(hp * m) + scaledHp,
     atk: Math.round(atk * m) + scaledAtk,
-    def: Math.round(def * m),
-    spd: Math.round(spd * m),
+    def: Math.round(def * m) + scaledDef,
+    spd: Math.round(spd * m) + scaledSpd,
   }
 }
 

@@ -33,4 +33,31 @@ describe('relic scaling', () => {
     const mult = keywordDamageMult(team, relics, [], 'veleno')
     expect(mult).toBeCloseTo(1.30) // 1 + 10*0.03
   })
+
+  it('scales defense and speed from scaling relics', () => {
+    const defJoker: ActiveRelic = {
+      relic: { id: 'dj', name: 'DJ', desc: '', rarity: 'epica',
+        scaling: { trigger: 'battleWin', stat: 'defense', per: 5, cap: 50 } },
+      stageObtained: 0, runCounter: 4,
+    }
+    const spdJoker: ActiveRelic = {
+      relic: { id: 'sj', name: 'SJ', desc: '', rarity: 'epica',
+        scaling: { trigger: 'battleWin', stat: 'speed', per: 8, cap: 64 } },
+      stageObtained: 0, runCounter: 3,
+    }
+    const base = { hp: 100, atk: 10, def: 10, spd: 10 }
+    const out = applyRelicBonuses(base, [], [defJoker, spdJoker])
+    expect(out.def).toBe(10 + 20) // 4*5
+    expect(out.spd).toBe(10 + 24) // 3*8
+  })
+
+  it('clamps scaled def/spd at cap', () => {
+    const defJoker: ActiveRelic = {
+      relic: { id: 'dj', name: 'DJ', desc: '', rarity: 'epica',
+        scaling: { trigger: 'battleWin', stat: 'defense', per: 5, cap: 50 } },
+      stageObtained: 0, runCounter: 100,
+    }
+    const out = applyRelicBonuses({ hp: 100, atk: 10, def: 10, spd: 10 }, [], [defJoker])
+    expect(out.def).toBe(10 + 50)
+  })
 })
