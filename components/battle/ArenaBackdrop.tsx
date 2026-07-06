@@ -1,4 +1,5 @@
 'use client'
+import { memo } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 
 // Deterministic ember field (fixed values → no SSR/client hydration mismatch). Each rises
@@ -23,7 +24,10 @@ const EMBERS = [
  * rising embers and a low floor haze — ambient atmosphere, no flashing.
  * Transform/opacity only; static under reduced motion. Sits behind the busts.
  */
-export function ArenaBackdrop() {
+// Prop-less: memo makes it render exactly once and skip every parent re-render
+// (the replay ticks re-render BattleScreen ~every frame; this ambient backdrop
+// never needs to follow — its animations live in the compositor, not React).
+export const ArenaBackdrop = memo(function ArenaBackdrop() {
   const reduce = useReducedMotion()
   return (
     <div
@@ -63,4 +67,4 @@ export function ArenaBackdrop() {
       <div className="absolute inset-0" style={{ boxShadow: 'inset 0 0 130px rgba(0,0,0,0.72)' }} />
     </div>
   )
-}
+})
