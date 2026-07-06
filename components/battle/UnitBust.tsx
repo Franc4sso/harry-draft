@@ -77,8 +77,8 @@ function describeEffect(e: ActiveEffect): string {
   const stat = e.stat ? STAT_LABEL[e.stat] ?? e.stat : ''
   switch (e.kind) {
     case 'dot': {
-      const doses = e.stacks != null && e.stacks > 1 ? ` ×${e.stacks}` : ''
-      return `Veleno${doses}: -${e.amount ?? 0} HP/turno`
+      const doses = ` ×${e.stacks ?? 1}`
+      return `Veleno${doses}: -${dotTickDamage(e)} HP/turno`
     }
     case 'regen':
       return `Rigenerazione: +${e.amount ?? 0} HP/turno, ${turns}`
@@ -122,8 +122,20 @@ function magnitudeLabel(e: ActiveEffect): string {
  *  frozen because veleno is permanent. Everything else shows turns remaining. */
 function effectCount(e: ActiveEffect): number {
   if (e.kind === 'shield' && e.absorbLeft != null) return e.absorbLeft
-  if (e.kind === 'dot' && e.stacks != null && e.stacks > 1) return e.stacks
+  // A dot (veleno) shows its DOSE count, which starts at 1 and climbs — never `remaining`
+  // (frozen at 2 because veleno is permanent). The old `stacks > 1` guard made the FIRST dose
+  // fall through to remaining (showing "2"), so the pill never started at 1 and grew.
+  if (e.kind === 'dot') return e.stacks ?? 1
   return e.remaining
+}
+
+/** Per-turn damage of a dot effect for the tooltip. Veleno's damage lives on the status DEF
+ *  (tickDamage, scaled by stacks) — the effect instance carries no `amount`, so reading `e.amount`
+ *  produced "-0 HP/turno". Mirrors the engine's flat term in tickStatuses (game/engine/status.ts). */
+function dotTickDamage(e: ActiveEffect): number {
+  const def = e.statusId ? STATUS_BY_ID[e.statusId] : undefined
+  const base = def?.tickDamage ?? e.amount ?? 0
+  return base * (e.stacks ?? 1)
 }
 
 type LiveStat = 'atk' | 'def' | 'spd'

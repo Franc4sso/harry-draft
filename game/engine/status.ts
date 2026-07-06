@@ -112,8 +112,12 @@ export function tickStatuses(turn: number, unit: BattleUnit, opts: { velenoMult?
       logs.push({ turn, actorId: srcId, actorSide: srcSide, action: def?.name ?? 'Veleno',
         targetId: unit.wizard.id, targetSide: unit.side, type: 'Controllo', value: total, flags: ['dot'] })
     }
-    if (tickHeal && unit.alive) {
-      // Never regen-heal a dead unit (defense in depth — callers already gate on alive).
+    if (tickHeal && unit.hp > 0) {
+      // Never regen-heal a dead unit. Gate on LIVE hp, not `unit.alive`: within this same tick
+      // pass a preceding DoT (veleno/burn) may have already dropped hp <= 0, but `unit.alive` is
+      // only synced by the caller AFTER tickStatuses returns — so a stale-`alive` check let a unit
+      // that just took lethal poison heal itself back above 0 in the same tick and keep fighting
+      // ("dead mage still attacks"). Reading hp directly makes the death land this tick.
       const before = unit.hp
       unit.hp = Math.min(unit.maxHp, before + tickHeal)
       const overflow = (before + tickHeal) - unit.maxHp   // > 0 only when the tick exceeds the cap

@@ -36,4 +36,28 @@ describe('veleno pill shows accumulated doses (stacks), not remaining', () => {
     const pill = container.querySelector('[data-status-kind="dot"]')
     expect(pill!.getAttribute('title')).toMatch(/×5|x5|5 dos/i)
   })
+
+  // The bug the player actually sees: a FIRST dose (stacks: 1). It must read "1" (one dose),
+  // never "2" (the frozen permanent `remaining`) — otherwise the very first poison looks like
+  // some 2-turn status and the count doesn't visibly start at 1 and climb.
+  it('a single-dose veleno shows 1, not the frozen remaining (2)', () => {
+    // No `amount` on purpose: veleno's per-tick damage lives on the status def (tickDamage),
+    // not on the effect instance — this mirrors what the real engine pushes.
+    const eff = { kind: 'dot', statusId: 'veleno', remaining: 2, stacks: 1 } as unknown as ActiveEffect
+    const { container } = render(<UnitBust unit={unit} hp={100} effects={[eff]} />)
+    const pill = container.querySelector('[data-status-kind="dot"]')
+    expect(pill).not.toBeNull()
+    expect(pill!.textContent).toContain('1')
+    expect(pill!.textContent).not.toContain('2')
+  })
+
+  it('tooltip shows the real per-tick damage (from the status def), not -0', () => {
+    // Engine-shaped veleno effect: no `amount`. The tooltip must still state a non-zero
+    // per-turn damage (veleno tickDamage is 4/stack) rather than "-0 HP/turno".
+    const eff = { kind: 'dot', statusId: 'veleno', remaining: 2, stacks: 1 } as unknown as ActiveEffect
+    const { container } = render(<UnitBust unit={unit} hp={100} effects={[eff]} />)
+    const title = container.querySelector('[data-status-kind="dot"]')!.getAttribute('title') ?? ''
+    expect(title).not.toMatch(/-0 HP/)
+    expect(title).toMatch(/HP\/turno/)
+  })
 })

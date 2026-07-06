@@ -198,14 +198,17 @@ describe('UnitBust', () => {
   })
 
   describe('status row', () => {
-    it('renders a status icon with its remaining count and a descriptive title for a dot', () => {
-      render(<UnitBust unit={u} hp={50} effects={[{ kind: 'dot', amount: 6, remaining: 2 }]} />)
+    it('renders a status icon with its DOSE count and a descriptive title for a dot', () => {
+      // A dot (veleno) pill shows its dose count (stacks), which starts at 1 and grows — NOT
+      // `remaining` (frozen at 2 for permanent veleno). Here stacks:2 → shows "2".
+      render(<UnitBust unit={u} hp={50} effects={[{ kind: 'dot', amount: 6, remaining: 2, stacks: 2 }]} />)
       const root = screen.getByTestId('battle-unit')
       const dot = root.querySelector('[data-status-kind="dot"]') as HTMLElement
       expect(dot).not.toBeNull()
       expect(dot.textContent).toContain('2')
       expect(dot.getAttribute('title')).toMatch(/veleno/i)
-      expect(dot.getAttribute('title')).toContain('6')
+      // Per-turn damage: amount 6 × 2 doses = 12 (no statusId → falls back to amount).
+      expect(dot.getAttribute('title')).toContain('12')
     })
     it('renders one icon per active control/over-time effect', () => {
       render(
@@ -449,8 +452,9 @@ describe('BattleArena', () => {
     const l = left(), r = right()
     const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
     // Inject a real dot effect on harry into a frame's statusEffects (the engine path).
+    // Veleno always carries `stacks` (dose count) from the engine; the pill shows that count.
     const dotted = unitKey('left', 'harry')
-    replay.frames[1]!.statusEffects = { [dotted]: [{ kind: 'dot', amount: 6, remaining: 2 }] }
+    replay.frames[1]!.statusEffects = { [dotted]: [{ kind: 'dot', statusId: 'veleno', amount: 6, remaining: 2, stacks: 2 }] }
     render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={replay.frames[1]!.entry} frameKey={1} />)
     const bust = document.querySelector(`[data-unit-key="${CSS.escape(dotted)}"]`) as HTMLElement
     const dot = bust.querySelector('[data-status-kind="dot"]') as HTMLElement
