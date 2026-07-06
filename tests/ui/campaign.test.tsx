@@ -19,6 +19,7 @@ function fakeResult(winner: 'left' | 'right' = 'left'): BattleResult {
     snapshots: [],
     timedOut: false,
     kills: { left: 0, right: 0 },
+    alliesLost: 0,
   }
 }
 

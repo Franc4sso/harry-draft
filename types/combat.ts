@@ -113,4 +113,6 @@ export interface BattleResult {
   /** ENEMY units killed by each side this battle (direct-hit + DoT kills; excludes recoil
    *  self-kills and fatigue deaths). Drives within-run relic scaling. */
   kills: { left: number; right: number }
+  /** Player-side (left) units that died this battle. Drives allyDead scaling jokers. */
+  alliesLost: number
 }

@@ -102,6 +102,7 @@ export function simulateBattle(
   // Score keyed by "side:wizard.id" to avoid merging same-id wizards on opposite teams
   const score: Record<string, number> = {}
   const kills = { left: 0, right: 0 }
+  let alliesLost = 0
 
   const sync = (u: BattleUnit) => { if (u.hp <= 0) { u.hp = 0; u.alive = false } }
   const sideUnits = (s: Side) => (s === 'left' ? L : R).filter(u => u.alive)
@@ -283,6 +284,7 @@ export function simulateBattle(
         // If a self-damaging/self-poisoning effect is ever added, this would mis-credit the
         // enemy and must be revisited.
         kills[realTarget.side === 'left' ? 'right' : 'left']++
+        if (realTarget.side === 'left') alliesLost++
         fireReactive('onDeath', realTarget, turn)
         const allyPool = realTarget.side === 'left' ? L : R
         for (const ally of allyPool) {
@@ -296,6 +298,7 @@ export function simulateBattle(
           turn, actorId: actor.wizard.id, actorSide: actor.side, action: 'KO',
           targetId: actor.wizard.id, targetSide: actor.side, type: 'system', flags: ['kill'],
         })
+        if (actor.side === 'left') alliesLost++
         fireReactive('onDeath', actor, turn)
         const allyPool = actor.side === 'left' ? L : R
         for (const ally of allyPool) {
@@ -329,6 +332,7 @@ export function simulateBattle(
         // Assumption: relies on the same self-damage/self-DoT impossibility noted above
         // (effects.ts guards against friendly fire) — revisit if that ever changes.
         kills[u.side === 'left' ? 'right' : 'left']++
+        if (u.side === 'left') alliesLost++
         fireReactive('onDeath', u, turn)
         const allyPool = u.side === 'left' ? L : R
         for (const ally of allyPool) {
@@ -401,5 +405,5 @@ export function simulateBattle(
     ? mvpScoreKey.split(':').slice(1).join(':')
     : (winner === 'left' ? L[0]!.wizard.id : R[0]!.wizard.id)
 
-  return { winner, turns: turn, log, mvpId, finalSnapshot: snapshot, snapshots, timedOut, kills }
+  return { winner, turns: turn, log, mvpId, finalSnapshot: snapshot, snapshots, timedOut, kills, alliesLost }
 }
