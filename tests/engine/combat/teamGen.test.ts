@@ -86,14 +86,17 @@ describe('boss/elite pack rules', () => {
 
 describe('enemy offense bias', () => {
   it('preferOffense always equips a damaging spell when the pool has one', () => {
-    const harry = WIZARD_BY_ID['harry']!
-    // Precondition: harry's pool actually mixes offensive and non-offensive spells,
-    // so the bias is doing real work (not passing trivially).
-    const offensiveInPool = harry.spellPool.filter(id => spellIsOffensive(SPELL_BY_ID[id]))
+    // mcgonagall (Tank) mixes offensive (reducto/bombarda) and non-offensive
+    // (protego_maxima/fianto/protego) spells, so the bias is doing real work
+    // (not passing trivially). Harry (Attaccante) no longer qualifies: the
+    // Supporto-archetype rewrite dropped his only non-offensive spell (confundo),
+    // and the Attaccante whitelist is now 100% offensive spells by design.
+    const mcgonagall = WIZARD_BY_ID['mcgonagall']!
+    const offensiveInPool = mcgonagall.spellPool.filter(id => spellIsOffensive(SPELL_BY_ID[id]))
     expect(offensiveInPool.length).toBeGreaterThan(0)
-    expect(offensiveInPool.length).toBeLessThan(harry.spellPool.length)
+    expect(offensiveInPool.length).toBeLessThan(mcgonagall.spellPool.length)
     for (let s = 0; s < 25; s++) {
-      const dw = draftWizard(createRng(`o-${s}`), harry, false, true)
+      const dw = draftWizard(createRng(`o-${s}`), mcgonagall, false, true)
       expect(spellIsOffensive(dw.spell), `seed ${s} → ${dw.spell.id}`).toBe(true)
     }
   })
