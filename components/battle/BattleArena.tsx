@@ -1,6 +1,7 @@
 'use client'
 import type React from 'react'
-import type { LogEntry } from '@/types'
+import { useMemo } from 'react'
+import type { LogEntry, ActiveEffect } from '@/types'
 import type { Replay, ReplayUnit } from '@/game/engine/combat/replay'
 import { unitKey } from '@/game/engine/combat/replay'
 import { UnitBust } from './UnitBust'
@@ -13,6 +14,10 @@ import { floatFor } from './damageFloat'
 const BIG_SPELLS = new Set([
   'Avada Kedavra', 'Ardemonio', 'Sectumsempra', 'Bombarda', 'Reducto', 'Confringo', 'Crucio',
 ])
+
+/** Stable empty-array fallback so units with no active effects keep the SAME reference
+ *  across ticks — a fresh `[]` per render would defeat UnitBust's React.memo. */
+const EMPTY_EFFECTS: ActiveEffect[] = []
 
 /**
  * Staged battlefield: player's busts on top, enemies on the bottom, the
@@ -44,28 +49,28 @@ export function BattleArena({
   // A control status (stun/freeze/silence/disarm) carries no flag of its own, so detect
   // one freshly applied to the target THIS frame by diffing against the previous frame —
   // this is what lets the Callout announce SILENZIATO / DISARMATO / STORDITO / CONGELATO.
-  const appliedControl = (() => {
+  const appliedControl = useMemo(() => {
     if (!targetKey) return null
     const CONTROLS = new Set(['stun', 'freeze', 'silence', 'disarm'])
     const prev = replay.frames[frameKey - 1]?.statusEffects?.[targetKey] ?? []
     const prevKeys = new Set(prev.map(e => e.statusId ?? e.kind))
     const fresh = (statusEffects[targetKey] ?? []).find(e => CONTROLS.has(e.kind) && !prevKeys.has(e.statusId ?? e.kind))
     return fresh?.kind ?? null
-  })()
+  }, [replay.frames, frameKey, targetKey, statusEffects])
 
   // Boss telegraph: peek at the NEXT frame — if an enemy is about to unleash a big/ultimate
   // spell, warn the player one beat before it lands.
-  const telegraph = (() => {
+  const telegraph = useMemo(() => {
     const next = replay.frames[frameKey + 1]?.entry
     if (next && next.actorSide === 'right' && BIG_SPELLS.has(next.action)) {
       const caster = replay.units.find(u => u.id === next.actorId && u.side === 'right')
       return { name: caster?.name ?? 'Il nemico', spell: next.action }
     }
     return null
-  })()
+  }, [replay.frames, replay.units, frameKey])
 
-  const left = replay.units.filter(u => u.side === 'left')
-  const right = replay.units.filter(u => u.side === 'right')
+  const left = useMemo(() => replay.units.filter(u => u.side === 'left'), [replay.units])
+  const right = useMemo(() => replay.units.filter(u => u.side === 'right'), [replay.units])
 
   const anyAction = !!actingKey
   // A lone enemy reads as a boss encounter → ominous treatment on that bust.
@@ -84,7 +89,7 @@ export function BattleArena({
             boss={boss}
             float={u.key === targetKey ? float : null}
             floatKey={frameKey}
-            effects={statusEffects[u.key] ?? []}
+            effects={statusEffects[u.key] ?? EMPTY_EFFECTS}
             cooldown={cooldowns[u.key]?.[u.spell.id] ?? 0}
             level={u.side === 'right' ? enemyLevel : u.level}
           />

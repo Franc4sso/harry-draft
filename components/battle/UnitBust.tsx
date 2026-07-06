@@ -1,4 +1,5 @@
 'use client'
+import { memo } from 'react'
 import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import {
   Flame, Zap, Shield, ShieldCheck, Sword, Snowflake, Ban, Swords, ArrowUp, ArrowDown, Heart,
@@ -160,7 +161,7 @@ function liveStats(base: StatTriple, effects: ActiveEffect[]): StatTriple {
  * acting (green) / targeted (red) aura, status icons, KO tombstone, and a
  * floating damage/heal number. Reduced-motion → static final state.
  */
-export function UnitBust({
+export const UnitBust = memo(function UnitBust({
   unit, hp, acting, targeted, mirrored, boss, compact, float, floatKey, effects = [], cooldown = 0, level,
 }: {
   unit: ReplayUnit
@@ -364,5 +365,5 @@ export function UnitBust({
       </AnimatePresence>
     </motion.div>
   )
-}
+})
 
