@@ -75,8 +75,10 @@ function describeEffect(e: ActiveEffect): string {
   const turns = turnsLabel(e.remaining)
   const stat = e.stat ? STAT_LABEL[e.stat] ?? e.stat : ''
   switch (e.kind) {
-    case 'dot':
-      return `Veleno: -${e.amount ?? 0} HP/turno, ${turns}`
+    case 'dot': {
+      const doses = e.stacks != null && e.stacks > 1 ? ` ×${e.stacks}` : ''
+      return `Veleno${doses}: -${e.amount ?? 0} HP/turno`
+    }
     case 'regen':
       return `Rigenerazione: +${e.amount ?? 0} HP/turno, ${turns}`
     case 'stun':
@@ -114,9 +116,12 @@ function magnitudeLabel(e: ActiveEffect): string {
   return isPct(e) ? `${sign}${amt}%` : `${sign}${amt}`
 }
 
-/** The number to show beside a status icon: shield prefers absorbLeft, else remaining. */
+/** The number to show beside a status icon: shield prefers absorbLeft; an accumulating
+ *  dot (veleno) shows its DOSE count (stacks), which is what grows — its `remaining` is
+ *  frozen because veleno is permanent. Everything else shows turns remaining. */
 function effectCount(e: ActiveEffect): number {
   if (e.kind === 'shield' && e.absorbLeft != null) return e.absorbLeft
+  if (e.kind === 'dot' && e.stacks != null && e.stacks > 1) return e.stacks
   return e.remaining
 }
 
