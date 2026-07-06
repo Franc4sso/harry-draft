@@ -4,6 +4,7 @@ import type { Rng } from './rng'
 import type { EventBus } from './combat/eventBus'
 import { RELICS, SCALING_RELIC_IDS } from '@/data/relics'
 import { BALANCE } from '@/data/constants'
+import { livingOf } from './roster'
 
 let relicRestriction: ReadonlySet<string> | null = null
 
@@ -123,6 +124,22 @@ export function applyRelicBonuses(stats: Stats, team: DraftedWizard[], relics: A
     def += b.def ?? 0
     spd += b.spd ?? 0
     pct += b.allPct ?? 0
+  }
+  for (const { relic } of relics) {
+    // Conditional (static teamSizeBelow gate)
+    const cond = relic.conditional
+    if (cond && cond.when.kind === 'teamSizeBelow') {
+      const living = livingOf(team).length
+      if (living < cond.when.value) {
+        const t = cond.then
+        hp += t.hp ?? 0; atk += t.atk ?? 0; def += t.def ?? 0; spd += t.spd ?? 0; pct += t.allPct ?? 0
+      }
+    }
+    // Drawback (always-on negative)
+    const dbk = relic.drawback
+    if (dbk) {
+      hp += dbk.hp ?? 0; atk += dbk.atk ?? 0; def += dbk.def ?? 0; spd += dbk.spd ?? 0; pct += dbk.allPct ?? 0
+    }
   }
   const m = 1 + pct
   return {
