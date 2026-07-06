@@ -40,6 +40,10 @@ export function PortraitImage({
       data-variant={variant}
       onError={() => setFailed(true)}
       className={`h-full w-full object-cover ${fit}`}
+      loading="lazy"
+      decoding="async"
+      width={512}
+      height={512}
     />
   )
 }

@@ -19,6 +19,14 @@ describe('PortraitImage', () => {
     const fallback = container.querySelector('[data-fallback]') as HTMLElement
     expect(fallback.getAttribute('data-variant')).toBe('bust')
   })
+  it('lazy-loads, decodes async, and reserves intrinsic size', () => {
+    const { container } = render(<PortraitImage id="harry" house="Grifondoro" alt="Harry" />)
+    const img = container.querySelector('img')!
+    expect(img.getAttribute('loading')).toBe('lazy')
+    expect(img.getAttribute('decoding')).toBe('async')
+    expect(img.getAttribute('width')).toBeTruthy()
+    expect(img.getAttribute('height')).toBeTruthy()
+  })
 })
 
 describe('PortraitImage fallback', () => {
