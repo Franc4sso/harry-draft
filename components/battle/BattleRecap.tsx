@@ -1,4 +1,5 @@
 'use client'
+import { memo } from 'react'
 import type { ReplayFrame, ReplayUnit } from '@/game/engine/combat/replay'
 import { recapTotals } from '@/lib/battleRecap'
 import { cn } from '@/lib/theme'
@@ -7,8 +8,12 @@ import { cn } from '@/lib/theme'
  * Live damage/heal recap for one team. Bars scale to the team's current max
  * combined total. Pass a sliced `frames` for running totals during replay.
  * `tone` accents the panel for the player (ally) or the enemy team.
+ *
+ * Memoized: callers (BattleScreen) memoize `frames`/`units` per replay tick so
+ * both the desktop and mobile layout copies share one stable reference and
+ * this component only re-renders (and re-scans) once per tick, not per copy.
  */
-export function BattleRecap({
+export const BattleRecap = memo(function BattleRecap({
   frames, units, side = 'left', title = 'Resoconto squadra', tone = 'ally',
 }: {
   frames: ReplayFrame[]
@@ -48,4 +53,4 @@ export function BattleRecap({
       </ul>
     </div>
   )
-}
+})

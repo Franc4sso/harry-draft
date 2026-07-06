@@ -57,6 +57,13 @@ export function BattleScreen({
   // track the real frame.
   const stickyEntry = useMemo(() => lastRealEntryAt(replay, r.index), [replay, r.index])
 
+  // Recap frame slices: computed ONCE per tick (keyed on replay+index) and
+  // shared by identity between the desktop and mobile layout copies below, so
+  // React.memo(BattleRecap) can skip the second copy's render+recapTotals scan
+  // entirely instead of rescanning frames 0..index up to 4x per tick.
+  const leftRecapFrames = useMemo(() => replay.frames.slice(0, r.index + 1), [replay, r.index])
+  const rightRecapFrames = leftRecapFrames
+
   // Fatigue ("Sfinimento") kicks in once the anti-stall system starts ticking
   // true damage every turn. Flag it as soon as the current turn passes the
   // threshold, or the moment a Fatica entry has actually played (whichever
@@ -149,16 +156,16 @@ export function BattleScreen({
         </div>
 
         <div className="hidden lg:flex lg:flex-col gap-3">
-          <BattleRecap frames={replay.frames.slice(0, r.index + 1)} units={replay.units} side="left" title="I tuoi danni" tone="ally" />
-          <BattleRecap frames={replay.frames.slice(0, r.index + 1)} units={replay.units} side="right" title="Danni nemici" tone="enemy" />
+          <BattleRecap frames={leftRecapFrames} units={replay.units} side="left" title="I tuoi danni" tone="ally" />
+          <BattleRecap frames={rightRecapFrames} units={replay.units} side="right" title="Danni nemici" tone="enemy" />
         </div>
       </div>
 
       {/* initiative + recaps stack here so small screens still get them */}
       <div className="flex flex-col items-center gap-3 lg:hidden w-full">
         <InitiativeBar replay={replay} index={r.index} />
-        <BattleRecap frames={replay.frames.slice(0, r.index + 1)} units={replay.units} side="left" title="I tuoi danni" tone="ally" />
-        <BattleRecap frames={replay.frames.slice(0, r.index + 1)} units={replay.units} side="right" title="Danni nemici" tone="enemy" />
+        <BattleRecap frames={leftRecapFrames} units={replay.units} side="left" title="I tuoi danni" tone="ally" />
+        <BattleRecap frames={rightRecapFrames} units={replay.units} side="right" title="Danni nemici" tone="enemy" />
       </div>
 
       <div className="flex w-full max-w-md justify-center">
