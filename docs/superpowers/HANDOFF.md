@@ -1,6 +1,6 @@
 # Handoff — dove riprendere
 
-Aggiornato: **2026-07-06**. Ultimo commit su `origin/master`: `8739a3e`.
+Aggiornato: **2026-07-06**. Ultimo commit su `origin/master`: `e58eedd`.
 Da un altro PC: `git pull origin master`, `npm install`, poi leggi questo file.
 
 ## Stato in una riga
@@ -8,7 +8,29 @@ Da un altro PC: `git pull origin master`, `npm install`, poi leggi questo file.
 Il gioco è un roguelite auto-battler (Harry Potter, Next.js/TypeScript). Il loop di run
 è ricco: mappa a nodi, combattimento, progressione. **Tutto il lavoro recente è su
 `origin/master` (0 commit avanti).** Prossimo: **playtest** (ora anche i joker!) + nuovi
-nodi run (campfire, modificatori di battaglia). 1183 test verdi, typecheck pulito, build ok.
+nodi run (campfire, modificatori di battaglia). 1184 test verdi, typecheck pulito, build ok.
+(Perf UI non-combat appena chiusa — vedi sezione sotto.)
+
+## Perf UI 2026-07-06 (pagine non-combat): background statico + dedup effetti
+
+Diagnosi: frame drop nelle pagine non-combat da tax globale di animazione. Fix (spec+piano
+in `docs/superpowers/{specs,plans}/2026-07-06-noncombat-perf*`, SDD ledger locale). Solo
+UI/CSS/markup, ZERO motore, look il più vicino possibile all'attuale (rimozione di costo, non
+redesign). 1184 test verdi, typecheck pulito. Tutto pushato.
+- **GameShell statico** (`0bae860`): il backdrop montato su OGNI route (app/layout) non anima
+  più. 3 fog blob tenuti (gradienti/posizioni/dimensioni byte-identici) ma blur 110/120/100→60px
+  e senza animazione; 14 ember infiniti + noise mix-blend rimossi; vignette invariata. Keyframe
+  `warmDrift`/`emberRise` cancellati (orfani). `anim-ambient` lasciato (lo usa MapScreen).
+- **Dedup blob per-schermata** (`443e0ea`): rimossi i blur blob ambient ridondanti che
+  Menu/Result/Boss impilavano sopra GameShell (34 righe, puramente sottrattivo). Tenuti gli
+  effetti in primo piano (Menu CTA aura, teaser levitation, Boss Skull pulse).
+- **PortraitImage lazy-load** (`29048ce`): +`loading=lazy` +`decoding=async` +`width/height`
+  512×512 → niente CLS nella griglia Collezione (~60 img). `object-cover` + sizing CSS →
+  nessuna distorsione su sorgenti non-quadrate.
+- **MapScreen** (`e58eedd`): rimossi 8 `.map-ember` duplicati (GameShell già li aveva) +
+  const/keyframe/rule relativi; `mapCurrentPulse` da `filter:brightness` (repaint) a
+  `transform:scale(1.06)+opacity` (composite-only). Nodo pulsa ancora. **Live-edge SMIL /
+  motion.path / glow del sentiero NON toccati** (già ottimizzati). reduced-motion preservato.
 
 ## Fix 2026-07-06 (dopo i joker): veleno visibile + combattimento fluido
 
