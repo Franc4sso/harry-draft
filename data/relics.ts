@@ -72,3 +72,7 @@ export const RELIC_BY_ID: Record<string, Relic> = Object.fromEntries(
 
 export const RULE_BREAKING_RELIC_IDS: string[] = ['zanna-vorace', 'furia-iniziale', 'patto-di-sangue']
 export const SCALING_RELIC_IDS: string[] = ['fame-vorace', 'collezionista-anime', 'marchio-vorace']
+export const JOKER_RELIC_IDS: string[] = [
+  'fame-vorace', 'collezionista-anime', 'marchio-vorace',
+  // + new joker ids added in Task 8
+]

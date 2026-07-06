@@ -2,9 +2,11 @@ import type { ActiveRelic, ActiveSynergy, DraftedWizard, Keyword, RelicCondition
 import type { Relic } from '@/types'
 import type { Rng } from './rng'
 import type { EventBus } from './combat/eventBus'
-import { RELICS, SCALING_RELIC_IDS } from '@/data/relics'
+import { RELICS, SCALING_RELIC_IDS, JOKER_RELIC_IDS } from '@/data/relics'
 import { BALANCE } from '@/data/constants'
 import { livingOf } from './roster'
+
+const JOKER_SET = new Set(JOKER_RELIC_IDS)
 
 let relicRestriction: ReadonlySet<string> | null = null
 
@@ -192,7 +194,7 @@ export function selectEnemyRelics(rng: Rng, count: number): ActiveRelic[] {
 
 export function offerRelics(rng: Rng, owned: ActiveRelic[], _stage: number): Relic[] {
   const ownedIds = new Set(owned.map(o => o.relic.id))
-  const available = restrictedRelicPool(RELICS).filter(r => !ownedIds.has(r.id))
+  const available = restrictedRelicPool(RELICS).filter(r => !ownedIds.has(r.id) && !JOKER_SET.has(r.id))
   const count = Math.min(BALANCE.relics.offerCount, available.length)
   const chosen: Relic[] = []
   const remaining = [...available]
@@ -200,6 +202,27 @@ export function offerRelics(rng: Rng, owned: ActiveRelic[], _stage: number): Rel
     const pick = weightedPick(rng, remaining)
     chosen.push(pick)
     const idx = remaining.indexOf(pick)
+    remaining.splice(idx, 1)
+  }
+  return chosen
+}
+
+/**
+ * Offer up to `BALANCE.relics.offerCount` distinct jokers not already owned,
+ * picked UNIFORMLY (not rarity-weighted, unlike offerRelics) so every joker
+ * is equally likely to surface despite all being 'epica' rarity. Jokers are
+ * always available (not gated by restrictedRelicPool unlocks). Deterministic
+ * per rng.
+ */
+export function offerJokers(rng: Rng, owned: ActiveRelic[]): Relic[] {
+  const ownedIds = new Set(owned.map(o => o.relic.id))
+  const pool = RELICS.filter(r => JOKER_SET.has(r.id) && !ownedIds.has(r.id))
+  const count = Math.min(BALANCE.relics.offerCount, pool.length)
+  const remaining = [...pool]
+  const chosen: Relic[] = []
+  for (let i = 0; i < count; i++) {
+    const idx = Math.floor(rng.next() * remaining.length)
+    chosen.push(remaining[idx]!)
     remaining.splice(idx, 1)
   }
   return chosen
