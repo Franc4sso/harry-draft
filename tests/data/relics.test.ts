@@ -17,7 +17,7 @@ describe('relics data', () => {
       expect(r.desc.length).toBeGreaterThan(0)
     }
   })
-  it('every relic has either a bonus, a trigger, a keywordMult, grantsExecute, grantsShieldConvert, grantsDarkMagic, grantsAlwaysHit, active, or scaling', () => {
+  it('every relic has either a bonus, a trigger, a keywordMult, grantsExecute, grantsShieldConvert, grantsDarkMagic, grantsAlwaysHit, active, scaling, conditional, or drawback', () => {
     for (const r of RELICS) {
       const hasBonus = !!r.bonus
       const hasTrigger = !!(r.triggers?.length)
@@ -28,14 +28,17 @@ describe('relics data', () => {
       const hasGrantsAlwaysHit = !!r.grantsAlwaysHit
       const hasActive = !!r.active
       const hasScaling = !!r.scaling
-      expect(hasBonus || hasTrigger || hasKeywordMult || hasGrantsExecute || hasGrantsShieldConvert || hasGrantsDarkMagic || hasGrantsAlwaysHit || hasActive || hasScaling, `relic ${r.id} has nothing`).toBe(true)
+      const hasConditional = !!r.conditional
+      const hasDrawback = !!r.drawback
+      expect(hasBonus || hasTrigger || hasKeywordMult || hasGrantsExecute || hasGrantsShieldConvert || hasGrantsDarkMagic || hasGrantsAlwaysHit || hasActive || hasScaling || hasConditional || hasDrawback, `relic ${r.id} has nothing`).toBe(true)
     }
   })
-  it('limits trigger relics to at most 4 (v1)', () => {
-    // Cap raised 3 -> 4: `zanna-vorace` is an intentional 4th trigger relic
-    // (rule-breaking content, added alongside furia-iniziale/patto-di-sangue).
+  it('limits trigger relics to at most 7 (v2: Task 8 adds 3 reactive jokers)', () => {
+    // Cap raised 4 -> 7: furia-morente, canto-del-cigno, assalto-d-apertura are
+    // intentional new trigger-based jokers added in Task 8 (balance-safe: jokers
+    // are excluded from offerRelics' balance-sensitive pool).
     const triggers = RELICS.filter(r => r.triggers?.length)
-    expect(triggers.length).toBeLessThanOrEqual(4)
+    expect(triggers.length).toBeLessThanOrEqual(7)
   })
   it('conditional relics reference real houses/roles', () => {
     const houses = ['Grifondoro', 'Serpeverde', 'Corvonero', 'Tassorosso']

@@ -64,6 +64,68 @@ export const RELICS: Relic[] = [
     desc: 'A ogni nemico sconfitto, +4% danno da veleno per il resto della run (max +100%).',
     scaling: { trigger: 'kill', stat: 'velenoMult', per: 0.04, cap: 1.0 },
   },
+  // --- Joker: scaling (nuovi trigger/stat, Task 8) ---
+  {
+    id: 'marcia-di-guerra', name: 'Marcia di Guerra', rarity: 'epica',
+    desc: 'A ogni turno di battaglia, +6 attacco per il resto della run (max +90).',
+    scaling: { trigger: 'turn', stat: 'attack', per: 6, cap: 90 },
+  },
+  {
+    id: 'fortezza-vivente', name: 'Fortezza Vivente', rarity: 'epica',
+    desc: 'A ogni battaglia vinta, +5 difesa per il resto della run (max +50).',
+    scaling: { trigger: 'battleWin', stat: 'defense', per: 5, cap: 50 },
+  },
+  {
+    id: 'vento-crescente', name: 'Vento Crescente', rarity: 'epica',
+    desc: 'A ogni battaglia vinta, +8 velocità per il resto della run (max +64).',
+    scaling: { trigger: 'battleWin', stat: 'speed', per: 8, cap: 64 },
+  },
+  {
+    id: 'eredita-dei-caduti', name: 'Eredità dei Caduti', rarity: 'epica',
+    desc: 'Per ogni mago caduto nella run, +18 attacco alla squadra (max +90).',
+    scaling: { trigger: 'allyDead', stat: 'attack', per: 18, cap: 90 },
+  },
+  // --- Joker: condizionali (when X then Y) ---
+  {
+    id: 'ultimo-baluardo', name: 'Ultimo Baluardo', rarity: 'epica',
+    desc: 'Se restano meno di 2 maghi vivi, +50% a tutte le statistiche.',
+    conditional: { when: { kind: 'teamSizeBelow', value: 2 }, then: { allPct: 0.5 } },
+  },
+  {
+    id: 'branco-ristretto', name: 'Branco Ristretto', rarity: 'epica',
+    desc: 'Se hai meno di 3 maghi vivi, +25 attacco e +25 difesa.',
+    conditional: { when: { kind: 'teamSizeBelow', value: 3 }, then: { atk: 25, def: 25 } },
+  },
+  // --- Joker: reattivi (trigger su evento -> applyStatus 'atkUp', vedi nota EffectSpec) ---
+  {
+    id: 'furia-morente', name: 'Furia Morente', rarity: 'epica',
+    desc: 'Quando un mago scende sotto il 40% di vita, guadagna +20 attacco (2 turni).',
+    triggers: [{ hook: 'onHpThreshold', threshold: 0.4,
+      effects: [{ kind: 'applyStatus', target: 'self', statusId: 'atkUp' }] }],
+  },
+  {
+    id: 'canto-del-cigno', name: 'Canto del Cigno', rarity: 'epica',
+    desc: 'Quando un alleato cade, la squadra viva guadagna +20 attacco (2 turni).',
+    triggers: [{ hook: 'onAllyDeath',
+      effects: [{ kind: 'applyStatus', target: 'ally', statusId: 'atkUp' }] }],
+  },
+  {
+    id: 'assalto-d-apertura', name: "Assalto d'Apertura", rarity: 'epica',
+    desc: 'Al primo turno, tutta la squadra guadagna +20 attacco (2 turni).',
+    triggers: [{ hook: 'onTurnStart', onlyTurn: 1,
+      effects: [{ kind: 'applyStatus', target: 'ally', statusId: 'atkUp' }] }],
+  },
+  // --- Joker: drawback (rischio/ricompensa) ---
+  {
+    id: 'patto-vorace', name: 'Patto Vorace', rarity: 'epica',
+    desc: '+40 attacco, ma -60 vita massima (cannone di vetro).',
+    bonus: { atk: 40 }, drawback: { hp: -60 },
+  },
+  {
+    id: 'sete-di-sangue', name: 'Sete di Sangue', rarity: 'epica',
+    desc: '+50 attacco, ma -6 rigenerazione (ti logori).',
+    bonus: { atk: 50 }, drawback: { regen: -6 },
+  },
 ]
 
 export const RELIC_BY_ID: Record<string, Relic> = Object.fromEntries(
@@ -74,5 +136,7 @@ export const RULE_BREAKING_RELIC_IDS: string[] = ['zanna-vorace', 'furia-inizial
 export const SCALING_RELIC_IDS: string[] = ['fame-vorace', 'collezionista-anime', 'marchio-vorace']
 export const JOKER_RELIC_IDS: string[] = [
   'fame-vorace', 'collezionista-anime', 'marchio-vorace',
-  // + new joker ids added in Task 8
+  'marcia-di-guerra', 'fortezza-vivente', 'vento-crescente', 'eredita-dei-caduti',
+  'ultimo-baluardo', 'branco-ristretto', 'furia-morente', 'canto-del-cigno',
+  'assalto-d-apertura', 'patto-vorace', 'sete-di-sangue',
 ]
