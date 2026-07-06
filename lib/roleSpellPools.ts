@@ -18,7 +18,7 @@ export const ROLE_SPELL_WHITELIST: Record<Role, ReadonlySet<string>> = {
   Attaccante: new Set([
     'avada', 'bombarda', 'confringo', 'crucio', 'diffindo', 'expelliarmus',
     'fiendfyre', 'flipendo', 'incendio', 'levicorpus', 'oppugno', 'reducto',
-    'sectumsempra', 'serpensortia', 'stupeficium', 'base_attack',
+    'sectumsempra', 'serpensortia', 'stupeficium',
   ]),
   Controllo: new Set([
     'confringo', 'confundo', 'crucio', 'fiendfyre', 'flipendo', 'imperio',
