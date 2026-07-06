@@ -1,6 +1,6 @@
 # Handoff — dove riprendere
 
-Aggiornato: **2026-07-06**. Ultimo commit su `origin/master`: `e58eedd`.
+Aggiornato: **2026-07-06**. Ultimo commit su `origin/master`: `212d697`.
 Da un altro PC: `git pull origin master`, `npm install`, poi leggi questo file.
 
 ## Stato in una riga
@@ -10,6 +10,32 @@ Il gioco è un roguelite auto-battler (Harry Potter, Next.js/TypeScript). Il loo
 `origin/master` (0 commit avanti).** Prossimo: **playtest** (ora anche i joker!) + nuovi
 nodi run (campfire, modificatori di battaglia). 1184 test verdi, typecheck pulito, build ok.
 (Perf UI non-combat appena chiusa — vedi sezione sotto.)
+
+## Perf UI 2026-07-06 (COMBATTIMENTO): ArenaBackdrop statico — VFX attacchi INTATTI
+
+`212d697`. Misurato il combattimento con Playwright (probe rAF-FPS). **Attenzione al
+metodo**: Chromium headless usa SwiftShader (rendering software CPU) che ammazza Pixi/WebGL →
+cifre finte (3fps). Rifatto headed con GPU vera (Intel Iris Xe/D3D12): idle arena ~52fps,
+replay attacchi ~30fps. Attribuzione LoAF: `blocking:0`, quasi zero script → **il collo non è
+JS/React** (la memoization di 8739a3e regge), è **paint/compositing**. NB: su questa macchina
+(WSL, compositor software) le cifre assolute NON sono affidabili — la varianza tra run supera
+l'effetto; il verdetto vero sul framerate va dato a occhio su finestra nativa.
+- **Causa (meccanismo, non solo numeri)**: `ArenaBackdrop` girava ~15 loop framer-motion
+  INFINITI dietro la battaglia (glow scale/opacity, una haze con `blur(9px)` che driftava, 12
+  embers che salivano) → ripaint dell'intera arena a OGNI frame del compositor, che poi ogni
+  card `backdrop-blur` dei maghi ri-campionava sopra. Stessa tax già rimossa da GameShell/
+  MapScreen nella slice non-combat.
+- **Fix**: `ArenaBackdrop` reso STATICO — gradiente + glow + scatter di embers fermi + vignette
+  (look preservato: gradienti/posizioni/vignette identici). La GPU ora dipinge solo quando parte
+  un VFX d'attacco vero. **VFX attacchi NON toccati** (`SpellFx` / impatto `UnitBust` restano
+  mount-on-cast) — verificato a schermo: callout, cast dorato, squash&stretch tutti presenti.
+- **NON toccato di proposito**: il `backdrop-blur-sm` sulle card dei maghi (parte del look
+  glass premium; ora che il fondo è fermo, non ri-campiona più un campo in movimento → costo
+  crollato da solo). Se al playtest il combattimento scatta ANCORA su finestra nativa, le leve
+  successive sono: (a) togliere/ridurre `backdrop-blur` sui bust, (b) canvas Pixi a risoluzione/
+  DPR ridotto, (c) atlas texture. NIENTE di questo tocca la bellezza degli attacchi (il costo è
+  paint, non gli effetti).
+- 1185/1185 test verdi (nuovo test arenaBackdrop: "static, no per-frame animation"), tsc pulito.
 
 ## Perf UI 2026-07-06 (pagine non-combat): background statico + dedup effetti
 
