@@ -1,27 +1,36 @@
 'use client'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import type { DraftedWizard, Stat } from '@/types'
 import { cn, houseTheme } from '@/lib/theme'
 import { TierBadge } from './TierBadge'
-import { RoleIcon } from './RoleIcon'
+import { RoleBadge } from './RoleBadge'
+import { AbilityPlate } from './AbilityPlate'
 import { CARD_STAT_MAX } from './WizardCard'
-import { STAT_CELLS } from './statCells'
-import { Chip } from '@/components/ui/Chip'
-import { HouseCrest } from '@/components/ui/HouseCrest'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { affiliationChips } from '@/lib/affiliationChips'
-import { spellTypeChip, spellEffectChips, spellEffectDetails, formatSpellStats } from '@/lib/glossary'
-import { roleTooltip } from '@/lib/roleInfo'
-import { Tooltip } from '@/components/ui/Tooltip'
+import { spellEffectChips, spellEffectDetails, formatSpellStats } from '@/lib/glossary'
+import { ROLE_ACCENT, ROLE_INFO } from '@/lib/roleInfo'
+import { synergyName } from '@/lib/synergyBadge'
 import { TRAIT_BY_ID } from '@/data/traits'
 import { SIGNATURE_BY_ID } from '@/data/signatures'
 import { displayName } from '@/lib/displayName'
 
 /**
- * Vertical "collectible" card for the draft. Portrait on top, spell panel at the
- * bottom. Sibling to WizardCardRow (which stays horizontal for team/recruit).
- * Root is NOT overflow-hidden (only the bg + portrait clip) so tooltips escape.
+ * Vertical "poster" card for the draft. Full-bleed portrait hero (role badge +
+ * tier + role word + monumental name over it), spell block, ability plate, and
+ * stat row below. Sibling to WizardCardRow (which stays horizontal for
+ * team/recruit). Root is NOT overflow-hidden (only the bg + portrait clip) so
+ * tooltips/glows can escape.
  */
+// Poster stat labels match the approved mockup ("ATT", not the roster row's
+// "ATK"); colors are shared with the row/compact layouts.
+const STAT_CELLS: Array<{ key: keyof typeof CARD_STAT_MAX; label: string; color: string }> = [
+  { key: 'hp', label: 'HP', color: '#7CFC9B' },
+  { key: 'atk', label: 'ATT', color: '#FF8A7A' },
+  { key: 'def', label: 'DIF', color: '#7DB7FF' },
+  { key: 'spd', label: 'VEL', color: '#FFD37D' },
+]
+
 export function WizardCardColumn({
   drafted, selected, onClick, className, hotSynergyIds, testId,
 }: {
@@ -34,8 +43,9 @@ export function WizardCardColumn({
 }) {
   const { wizard, stats, spell } = drafted
   const clickable = Boolean(onClick)
+  const reduceMotion = useReducedMotion()
   const theme = houseTheme(wizard.house)
-  const typeChip = spellTypeChip(spell.type)
+  const accent = ROLE_ACCENT[wizard.role]
   const effectChips = spellEffectChips(spell)
   const effectDetails = spellEffectDetails(spell)
   const spellStats = formatSpellStats(spell)
@@ -43,11 +53,17 @@ export function WizardCardColumn({
   const shinyTrait = drafted.shiny ? TRAIT_BY_ID[drafted.shiny.traitId] : undefined
   const shinyGlow = drafted.shiny ? ', 0 0 22px rgba(255,200,80,0.55), inset 0 0 0 2px rgba(255,210,90,0.7)' : ''
   const signature = SIGNATURE_BY_ID[wizard.id]
+  // TEMP stub — replaced by abilityFor in Task 5. The real per-wizard personal
+  // ability text (name + blurb) lands in lib/wizardAbilities.ts; until then the
+  // plate shows the equipped spell's name paired with the role's behaviour blurb.
+  const ability = { name: spell.name, blurb: ROLE_INFO[wizard.role] }
+  const firstHotSynergy = hotSynergyIds?.size ? [...hotSynergyIds][0] : undefined
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
+      whileHover={clickable && !reduceMotion ? { y: -4 } : undefined}
       transition={{ type: 'spring', stiffness: 300, damping: 26 }}
       onClick={onClick}
       role={clickable ? 'button' : undefined}
@@ -73,89 +89,79 @@ export function WizardCardColumn({
         className="pointer-events-none absolute inset-0 z-20 rounded-2xl"
         style={{ boxShadow: 'inset 0 0 0 1px rgba(217,182,95,0.28), inset 0 2px 0 rgba(255,255,255,0.05)' }}
       />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 rounded-2xl opacity-60"
-        style={{ background: `radial-gradient(60% 38% at 50% 6%, ${theme.color}66, transparent 70%)` }}
-      />
 
-      {/* PORTRAIT — full width, top, bleeding into the body via a soft mask.
-          Image is clipped; the crest/tier/role sit OVER it (outside the clip) so
-          their tooltips can escape. */}
-      <div className="relative h-44 w-full shrink-0">
+      {/* HERO — full-bleed portrait + role-accent wash + gradient + vignette.
+          Image is clipped; the badges/title sit OVER it (outside the clip) so
+          the card root can stay un-clipped for escaping tooltips/glows. */}
+      <div className="relative h-[248px] w-full shrink-0 overflow-hidden rounded-t-2xl">
+        <PortraitImage id={wizard.id} house={wizard.house} alt={wizard.name} variant="card" />
+        {/* role-accent wash, soft-light */}
         <div
-          className="absolute inset-0 overflow-hidden rounded-t-2xl"
-          style={{ WebkitMaskImage: 'linear-gradient(180deg,#000 66%,transparent 100%)', maskImage: 'linear-gradient(180deg,#000 66%,transparent 100%)' }}
-        >
-          <PortraitImage id={wizard.id} house={wizard.house} alt={wizard.name} variant="card" />
-          {/* house-tinted wash at the crown + fade into the card body */}
-          <div className="absolute inset-0" style={{ background: `radial-gradient(100% 55% at 50% 0%, ${theme.color}6e, transparent 72%)` }} />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, transparent 36%, rgba(19,15,34,0.55) 80%, #130f22 100%)' }} />
-          <div aria-hidden className="absolute inset-0" style={{ boxShadow: 'inset 0 0 34px rgba(0,0,0,0.55)' }} />
+          aria-hidden
+          className="absolute inset-0 mix-blend-soft-light opacity-40"
+          style={{ background: `radial-gradient(85% 55% at 50% 14%, ${accent}, transparent 66%)` }}
+        />
+        <div aria-hidden className="absolute inset-0" style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.42), transparent 30%)' }} />
+        <div aria-hidden className="absolute inset-0" style={{ background: 'linear-gradient(180deg, transparent 44%, rgba(6,5,11,0.5) 76%, #130f22 99%)' }} />
+        <div aria-hidden className="absolute inset-0" style={{ boxShadow: 'inset 0 0 100px 16px rgba(0,0,0,0.5)' }} />
+
+        <div className="absolute left-3 top-3">
+          <RoleBadge role={wizard.role} />
         </div>
-        {/* rarity gem */}
-        <div className="absolute left-2.5 top-2.5 z-30">
+        <div className="absolute right-3 top-3">
           <TierBadge tier={wizard.tier} />
         </div>
-        {/* house wax-seal crest */}
-        <div
-          className="absolute right-2.5 top-2 z-30 grid h-9 w-9 place-items-center rounded-full"
-          style={{
-            background: `radial-gradient(circle at 35% 30%, ${theme.color} 0%, ${theme.color} 55%, #000 135%)`,
-            boxShadow: `0 3px 7px rgba(0,0,0,0.6), 0 0 0 2px rgba(0,0,0,0.55), 0 0 0 3px ${theme.glow}55, inset 0 0 6px rgba(0,0,0,0.5)`,
-          }}
-        >
-          <HouseCrest house={wizard.house} size={18} />
-        </div>
-        {/* role pip — bottom-right, opposite the crest, clear of the name below */}
-        <Tooltip
-          className="absolute bottom-3 right-2.5 z-30"
-          triggerClassName="grid h-7 w-7 place-items-center rounded-full border border-[#caa24a]/50 bg-black/60 backdrop-blur-sm"
-          content={roleTooltip(wizard.role)}
-        >
-          <RoleIcon role={wizard.role} size={14} className="text-[#f3e0b0]" />
-        </Tooltip>
-      </div>
 
-      {/* CONTENT — pulled up under the arched portrait bleed. */}
-      <div className="relative z-10 -mt-4 flex min-w-0 flex-1 flex-col gap-2 px-3.5 pb-3.5">
-        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+        {/* Title block — role word pill + monumental name, over the portrait bottom. */}
+        <div className="absolute inset-x-3.5 bottom-2.5">
+          <span
+            className="mb-1 inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-black uppercase tracking-[0.1em] backdrop-blur-sm"
+            style={{ background: `${accent}47`, color: '#fff', border: `1px solid ${accent}80` }}
+          >
+            {wizard.role}
+          </span>
           <h3
-            className="font-display text-[18px] font-bold leading-[1.05]"
-            style={{ color: '#f6ecc4', textShadow: '0 2px 7px rgba(0,0,0,0.85)' }}
+            className="font-display text-[26px] font-extrabold leading-[0.95]"
+            style={{ textShadow: '0 4px 20px rgba(0,0,0,0.85)' }}
           >
             {displayName(drafted)}
             {drafted.shiny && <span aria-hidden className="ml-1 text-amber-300">✨</span>}
           </h3>
         </div>
-        {specialChips.length > 0 && (
-          <div data-testid="affiliation-strip" className="flex flex-wrap items-center gap-1">
-            {specialChips.map((c) => {
-              const hot = c.synergyId ? hotSynergyIds?.has(c.synergyId) ?? false : false
-              return (
-                <span
-                  key={c.id}
-                  data-synergy={c.synergyId}
-                  data-hot={hot ? '' : undefined}
-                  className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold"
-                  style={
-                    hot
-                      ? { color: '#f3e6c4', borderColor: '#caa24a', background: 'rgba(120,90,40,0.65)', boxShadow: '0 0 8px rgba(202,162,74,0.6)' }
-                      : { color: '#ead9b0', borderColor: 'rgba(176,141,87,0.55)', background: 'rgba(176,141,87,0.14)' }
-                  }
-                >
-                  <span aria-hidden style={{ color: '#caa24a' }}>◆</span>
-                  {c.label}
-                </span>
-              )
-            })}
-          </div>
-        )}
 
-        {signature && (
-          <div className="flex flex-wrap items-center gap-1">
-            <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-amber-300/60">Abilità</span>
-            <Tooltip content={signature.desc}>
+        {drafted.shiny && (
+          <div aria-hidden className="pointer-events-none absolute inset-0" style={{ boxShadow: 'inset 0 0 0 2px rgba(255,210,90,0.8), 0 0 18px rgba(255,200,80,0.5)' }} />
+        )}
+      </div>
+
+      {/* BODY */}
+      <div className="flex flex-1 flex-col p-3.5 pt-3">
+        {(specialChips.length > 0 || signature || shinyTrait) && (
+          <div className="mb-2.5 flex flex-wrap items-center gap-1">
+            {specialChips.length > 0 && (
+              <div data-testid="affiliation-strip" className="flex flex-wrap items-center gap-1">
+                {specialChips.map((c) => {
+                  const hot = c.synergyId ? hotSynergyIds?.has(c.synergyId) ?? false : false
+                  return (
+                    <span
+                      key={c.id}
+                      data-synergy={c.synergyId}
+                      data-hot={hot ? '' : undefined}
+                      className="inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold"
+                      style={
+                        hot
+                          ? { color: '#f3e6c4', borderColor: '#caa24a', background: 'rgba(120,90,40,0.6)', boxShadow: '0 0 8px rgba(202,162,74,0.6)' }
+                          : { color: '#ead9b0', borderColor: 'rgba(176,141,87,0.55)', background: 'rgba(176,141,87,0.12)' }
+                      }
+                    >
+                      <span aria-hidden style={{ color: '#caa24a' }}>◆</span>
+                      {c.label}
+                    </span>
+                  )
+                })}
+              </div>
+            )}
+            {signature && (
               <span
                 className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold"
                 style={{ color: '#f3e0b0', borderColor: 'rgba(202,162,74,0.6)', background: 'rgba(120,90,40,0.28)' }}
@@ -163,69 +169,75 @@ export function WizardCardColumn({
                 <span aria-hidden className="text-amber-300">★</span>
                 {signature.name}
               </span>
-            </Tooltip>
-          </div>
-        )}
-
-        {shinyTrait && (
-          <div className="flex flex-wrap items-center gap-1">
-            <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-sky-300/55">Tratto</span>
-            <Tooltip content={shinyTrait.desc}>
+            )}
+            {shinyTrait && (
               <span
-                className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold"
-                style={{ color: '#bcd9f5', borderColor: 'rgba(96,156,214,0.55)', background: 'rgba(40,92,162,0.22)' }}
+                className="inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold"
+                style={{ color: '#c4dff3', borderColor: 'rgba(100,160,220,0.5)', background: 'rgba(60,110,180,0.18)' }}
               >
-                <span aria-hidden className="text-sky-300">✦</span>
                 {shinyTrait.name}
               </span>
-            </Tooltip>
+            )}
           </div>
         )}
 
-        {/* Engraved stat plate — punchy bars with a min floor so low stats still read. */}
+        {/* SPELL BLOCK — hero move. No type chip: the role-accent bar carries
+            the "kind" cue instead. */}
         <div
-          className="mt-0.5 flex flex-col gap-1.5 rounded-xl px-3 py-2.5"
-          style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.4), rgba(0,0,0,0.18))', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)' }}
+          data-testid="spell-block"
+          className="relative overflow-hidden rounded-[15px] border"
+          style={{ background: 'linear-gradient(160deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02))', borderColor: 'rgba(255,255,255,0.1)' }}
         >
-          {STAT_CELLS.map((c) => {
-            const value = stats[c.key as Stat]
-            const max = CARD_STAT_MAX[c.key]
-            const ratio = Math.min(1, max <= 0 ? 0 : value / max)
-            return (
-              <div key={c.key} className="flex items-center gap-2">
-                <span className="w-6 shrink-0 text-[8px] font-bold uppercase tracking-[0.1em] text-white/45">{c.label}</span>
-                <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.07]" style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.5)' }}>
-                  <span className="block h-full rounded-full" style={{ width: `${Math.max(6, ratio * 100)}%`, background: c.color, boxShadow: `0 0 6px ${c.color}` }} />
-                </span>
-                <span className="w-6 shrink-0 text-right text-[11px] font-bold tabular-nums text-white">{value}</span>
-              </div>
-            )
-          })}
-        </div>
-
-        <div className="mt-auto flex min-w-0 flex-col rounded-xl px-3 py-2.5"
-          style={{ background: 'linear-gradient(180deg, rgba(34,24,58,0.55), rgba(12,9,23,0.5))', border: '1px solid rgba(217,182,95,0.2)' }}>
-          <div className="flex items-center justify-between gap-2">
-            <p className="truncate font-display text-[14px] font-semibold leading-tight text-white">{spell.name}</p>
-            <Chip label={typeChip.label} color={typeChip.color} icon={typeChip.icon} />
+          <span aria-hidden className="absolute inset-y-0 left-0 w-1" style={{ background: accent }} />
+          <div className="px-3.5 pb-1.5 pt-2.5">
+            <p className="font-display text-lg font-extrabold leading-none">{spell.name}</p>
           </div>
-          <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-white/70">
+          {spell.type === 'Controllo' && effectDetails.length > 0 ? (
+            <div className="space-y-0.5 px-3.5 pb-2.5 text-[11px] leading-snug text-white/80">
+              {effectDetails.map((line) => (<p key={line}>{line}</p>))}
+            </div>
+          ) : effectChips.length > 0 && (
+            <div className="flex flex-wrap gap-1 px-3.5 pb-2.5">
+              {effectChips.map((e) => (
+                <span
+                  key={e.label}
+                  className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold"
+                  style={{ color: e.color, background: `${e.color}22`, border: `1px solid ${e.color}55` }}
+                >
+                  {e.label}
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="flex flex-wrap gap-x-3.5 gap-y-0.5 border-t px-3.5 py-2 text-[11px]" style={{ borderColor: 'rgba(255,255,255,0.06)', background: 'rgba(0,0,0,0.25)', color: '#a4a1b6' }}>
             {spellStats.map((s) => (
               <span key={s.label} className="tabular-nums">
-                <span className="text-white/45">{s.label}</span> <span className="text-white/90">{s.value}</span>
+                <span>{s.label}:</span> <span className="font-bold" style={{ color: '#e8e5f2' }}>{s.value}</span>
               </span>
             ))}
           </div>
-          {spell.type === 'Controllo' && effectDetails.length > 0 ? (
-            <div className="mt-1.5 flex flex-col gap-0.5 text-[10px] leading-snug text-white/80">
-              {effectDetails.map((line) => (<span key={line}>{line}</span>))}
-            </div>
-          ) : effectChips.length > 0 && (
-            <div className="mt-1.5 flex flex-wrap gap-1">
-              {effectChips.map((e) => (<Chip key={e.label} label={e.label} color={e.color} icon={e.icon} />))}
-            </div>
-          )}
         </div>
+
+        <AbilityPlate name={ability.name} blurb={ability.blurb} />
+
+        <div className="mt-3.5 flex justify-between px-1">
+          {STAT_CELLS.map((c) => (
+            <div key={c.key} className="flex flex-col items-center gap-0.5">
+              <span className="text-[9.5px] font-bold uppercase tracking-wide text-white/45">{c.label}</span>
+              <span className="text-lg font-black tabular-nums" style={{ color: c.color }}>{stats[c.key as Stat]}</span>
+            </div>
+          ))}
+        </div>
+
+        {firstHotSynergy && (
+          <div
+            data-testid="synergy-nudge"
+            className="mt-2.5 rounded-lg border px-2.5 py-1.5 text-center text-[11px] font-semibold"
+            style={{ color: '#f3e6c4', borderColor: 'rgba(202,162,74,0.5)', background: 'rgba(120,90,40,0.22)' }}
+          >
+            Aggiunge {synergyName(firstHotSynergy)}
+          </div>
+        )}
       </div>
     </motion.div>
   )

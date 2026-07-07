@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { WizardCard } from '@/components/cards/WizardCard'
+import { WizardCardColumn } from '@/components/cards/WizardCardColumn'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
 import { WIZARD_BY_ID } from '@/data/wizards'
@@ -139,5 +140,59 @@ describe('WizardCard compact', () => {
     for (const id of Object.keys(TRAIT_BY_ID)) {
       expect(screen.queryByText(TRAIT_BY_ID[id]!.name)).toBeNull()
     }
+  })
+})
+
+describe('WizardCardColumn (poster layout, the LIVE draft card)', () => {
+  it('renders the role badge, spell block, name heading and all four stat labels', () => {
+    render(<WizardCardColumn drafted={draftedTank()} />)
+    expect(screen.getByTestId('role-badge')).toBeInTheDocument()
+    expect(screen.getByTestId('role-badge')).toHaveAttribute('aria-label', draftedTank().wizard.role)
+    expect(screen.getByTestId('spell-block')).toHaveTextContent(/./)
+    expect(screen.getByRole('heading', { name: /./ })).toBeInTheDocument()
+    for (const k of ['HP', 'ATT', 'DIF', 'VEL']) expect(screen.getByText(k)).toBeInTheDocument()
+  })
+
+  it('shows the ability plate fed by the temp stub (spell name + role blurb)', () => {
+    const d = draftedTank()
+    render(<WizardCardColumn drafted={d} />)
+    const plate = screen.getByTestId('ability-plate')
+    expect(plate).toHaveTextContent(/Abilità personale/i)
+    expect(within(plate).getByText(d.spell.name)).toBeInTheDocument()
+  })
+
+  it('shows the synergy nudge only when hotSynergyIds is non-empty', () => {
+    const { rerender } = render(<WizardCardColumn drafted={draftedTank()} />)
+    expect(screen.queryByTestId('synergy-nudge')).toBeNull()
+    rerender(<WizardCardColumn drafted={draftedTank()} hotSynergyIds={new Set(['gryffindor'])} />)
+    expect(screen.getByTestId('synergy-nudge')).toBeInTheDocument()
+  })
+
+  it('conveys the house via data-house and keeps the testId prop wired', () => {
+    const d = harry()
+    const { container } = render(<WizardCardColumn drafted={d} testId="draft-card-0" />)
+    expect(container.querySelector(`[data-house="${d.wizard.house}"]`)).not.toBeNull()
+    expect(container.querySelector('[data-testid="draft-card-0"]')).not.toBeNull()
+  })
+
+  it('fires onClick when clickable (name click) and supports keyboard activation', async () => {
+    const handler = vi.fn()
+    const d = harry()
+    render(<WizardCardColumn drafted={d} onClick={handler} />)
+    await userEvent.click(screen.getByText(displayName(d)))
+    expect(handler).toHaveBeenCalledOnce()
+  })
+
+  it('shows the role word (not the verb) next to the name', () => {
+    const d = draftedTank()
+    render(<WizardCardColumn drafted={d} />)
+    expect(screen.getByText(d.wizard.role)).toBeInTheDocument()
+  })
+
+  it('shows a trait chip when the wizard is shiny', () => {
+    const base = harry()
+    const shiny = { ...base, shiny: { traitId: 'furia' } }
+    render(<WizardCardColumn drafted={shiny} />)
+    expect(screen.getByText(TRAIT_BY_ID['furia']!.name)).toBeInTheDocument()
   })
 })

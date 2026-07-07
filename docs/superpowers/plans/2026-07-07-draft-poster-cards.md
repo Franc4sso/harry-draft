@@ -98,10 +98,18 @@ git commit -m "feat(ui): role verbs + accent colors; correct stale role descript
 
 ### Task 2: The poster card engine (layout) — verified on screen
 
+**CORRECTION (2026-07-07):** the LIVE draft renders `WizardCardColumn` (via
+`DraftScreen → DraftCandidateCard → WizardCardColumn`), NOT `WizardCard` (which is dead — its
+only consumer `DraftBoard`/`DraftSlot` is not wired into any route). So the poster layout must be
+applied to **`components/cards/WizardCardColumn.tsx`**, not `WizardCard.tsx`. `WizardCardColumn`
+has the same props as `WizardCard` plus `testId?`. Scope for THIS slice = DRAFT only (user
+decision) → `WizardCardRow` (team/recruit, horizontal) is NOT touched here. `RoleBadge`/
+`AbilityPlate` sub-components are still built and used (by Column).
+
 **Files:**
 - Create: `components/cards/RoleBadge.tsx`, `components/cards/AbilityPlate.tsx`
-- Modify: `components/cards/WizardCard.tsx`
-- Test: `tests/ui/wizardCard.test.tsx` (exists — extend)
+- Modify: `components/cards/WizardCardColumn.tsx`
+- Test: `tests/ui/wizardCard.test.tsx` (extend) — but assert against `WizardCardColumn` (the live draft card), not `WizardCard`.
 
 **Interfaces:**
 - Consumes: `ROLE_VERB`, `ROLE_ACCENT`, `ROLE_INFO` (Task 1); `abilityFor`, `epithetFor` (Task 3 — until Task 3 lands, use a temporary inline stub that returns the wizard's spell name + role blurb, replaced in Task 4). Existing glossary helpers `spellEffectLines`, `formatSpellStats` for the spell block.

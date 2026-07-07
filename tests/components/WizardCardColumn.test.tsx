@@ -14,8 +14,13 @@ describe('WizardCardColumn', () => {
     render(<WizardCardColumn drafted={d} testId="col-0" />)
     expect(screen.getByTestId('col-0')).toBeInTheDocument()
     expect(screen.getByText(displayName(d))).toBeInTheDocument()
-    expect(screen.getByText(d.spell.name)).toBeInTheDocument()
-    for (const l of ['HP', 'ATK', 'DIF', 'VEL']) expect(screen.getByText(l)).toBeInTheDocument()
+    // Poster layout (Task 2b): the spell name now appears twice — once in the
+    // spell block, once in the ability plate (TEMP stub: ability.name ===
+    // spell.name, replaced by abilityFor in Task 5). getAllByText preserves
+    // the original intent (the spell name is shown) without over-asserting
+    // on the stub's incidental duplication.
+    expect(screen.getAllByText(d.spell.name).length).toBeGreaterThan(0)
+    for (const l of ['HP', 'ATT', 'DIF', 'VEL']) expect(screen.getByText(l)).toBeInTheDocument()
   })
   it('exposes the affiliation strip with special synergies', () => {
     render(<WizardCardColumn drafted={harry()} />)
