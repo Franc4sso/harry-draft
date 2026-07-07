@@ -7,7 +7,7 @@ describe('balance constants', () => {
     expect(BALANCE.combat.turnCap).toBe(100)
     expect(BALANCE.combat.minDamage).toBeGreaterThanOrEqual(1)
     expect(BALANCE.draft.teamSize).toBe(5)
-    expect(BALANCE.draft.screenSize).toBe(5)
+    expect(BALANCE.draft.screenSize).toBe(3)
     expect(BALANCE.draft.maxTier1PerScreen).toBe(1)
   })
   it('tier weights favor lower tiers', () => {

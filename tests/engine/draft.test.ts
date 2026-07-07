@@ -1,12 +1,13 @@
 import { describe, it, expect } from 'vitest'
 import { createDraftPool, generateScreen, commitPick } from '@/game/engine/draft'
 import { createRng } from '@/game/engine/rng'
+import { BALANCE } from '@/data/constants'
 import type { Tier } from '@/types'
 
 describe('draft', () => {
-  it('returns exactly 5 options', () => {
+  it('returns exactly screenSize options', () => {
     const screen = generateScreen(createRng(1), createDraftPool(), [], 0)
-    expect(screen).toHaveLength(5)
+    expect(screen).toHaveLength(BALANCE.draft.screenSize)
   })
   it('never shows more than one Tier 1 per screen', () => {
     for (let seed = 0; seed < 50; seed++) {

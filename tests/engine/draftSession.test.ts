@@ -10,7 +10,7 @@ const TEAM = BALANCE.draft.teamSize
 describe('draftSession', () => {
   it('starts with a full first screen and no picks', () => {
     const s = startDraft('seed-a')
-    expect(s.current).toHaveLength(5)
+    expect(s.current).toHaveLength(BALANCE.draft.screenSize)
     expect(s.picks).toHaveLength(0)
     expect(s.screenIndex).toBe(0)
     expect(s.done).toBe(false)
@@ -31,7 +31,7 @@ describe('draftSession', () => {
     expect(s1.picks[0]!.wizard.id).toBe(s0.current[0]!.wizard.id)
     expect(s1.pool.length).toBe(beforePool - s0.current.length)
     expect(s1.screenIndex).toBe(1)
-    expect(s1.current).toHaveLength(5)
+    expect(s1.current).toHaveLength(BALANCE.draft.screenSize)
   })
   it('completes after teamSize picks', () => {
     let s = startDraft('seed-a')

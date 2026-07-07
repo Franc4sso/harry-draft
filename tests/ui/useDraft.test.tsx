@@ -6,7 +6,7 @@ import { BALANCE } from '@/data/constants'
 describe('useDraft', () => {
   it('exposes a first screen of 5 and no picks', () => {
     const { result } = renderHook(() => useDraft('s1'))
-    expect(result.current.current).toHaveLength(5)
+    expect(result.current.current).toHaveLength(BALANCE.draft.screenSize)
     expect(result.current.picks).toHaveLength(0)
     expect(result.current.done).toBe(false)
     expect(result.current.teamSize).toBe(BALANCE.draft.teamSize)
