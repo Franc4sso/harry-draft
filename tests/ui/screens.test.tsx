@@ -46,7 +46,7 @@ describe('Compendio (RulesScreen)', () => {
     render(<RulesScreen />)
     // existing categories
     expect(screen.getByText('Tipi di magia')).toBeInTheDocument()
-    expect(screen.getByText('Effetti')).toBeInTheDocument()
+    expect(screen.getByText('Effetti di stato')).toBeInTheDocument()
     // new categories
     expect(screen.getByText('Rarità reliquie')).toBeInTheDocument()
     expect(screen.getByText('Tipi sinergia')).toBeInTheDocument()
