@@ -1,6 +1,6 @@
 # Handoff — dove riprendere
 
-Aggiornato: **2026-07-06**. Ultimo commit su `origin/master`: `212d697`.
+Aggiornato: **2026-07-07**. Ultimo commit su `origin/master`: `fc75131`.
 Da un altro PC: `git pull origin master`, `npm install`, poi leggi questo file.
 
 ## Stato in una riga
@@ -8,8 +8,49 @@ Da un altro PC: `git pull origin master`, `npm install`, poi leggi questo file.
 Il gioco è un roguelite auto-battler (Harry Potter, Next.js/TypeScript). Il loop di run
 è ricco: mappa a nodi, combattimento, progressione. **Tutto il lavoro recente è su
 `origin/master` (0 commit avanti).** Prossimo: **playtest** (ora anche i joker!) + nuovi
-nodi run (campfire, modificatori di battaglia). 1184 test verdi, typecheck pulito, build ok.
-(Perf UI non-combat appena chiusa — vedi sezione sotto.)
+nodi run (campfire, modificatori di battaglia). 1205 test verdi, typecheck pulito, build ok.
+(Perf UI non-combat + fix veleno/morte + archetipi Supporto appena chiusi — vedi sotto.)
+
+## Archetipi Supporto 2026-07-07 (identità distinta, spec+piano in docs/superpowers/*supporto-archetypes*)
+
+Review finale whole-branch (opus): SPEC ✅ / quality approved. 1205 test verdi, tsc pulito.
+Diagnosi: i 14 Supporto clonavano episkey+protego → intercambiabili; serpensortia era leaked
+in TUTTI i ruoli. Slice (11 commit b74f8c9..fc75131):
+- **Whitelist per ruolo** (`lib/roleSpellPools.ts`) + guard test: ogni magia di ogni mago ∈
+  whitelist del suo ruolo. **serpensortia** (un Attacco) lecito su Tank/Attaccante/Controllo,
+  VIETATO su Supporto. **confundo** (Controllo) tolto da harry/sirius (Attaccante puro).
+- **4 archetipi Supporto** (solo effetti esistenti): Guaritore (heal/revive/ferula), Scudiero
+  (protego/fianto/aegis/colletivo_scudo), Stratega (incitamento/riddikulus/salvio), Purificatore
+  (salvio/ferula/anapneo). I 14 Supporto riassegnati; ogni pool ha ≥1 magia PROATTIVA (utile a
+  HP pieno: protego/fianto/salvio/ferula — NON le cure/rider che servono un ferito).
+- **Supporto = ZERO attacchi diretti (lato PLAYER)** — via pool puliti. Il tag `veleno` tolto da
+  narcissa/slughorn/sprout/astoria (non avvelenano più); sinergia Tossicità ancora formabile (6
+  veleno-maghi non-Supporto restano). STARTER veleno-quota via pansy+theodore (starter-safe).
+- **Nemici elite/boss: ≤1 Supporto** (con altri ruoli), e quell'1 riceve `base_attack` via
+  `guaranteeOffense` (nessun nemico innocuo). Il PLAYER-Supporto non passa mai da lì → identità
+  intatta. `capSupporto` in teamGen sostituisce i Supporto in eccesso con non-Supporto.
+- **MURO_ALT boss-leader**: pettigrew (Supporto) → **marcus** (Serpeverde Attaccante, powerOf
+  145.5 = match esatto, balance immoto). Regola: nessun Supporto come boss-leader scriptato.
+- **VFX per-magia** rifinite per archetipo (Guaritore verde, Scudiero azzurro, Stratega dorato,
+  Purificatore argento). Tutte le 14 avevano già entry; corretti 3 mismatch colore.
+- **⚠️ BALANCE**: campaignBalanceB winRate **0.375 → 0.225** (più difficile — i Supporto player
+  non fanno più danno). **APPROVATO dall'utente** come ok (sopra il floor 0.15, coerente con
+  "difficoltà più cattiva approvata"). Se al playtest è troppo, la leva è buffare cura/scudo/buff
+  dei Supporto, NON reintrodurre attacchi. Task 4 del piano (rimuovere branch targeting) CANCELLATO:
+  dopo la decisione ≤1-Supporto-nemico quel branch NON è morto (aima il base_attack del Supporto
+  nemico al nemico giusto — rimuoverlo darebbe fuoco amico).
+
+## Fix veleno/morte 2026-07-06 (combattimento)
+
+Tre bug fixati (commit 0d18e27): (1) **mago morto attaccava** — un'unità uccisa da un tick di
+veleno si auto-rianimava con la propria rigen nello STESSO tick (`tickHeal` gated su `unit.alive`
+stantio invece di `hp>0`); ora la morte "atterra" nel tick. (2) **icona veleno**: la pill mostrava
+`remaining` (2, congelato) invece delle dosi per la PRIMA dose (guardia `stacks>1`); ora mostra
+sempre le dosi (≥1). (3) **tooltip "-0 HP/turno"**: usava `amount` non settato invece di
+`tickDamage` del def. Veleno ticca a FINE ROUND (= "fine turno" nel modello round=turn) — verificato,
+invariato. Vedi memoria [[harry-draft-dot-death-self-revive]].
+
+## Perf UI 2026-07-06 (COMBATTIMENTO): ArenaBackdrop statico — VFX attacchi INTATTI
 
 ## Perf UI 2026-07-06 (COMBATTIMENTO): ArenaBackdrop statico — VFX attacchi INTATTI
 
