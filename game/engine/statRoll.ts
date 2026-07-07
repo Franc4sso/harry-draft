@@ -74,12 +74,21 @@ export function pickSpell(rng: Rng, wizard: Wizard, preferOffense = false): Spel
   // Soft: falls back to the whole pool if the pool has none. Venom / preferOffense below
   // still OVERRIDE this base (enemy offensive guarantee wins).
   const roleTypes = ROLE_SPELL_TYPES[wizard.role]
+  let roleMatch: string[] = []
   if (roleTypes) {
-    const roleMatch = wizard.spellPool.filter(id => roleTypes.includes(SPELL_BY_ID[id]?.type as SpellType))
+    roleMatch = wizard.spellPool.filter(id => roleTypes.includes(SPELL_BY_ID[id]?.type as SpellType))
     if (roleMatch.length > 0) candidates = roleMatch
   }
-  const venom = (wizard.tags ?? []).includes('veleno')
+  // Venom guarantee, but ROLE WINS. A venom Attaccante equips serpensortia (an Attacco —
+  // IN role: it's a damage-over-time attacker). A venom Controllo/Tank/Supporto must NOT be
+  // forced onto serpensortia against its role ("the Controllo goes on the attack" bug) — it
+  // only equips a venom spell if that venom spell is also in-role, or if it has no in-role
+  // spell at all. Restrict venom candidates to the in-role set when one exists.
+  const venomAll = (wizard.tags ?? []).includes('veleno')
     ? wizard.spellPool.filter(id => SPELL_IS_VENOM.has(id))
+    : null
+  const venom = venomAll && venomAll.length > 0
+    ? (roleMatch.length > 0 ? venomAll.filter(id => roleMatch.includes(id)) : venomAll)
     : null
   if (venom && venom.length > 0) {
     candidates = venom
