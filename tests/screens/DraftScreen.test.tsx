@@ -6,11 +6,12 @@ import { STARTER_PICKS } from '@/game/engine/runEngine'
 import type { DraftedWizard } from '@/types'
 
 describe('DraftScreen', () => {
-  it('shows a screen of 5 candidates', () => {
+  it('shows a screen of 3 candidates', () => {
     render(<DraftScreen seed="ds-seed" onComplete={() => {}} />)
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 3; i++) {
       expect(screen.getByTestId(`draft-pick-${i}`)).toBeInTheDocument()
     }
+    expect(screen.queryByTestId('draft-pick-3')).toBeNull()
     expect(screen.getByText(new RegExp(`Pesca 0/${STARTER_PICKS}`))).toBeInTheDocument()
   })
 
