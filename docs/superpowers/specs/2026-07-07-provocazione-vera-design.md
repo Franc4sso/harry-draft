@@ -50,21 +50,32 @@ la provocazione (regola globale già esistente).
 Quando il Tank provocante È hard-controllato (o non c'è Tank): tutti tornano al loro targeting
 naturale (Attaccante→Affondo/dive, Controllo→backline, Tank→lowestHp, ecc.).
 
-### Controllo: lo scavalco attivo
+### Controllo: lo scavalco attivo (hard-control-gated — VALIDATO PER SIMULAZIONE)
+
+**Decisione presa DOPO una simulazione** (2026-07-07): la prima idea era "il Controllo punta il
+Tank finché provoca, indipendentemente dalla spell". Una sim strumentata (Controllo vs team con
+Tank tanky + carry) l'ha smontata: un Controllo con **soft-control** (confundo/crucio: solo
+debuff/dot, NON stordiscono) martellava il Tank **a vuoto per tutta la battaglia** (68 colpi sul
+Tank, 2 sul backline) senza mai spegnere la provocazione né arrivare al backline — il counter
+Controllo→Tank si auto-sabotava.
+
+Design corretto (misurato: soft→backline pulito, hard→Tank):
 Oggi `case 'Controllo'` → `backlineTarget` (ignora il Tank sempre). Nuovo:
-- Se esiste un Tank nemico che provoca e non è ancora hard-controllato → il Controllo **punta
-  quel Tank** (per applicargli il suo controllo e spegnere la provocazione). Usa
-  `highestThreat(enemyPool)` come gli altri (il Tank domina per il tauntBonus).
-- Se il Tank provocante è già hard-controllato, o non c'è un Tank che provoca → **backlineTarget**
-  come oggi (il Controllo torna a scavalcare verso il backline).
+- Se esiste un Tank nemico che provoca e non è ancora hard-controllato, **E la magia del Controllo
+  applica un HARD-control** (stun/freeze/silence — cioè `appliesControl(spell)` interseca
+  `HARD_CONTROL_KINDS`) → il Controllo **punta quel Tank** (`highestThreat(enemyPool)`) per
+  stordirlo e spegnere la provocazione.
+- Altrimenti (Tank già hard-controllato, nessun Tank che provoca, O la magia del Controllo è
+  soft/debuff/attacco che NON può spegnere il taunt) → **backlineTarget** come oggi. Non ha senso
+  martellare un muro che non si può rompere: il Controllo scavalca.
 
-Semantica: il Controllo counterizza il Tank stordendolo, non ignorandolo. Una volta stordito, la
-provocazione cade (regola globale) e TUTTI (Controllo incluso) sono liberi sul backline.
+Semantica: il Controllo counterizza il Tank **solo con lo strumento giusto** (un hard-control),
+spendendolo per aprire il team; senza quello strumento, resta il bisturi che scavalca verso il
+backline. Una volta stordito il Tank, la provocazione cade (regola globale) e TUTTI (Controllo
+incluso) sono liberi.
 
-Nota: non distinguiamo se la spell del Controllo è hard o soft. Il Controllo punta comunque il
-Tank finché provoca; se la sua spell è un hard-control lo spegne (e il turno dopo tutti liberi),
-se è soft continuerà a puntarlo finché qualcuno (o lui stesso con un'altra magia) lo stordisce.
-Semplice e coerente — YAGNI sul ramo soft-vs-hard.
+Evidenza sim (variante gated): confundo (soft) → Tank=0 / backline=12 (scavalca netto);
+petrificus/imperio (hard) → quasi tutto sul Tank (lo stordisce). Riserva "stallo" risolta.
 
 ## Architettura / implementazione
 
@@ -75,8 +86,9 @@ Un solo file: `game/engine/combat/targeting.ts`, funzione `selectTarget`.
   come gate booleano "c'è un taunt attivo?").
 - `case 'Tank'`: se `activeTauntTank(enemyPool)` → `highestThreat(enemyPool, ign)`; altrimenti
   `lowestHp(enemyPool)` (comportamento attuale).
-- `case 'Controllo'`: se `activeTauntTank(enemyPool)` → `highestThreat(enemyPool)`; altrimenti
-  `backlineTarget(enemyPool)` (comportamento attuale).
+- `case 'Controllo'`: se `activeTauntTank(enemyPool)` **E** la spell applica un hard-control
+  (`[...appliesControl(spell)].some(k => HARD_CONTROL_KINDS.has(k))`) → `highestThreat(enemyPool)`;
+  altrimenti `backlineTarget(enemyPool)`. Serve importare `HARD_CONTROL_KINDS` da `./roleCounter`.
 - `case 'Supporto'` (ramo offensivo): se `activeTauntTank(enemyPool)` → `highestThreat(enemyPool)`;
   altrimenti il comportamento attuale (backline per controllo, highestThreat per attacco).
 - `case 'Attaccante'`: invariato (già rispetta il taunt; l'`ignoresTaunt` di Bellatrix resta).
@@ -90,7 +102,9 @@ bersaglio. Nessun cambio a resolve/effects/simulate. Deterministico.
 ## Testing
 1. `tests/engine/combat/targeting.test.ts` — estendere:
    - Un **Tank** nemico attaccante, con un Tank avversario che provoca → punta il Tank (non lowestHp).
-   - Un **Controllo** con un Tank che provoca (non ancora controllato) → punta il Tank (non backline).
+   - Un **Controllo con hard-control** (es. petrificus) e un Tank che provoca → punta il Tank.
+   - Un **Controllo con soft-control** (es. confundo) e un Tank che provoca → scavalca al backline
+     (NON martella il Tank — è la correzione validata per simulazione).
    - Un **Controllo** con Tank provocante GIÀ hard-controllato → torna a backlineTarget.
    - Un **Supporto offensivo** con Tank che provoca → punta il Tank.
    - `ignoresTaunt` (Bellatrix) → salta il gate per OGNI ruolo, non solo Attaccante.
