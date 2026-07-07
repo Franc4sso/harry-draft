@@ -5,9 +5,11 @@ import { SPELL_BY_ID } from '@/data/spells'
 const SUPPORTO = () => WIZARDS.filter(w => w.role === 'Supporto')
 
 // A proactive spell has effect even at full team HP: Difesa (shield/ward/buff) or a
-// regen/buff Cura (ferula = regen-over-time; incitamento = atkUp). Pure instant heals
-// (episkey/vulnera/anapneo/rennervate) do NOT count — they need a wounded ally.
-const PROACTIVE = new Set(['protego', 'protego_maxima', 'fianto', 'colletivo_scudo', 'aegis', 'expecto', 'incitamento', 'riddikulus', 'salvio', 'ferula'])
+// self-buff (riddikulus/salvio = atkUp/spdUp on self) or a regen-over-time Cura (ferula).
+// Spells needing a WOUNDED ALLY do NOT count as proactive: pure instant heals
+// (episkey/vulnera/anapneo/rennervate) AND ally-targeted Cura riders (colletivo_scudo,
+// incitamento) all fall to lowestHp(enemyPool) at full team HP, doing nothing useful.
+const PROACTIVE = new Set(['protego', 'protego_maxima', 'fianto', 'aegis', 'expecto', 'riddikulus', 'salvio', 'ferula'])
 
 describe('Supporto archetypes', () => {
   it('no Supporto carries a direct-attack spell', () => {
