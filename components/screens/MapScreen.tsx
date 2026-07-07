@@ -144,7 +144,7 @@ export function MapScreen({
 
   return (
     <div
-      className="relative flex-1 flex flex-col items-center gap-5 overflow-auto p-6"
+      className="relative flex-1 flex flex-col items-center gap-5 overflow-auto p-6 pb-16 [scrollbar-gutter:stable]"
       style={{ background: 'radial-gradient(130% 80% at 50% -12%, #1b1436 0%, #100c20 52%, #09070f 100%)' }}
     >
       {header}
