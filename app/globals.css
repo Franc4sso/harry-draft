@@ -40,12 +40,16 @@ html, body {
     var(--background);
   color: var(--foreground);
   min-height: 100%;
-  /* Always reserve the vertical scrollbar gutter so content that changes height
-     (e.g. draft synergy preview on hover) can't toggle the scrollbar on/off and
-     flicker the layout width. */
+  /* Reserve the vertical scrollbar gutter so content that changes height (e.g. the
+     draft synergy preview on hover, or the map tree) can't toggle the scrollbar on/
+     off and flicker the layout width. Only the document (html) scrolls; body must
+     NOT draw its own bar, or two scrollbars appear side by side. */
   scrollbar-gutter: stable;
   overflow-y: scroll;
 }
+/* Cancel body's forced bar — only the document scrolls, so body drawing a second
+   (empty) scrollbar next to html's must be suppressed. */
+body { overflow-y: visible; }
 
 .glass {
   background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
