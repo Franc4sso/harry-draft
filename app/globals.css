@@ -50,6 +50,11 @@ html, body {
 
 @keyframes resaShimmer { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
 @keyframes resaPulse { 0%,100% { opacity: .85 } 50% { opacity: 1 } }
+/* Draft synergy "would activate" gem-socket: charging glow (box-shadow only, so
+   the node's rotate-45 transform is untouched). */
+@keyframes synergyNodePulse { 0%,100% { box-shadow: 0 0 9px rgba(80,230,130,.55) } 50% { box-shadow: 0 0 22px rgba(80,230,130,1) } }
+.synergy-node-pulse { animation: synergyNodePulse 1.4s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .synergy-node-pulse { animation: none; box-shadow: 0 0 14px rgba(80,230,130,.85); } }
 /* Battle arena central callout (CRITICO/PARATO/…): scale/blur-in then fade. */
 @keyframes battleCallout {
   0% { opacity: 0; transform: translate(-50%, -50%) scale(2.3); filter: blur(9px); }

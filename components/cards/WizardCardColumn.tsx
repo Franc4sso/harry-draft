@@ -5,8 +5,9 @@ import { cn, houseTheme } from '@/lib/theme'
 import { TierBadge } from './TierBadge'
 import { RoleIcon } from './RoleIcon'
 import { CARD_STAT_MAX } from './WizardCard'
-import { StatCell, STAT_CELLS } from './statCells'
+import { STAT_CELLS } from './statCells'
 import { Chip } from '@/components/ui/Chip'
+import { HouseCrest } from '@/components/ui/HouseCrest'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { affiliationChips } from '@/lib/affiliationChips'
 import { spellTypeChip, spellEffectChips, spellEffectDetails, formatSpellStats } from '@/lib/glossary'
@@ -55,43 +56,74 @@ export function WizardCardColumn({
       data-house={wizard.house}
       data-testid={testId}
       className={cn(
-        'wizard-col relative flex w-full select-none flex-col rounded-2xl text-white',
+        'wizard-col group relative flex w-full select-none flex-col rounded-2xl text-white',
         clickable && 'cursor-pointer', className,
       )}
       style={{
-        border: `2px solid ${theme.color}`,
+        // Object, not panel: gold double-bevel frame + house glow + deep drop.
+        background: `linear-gradient(180deg, ${theme.color}1f 0%, #130f22 42%, #0c0917 100%)`,
         boxShadow: selected
-          ? `0 10px 30px rgba(0,0,0,0.5), 0 0 0 2px rgba(255,255,255,0.85), 0 0 18px ${theme.glow}55${shinyGlow}`
-          : `0 10px 30px rgba(0,0,0,0.5), 0 0 16px ${theme.glow}30${shinyGlow}`,
+          ? `0 0 0 1px rgba(0,0,0,0.7), 0 0 0 2px #f6ecc4, 0 0 0 3px rgba(0,0,0,0.8), 0 22px 46px -14px rgba(0,0,0,0.85), 0 0 30px -4px ${theme.glow}88${shinyGlow}`
+          : `0 0 0 1px rgba(0,0,0,0.7), 0 0 0 2px #a9802f, 0 0 0 3px rgba(0,0,0,0.8), 0 22px 46px -14px rgba(0,0,0,0.85), 0 0 34px -6px ${theme.glow}44${shinyGlow}`,
       }}
     >
-      {/* Background layer, clipped to the rounded corners. Root stays un-clipped. */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">
-        <div className="absolute inset-0" style={{ background: `linear-gradient(180deg, ${theme.color}22 0%, #0c0a16 60%)` }} />
-      </div>
+      {/* Engraved gold inner hairline + faint house aura at the crown. */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 z-20 rounded-2xl"
+        style={{ boxShadow: 'inset 0 0 0 1px rgba(217,182,95,0.28), inset 0 2px 0 rgba(255,255,255,0.05)' }}
+      />
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-0 rounded-2xl opacity-60"
+        style={{ background: `radial-gradient(60% 38% at 50% 6%, ${theme.color}66, transparent 70%)` }}
+      />
 
-      {/* PORTRAIT — full width, top. Image clipped; badges over it stay outside the clip. */}
-      <div className="relative h-40 w-full shrink-0">
-        <div className="absolute inset-0 overflow-hidden rounded-t-[14px]">
+      {/* PORTRAIT — full width, top, bleeding into the body via a soft mask.
+          Image is clipped; the crest/tier/role sit OVER it (outside the clip) so
+          their tooltips can escape. */}
+      <div className="relative h-44 w-full shrink-0">
+        <div
+          className="absolute inset-0 overflow-hidden rounded-t-2xl"
+          style={{ WebkitMaskImage: 'linear-gradient(180deg,#000 66%,transparent 100%)', maskImage: 'linear-gradient(180deg,#000 66%,transparent 100%)' }}
+        >
           <PortraitImage id={wizard.id} house={wizard.house} alt={wizard.name} variant="card" />
-          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, transparent 40%, #0c0a16 96%)' }} />
+          {/* house-tinted wash at the crown + fade into the card body */}
+          <div className="absolute inset-0" style={{ background: `radial-gradient(100% 55% at 50% 0%, ${theme.color}6e, transparent 72%)` }} />
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, transparent 36%, rgba(19,15,34,0.55) 80%, #130f22 100%)' }} />
+          <div aria-hidden className="absolute inset-0" style={{ boxShadow: 'inset 0 0 34px rgba(0,0,0,0.55)' }} />
         </div>
-        <div className="absolute left-2 top-2">
+        {/* rarity gem */}
+        <div className="absolute left-2.5 top-2.5 z-30">
           <TierBadge tier={wizard.tier} />
         </div>
+        {/* house wax-seal crest */}
+        <div
+          className="absolute right-2.5 top-2 z-30 grid h-9 w-9 place-items-center rounded-full"
+          style={{
+            background: `radial-gradient(circle at 35% 30%, ${theme.color} 0%, ${theme.color} 55%, #000 135%)`,
+            boxShadow: `0 3px 7px rgba(0,0,0,0.6), 0 0 0 2px rgba(0,0,0,0.55), 0 0 0 3px ${theme.glow}55, inset 0 0 6px rgba(0,0,0,0.5)`,
+          }}
+        >
+          <HouseCrest house={wizard.house} size={18} />
+        </div>
+        {/* role pip — bottom-right, opposite the crest, clear of the name below */}
         <Tooltip
-          className="absolute bottom-2 left-2"
-          triggerClassName="grid h-6 w-6 place-items-center rounded-full border border-white/25 bg-black/55 backdrop-blur-sm"
+          className="absolute bottom-3 right-2.5 z-30"
+          triggerClassName="grid h-7 w-7 place-items-center rounded-full border border-[#caa24a]/50 bg-black/60 backdrop-blur-sm"
           content={roleTooltip(wizard.role)}
         >
-          <RoleIcon role={wizard.role} size={13} className="text-white/90" />
+          <RoleIcon role={wizard.role} size={14} className="text-[#f3e0b0]" />
         </Tooltip>
       </div>
 
-      {/* CONTENT */}
-      <div className="relative z-10 flex min-w-0 flex-1 flex-col gap-1.5 p-3">
+      {/* CONTENT — pulled up under the arched portrait bleed. */}
+      <div className="relative z-10 -mt-4 flex min-w-0 flex-1 flex-col gap-2 px-3.5 pb-3.5">
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-          <h3 className="font-display text-[17px] leading-none">
+          <h3
+            className="font-display text-[18px] font-bold leading-[1.05]"
+            style={{ color: '#f6ecc4', textShadow: '0 2px 7px rgba(0,0,0,0.85)' }}
+          >
             {displayName(drafted)}
             {drafted.shiny && <span aria-hidden className="ml-1 text-amber-300">✨</span>}
           </h3>
@@ -150,15 +182,31 @@ export function WizardCardColumn({
           </div>
         )}
 
-        <div className="mt-1 grid grid-cols-1 content-center gap-y-1">
-          {STAT_CELLS.map((c) => (
-            <StatCell key={c.key} label={c.label} value={stats[c.key as Stat]} max={CARD_STAT_MAX[c.key]} color={c.color} />
-          ))}
+        {/* Engraved stat plate — punchy bars with a min floor so low stats still read. */}
+        <div
+          className="mt-0.5 flex flex-col gap-1.5 rounded-xl px-3 py-2.5"
+          style={{ background: 'linear-gradient(180deg, rgba(0,0,0,0.4), rgba(0,0,0,0.18))', boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04)' }}
+        >
+          {STAT_CELLS.map((c) => {
+            const value = stats[c.key as Stat]
+            const max = CARD_STAT_MAX[c.key]
+            const ratio = Math.min(1, max <= 0 ? 0 : value / max)
+            return (
+              <div key={c.key} className="flex items-center gap-2">
+                <span className="w-6 shrink-0 text-[8px] font-bold uppercase tracking-[0.1em] text-white/45">{c.label}</span>
+                <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.07]" style={{ boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.5)' }}>
+                  <span className="block h-full rounded-full" style={{ width: `${Math.max(6, ratio * 100)}%`, background: c.color, boxShadow: `0 0 6px ${c.color}` }} />
+                </span>
+                <span className="w-6 shrink-0 text-right text-[11px] font-bold tabular-nums text-white">{value}</span>
+              </div>
+            )
+          })}
         </div>
 
-        <div className="mt-auto flex min-w-0 flex-col rounded-xl border border-white/12 bg-black/35 px-3 py-2">
+        <div className="mt-auto flex min-w-0 flex-col rounded-xl px-3 py-2.5"
+          style={{ background: 'linear-gradient(180deg, rgba(34,24,58,0.55), rgba(12,9,23,0.5))', border: '1px solid rgba(217,182,95,0.2)' }}>
           <div className="flex items-center justify-between gap-2">
-            <p className="truncate font-display text-sm leading-tight">{spell.name}</p>
+            <p className="truncate font-display text-[14px] font-semibold leading-tight text-white">{spell.name}</p>
             <Chip label={typeChip.label} color={typeChip.color} icon={typeChip.icon} />
           </div>
           <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[10px] text-white/70">

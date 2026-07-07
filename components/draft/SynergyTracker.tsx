@@ -1,6 +1,7 @@
 'use client'
 import type { SynergyProgress, SynergyPreview } from '@/game/engine/synergy'
 import { synergyBonusText } from '@/lib/glossary'
+import { cn } from '@/lib/cn'
 
 type Row = SynergyProgress | SynergyPreview
 function isPreview(r: Row): r is SynergyPreview {
@@ -96,41 +97,49 @@ export function SynergyTracker({
 
   return (
     <div className="w-full">
-      <p className="mb-2 text-[10px] uppercase tracking-[0.14em] text-white/50">
-        {candidateName ? <>Se peschi <span className="text-[#7cdc7c]">{candidateName}</span>:</> : 'Sinergie · cosa sbloccano'}
+      {/* Engraved gold header — the ledger's masthead. */}
+      <div className="mb-1 flex items-center gap-2.5">
+        <span aria-hidden className="h-px flex-1" style={{ background: 'linear-gradient(90deg,transparent,rgba(217,182,95,0.45),transparent)' }} />
+        <span className="font-display text-[10.5px] uppercase tracking-[0.18em] text-[#d9b65f]">Sinergie</span>
+        <span aria-hidden className="h-px flex-1" style={{ background: 'linear-gradient(90deg,transparent,rgba(217,182,95,0.45),transparent)' }} />
+      </div>
+      <p className="mb-3.5 text-center text-[9px] tracking-[0.05em] text-white/45">
+        {candidateName ? <>Se peschi <span className="font-semibold text-[#a8ffbf]">{candidateName}</span></> : 'cosa sbloccano'}
       </p>
-      {groups.length === 0 && <p className="text-xs text-white/40">Nessuna sinergia ancora. Pesca per costruirne una.</p>}
-      <div className="space-y-2.5">
+      {groups.length === 0 && <p className="text-center text-xs text-white/40">Nessuna sinergia ancora. Pesca per costruirne una.</p>}
+      <div className="space-y-3.5">
         {groups.map((g) => {
           const fillRatio = Math.min(1, g.maxThreshold <= 0 ? 0 : Math.min(g.nextCount, g.maxThreshold) / g.maxThreshold)
           return (
             <div
               key={g.key}
               data-family={g.key}
-              className="rounded-xl border border-[#2a2440] bg-[rgba(255,255,255,0.02)] p-2.5"
+              className="[&+&]:border-t [&+&]:border-[#d9b65f]/10 [&+&]:pt-3.5"
             >
-              <div className="mb-2 flex items-center justify-between gap-2">
-                <span className="text-xs font-semibold text-white/90">{g.name}</span>
-                <span className="text-[11px] font-bold text-[#b08d57]">
+              <div className="mb-2.5 flex items-baseline justify-between gap-2">
+                <span className="font-display text-[12.5px] font-semibold text-[#f6ecc4]">{g.name}</span>
+                <span className="text-[11px] font-bold tabular-nums text-[#d9b65f]">
                   {g.nextCount !== g.count ? <>{g.count} → {g.nextCount}</> : <>{g.count} / {g.nextThreshold}</>}
                 </span>
               </div>
 
-              {/* Tier track: connecting fill line + one node per tier threshold. */}
-              <div className="relative flex items-center justify-between">
-                <div aria-hidden className="absolute left-3 right-3 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-white/10" />
+              {/* Rune track: etched fill line + gem-socket node per tier threshold. */}
+              <div className="relative flex items-center justify-between px-0.5">
+                <div aria-hidden className="absolute left-3.5 right-3.5 top-1/2 h-0.5 -translate-y-1/2 rounded-full bg-white/10" />
                 <div
                   aria-hidden
-                  className="synergy-bar-fill absolute left-3 top-1/2 h-0.5 -translate-y-1/2 rounded-full"
-                  style={{ width: `calc((100% - 1.5rem) * ${fillRatio})`, background: 'linear-gradient(90deg,#7c3aed,#b08d57)' }}
+                  className="synergy-bar-fill absolute left-3.5 top-1/2 h-0.5 -translate-y-1/2 rounded-full"
+                  style={{ width: `calc((100% - 1.75rem) * ${fillRatio})`, background: 'linear-gradient(90deg,#7c3aed,#d9b65f)', boxShadow: '0 0 6px rgba(124,58,237,0.5)' }}
                 />
                 {g.nodes.map((n) => {
                   const green = n.activates
                   const gold = (n.active || n.reached) && !n.superseded
-                  const bg = green ? '#7cdc7c' : gold ? '#b08d57' : '#241f38'
+                  const bg = green
+                    ? 'linear-gradient(135deg,#a8ffbf,#3ecb6a)'
+                    : gold ? 'linear-gradient(135deg,#f6ecc4,#a9802f)' : '#14101f'
                   const ring = green
-                    ? '0 0 10px rgba(124,220,124,0.8)'
-                    : n.active && !n.superseded ? '0 0 8px rgba(176,141,87,0.7)' : 'none'
+                    ? '0 0 14px rgba(80,230,130,0.85)'
+                    : n.active && !n.superseded ? '0 0 11px rgba(217,182,95,0.6)' : 'none'
                   return (
                     <span
                       key={n.threshold}
@@ -138,18 +147,22 @@ export function SynergyTracker({
                       data-active={n.active ? '' : undefined}
                       data-activates={n.activates ? '' : undefined}
                       data-superseded={n.superseded ? '' : undefined}
-                      className="relative z-10 grid h-6 w-6 place-items-center rounded-full border text-[10px] font-bold tabular-nums"
+                      className={cn('relative z-10 grid h-[26px] w-[26px] rotate-45 place-items-center rounded-[7px] border-[1.5px]', green && 'synergy-node-pulse')}
                       style={{
                         background: bg,
-                        borderColor: green ? '#7cdc7c' : gold ? '#caa24a' : '#3a3352',
-                        color: gold || green ? '#0c0a16' : 'rgba(255,255,255,0.5)',
+                        borderColor: green ? '#a8ffbf' : gold ? '#f6ecc4' : '#3a3352',
                         boxShadow: ring,
                         opacity: n.superseded ? 0.5 : 1,
                       }}
                     >
-                      {n.threshold}
+                      <span
+                        className="-rotate-45 text-[10.5px] font-extrabold tabular-nums"
+                        style={{ color: green ? '#0a2a14' : gold ? '#1a1330' : 'rgba(255,255,255,0.5)' }}
+                      >
+                        {n.threshold}
+                      </span>
                       {n.activates && (
-                        <span className="absolute -top-4 left-1/2 -translate-x-1/2 whitespace-nowrap text-[8px] font-bold uppercase tracking-wide text-[#7cdc7c]">
+                        <span className="absolute -top-[18px] left-1/2 -translate-x-1/2 -rotate-45 whitespace-nowrap text-[7.5px] font-extrabold uppercase tracking-wide text-[#7ee39a]">
                           si attiva
                         </span>
                       )}
@@ -158,7 +171,7 @@ export function SynergyTracker({
                 })}
               </div>
 
-              {g.bonus && <p className="mt-2 text-[10px] leading-snug text-[#c9bfa0]">{g.bonus}</p>}
+              {g.bonus && <p className="mt-3 text-[10.5px] leading-snug text-[#c9bfa0]">{g.bonus}</p>}
             </div>
           )
         })}
