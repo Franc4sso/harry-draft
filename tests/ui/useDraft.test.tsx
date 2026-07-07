@@ -4,7 +4,7 @@ import { useDraft } from '@/hooks/useDraft'
 import { BALANCE } from '@/data/constants'
 
 describe('useDraft', () => {
-  it('exposes a first screen of 5 and no picks', () => {
+  it('exposes a full first screen and no picks', () => {
     const { result } = renderHook(() => useDraft('s1'))
     expect(result.current.current).toHaveLength(BALANCE.draft.screenSize)
     expect(result.current.picks).toHaveLength(0)
