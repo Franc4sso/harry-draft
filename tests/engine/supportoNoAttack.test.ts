@@ -31,24 +31,26 @@ describe('a Supporto never enters battle with an attack spell', () => {
     }
   })
 
-  // RESOLVED 2026-07-07 (USER DECISION): the previously-flagged exception is now closed.
-  // `guaranteeOffense=true` (enemy ELITE/BOSS drafts) used to hand a pool-less Supporto
-  // the `base_attack` fallback, conflicting with "a Supporto never attacks". Fixed on BOTH
-  // sides: (1) guaranteeOffensiveSpell now falls a Supporto back to a Cura (episkey), never
-  // base_attack; (2) elite/boss enemy drafts EXCLUDE Supporto from the candidate pool
-  // (teamGen.ts budgetWindow's excludeSupporto), so no Supporto is ever fielded where the
-  // no-harmless-enemy invariant applies — keeping attackMoveGuarantee.test.ts green without
-  // any Supporto ever holding an attack. The boss-leader ban (data/bosses.ts MURO_ALT now
-  // uses marcus, an Attaccante, not pettigrew) is the third leg of the same fix.
-  it('guaranteeOffensiveSpell keeps a pool-less Supporto non-offensive (Cura, not base_attack)', () => {
+  // REVERSED AGAIN 2026-07-07 (USER DECISION, Task 3c, final): the previous "exclude
+  // Supporto entirely from enemy elite/boss" fix is now wrong. Final decision: enemy
+  // elite/boss teams may field ≤1 Supporto, alongside other roles, and that Supporto
+  // MUST be able to attack. So `guaranteeOffensiveSpell` no longer special-cases
+  // Supporto at all — a pool-less Supporto forced through the guarantee now gets the
+  // universal `base_attack` fallback, same as every other role. This only ever fires on
+  // the enemy elite/boss path (`guaranteeOffense=true`, see teamGen.ts's ≤1-Supporto
+  // cap) — the test above (`draftWizard never resolves a Supporto to an offensive spell
+  // for player drafts...`) still holds for every path that does NOT opt into
+  // guaranteeOffense, so "a Supporto never enters PLAYER battle with an attack spell"
+  // (this describe block's title) remains true.
+  it('guaranteeOffensiveSpell now gives a pool-less Supporto base_attack (enemy elite/boss only; player Supporto never reach this path)', () => {
     const supportoNoOffense = WIZARDS.filter(w =>
       w.role === 'Supporto' && !w.spellPool.some(id => spellIsOffensive(SPELL_BY_ID[id])))
     expect(supportoNoOffense.length).toBeGreaterThan(0)
     for (const w of supportoNoOffense) {
       const start = SPELL_BY_ID[w.spellPool[0]!]!
       const out = guaranteeOffensiveSpell(w, start)
-      expect(spellIsOffensive(out), `${w.id} → ${out.id}`).toBe(false)
-      expect(out.id, `${w.id} fell back to base_attack`).not.toBe('base_attack')
+      expect(out.id, `${w.id} → ${out.id}`).toBe('base_attack')
+      expect(spellIsOffensive(out), `${w.id} → ${out.id}`).toBe(true)
     }
   })
 })

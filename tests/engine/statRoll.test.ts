@@ -25,37 +25,38 @@ describe('fixedStats', () => {
   })
 })
 
-describe('guaranteeOffensiveSpell — Supporto never gets an attack', () => {
-  // A Supporto is a healer/warder: this slice bans it from ever holding a direct attack
-  // (so no Supporto can be a boss-leader). When a Supporto with a pure-support pool is
-  // forced through the strict offensive guarantee, it must fall back to a Cura/Difesa
-  // spell — NEVER an Attacco/Controllo (and NEVER base_attack).
+describe('guaranteeOffensiveSpell — enemy elite/boss Supporto now gets base_attack', () => {
+  // REVERSED 2026-07-07 (USER DECISION, Task 3c): enemy elite/boss teams may field ≤1
+  // Supporto, and that Supporto must be able to attack. A Supporto with a pure-support
+  // pool, forced through the strict offensive guarantee, now falls back to the universal
+  // `base_attack` — exactly like every other role — NOT a Cura/Difesa clamp. Player
+  // Supporto never reach this function (their "zero direct attacks" identity comes from
+  // the cleaned pools, not from here), so this change is enemy-elite/boss-only in effect.
   const supportoWithNoOffense = (WIZARDS as typeof WIZARDS)
     .filter(w => w.role === 'Supporto' &&
       !w.spellPool.some(id => spellIsOffensive(SPELL_BY_ID[id])))
 
-  it('there is at least one pure-support Supporto to exercise the clamp (e.g. pettigrew)', () => {
+  it('there is at least one pure-support Supporto to exercise the fallback (e.g. pettigrew)', () => {
     expect(supportoWithNoOffense.length).toBeGreaterThan(0)
     expect(supportoWithNoOffense.some(w => w.id === 'pettigrew')).toBe(true)
   })
 
-  it('every pure-support Supporto, forced offensive, keeps a Cura/Difesa spell (never Attacco/Controllo, never base_attack)', () => {
+  it('every pure-support Supporto, forced offensive, falls back to base_attack (universal fallback, no role special-case)', () => {
     for (const w of supportoWithNoOffense) {
       // Feed a non-offensive starting spell so the guarantee's fallback branch runs.
       const start = SPELL_BY_ID[w.spellPool[0]!]!
       const result = guaranteeOffensiveSpell(w, start)
-      expect(spellIsOffensive(result), `${w.id} → ${result.id} is offensive`).toBe(false)
-      expect(['Cura', 'Difesa']).toContain(result.type)
-      expect(result.id, `${w.id} fell back to base_attack`).not.toBe('base_attack')
+      expect(result.id, `${w.id} → ${result.id}`).toBe('base_attack')
+      expect(spellIsOffensive(result), `${w.id} → ${result.id} is offensive`).toBe(true)
     }
   })
 
-  it('routes a Supporto through the full draftWizard(guaranteeOffense=true) path to a non-offensive spell', () => {
+  it('routes a Supporto through the full draftWizard(guaranteeOffense=true) path to base_attack', () => {
     const pettigrew = WIZARD_BY_ID['pettigrew']!
     for (let s = 0; s < 25; s++) {
-      const dw = draftWizard(createRng(`supporto-clamp-${s}`), pettigrew, false, true, true)
-      expect(spellIsOffensive(dw.spell), `seed ${s} → ${dw.spell.id}`).toBe(false)
-      expect(['Cura', 'Difesa']).toContain(dw.spell.type)
+      const dw = draftWizard(createRng(`supporto-offense-${s}`), pettigrew, false, true, true)
+      expect(spellIsOffensive(dw.spell), `seed ${s} → ${dw.spell.id}`).toBe(true)
+      expect(dw.spell.id).toBe('base_attack')
     }
   })
 

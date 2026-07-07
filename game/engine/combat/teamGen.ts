@@ -29,15 +29,13 @@ function expectedPower(w: Wizard): number {
  *  power-percentile implied by `targetPer`. Shared by the legacy draft and the
  *  themed draft so both anchor difficulty to the same window.
  *
- *  `excludeSupporto` (enemy elite/boss drafts only): a Supporto is clamped to never
- *  hold an attack (guaranteeOffensiveSpell → Cura), so it can never satisfy the
- *  "no harmless boss/elite enemy" invariant (attackMoveGuarantee.test.ts). Drafting one
- *  onto an elite/boss squad would field a unit that deals zero damage — a free win.
- *  So those drafts exclude Supporto from the candidate pool entirely (normal packs and
- *  player drafts keep Supporto — they have no such invariant). */
-export function budgetWindow(targetPer: number, count: number, excludeSupporto = false): Wizard[] {
-  const eligible = excludeSupporto ? WIZARDS.filter(w => w.role !== 'Supporto') : WIZARDS
-  const sorted = [...eligible].sort((a, b) => expectedPower(a as Wizard) - expectedPower(b as Wizard))
+ *  Supporto is NOT excluded here (USER DECISION 2026-07-07, Task 3c): enemy elite/boss
+ *  teams may field up to 1 Supporto, and guaranteeOffensiveSpell now falls back to
+ *  `base_attack` for every role, so a fielded Supporto still threatens like any other
+ *  unit (see statRoll.ts). The ≤1-Supporto cap and role-variety guarantee are enforced
+ *  downstream after the team is drawn (see `capSupporto`), so this window stays uniform. */
+export function budgetWindow(targetPer: number, count: number): Wizard[] {
+  const sorted = [...WIZARDS].sort((a, b) => expectedPower(a as Wizard) - expectedPower(b as Wizard))
   const n = sorted.length
   const minBudget = BALANCE.campaign.baseBudget / BALANCE.draft.teamSize
   const maxBudget =
@@ -50,16 +48,52 @@ export function budgetWindow(targetPer: number, count: number, excludeSupporto =
   return sorted.slice(start, start + count * 3) as Wizard[]
 }
 
+/** Enforces "≤1 Supporto, alongside other roles" (enemy elite/boss only, USER DECISION
+ *  2026-07-07): if the drafted `team` has ≥2 Supporto, keep the strongest one and
+ *  replace every extra with the next-best NON-Supporto candidate from `window`
+ *  (deterministic — reuses the rng that's already threaded through, no fresh draw
+ *  source). `window` must be the same pool the team was drawn from, so replacements
+ *  stay power-consistent with what was already on offer. */
+function capSupporto(
+  rng: Rng, team: DraftedWizard[], window: Wizard[], preferOffense: boolean, guaranteeOffense: boolean,
+): DraftedWizard[] {
+  const supportoSlots = team
+    .map((d, i) => ({ d, i }))
+    .filter(({ d }) => d.wizard.role === 'Supporto')
+  if (supportoSlots.length <= 1) return team
+
+  // Keep the strongest Supporto; replace the rest.
+  const byPowerDesc = [...supportoSlots].sort((a, b) => powerOf(b.d) - powerOf(a.d))
+  const replaceIdxs = byPowerDesc.slice(1).map(x => x.i)
+
+  const usedIds = new Set(team.map(d => d.wizard.id))
+  const candidates = window
+    .filter(w => w.role !== 'Supporto' && !usedIds.has(w.id))
+    .sort((a, b) => expectedPower(b) - expectedPower(a))
+
+  const out = [...team]
+  let ci = 0
+  for (const idx of replaceIdxs) {
+    const replacement = candidates[ci]
+    ci += 1
+    if (!replacement) continue // window exhausted — leave the extra Supporto rather than shrink the team
+    out[idx] = draftWizard(rng, replacement, false, preferOffense, guaranteeOffense)
+    usedIds.add(replacement.id)
+  }
+  return out
+}
+
 function pickTowardBudget(
   rng: Rng, targetPer: number, count: number, preferOffense = false, guaranteeOffense = false,
 ): DraftedWizard[] {
-  // guaranteeOffense (elite/boss) ⇒ exclude Supporto: a Supporto can never be offensive
-  // (clamped to Cura), so it must not be fielded where the no-harmless-enemy invariant holds.
-  const window = budgetWindow(targetPer, count, guaranteeOffense)
+  const window = budgetWindow(targetPer, count)
   const pool = rng.shuffle(window)
   const out: DraftedWizard[] = []
   for (const w of pool) out.push(draftWizard(rng, w as Wizard, false, preferOffense, guaranteeOffense))
-  return out.sort((a, b) => powerOf(b) - powerOf(a)).slice(0, count)
+  const team = out.sort((a, b) => powerOf(b) - powerOf(a)).slice(0, count)
+  // Elite/boss (guaranteeOffense) ⇒ cap Supporto at ≤1 so the fielded roster keeps role
+  // variety (USER DECISION 2026-07-07: Supporto may appear, but never dominate/mono-field).
+  return guaranteeOffense ? capSupporto(rng, team, window, preferOffense, guaranteeOffense) : team
 }
 
 export function generateEnemyTeam(rng: Rng, targetBudget: number): DraftedWizard[] {
@@ -123,11 +157,10 @@ export function themedEnemyTeam(rng: Rng, opts: {
 }): { team: DraftedWizard[]; themeId: string | null } {
   const { area, kind, budget, count, excludeThemes } = opts
   const perUnit = budget / BALANCE.draft.teamSize
-  // Elite/boss packs get the strict offensive guarantee, so they must exclude Supporto
-  // (which can never be offensive — clamped to Cura); normal packs keep Supporto.
-  const excludeSupporto = kind === 'elite' || kind === 'boss'
   // Power-sorted ascending so weightedPick favors the stronger end of the window.
-  const window = [...budgetWindow(perUnit, count, excludeSupporto)]
+  // Supporto is included (USER DECISION 2026-07-07): elite/boss packs cap it at ≤1 after
+  // drafting (see capSupporto below), rather than excluding it from the window up front.
+  const window = [...budgetWindow(perUnit, count)]
     .sort((a, b) => expectedPower(a) - expectedPower(b))
 
   const strength = themeStrengthFor(area, kind)
@@ -189,6 +222,9 @@ export function themedEnemyTeam(rng: Rng, opts: {
   // get the STRICT guarantee on top: a degenerate zero-damage elite/boss enemy is a
   // free win, so those kinds can never end up with a non-offensive active.
   const guaranteeOffense = kind === 'elite' || kind === 'boss'
-  const team = chosen.map(w => draftWizard(drawRng, w, false, true, guaranteeOffense))
+  const draftedTeam = chosen.map(w => draftWizard(drawRng, w, false, true, guaranteeOffense))
+  // Elite/boss ⇒ cap Supporto at ≤1 (USER DECISION 2026-07-07: keep role variety, never a
+  // mono/heavy-Supporto squad). window still holds the full candidate pool for replacements.
+  const team = guaranteeOffense ? capSupporto(drawRng, draftedTeam, window, true, guaranteeOffense) : draftedTeam
   return { team, themeId: realized ? realized.id : null }
 }
