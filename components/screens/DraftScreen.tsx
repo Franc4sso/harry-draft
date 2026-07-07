@@ -75,13 +75,13 @@ export function DraftScreen({
         Single-column on mobile: candidates first, tracker below.
         Two-column on desktop (md+): candidates left, tracker right rail.
       */}
-      <div className="mx-auto grid max-w-5xl grid-cols-1 items-start gap-6 p-4 md:grid-cols-[1fr_280px]">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 items-start gap-6 p-4 md:grid-cols-[1fr_320px]">
         {/* items-start (above) + content-start (here) keep each candidate at its
             own height: without them the column stretches to match the synergy
             rail, growing the hovered card downward when the rail gets taller. */}
         <section onPointerLeave={() => setConsidered(null)}>
           {/* Re-key by pick count so each new hand cascades in again. */}
-          <Stagger key={picks.length} className="grid grid-cols-1 content-start gap-4">
+          <Stagger key={picks.length} className="grid grid-cols-1 content-start gap-4 sm:grid-cols-3">
             {current.map((c, i) => (
               <StaggerItem key={c.wizard.id}>
                 <DraftCandidateCard
