@@ -337,7 +337,16 @@ git commit -m "feat(combat): clamp resolved battle spell to role whitelist (Supp
 - [ ] **Step 5:** Run `npx vitest run tests/engine/campaignBalanceB.test.ts tests/engine/combat/attackMoveGuarantee.test.ts` + the new clamp test → all green; record the campaignBalanceB winRate (must stay `> 0` and near the ~0.375 baseline). `npm run typecheck` clean.
 - [ ] **Step 6:** Commit `fix(boss): MURO_ALT non-Supporto leader + Supporto never gets base_attack`.
 
-### Task 4: Remove the now-dead offensive-Supporto branch in targeting
+### Task 4: ~~Remove offensive-Supporto targeting branch~~ — CANCELLED
+
+**CANCELLED (2026-07-07).** This task assumed no Supporto ever carries an attack spell. But
+the user's Task 3c decision allows enemy elite/boss teams to field ≤1 Supporto that receives
+`base_attack` (an Attacco). So the `spell.type === 'Attacco' || 'Controllo'` branch in
+`selectTarget`'s Supporto case is NOT dead — it correctly aims that enemy Supporto's base_attack
+at an ENEMY instead of "protecting" (which would misfire the attack at an ally). Removing it
+would reintroduce a friendly-fire / mis-target bug. The branch stays. No code change.
+
+### Task 4 (obsolete anchor kept for numbering): Remove the now-dead offensive-Supporto branch in targeting
 
 **Files:**
 - Modify: `game/engine/combat/targeting.ts` (the `case 'Supporto':` block in `selectTarget`)
