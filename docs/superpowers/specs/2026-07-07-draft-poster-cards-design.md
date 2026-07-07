@@ -117,6 +117,11 @@ gli stanno a cuore) PRIMA di cablarli nella card. Esempi (dal mockup):
   la stessa card, la eredita gratis; se ha un layout diverso, resta invariata in questa slice).
 - Niente ritratti nuovi (i 60 esistono).
 - Niente pannello sinergie separato ridisegnato (il nudge sulla card + il tracker esistente bastano).
+- **Combattimento fuori scope (slice futura separata).** Le unità in battaglia (`components/battle/
+  UnitBust.tsx`) NON sono ridisegnate qui. Decisione utente: dopo il draft, una slice PICCOLA e
+  separata farà solo un **ritocco estetico** delle unità di combattimento per allinearle allo stile
+  poster (colore-ruolo sulla cornice, oro, icona-ruolo) — senza toccare struttura, HP/stato, né i
+  VFX degli attacchi (che restano intatti). Non è parte di questa slice draft.
 
 ## Rischi
 
