@@ -107,99 +107,49 @@ export function SynergyTracker({
         {candidateName ? <>Se peschi <span className="font-semibold text-[#a8ffbf]">{candidateName}</span></> : 'cosa sbloccano'}
       </p>
       {groups.length === 0 && <p className="text-center text-xs text-white/40">Nessuna sinergia ancora. Pesca per costruirne una.</p>}
-      <div className="space-y-2.5">
+      <div className="space-y-3">
         {groups.map((g) => {
-          // Overall family state, so the block reads at a glance.
           const isActive = g.nodes.some((n) => n.active && !n.superseded)
           const willActivate = g.nodes.some((n) => n.activates)
-          const missing = Math.max(0, g.nextThreshold - g.nextCount) // members still needed for the next tier
           const allDone = g.nextCount >= g.maxThreshold
-          // Accent + status colour: green if a pick would activate it, gold if already active, muted otherwise.
-          const accent = willActivate ? '#3ecb6a' : isActive ? '#d9b65f' : '#5b5470'
-          const statusText = willActivate ? 'Si attiva' : isActive ? 'Attiva' : allDone ? 'Completa' : `Manca ${missing}`
-          const statusFg = willActivate ? '#0a2a14' : isActive ? '#1a1330' : '#cdc7dd'
-          const statusBg = willActivate ? '#7ee39a' : isActive ? '#d9b65f' : 'rgba(255,255,255,0.06)'
-          // progress toward the NEXT tier (clear "how close am I"), not toward max.
+          // One bar to the NEXT tier: "how close am I".
           const prevThreshold = g.nodes.filter((n) => n.threshold < g.nextThreshold).reduce((m, n) => Math.max(m, n.threshold), 0)
           const span = Math.max(1, g.nextThreshold - prevThreshold)
-          const stepRatio = allDone ? 1 : Math.min(1, Math.max(0, (g.nextCount - prevThreshold) / span))
+          const ratio = allDone || isActive ? 1 : Math.min(1, Math.max(0, (g.nextCount - prevThreshold) / span))
+          // One colour tells the whole story: green = will activate, gold = active, purple = building.
+          const col = willActivate ? '#3ecb6a' : isActive ? '#d9b65f' : '#7c3aed'
+          const status = willActivate ? '· si attiva' : isActive ? '· attiva' : null
           return (
-            <div
-              key={g.key}
-              data-family={g.key}
-              className="relative overflow-hidden rounded-xl border py-2.5 pl-3.5 pr-3"
-              style={{
-                borderColor: willActivate ? 'rgba(126,227,154,0.5)' : isActive ? 'rgba(217,182,95,0.4)' : 'rgba(255,255,255,0.08)',
-                background: willActivate ? 'rgba(62,203,106,0.08)' : isActive ? 'rgba(217,182,95,0.07)' : 'rgba(255,255,255,0.02)',
-              }}
-            >
-              {/* left accent stripe — instantly distinguishes each synergy */}
-              <span aria-hidden className="absolute inset-y-0 left-0 w-1" style={{ background: accent, boxShadow: `0 0 8px ${accent}` }} />
-
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-display text-[13px] font-semibold text-[#f6ecc4]">{g.name}</span>
+            <div key={g.key} data-family={g.key}>
+              <div className="mb-1.5 flex items-baseline justify-between gap-2">
+                <span className="text-[12px] font-semibold text-[#e7e2f2]">
+                  {g.name}
+                  {status && <span className="ml-1 text-[10px] font-bold" style={{ color: col }}>{status}</span>}
+                </span>
+                <span className="shrink-0 text-[12px] font-bold tabular-nums" style={{ color: col }}>
+                  {g.nextCount}<span className="text-white/30">/{g.nextThreshold}</span>
+                </span>
+              </div>
+              {/* Single progress bar. Per-tier ticks carry the data-* contract but stay subtle. */}
+              <div className={cn('relative h-2 w-full overflow-hidden rounded-full bg-white/[0.07]', willActivate && 'synergy-node-pulse')}>
                 <span
-                  className="shrink-0 rounded-full px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide tabular-nums"
-                  style={{ background: statusBg, color: statusFg }}
-                >
-                  {statusText}
-                </span>
+                  className="absolute inset-y-0 left-0 rounded-full"
+                  style={{ width: `${ratio * 100}%`, background: col, boxShadow: `0 0 8px ${col}aa` }}
+                />
+                {g.nodes.map((n) => (
+                  <span
+                    key={n.threshold}
+                    data-synergy={n.row.synergy.id}
+                    data-active={n.active ? '' : undefined}
+                    data-activates={n.activates ? '' : undefined}
+                    data-superseded={n.superseded ? '' : undefined}
+                    aria-hidden
+                    className="absolute top-1/2 h-2 w-px -translate-y-1/2"
+                    style={{ left: `${(n.threshold / g.maxThreshold) * 100}%`, background: 'rgba(0,0,0,0.35)' }}
+                  />
+                ))}
               </div>
-
-              {/* Big legible count + tier gem row */}
-              <div className="mt-2 flex items-center gap-2.5">
-                <span className="shrink-0 text-[15px] font-extrabold tabular-nums text-white">
-                  {g.nextCount}<span className="text-white/35">/{g.nextThreshold}</span>
-                </span>
-                {/* segmented tier gems — solid when reached, ring on current target */}
-                <div className="relative flex flex-1 items-center gap-1.5">
-                  {g.nodes.map((n) => {
-                    const green = n.activates
-                    const gold = (n.active || n.reached) && !n.superseded
-                    const isTarget = !gold && !green && n.threshold === g.nextThreshold
-                    return (
-                      <div
-                        key={n.threshold}
-                        data-synergy={n.row.synergy.id}
-                        data-active={n.active ? '' : undefined}
-                        data-activates={n.activates ? '' : undefined}
-                        data-superseded={n.superseded ? '' : undefined}
-                        className={cn('flex flex-1 items-center gap-1.5', green && 'synergy-node-pulse')}
-                        style={{ opacity: n.superseded ? 0.45 : 1 }}
-                      >
-                        {/* track segment fills toward this node */}
-                        <span className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
-                          <span
-                            className="absolute inset-y-0 left-0 rounded-full"
-                            style={{
-                              width: gold || green ? '100%' : isTarget ? `${stepRatio * 100}%` : '0%',
-                              background: green ? '#3ecb6a' : gold ? 'linear-gradient(90deg,#a9802f,#f6ecc4)' : '#7c3aed',
-                            }}
-                          />
-                        </span>
-                        {/* tier gem */}
-                        <span
-                          className="grid h-5 w-5 shrink-0 rotate-45 place-items-center rounded-[5px] border"
-                          style={{
-                            background: green ? 'linear-gradient(135deg,#a8ffbf,#3ecb6a)' : gold ? 'linear-gradient(135deg,#f6ecc4,#a9802f)' : '#14101f',
-                            borderColor: green ? '#a8ffbf' : gold ? '#f6ecc4' : isTarget ? accent : '#3a3352',
-                            boxShadow: green ? '0 0 12px rgba(80,230,130,0.85)' : gold ? '0 0 8px rgba(217,182,95,0.5)' : 'none',
-                          }}
-                        >
-                          <span
-                            className="-rotate-45 text-[9px] font-extrabold tabular-nums"
-                            style={{ color: green ? '#0a2a14' : gold ? '#1a1330' : isTarget ? '#e7e2f2' : 'rgba(255,255,255,0.45)' }}
-                          >
-                            {n.threshold}
-                          </span>
-                        </span>
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-
-              {g.bonus && <p className="mt-2 text-[10.5px] leading-snug text-[#c9bfa0]">{g.bonus}</p>}
+              {g.bonus && <p className="mt-1.5 text-[10px] leading-snug text-white/45">{g.bonus}</p>}
             </div>
           )
         })}
