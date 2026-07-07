@@ -1,6 +1,6 @@
 # Handoff — dove riprendere
 
-Aggiornato: **2026-07-07**. Ultimo commit su `origin/master`: `PENDING_SHA`.
+Aggiornato: **2026-07-07**. Ultimo commit su `origin/master`: `9df3ed3`.
 Da un altro PC: `git pull origin master`, `npm install`, poi leggi questo file.
 
 ## Stato in una riga
