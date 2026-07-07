@@ -3,7 +3,7 @@ import { BALANCE } from '@/data/constants'
 import { effectiveStats } from '../status'
 import { normalizeSpell } from './normalizeSpell'
 import { STATUS_BY_ID } from '@/data/statuses'
-import { isUnderHardControl } from './roleCounter'
+import { isUnderHardControl, HARD_CONTROL_KINDS } from './roleCounter'
 
 const CONTROL_KINDS = new Set(['stun', 'freeze', 'silence', 'disarm'])
 
@@ -139,16 +139,21 @@ export function selectTarget(
         return spell.type === 'Controllo' ? backlineTarget(enemyPool) : highestThreat(enemyPool)
       }
       return carryToProtect(liveAllies) ?? mostWounded(liveAllies) ?? lowestHp(enemyPool)
-    case 'Controllo':
-      return backlineTarget(enemyPool)
+    case 'Controllo': {
+      // Controllo counters a taunting Tank ONLY by hard-controlling it (stun/freeze/silence),
+      // spending that control to break the taunt. With a soft spell it scavalca to the backline
+      // — hammering an unbreakable wall is wasted (validated by sim). Once the Tank is stunned,
+      // activeTauntTank is false → it scavalca like usual.
+      const canHardControl = spell
+        ? [...appliesControl(spell)].some(k => HARD_CONTROL_KINDS.has(k))
+        : false
+      return (taunt && canHardControl) ? highestThreat(enemyPool) : backlineTarget(enemyPool)
+    }
     case 'Tank':
       return taunt ? highestThreat(enemyPool, ign) : lowestHp(enemyPool)
     case 'Attaccante':
-    default: {
-      const ign = actor.ignoresTaunt ?? false
+    default:
       // If an enemy Tank is actively taunting, it wins (Tank beats Attaccante). Otherwise dive.
-      const tauntActive = !ign && enemyPool.some(e => e.wizard.role === 'Tank' && !isUnderHardControl(e))
-      return tauntActive ? highestThreat(enemyPool, ign) : diveTarget(enemyPool, ign)
-    }
+      return taunt ? highestThreat(enemyPool, ign) : diveTarget(enemyPool, ign)
   }
 }

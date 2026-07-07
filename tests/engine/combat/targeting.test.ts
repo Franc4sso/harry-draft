@@ -46,6 +46,27 @@ describe('threat targeting', () => {
     expect(selectTarget(me, [me], enemies)?.wizard.id).toBe('wall')
   })
 
+  it('a Controllo with a HARD-control spell targets the taunting Tank to break it', () => {
+    const me = u('ctrl', 'Controllo', 'left')
+    const enemies = [u('healer', 'Supporto', 'right'), u('wall', 'Tank', 'right')]
+    // petrificus applies stun (a hard control) → spend it on the wall.
+    expect(selectTarget(me, [me], enemies, SPELL_BY_ID['petrificus']!)?.wizard.id).toBe('wall')
+  })
+
+  it('a Controllo with a SOFT-control spell scavalca the taunt to the backline', () => {
+    const me = u('ctrl', 'Controllo', 'left')
+    const enemies = [u('healer', 'Supporto', 'right'), u('wall', 'Tank', 'right')]
+    // confundo applies only a spd debuff (no hard control) → no point hammering the wall.
+    expect(selectTarget(me, [me], enemies, SPELL_BY_ID['confundo']!)?.wizard.id).toBe('healer')
+  })
+
+  it('a Controllo with hard-control still scavalca when the Tank is already stunned', () => {
+    const me = u('ctrl', 'Controllo', 'left')
+    const stunnedWall = u('wall', 'Tank', 'right'); stunnedWall.statusEffects = [{ kind: 'stun', remaining: 1, stacks: 1 } as never]
+    const enemies = [u('healer', 'Supporto', 'right'), stunnedWall]
+    expect(selectTarget(me, [me], enemies, SPELL_BY_ID['petrificus']!)?.wizard.id).toBe('healer')
+  })
+
   it('a Supporto casting an OFFENSIVE attack spell aims at an enemy, never an ally (Serpensortia-on-ally bug)', () => {
     const me = u('narcissa', 'Supporto', 'left')
     const woundedAlly = u('cedric', 'Attaccante', 'left'); woundedAlly.hp = 10
