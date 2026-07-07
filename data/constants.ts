@@ -34,7 +34,7 @@ defenseK: 0.5,
     freezeShatterMult: 1.5,
   },
   draft: {
-    screenSize: 5,
+    screenSize: 3,
     teamSize: 5,
     tierWeights: { 1: 1, 2: 3, 3: 30, 4: 66 } as Record<Tier, number>,
     maxTier1PerScreen: 1,
