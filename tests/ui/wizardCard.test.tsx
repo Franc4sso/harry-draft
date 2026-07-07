@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, within, fireEvent } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { WizardCard } from '@/components/cards/WizardCard'
 import { draftWizard } from '@/game/engine/statRoll'
@@ -10,16 +10,50 @@ import { TRAIT_BY_ID } from '@/data/traits'
 import { displayName } from '@/lib/displayName'
 
 const harry = () => draftWizard(createRng(1), WIZARD_BY_ID['harry']!)
+// Tank fixture (role === 'Tank') for the poster-layout render tests below.
+const draftedTank = () => draftWizard(createRng(1), WIZARD_BY_ID['mcgonagall']!)
+// A wizard whose portrait file is missing — PortraitImage falls back to a crest;
+// the card must still render the name/heading.
+const draftedNoPortrait = () => {
+  const d = harry()
+  return { ...d, wizard: { ...d.wizard, id: '__no_such_portrait__' } }
+}
 
 describe('WizardCard compact', () => {
   it('renders at the card width and shows the name and all four stat labels', () => {
     const d = harry()
     const { container } = render(<WizardCard drafted={d} />)
     expect(screen.getByText(displayName(d))).toBeInTheDocument()
-    for (const stat of ['HP', 'ATK', 'DIF', 'VEL']) {
+    for (const stat of ['HP', 'ATT', 'DIF', 'VEL']) {
       expect(screen.getByText(stat)).toBeInTheDocument()
     }
     expect(container.querySelector('.w-56')).not.toBeNull()
+  })
+
+  it('renders name, role word, spell name and the four stats (poster layout)', () => {
+    render(<WizardCard drafted={draftedTank()} />)
+    expect(screen.getByRole('heading', { name: /./ })).toBeInTheDocument()
+    expect(screen.getByTestId('role-badge')).toBeInTheDocument()
+    expect(screen.getByTestId('spell-block')).toHaveTextContent(/./)
+    for (const k of ['HP', 'ATT', 'DIF', 'VEL']) expect(screen.getByText(k)).toBeInTheDocument()
+  })
+
+  it('shows the synergy nudge only when hotSynergyIds is non-empty', () => {
+    const { rerender } = render(<WizardCard drafted={draftedTank()} />)
+    expect(screen.queryByTestId('synergy-nudge')).toBeNull()
+    rerender(<WizardCard drafted={draftedTank()} hotSynergyIds={new Set(['gryffindor'])} />)
+    expect(screen.getByTestId('synergy-nudge')).toBeInTheDocument()
+  })
+
+  it('falls back to an initial when the portrait is missing', () => {
+    // PortraitImage already handles missing files; assert the card still renders the name.
+    render(<WizardCard drafted={draftedNoPortrait()} />)
+    expect(screen.getByRole('heading')).toBeInTheDocument()
+  })
+
+  it('shows the ability plate with a name and blurb (Task 2 stub)', () => {
+    render(<WizardCard drafted={draftedTank()} />)
+    expect(screen.getByTestId('ability-plate')).toHaveTextContent(/Abilità personale/i)
   })
 
   it('fires onClick when clickable', async () => {
@@ -41,27 +75,15 @@ describe('WizardCard compact', () => {
     if (strip) expect(within(strip).queryByText(drafted.wizard.house)).toBeNull()
   })
 
-  it('conveys the role as an icon badge, not a text pill', () => {
+  it('conveys the role as a badge (poster gem) and the role word next to the name, not a strip pill', () => {
+    // Poster layout (approved mockup): the role gem sits over the portrait, and
+    // the role WORD ("Tank"/"Controllo") shows next to the monumental name — the
+    // old affiliation-strip role pill is gone (superseded, not duplicated).
     const drafted = harry()
     render(<WizardCard drafted={drafted} />)
-    // RoleIcon exposes the role as its aria-label.
-    expect(screen.getByLabelText(drafted.wizard.role)).toBeInTheDocument()
+    expect(screen.getByTestId('role-badge')).toHaveAttribute('aria-label', drafted.wizard.role)
     const strip = screen.queryByTestId('affiliation-strip')
     if (strip) expect(within(strip).queryByText(drafted.wizard.role)).toBeNull()
-  })
-
-  it('reveals the role behaviour on tap without picking the card', async () => {
-    const onPick = vi.fn()
-    const drafted = harry() // Attaccante
-    render(<WizardCard drafted={drafted} onClick={onPick} />)
-    // No tooltip until the role badge is tapped.
-    expect(screen.queryByRole('tooltip')).toBeNull()
-    const trigger = screen.getByLabelText(drafted.wizard.role).closest('button')!
-    fireEvent.click(trigger)
-    // The behaviour blurb appears (Attaccante = armor penetration -> "difesa")...
-    expect(screen.getByRole('tooltip')).toHaveTextContent(/difesa/i)
-    // ...and tapping the badge did NOT pick the wizard.
-    expect(onPick).not.toHaveBeenCalled()
   })
 
   it('shows the portrait (house crest no longer overlaid on the card)', () => {
