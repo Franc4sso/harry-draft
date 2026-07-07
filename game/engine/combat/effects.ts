@@ -159,7 +159,6 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
   },
   protego: (ctx, eff) => {
     if (eff.kind !== 'protego') return {}
-    const count = eff.count ?? 1
     const pool = (ctx.allies ?? [ctx.actor]).filter(u => u.alive)
     // Protect the carry: highest effective ATK first (the team's damage source),
     // tiebreak by lowest HP fraction (most threatened), then id for determinism.
@@ -167,6 +166,9 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
       effectiveStats(b).atk - effectiveStats(a).atk ||
       (a.hp / a.maxHp) - (b.hp / b.maxHp) ||
       a.wizard.id.localeCompare(b.wizard.id))
+    // count omitted (or <= 0) = ward the WHOLE living team (Protego Maxima). A positive
+    // count wards that many top-ranked allies (plain Protego = 1).
+    const count = eff.count == null || eff.count <= 0 ? ranked.length : eff.count
     for (const u of ranked.slice(0, count)) {
       applyStatus(u, 'protego', { sourceId: `${ctx.actor.side}:${ctx.actor.wizard.id}` })
     }

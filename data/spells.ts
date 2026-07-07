@@ -46,7 +46,7 @@ export const SPELLS: Spell[] = [
   // Nerf (2026-07-02): cooldown 1->2 pairs with the protego ward's defaultDuration cut
   // (3->1 in data/statuses.ts) so a warded charge doesn't sit near-permanently.
   { id: 'protego', name: 'Protego', desc: 'Annulla la prossima magia sul bersaglio.', type: 'Difesa', hitChance: 1, cooldown: 2, spec: [{ kind: 'protego', count: 1 }] },
-  { id: 'protego_maxima', name: 'Protego Maxima', desc: 'Annulla la prossima magia su due alleati.', type: 'Difesa', hitChance: 1, cooldown: 3, spec: [{ kind: 'protego', count: 2 }] },
+  { id: 'protego_maxima', name: 'Protego Maxima', desc: 'Annulla la prossima magia su TUTTA la squadra.', type: 'Difesa', hitChance: 1, cooldown: 3, spec: [{ kind: 'protego' }] },
   { id: 'fianto', name: 'Fianto Duri', desc: 'Erige una barriera che assorbe il danno.', type: 'Difesa', hitChance: 1, cooldown: 1,
     spec: [{ kind: 'shield', amount: 40, duration: 2 }, { kind: 'applyStatus', target: 'self', statusId: 'defUp' }] },
   // Self-buff riders rerouted (2026-07-02) from uncapped inline {kind:'buff'} effects to the

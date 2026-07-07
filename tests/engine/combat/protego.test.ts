@@ -40,12 +40,21 @@ describe('Protego', () => {
     expect(caster.statusEffects.some(e => e.statusId === 'protego')).toBe(true) // ward intact
   })
 
-  it('protego_maxima wards two allies', () => {
+  it('protego_maxima wards the WHOLE team', () => {
     const a = mk('left', 'a', 40); const b = mk('left', 'b', 50); const c = mk('left', 'c', 100)
     resolveAction(createRng('s'), 1, c, c, SPELL_BY_ID['protego_maxima']!, [a, b, c], undefined)
     const warded = [a, b, c].filter(u => u.statusEffects.some(e => e.statusId === 'protego'))
-    expect(warded.length).toBe(2) // the two most-threatened (lowest hp): a and b
-    expect(warded).toEqual(expect.arrayContaining([a, b]))
+    expect(warded.length).toBe(3) // every living ally is protected from the next attack
+    expect(warded).toEqual(expect.arrayContaining([a, b, c]))
+  })
+
+  it('protego_maxima wards only LIVING allies (skips the dead)', () => {
+    const a = mk('left', 'a', 40); const b = mk('left', 'b', 50); const c = mk('left', 'c', 100)
+    b.alive = false; b.hp = 0
+    resolveAction(createRng('s'), 1, c, c, SPELL_BY_ID['protego_maxima']!, [a, b, c], undefined)
+    expect(b.statusEffects.some(e => e.statusId === 'protego')).toBe(false)
+    expect(a.statusEffects.some(e => e.statusId === 'protego')).toBe(true)
+    expect(c.statusEffects.some(e => e.statusId === 'protego')).toBe(true)
   })
 
   it('consumeWard returns false when no ward present', () => {
