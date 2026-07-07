@@ -92,4 +92,25 @@ describe('threat targeting', () => {
     const strongEnemy = u('strong', 'Attaccante', 'right')
     expect(selectTarget(me, [me, fine], [strongEnemy, weakEnemy])?.wizard.id).toBe('weak')
   })
+
+  it('an enemy Tank focuses the taunting Tank, not the squishiest', () => {
+    const me = u('bruiser', 'Tank', 'left')
+    const enemies = [u('squishy', 'Supporto', 'right', { atk: 10, spd: 10 }), u('wall', 'Tank', 'right')]
+    // A Tank normally hits lowest-HP; with an enemy taunt active it must hit the wall.
+    expect(selectTarget(me, [me], enemies)?.wizard.id).toBe('wall')
+  })
+
+  it('an offensive Supporto focuses the taunting Tank', () => {
+    const me = u('narc', 'Supporto', 'left')
+    const enemies = [u('squishy', 'Attaccante', 'right', { atk: 40, spd: 40 }), u('wall', 'Tank', 'right')]
+    // Give the Supporto an offensive spell so it aims at an enemy at all.
+    expect(selectTarget(me, [me], enemies, SPELL_BY_ID['serpensortia']!)?.wizard.id).toBe('wall')
+  })
+
+  it('a Tank ignores a STUNNED enemy Tank (taunt suppressed) and hits the squishiest', () => {
+    const me = u('bruiser', 'Tank', 'left')
+    const stunnedWall = u('wall', 'Tank', 'right'); stunnedWall.statusEffects = [{ kind: 'stun', remaining: 1, stacks: 1 } as never]
+    const enemies = [u('squishy', 'Supporto', 'right', { hp: 30, atk: 10, spd: 10 }), stunnedWall]
+    expect(selectTarget(me, [me], enemies)?.wizard.id).toBe('squishy')
+  })
 })

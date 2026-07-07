@@ -101,6 +101,13 @@ function diveTarget(enemies: BattleUnit[], ignoresTaunt: boolean): BattleUnit | 
   return highestThreat(enemies, ignoresTaunt)
 }
 
+// A live enemy Tank that is actively provoking (role Tank, alive, not hard-controlled).
+// The actor's own ignoresTaunt (Bellatrix) frees it from every taunt.
+function activeTauntTank(enemies: BattleUnit[], ignoresTaunt: boolean): boolean {
+  if (ignoresTaunt) return false
+  return enemies.some(e => e.wizard.role === 'Tank' && e.alive && !isUnderHardControl(e))
+}
+
 export function selectTarget(
   actor: BattleUnit,
   allies: BattleUnit[],
@@ -119,19 +126,23 @@ export function selectTarget(
         : liveEnemies)
     : liveEnemies
 
+  const ign = actor.ignoresTaunt ?? false
+  const taunt = activeTauntTank(enemyPool, ign)
+
   switch (actor.wizard.role) {
     case 'Supporto':
       // A Supporto equipped with an OFFENSIVE spell (Attacco/Controllo) must aim at an ENEMY.
       // Its role default is to protect an ally, which would otherwise turn the attack — or a
       // control effect — onto its own team (e.g. Narcissa casting Serpensortia on a teammate).
       if (spell && (spell.type === 'Attacco' || spell.type === 'Controllo')) {
+        if (taunt) return highestThreat(enemyPool, ign)
         return spell.type === 'Controllo' ? backlineTarget(enemyPool) : highestThreat(enemyPool)
       }
       return carryToProtect(liveAllies) ?? mostWounded(liveAllies) ?? lowestHp(enemyPool)
     case 'Controllo':
       return backlineTarget(enemyPool)
     case 'Tank':
-      return lowestHp(enemyPool)
+      return taunt ? highestThreat(enemyPool, ign) : lowestHp(enemyPool)
     case 'Attaccante':
     default: {
       const ign = actor.ignoresTaunt ?? false
