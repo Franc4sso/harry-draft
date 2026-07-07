@@ -1,6 +1,6 @@
 # Handoff — dove riprendere
 
-Aggiornato: **2026-07-07**. Ultimo commit su `origin/master`: `fc75131`.
+Aggiornato: **2026-07-07**. Ultimo commit su `origin/master`: `PENDING_SHA`.
 Da un altro PC: `git pull origin master`, `npm install`, poi leggi questo file.
 
 ## Stato in una riga
@@ -8,8 +8,37 @@ Da un altro PC: `git pull origin master`, `npm install`, poi leggi questo file.
 Il gioco è un roguelite auto-battler (Harry Potter, Next.js/TypeScript). Il loop di run
 è ricco: mappa a nodi, combattimento, progressione. **Tutto il lavoro recente è su
 `origin/master` (0 commit avanti).** Prossimo: **playtest** (ora anche i joker!) + nuovi
-nodi run (campfire, modificatori di battaglia). 1205 test verdi, typecheck pulito, build ok.
-(Perf UI non-combat + fix veleno/morte + archetipi Supporto appena chiusi — vedi sotto.)
+nodi run (campfire, modificatori di battaglia). 1218 test verdi, typecheck pulito, build ok.
+(Provocazione vera + perf UI non-combat + fix veleno/morte + archetipi Supporto appena chiusi — vedi sotto.)
+
+## Provocazione vera 2026-07-07 (Tank taunt reale, tutti i ruoli attaccanti)
+
+3 task (commit `43159f3`..`1e8e6d2`, spec in `docs/superpowers/`/`.superpowers/sdd/`).
+Prima di questa slice il Tank "provocava" solo sulla carta: `threatScore` dava un bonus
+al Tank ma Attaccante/Supporto-offensivo/Controllo lo ignoravano quasi sempre nella
+pratica (il Tank veniva bypassato). Ora:
+- **Task 1**: Tank e Supporto con magia offensiva (Attacco/Controllo) rispettano il taunt
+  — se un Tank nemico sta provocando (vivo, non hard-controllato), lo colpiscono invece
+  del bersaglio di default (`activeTauntTank` helper condiviso). L'Attaccante già lo
+  rispettava (Affondo) — non toccato, verificato non-regredito.
+- **Task 2**: il Controllo bypassa il taunt SOLO con una magia hard-control (stun/freeze/
+  silence, `HARD_CONTROL_KINDS`) — spende quel controllo per rompere la provocazione. Con
+  una magia soft (es. confundo, solo debuff spd) scavalca comunque verso il backline
+  (martellare un muro incassabile è spreco, validato a sim). Una volta stordito il Tank,
+  `activeTauntTank` torna false → tutti scavalcano normalmente (Global Rule pre-esistente:
+  un Tank sotto hard-control perde il taunt).
+- **Task 3 (questo)**: sim full-battle di sanità — Tank giocatore che provoca (alta
+  def/hp) + carry fragile vs squadra nemica MISTA (Attaccante + Tank + Controllo con
+  petrificus + Supporto offensivo con serpensortia). Risultato: il Tank assorbe **43/51
+  = 84.3%** dei colpi nemici prima di essere stordito dal Controllo, il carry ne prende
+  solo 8/51 — la provocazione ora funziona davvero in game reale, non solo a unit-test.
+  Regressione completa: 294 file / 1218 test verdi, tsc pulito, zero fixture re-ancorate
+  (i test esistenti già coprivano esattamente questo comportamento dai Task 1-2, nessuna
+  rottura). Balance re-misurato con git-diff prima/dopo di `targeting.ts` (commit
+  `aabfbf2` = prima dei 3 task): **campaignBalanceB 0.225 → 0.225 (invariato)**,
+  campaignBalanceRestricted 0.300 → 0.308 (rumore, +1/120 seed) — il cambio di targeting
+  non ha spostato la winrate campagna (il floor 0.15 resta ampiamente rispettato, nessun
+  bisogno di toccare `tauntBonus`). Report completo in `.superpowers/sdd/task-3-report.md`.
 
 ## Archetipi Supporto 2026-07-07 (identità distinta, spec+piano in docs/superpowers/*supporto-archetypes*)
 
