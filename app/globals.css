@@ -40,6 +40,11 @@ html, body {
     var(--background);
   color: var(--foreground);
   min-height: 100%;
+  /* Always reserve the vertical scrollbar gutter so content that changes height
+     (e.g. draft synergy preview on hover) can't toggle the scrollbar on/off and
+     flicker the layout width. */
+  scrollbar-gutter: stable;
+  overflow-y: scroll;
 }
 
 .glass {
