@@ -9,14 +9,24 @@ import { ROLE_PREY } from '@/game/engine/combat/roleCounter'
  */
 export const ROLE_INFO: Record<Role, string> = {
   Tank: 'Muro della squadra: i nemici lo attaccano per primo. Tanta vita e difesa, poco danno.',
-  Attaccante: 'Cannone di vetro: ignora parte della difesa nemica. Tanto attacco, poca vita.',
-  Controllo: 'Disturbatore: scavalca il Tank e colpisce le retrovie nemiche. Molto veloce.',
-  Supporto: 'Guaritore: ogni turno cura l\'alleato più ferito. Tiene in piedi la squadra.',
+  Attaccante: 'Cannone di vetro: ignora parte della difesa nemica e si tuffa sui bersagli fragili. Tanto attacco, poca vita.',
+  Controllo: 'Disturbatore: stordisce e rallenta. Scavalca la provocazione del Tank solo se riesce a stordirlo. Molto veloce.',
+  Supporto: 'Sostegno: cura, scuda e pulisce i controlli dalla squadra. La tiene in piedi.',
 }
 
 /** Full tooltip string: role name followed by its behaviour blurb. */
 export function roleTooltip(role: Role): string {
   return `${role} — ${ROLE_INFO[role]}`
+}
+
+/** One-word action verb per role, player-facing. */
+export const ROLE_VERB: Record<Role, string> = {
+  Tank: 'Provoca', Attaccante: 'Colpisce', Supporto: 'Cura', Controllo: 'Disabilita',
+}
+
+/** Role accent color (poster cards / role gem). */
+export const ROLE_ACCENT: Record<Role, string> = {
+  Tank: '#3aa0f2', Attaccante: '#ff5140', Supporto: '#20d894', Controllo: '#b355ff',
 }
 
 /** The role this one deals bonus damage to — the counter cycle from `roleCounter.ts`,

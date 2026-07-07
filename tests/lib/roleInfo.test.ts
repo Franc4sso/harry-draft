@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Role } from '@/types'
-import { ROLE_INFO, roleTooltip, rolePreyOf } from '@/lib/roleInfo'
+import { ROLE_INFO, roleTooltip, rolePreyOf, ROLE_VERB, ROLE_ACCENT } from '@/lib/roleInfo'
 
 const ROLES: Role[] = ['Attaccante', 'Tank', 'Supporto', 'Controllo']
 
@@ -31,5 +31,18 @@ describe('roleInfo', () => {
   it('rolePreyOf returns the countered role', () => {
     expect(rolePreyOf('Attaccante')).toBe('Supporto')
     expect(rolePreyOf('Controllo')).toBe('Tank')
+  })
+
+  it('every role has a verb and an accent hex', () => {
+    for (const r of ROLES) {
+      expect(ROLE_VERB[r], r).toMatch(/\w/)
+      expect(ROLE_ACCENT[r], r).toMatch(/^#[0-9a-fA-F]{6}$/)
+    }
+  })
+
+  it('the Controllo description no longer claims it plainly bypasses the Tank', () => {
+    // Combat changed: Controllo bypasses the taunt ONLY with a hard-control. The old
+    // "scavalca il Tank" (unqualified) is now misleading and must be gone.
+    expect(ROLE_INFO.Controllo).not.toMatch(/scavalca il Tank/i)
   })
 })
