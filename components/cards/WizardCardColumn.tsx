@@ -56,7 +56,7 @@ export function WizardCardColumn({
       data-house={wizard.house}
       data-testid={testId}
       className={cn(
-        'wizard-col group relative flex w-full select-none flex-col rounded-2xl text-white',
+        'wizard-col group relative flex h-full w-full select-none flex-col rounded-2xl text-white',
         clickable && 'cursor-pointer', className,
       )}
       style={{

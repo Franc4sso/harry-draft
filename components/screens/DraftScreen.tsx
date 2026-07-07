@@ -81,9 +81,9 @@ export function DraftScreen({
             rail, growing the hovered card downward when the rail gets taller. */}
         <section onPointerLeave={() => setConsidered(null)}>
           {/* Re-key by pick count so each new hand cascades in again. */}
-          <Stagger key={picks.length} className="grid grid-cols-1 content-start gap-4 sm:grid-cols-3">
+          <Stagger key={picks.length} className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3">
             {current.map((c, i) => (
-              <StaggerItem key={c.wizard.id}>
+              <StaggerItem key={c.wizard.id} className="h-full">
                 <DraftCandidateCard
                   drafted={c}
                   testId={`draft-pick-${i}`}
