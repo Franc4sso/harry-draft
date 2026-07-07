@@ -86,14 +86,14 @@ const SPELL_VFX: Record<string, SpellVfxConfig> = {
   'rennervate': { kind: 'heal', color: C.heal, impact: 'revive' },
   'anapneo': { kind: 'heal', color: C.heal, impact: 'bubbles' },
   'ferula': { kind: 'heal', color: C.heal, impact: 'bandage' },
-  'colletivo scudo': { kind: 'self', color: C.shield, sigil: true, impact: 'buff' },
+  'colletivo scudo': { kind: 'self', color: C.gold, sigil: true, impact: 'buff' },
   'incitamento': { kind: 'self', color: C.gold, sigil: true, impact: 'rally' },
 
   // ── Difesa ──
   'protego': { kind: 'self', color: C.shield, sigil: true, impact: 'hex' },
   'protego maxima': { kind: 'self', color: C.shield, sigil: true, impact: 'hex' },
-  'fianto duri': { kind: 'self', color: C.gold, sigil: true, impact: 'wall' },
-  'salvio hexia': { kind: 'self', color: C.shield, sigil: true, impact: 'wind' },
+  'fianto duri': { kind: 'self', color: C.shield, sigil: true, impact: 'wall' },
+  'salvio hexia': { kind: 'self', color: C.silver, sigil: true, impact: 'wind' },
   'riddikulus': { kind: 'self', color: C.gold, sigil: true, impact: 'rally' },
   'expecto patronum': { kind: 'self', color: C.silver, sigil: true, impact: 'patronus', tier: 3, screen: 0xdaf0ff },
   'aegis': { kind: 'self', color: C.shield, sigil: true, impact: 'absorb' },
