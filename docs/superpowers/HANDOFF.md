@@ -81,8 +81,6 @@ invariato. Vedi memoria [[harry-draft-dot-death-self-revive]].
 
 ## Perf UI 2026-07-06 (COMBATTIMENTO): ArenaBackdrop statico — VFX attacchi INTATTI
 
-## Perf UI 2026-07-06 (COMBATTIMENTO): ArenaBackdrop statico — VFX attacchi INTATTI
-
 `212d697`. Misurato il combattimento con Playwright (probe rAF-FPS). **Attenzione al
 metodo**: Chromium headless usa SwiftShader (rendering software CPU) che ammazza Pixi/WebGL →
 cifre finte (3fps). Rifatto headed con GPU vera (Intel Iris Xe/D3D12): idle arena ~52fps,
