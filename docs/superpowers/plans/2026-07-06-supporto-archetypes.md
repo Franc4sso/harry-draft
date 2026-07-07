@@ -166,11 +166,13 @@ git commit -m "feat(combat): per-role spell whitelist + structural guard test"
 
 ---
 
-### Task 2: Rewrite the 14 Supporto spell pools by archetype
+### Task 2: Rewrite the 14 Supporto spell pools by archetype (+ remove confundo from harry/sirius)
 
 **Files:**
-- Modify: `data/wizards.ts` (the 14 Supporto `spellPool` arrays per the assignment table above)
+- Modify: `data/wizards.ts` (the 14 Supporto `spellPool` arrays per the assignment table above; PLUS remove `confundo` from harry and sirius — both Attaccante. Exact replacements (in-role Attacco spells they don't already carry): harry `confundo`→`flipendo`; sirius `confundo`→`bombarda`. Final pools: harry = [expelliarmus, stupeficium, reducto, sectumsempra, flipendo]; sirius = [stupeficium, expelliarmus, reducto, flipendo, bombarda])
 - Test: `tests/data/supportoArchetypes.test.ts`
+
+**Post-condition:** `tests/data/roleSpellPools.test.ts` "every wizard spell allowed for its role" must go fully GREEN after this task (all 6 remaining violations resolved: 4 Supporto serpensortia + harry/sirius confundo).
 
 **Interfaces:**
 - Consumes: `ROLE_SPELL_WHITELIST` from Task 1.
@@ -315,6 +317,25 @@ git commit -m "feat(combat): clamp resolved battle spell to role whitelist (Supp
 ```
 
 ---
+
+### Task 3b: No Supporto as boss-leader (MURO_ALT) + enable full Supporto attack-clamp
+
+**Decision (user):** "Supporto = zero attacks" is absolute. A Supporto must never be a scripted boss/elite leader. MURO_ALT currently uses `pettigrew` (a Supporto) — replace its leader with a NON-Supporto, then the draft-time clamp (Supporto→episkey) can be enabled unconditionally.
+
+**Files:**
+- Modify: `data/bosses.ts` (MURO_ALT `bossWizardId` + name + the leader-choice comment)
+- Modify: `game/engine/statRoll.ts` (`guaranteeOffensiveSpell` ~line 41 — for a Supporto, fall back to a Cura/Difesa spell, NOT `base_attack`) OR the clamp site found in Task 3
+- Modify: `tests/engine/combat/attackMoveGuarantee.test.ts` (its canonical case used pettigrew — re-anchor to the new non-Supporto leader; keep the assertion intent: enemy boss/elite units are never harmless)
+- Test: existing `tests/engine/campaignBalanceB.test.ts`
+
+**Constraint — power-neutral reskin (critical):** MURO_ALT's leader MUST have `powerOf` as close as possible to the current pettigrew baseline (≈145.5). The comment in `data/bosses.ts` documents that a too-strong leader (greyback ≈221.5) dropped `campaignBalanceB` 0.10→0.083. Pick a NON-Supporto, `deatheater`-tagged (thematic — Death Eater villain) wizard whose real `powerOf` (computed via the actual `toBattleUnits`/`powerOf` pipeline with true stats, NOT a guessed constant) is nearest to 145.5. Compute `powerOf` for all non-Supporto deatheater candidates and pick the closest; if none is within ~±15 of 145.5, report back before committing — do not silently ship a leader that moves the balance floor.
+
+- [ ] **Step 1:** Compute real `powerOf` for every non-Supporto `deatheater` wizard (write a throwaway test using `powerOf` from `game/engine/combat/teamGen.ts` fed by the real draft pipeline). Rank by |powerOf − 145.5|. Record the table in the report.
+- [ ] **Step 2:** Set MURO_ALT `bossWizardId`/`name` to the closest candidate; update the leader-choice comment to explain the swap (Supporto banned as leader; power-matched replacement). If the closest candidate is > ~±15 from 145.5, STOP and report.
+- [ ] **Step 3:** Enable the full Supporto clamp at the site from Task 3 (`guaranteeOffensiveSpell` / resolver): a Supporto never receives `base_attack` — fall back to `episkey` (Cura). Add a test that a Supporto forced through `guaranteeOffense=true` still ends up with a Cura/Difesa spell.
+- [ ] **Step 4:** Re-anchor `attackMoveGuarantee.test.ts` to the new non-Supporto leader, keeping the "no harmless boss" assertion.
+- [ ] **Step 5:** Run `npx vitest run tests/engine/campaignBalanceB.test.ts tests/engine/combat/attackMoveGuarantee.test.ts` + the new clamp test → all green; record the campaignBalanceB winRate (must stay `> 0` and near the ~0.375 baseline). `npm run typecheck` clean.
+- [ ] **Step 6:** Commit `fix(boss): MURO_ALT non-Supporto leader + Supporto never gets base_attack`.
 
 ### Task 4: Remove the now-dead offensive-Supporto branch in targeting
 

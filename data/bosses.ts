@@ -136,14 +136,22 @@ export const BELLATRIX: BossDef = {
  *  rank ~54/59 — a top-10% outlier), which broke the "alts are power-neutral reskins"
  *  rule and dropped campaignBalanceB 0.1000→0.0833 by making area-0 (the run's first,
  *  least-forgiving boss) markedly harder than default MURO (leaderless, ≈power 140).
- *  Replaced with 'pettigrew' (powerOf ≈145.5, tagged deatheater) — proportionate to
- *  the MURO baseline and in line with the other alts' pattern (dolohov ≈150.8,
- *  lucius ≈163). See tests/engine/campaignBalanceB.test.ts for the recovered win rate. */
+ *  Then briefly 'pettigrew' (powerOf ≈145.5) — an exact power match, but pettigrew is a
+ *  Supporto, and this slice bans any Supporto from being a boss-leader (a Supporto is
+ *  clamped to a Cura fallback in guaranteeOffensiveSpell, so it can never hold the
+ *  offensive spell the "no harmless boss/elite" invariant requires — see
+ *  tests/engine/combat/attackMoveGuarantee.test.ts and game/engine/statRoll.ts).
+ *  Leader FIXED 2026-07-07 (USER DECISION): replaced pettigrew with 'marcus'
+ *  (Marcus Flint, Serpeverde Attaccante, powerOf 145.5 — the SAME power as pettigrew,
+ *  so campaignBalanceB is unmoved). Thematic constraint relaxed from "deatheater-tagged"
+ *  to "Serpeverde house": the scoped deatheater/non-Supporto pool was empty (every
+ *  deatheater is either already a leader elsewhere or a Supporto), and marcus is a
+ *  credible Slytherin mini-boss and an exact power match to the MURO baseline. */
 export const MURO_ALT: BossDef = {
   ...MURO,
-  id: 'pettigrew_boss',
-  name: 'Peter Minus',
-  bossWizardId: 'pettigrew',
+  id: 'marcus_boss',
+  name: 'Marcus Flint',
+  bossWizardId: 'marcus',
 }
 
 /** Area-1 alt: same ignoresTaunt mechanic and calibrated numbers as BELLATRIX, reskinned

@@ -27,9 +27,17 @@ function expectedPower(w: Wizard): number {
 
 /** The budget-appropriate candidate window: `count*3` wizards centered on the
  *  power-percentile implied by `targetPer`. Shared by the legacy draft and the
- *  themed draft so both anchor difficulty to the same window. */
-export function budgetWindow(targetPer: number, count: number): Wizard[] {
-  const sorted = [...WIZARDS].sort((a, b) => expectedPower(a as Wizard) - expectedPower(b as Wizard))
+ *  themed draft so both anchor difficulty to the same window.
+ *
+ *  `excludeSupporto` (enemy elite/boss drafts only): a Supporto is clamped to never
+ *  hold an attack (guaranteeOffensiveSpell → Cura), so it can never satisfy the
+ *  "no harmless boss/elite enemy" invariant (attackMoveGuarantee.test.ts). Drafting one
+ *  onto an elite/boss squad would field a unit that deals zero damage — a free win.
+ *  So those drafts exclude Supporto from the candidate pool entirely (normal packs and
+ *  player drafts keep Supporto — they have no such invariant). */
+export function budgetWindow(targetPer: number, count: number, excludeSupporto = false): Wizard[] {
+  const eligible = excludeSupporto ? WIZARDS.filter(w => w.role !== 'Supporto') : WIZARDS
+  const sorted = [...eligible].sort((a, b) => expectedPower(a as Wizard) - expectedPower(b as Wizard))
   const n = sorted.length
   const minBudget = BALANCE.campaign.baseBudget / BALANCE.draft.teamSize
   const maxBudget =
@@ -45,7 +53,9 @@ export function budgetWindow(targetPer: number, count: number): Wizard[] {
 function pickTowardBudget(
   rng: Rng, targetPer: number, count: number, preferOffense = false, guaranteeOffense = false,
 ): DraftedWizard[] {
-  const window = budgetWindow(targetPer, count)
+  // guaranteeOffense (elite/boss) ⇒ exclude Supporto: a Supporto can never be offensive
+  // (clamped to Cura), so it must not be fielded where the no-harmless-enemy invariant holds.
+  const window = budgetWindow(targetPer, count, guaranteeOffense)
   const pool = rng.shuffle(window)
   const out: DraftedWizard[] = []
   for (const w of pool) out.push(draftWizard(rng, w as Wizard, false, preferOffense, guaranteeOffense))
@@ -113,8 +123,11 @@ export function themedEnemyTeam(rng: Rng, opts: {
 }): { team: DraftedWizard[]; themeId: string | null } {
   const { area, kind, budget, count, excludeThemes } = opts
   const perUnit = budget / BALANCE.draft.teamSize
+  // Elite/boss packs get the strict offensive guarantee, so they must exclude Supporto
+  // (which can never be offensive — clamped to Cura); normal packs keep Supporto.
+  const excludeSupporto = kind === 'elite' || kind === 'boss'
   // Power-sorted ascending so weightedPick favors the stronger end of the window.
-  const window = [...budgetWindow(perUnit, count)]
+  const window = [...budgetWindow(perUnit, count, excludeSupporto)]
     .sort((a, b) => expectedPower(a) - expectedPower(b))
 
   const strength = themeStrengthFor(area, kind)

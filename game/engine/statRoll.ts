@@ -33,11 +33,18 @@ export function fixedStats(wizard: Wizard): Stats {
 /** STRICT guarantee (enemy elite/boss only — see draftWizard's `guaranteeOffense`):
  *  given a wizard's already-chosen active `spell`, returns it unchanged if it's
  *  offensive. Otherwise replaces it with the strongest (highest `power`) offensive
- *  spell in the wizard's own pool, or — if the pool has none at all (a pure-support
- *  kit, e.g. pettigrew) — the universal `base_attack` fallback. Deterministic (no rng
- *  draw): unlike `preferOffense`'s soft bias, this NEVER falls through to a
- *  non-offensive spell, closing the "boss leader with a heal/shield active deals zero
- *  damage" degenerate case. */
+ *  spell in the wizard's own pool. If the pool has none at all (a pure-support kit),
+ *  the fallback depends on role:
+ *    - SUPPORTO: NEVER receives an attack. A Supporto is a healer/warder by design, and
+ *      (this slice) a Supporto is banned from being a boss-leader precisely because it
+ *      must never wield a direct attack — so we fall back to `episkey` (a Cura), keeping
+ *      the wizard true to its archetype. This also means a Supporto can never satisfy the
+ *      "no harmless boss/elite" invariant, which is why no Supporto is fielded as a
+ *      scripted boss-leader (see data/bosses.ts).
+ *    - Any other role with an empty offensive pool: the universal `base_attack` fallback.
+ *  Deterministic (no rng draw): unlike `preferOffense`'s soft bias, this NEVER falls
+ *  through to a spell weaker than the role's floor, closing the "boss leader with a
+ *  heal/shield active deals zero damage" degenerate case for non-Supporto enemies. */
 export function guaranteeOffensiveSpell(wizard: Wizard, spell: Spell): Spell {
   if (spellIsOffensive(spell)) return spell
   const offensiveIds = wizard.spellPool.filter(id => spellIsOffensive(SPELL_BY_ID[id]))
@@ -45,6 +52,13 @@ export function guaranteeOffensiveSpell(wizard: Wizard, spell: Spell): Spell {
     const strongestId = offensiveIds.reduce((best, id) =>
       (SPELL_BY_ID[id]!.power ?? 0) > (SPELL_BY_ID[best]!.power ?? 0) ? id : best)
     return SPELL_BY_ID[strongestId]!
+  }
+  // A Supporto with no offensive spell in its pool stays a support: fall back to a Cura
+  // (episkey), never base_attack. (Non-Supporto roles keep the base_attack fallback.)
+  if (wizard.role === 'Supporto') {
+    const cura = SPELL_BY_ID['episkey']
+    if (!cura) throw new Error('episkey spell missing from registry')
+    return cura
   }
   const fallback = SPELL_BY_ID['base_attack']
   if (!fallback) throw new Error('base_attack spell missing from registry')

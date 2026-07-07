@@ -2,9 +2,10 @@ import { describe, it, expect } from 'vitest'
 import { buildBattlePackage } from '@/game/engine/combat/battlePackage'
 import { generateBossTeam } from '@/game/engine/combat/teamGen'
 import { createRng } from '@/game/engine/rng'
-import { spellIsOffensive } from '@/game/engine/statRoll'
+import { spellIsOffensive, guaranteeOffensiveSpell } from '@/game/engine/statRoll'
 import { MURO_ALT } from '@/data/bosses'
 import { WIZARD_BY_ID } from '@/data/wizards'
+import { SPELL_BY_ID } from '@/data/spells'
 
 // Regression guard for the "degenerate enemy" bug: an ELITE or BOSS enemy wizard whose
 // equipped active spell never deals damage is a free win for the player. `preferOffense`
@@ -46,34 +47,48 @@ describe('attack move guarantee — enemy elite/boss', () => {
     expect(offenders).toEqual([])
   })
 
-  it('the MURO_ALT (pettigrew) leader — a pure-support wizard with NO attack spell in its pool — ends up with an offensive active', () => {
-    // Sanity precondition: pettigrew's own spell pool has zero offensive spells, so any
-    // pass here is because of the base_attack fallback, not a lucky pool draw.
-    const pettigrew = WIZARD_BY_ID['pettigrew']!
-    expect(pettigrew.spellPool.some(id => id === 'base_attack')).toBe(false)
-
+  it('the MURO_ALT (marcus) leader ends up with an offensive active spell', () => {
+    // Leader was pettigrew (a Supporto) — replaced by marcus (Serpeverde Attaccante) because
+    // no Supporto may be a boss-leader this slice (a Supporto is clamped to a Cura and can
+    // never hold the offensive spell the "no harmless boss" invariant demands). marcus is a
+    // real attacker, so the invariant holds natively here.
     for (let s = 0; s < 25; s++) {
       const team = generateBossTeam(createRng(`muro-alt-${s}`), MURO_ALT)
-      const leader = team.find(d => d.wizard.id === 'pettigrew')
-      expect(leader, `seed ${s}: pettigrew not fielded as leader`).toBeTruthy()
+      const leader = team.find(d => d.wizard.id === 'marcus')
+      expect(leader, `seed ${s}: marcus not fielded as leader`).toBeTruthy()
       expect(spellIsOffensive(leader!.spell), `seed ${s} → ${leader!.spell.id}`).toBe(true)
     }
   })
 
-  it('the MURO_ALT (pettigrew) boss is reachable via the real seeded pick and still guarantees offense', () => {
+  it('the MURO_ALT (marcus) boss is reachable via the real seeded pick and still guarantees offense', () => {
     // Hunt across seeds for one that actually routes the area-0 boss pick to MURO_ALT
     // (BOSSES_BY_AREA[0] = [MURO, MURO_ALT]) via buildBattlePackage's own bossPick fork,
     // so this exercises the full production path, not just generateBossTeam directly.
     let found = false
     for (let s = 0; s < 200 && !found; s++) {
       const { battle, preview } = buildBattlePackage(`hunt-${s}`, 0, 0, 'boss')
-      if (preview.bossName === 'Peter Minus') {
+      if (preview.bossName === 'Marcus Flint') {
         found = true
-        const leader = battle.enemyTeam.find(d => d.wizard.id === 'pettigrew')
-        expect(leader, `seed hunt-${s}: pettigrew not on the fielded team`).toBeTruthy()
+        const leader = battle.enemyTeam.find(d => d.wizard.id === 'marcus')
+        expect(leader, `seed hunt-${s}: marcus not on the fielded team`).toBeTruthy()
         expect(spellIsOffensive(leader!.spell), `seed hunt-${s} → ${leader!.spell.id}`).toBe(true)
       }
     }
-    expect(found, 'no seed in [0,200) routed the area-0 boss pick to MURO_ALT/pettigrew').toBe(true)
+    expect(found, 'no seed in [0,200) routed the area-0 boss pick to MURO_ALT/marcus').toBe(true)
+  })
+
+  it('a Supporto forced through guaranteeOffensiveSpell gets a Cura, NEVER base_attack (the clamp)', () => {
+    // The other half of the boss-leader ban: a Supporto (pettigrew) with an all-support pool,
+    // if ever forced through the offense guarantee, must fall back to a Cura (episkey) — not
+    // base_attack. This is why a Supporto can never be a non-harmless boss, and stays true to
+    // its healer archetype. See game/engine/statRoll.ts guaranteeOffensiveSpell.
+    const pettigrew = WIZARD_BY_ID['pettigrew']!
+    // Precondition: pettigrew's pool is all support (no offensive spell) so the fallback fires.
+    expect(pettigrew.spellPool.some(id => spellIsOffensive(SPELL_BY_ID[id]))).toBe(false)
+    const supportSpell = SPELL_BY_ID[pettigrew.spellPool[0]!]!
+    const guaranteed = guaranteeOffensiveSpell(pettigrew, supportSpell)
+    expect(spellIsOffensive(guaranteed), `got ${guaranteed.id}`).toBe(false)
+    expect(guaranteed.id).not.toBe('base_attack')
+    expect(guaranteed.type === 'Cura' || guaranteed.type === 'Difesa').toBe(true)
   })
 })
