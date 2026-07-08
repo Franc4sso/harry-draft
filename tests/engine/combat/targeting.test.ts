@@ -34,13 +34,17 @@ describe('threat targeting', () => {
     expect(selectTarget(me, [me], enemies)?.wizard.id).toBe('scary')
   })
 
-  it('Controllo bypasses the taunt and hits the enemy Supporto', () => {
+  // IRON TAUNT (USER 2026-07-08): an actively-provoking Tank MUST be attacked by every
+  // enemy role — including Controllo. The old "Controllo scavalca a soft spell to the
+  // backline" escape valve is GONE. The taunt only lifts when the Tank is hard-controlled
+  // (stun/freeze/silence), never merely because the attacker's spell is soft.
+  it('Controllo respects the taunt and hits the provoking Tank', () => {
     const me = u('ctrl', 'Controllo', 'left')
     const enemies = [u('wall', 'Tank', 'right', { atk: 60, spd: 50 }), u('healer', 'Supporto', 'right')]
-    expect(selectTarget(me, [me], enemies)?.wizard.id).toBe('healer')
+    expect(selectTarget(me, [me], enemies)?.wizard.id).toBe('wall')
   })
 
-  it('Controllo hits a Tank only if nothing else is alive', () => {
+  it('Controllo hits a Tank when it is the only enemy alive', () => {
     const me = u('ctrl', 'Controllo', 'left')
     const enemies = [u('wall', 'Tank', 'right')]
     expect(selectTarget(me, [me], enemies)?.wizard.id).toBe('wall')
@@ -53,18 +57,19 @@ describe('threat targeting', () => {
     expect(selectTarget(me, [me], enemies, SPELL_BY_ID['petrificus']!)?.wizard.id).toBe('wall')
   })
 
-  it('a Controllo with a SOFT-control spell scavalca the taunt to the backline', () => {
+  it('a Controllo with a SOFT-control spell STILL respects the taunt (iron taunt)', () => {
     const me = u('ctrl', 'Controllo', 'left')
     const enemies = [u('healer', 'Supporto', 'right'), u('wall', 'Tank', 'right')]
-    // confundo applies only a spd debuff (no hard control) → no point hammering the wall.
-    expect(selectTarget(me, [me], enemies, SPELL_BY_ID['confundo']!)?.wizard.id).toBe('healer')
+    // confundo is soft, but the Tank is provoking → must still be hit.
+    expect(selectTarget(me, [me], enemies, SPELL_BY_ID['confundo']!)?.wizard.id).toBe('wall')
   })
 
-  it('a Controllo with hard-control still scavalca when the Tank is already stunned', () => {
+  it('a Controllo scavalca to the backline once the Tank is hard-controlled', () => {
     const me = u('ctrl', 'Controllo', 'left')
     const stunnedWall = u('wall', 'Tank', 'right'); stunnedWall.statusEffects = [{ kind: 'stun', remaining: 1, stacks: 1 } as never]
     const enemies = [u('healer', 'Supporto', 'right'), stunnedWall]
-    expect(selectTarget(me, [me], enemies, SPELL_BY_ID['petrificus']!)?.wizard.id).toBe('healer')
+    // Tank is stunned → taunt is lifted → backline is fair game.
+    expect(selectTarget(me, [me], enemies, SPELL_BY_ID['confundo']!)?.wizard.id).toBe('healer')
   })
 
   it('a Supporto casting an OFFENSIVE attack spell aims at an enemy, never an ally (Serpensortia-on-ally bug)', () => {

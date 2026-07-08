@@ -3,7 +3,7 @@ import { BALANCE } from '@/data/constants'
 import { effectiveStats } from '../status'
 import { normalizeSpell } from './normalizeSpell'
 import { STATUS_BY_ID } from '@/data/statuses'
-import { isUnderHardControl, HARD_CONTROL_KINDS } from './roleCounter'
+import { isUnderHardControl } from './roleCounter'
 
 const CONTROL_KINDS = new Set(['stun', 'freeze', 'silence', 'disarm'])
 
@@ -140,14 +140,11 @@ export function selectTarget(
       }
       return carryToProtect(liveAllies) ?? mostWounded(liveAllies) ?? lowestHp(enemyPool)
     case 'Controllo': {
-      // Controllo counters a taunting Tank ONLY by hard-controlling it (stun/freeze/silence),
-      // spending that control to break the taunt. With a soft spell it scavalca to the backline
-      // — hammering an unbreakable wall is wasted (validated by sim). Once the Tank is stunned,
-      // activeTauntTank is false → it scavalca like usual.
-      const canHardControl = spell
-        ? [...appliesControl(spell)].some(k => HARD_CONTROL_KINDS.has(k))
-        : false
-      return (taunt && canHardControl) ? highestThreat(enemyPool) : backlineTarget(enemyPool)
+      // IRON TAUNT (USER 2026-07-08): a provoking Tank MUST be attacked — Controllo no longer
+      // gets a soft-spell escape valve past it. While the Tank actively taunts, Controllo hits
+      // it like everyone else. Only once the Tank is hard-controlled (stun/freeze/silence) does
+      // activeTauntTank go false → Controllo scavalca to the backline as before.
+      return taunt ? highestThreat(enemyPool, ign) : backlineTarget(enemyPool)
     }
     case 'Tank':
       return taunt ? highestThreat(enemyPool, ign) : lowestHp(enemyPool)
