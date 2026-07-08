@@ -108,7 +108,7 @@ export function BattleArena({
         <div
           key={`tg-${frameKey}`}
           data-testid="boss-telegraph"
-          className="pointer-events-none absolute left-1/2 top-1 z-20 -translate-x-1/2 whitespace-nowrap rounded-full border border-rose-500/50 bg-black/75 px-4 py-1.5 text-xs font-semibold text-rose-200 backdrop-blur-sm motion-safe:animate-pulse sm:text-sm"
+          className="pointer-events-none absolute left-1/2 top-1 z-20 -translate-x-1/2 whitespace-nowrap rounded-full border border-rose-500/50 bg-black/85 px-4 py-1.5 text-xs font-semibold text-rose-200 motion-safe:animate-pulse sm:text-sm"
           style={{ boxShadow: '0 0 26px rgba(224,90,74,.45)' }}
         >
           ⚠ {telegraph.name} sta caricando {telegraph.spell}…

@@ -224,7 +224,7 @@ export const UnitBust = memo(function UnitBust({
         scaleY: impact ? { type: 'tween', duration: isCrit ? 0.44 : 0.32, ease: [0.22, 1, 0.36, 1] } : { type: 'spring', stiffness: 360, damping: 22 },
         x: { type: 'spring', stiffness: 360, damping: 22 },
       }}
-      className={cn('relative rounded-2xl border bg-[rgba(20,16,33,0.45)] backdrop-blur-sm',
+      className={cn('relative rounded-2xl border bg-[rgba(20,16,33,0.62)]',
         compact && !boss ? 'p-1' : 'p-1.5',
         boss ? 'w-32 sm:w-40 border-[#7c3aed]/40' : compact ? 'w-[4.75rem] sm:w-24 border-[#C9A24B]/15' : 'w-28 sm:w-32 border-[#C9A24B]/15',
         mirrored && 'text-right')}
@@ -325,7 +325,7 @@ export const UnitBust = memo(function UnitBust({
           return (
             <span
               title={unit.role === 'Tank' ? 'Provocazione: i nemici attaccano questo bersaglio per primi' : unit.role}
-              className={cn('inline-flex items-center gap-0.5 rounded bg-black/60 px-1 py-0.5 text-[9px] font-semibold backdrop-blur-sm',
+              className={cn('inline-flex items-center gap-0.5 rounded bg-black/70 px-1 py-0.5 text-[9px] font-semibold',
                 unit.role === 'Tank' ? 'text-sky-300' : 'text-white/80')}
             >
               <RoleIcon size={9} aria-hidden />
