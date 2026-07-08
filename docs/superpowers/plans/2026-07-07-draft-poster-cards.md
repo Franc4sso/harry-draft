@@ -174,6 +174,21 @@ git commit -m "feat(ui): draft card poster layout — role gem, spell block, abi
 
 ---
 
+### PLAN CHANGE (2026-07-08): the personal ability IS the existing Signature
+
+Discovery: all 60 wizards already have a `Signature` (`data/signatures.ts`, `SIGNATURE_BY_ID[id]
+→ { id, name, desc, triggers }`) — a unique personal ability with a written name + description
+(e.g. draco "Tocco Velenoso: i suoi colpi possono avvelenare"). USER DECISION: the gold ability
+plate shows the wizard's SIGNATURE (name + desc), reusing existing text. Consequences:
+- **Task 3** becomes: `abilityFor(id)` reads `SIGNATURE_BY_ID[id]` → `{ name, blurb: desc }`, with a
+  fallback (role-derived) for any id without a signature (none today, but keep it total).
+- **Task 4 (write 60 abilities) is CANCELLED** — no hand-written text; the signatures already exist.
+  The epithet (`epithetFor`) is still small/optional — derive it from the role (e.g. Tank→"Muro
+  della squadra") rather than hand-writing 60; a `wizardEpithet.ts` with a role-based map is enough.
+- **Task 5** additionally REMOVES the residual signature pill still shown at the top of the card
+  (the "Tocco Velenoso" gold pill) — its content now lives in the gold ability plate, so showing it
+  twice is duplication. And it replaces the Task 2 stub with `abilityFor` (the signature).
+
 ### Task 3: Ability + epithet data modules (with fallbacks)
 
 **Files:**
