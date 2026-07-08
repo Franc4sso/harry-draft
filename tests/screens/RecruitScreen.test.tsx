@@ -43,15 +43,15 @@ describe('RecruitScreen', () => {
   it('renders candidates as horizontal (landscape) cards, like the draft', () => {
     const onPick = vi.fn()
     render(<RecruitScreen offer={offer} team={team} teamMax={5} onPick={onPick} />)
-    // Each candidate uses the draft's horizontal WizardCardRow (`.wizard-row`),
-    // NOT the portrait WizardCard — so recruiting reads like the draft.
+    // Each candidate uses the SAME poster card as the first draft (WizardCardColumn,
+    // `.wizard-col`) — recruiting looks identical to the draft.
     for (const d of offer) {
       const tile = screen.getByTestId(`recruit-${d.wizard.id}`)
-      expect(tile.querySelector('.wizard-row')).not.toBeNull()
+      expect(tile.querySelector('.wizard-col')).not.toBeNull()
     }
   })
 
-  it('stacks the candidates in a single vertical column (like the draft section)', () => {
+  it('lays the candidates out side by side (a responsive grid, like the draft row)', () => {
     const onPick = vi.fn()
     render(<RecruitScreen offer={offer} team={team} teamMax={5} onPick={onPick} />)
     const tiles = offer.map(d => screen.getByTestId(`recruit-${d.wizard.id}`))
@@ -59,7 +59,8 @@ describe('RecruitScreen', () => {
     expect(cols.size).toBe(1)
     const col = [...cols][0]!
     expect(col.tagName.toLowerCase()).toBe('section')
-    expect(col.className).toContain('grid-cols-1')
+    // multi-column at wider breakpoints (poster cards side by side, not a single stack)
+    expect(col.className).toContain('lg:grid-cols-3')
   })
 
   it('keeps the synergy rail as a right-hand aside sibling of the candidates', () => {

@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { DraftedWizard } from '@/types'
 import { WizardCardRow } from '@/components/cards/WizardCardRow'
+import { WizardCardColumn } from '@/components/cards/WizardCardColumn'
 import { Button } from '@/components/ui/Button'
 import { Frame } from '@/components/ui/Frame'
 import { Insegna } from '@/components/ui/Insegna'
@@ -112,10 +113,11 @@ export function RecruitScreen({
       </header>
 
       <div className="mx-auto grid max-w-5xl grid-cols-1 items-start gap-6 p-4 md:grid-cols-[1fr_280px]">
-        {/* Candidates (left column) — same WizardCardRow the draft uses, stacked. */}
+        {/* Candidates — the SAME poster card as the first draft (WizardCardColumn),
+            laid out side by side (sm+) like the draft's 3 candidates. */}
         <Stagger
           as="section"
-          className="grid grid-cols-1 content-start gap-4"
+          className="grid grid-cols-1 content-start gap-4 sm:grid-cols-2 lg:grid-cols-3"
           onPointerLeave={() => setConsidered(null)}
         >
           {offer.map(d => (
@@ -136,7 +138,7 @@ export function RecruitScreen({
               }}
               className="cursor-pointer rounded-2xl"
             >
-              <WizardCardRow drafted={d} selected={pick === d.wizard.id} />
+              <WizardCardColumn drafted={d} selected={pick === d.wizard.id} />
             </StaggerItem>
           ))}
 
