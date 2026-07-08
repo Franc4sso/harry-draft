@@ -55,7 +55,7 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
           orientation="vertical"
           onSetSpell={editable ? c.setWizardSpell : undefined}
         />
-        <Frame variant="panel" innerClassName="p-3">
+        <Frame variant="panel" innerClassName="p-3" className="[&>.frame-inner]:!overflow-visible">
           <span className="font-display text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Reliquie</span>
           <RelicBar relics={c.run.relics} className="mt-2" onUse={c.useConsumableRelic} team={c.run.team} />
         </Frame>
