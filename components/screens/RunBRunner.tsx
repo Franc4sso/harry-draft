@@ -38,7 +38,10 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
   // larger LEFT sidebar beside the screen content, so the player can read their wizards
   // and relics while choosing a path / recruit / relic. Battle and the end screens
   // don't use it (battle shows relics in-fight).
-  const withTeamSidebar = (content: ReactNode) => (
+  // `editable` gates the per-wizard spell selector. The map (tree) view is a read-only
+  // overview — you pick a path there, you don't manage loadouts — so it omits onSetSpell
+  // and the rows stay collapsed with no spell pool. Other nodes keep it editable.
+  const withTeamSidebar = (content: ReactNode, editable = true) => (
     <div className="flex-1 flex flex-row items-start gap-4 p-3">
       <motion.aside
         initial={reduce ? false : { opacity: 0, x: -18 }}
@@ -50,7 +53,7 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
           team={c.run.team}
           synergies={c.run.activeSynergies}
           orientation="vertical"
-          onSetSpell={c.setWizardSpell}
+          onSetSpell={editable ? c.setWizardSpell : undefined}
         />
         <Frame variant="panel" innerClassName="p-3">
           <span className="font-display text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Reliquie</span>
@@ -76,6 +79,7 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
             area={c.area}
             areasTotal={c.areasTotal}
           />,
+          false, // tree view: read-only, no spell selector
         )
 
       case 'battle': {

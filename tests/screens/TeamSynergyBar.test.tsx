@@ -51,17 +51,20 @@ describe('TeamSynergyBar', () => {
       <TeamSynergyBar team={[memberWithPool]} synergies={[]} orientation="vertical" onSetSpell={spy} />,
     )
 
-    // Role icon renders (RoleIcon sets aria-label to the role name) — smoke check
-    // that the folded-in role-icon path from the old LoadoutPanel still renders.
-    expect(screen.getByLabelText('Attaccante')).toBeInTheDocument()
+    // The role now reads as a text label on the compact row.
+    expect(screen.getByText('Attaccante')).toBeInTheDocument()
 
-    // Current spell name shows on the collapsed row's toggle button.
-    const toggle = screen.getByRole('button', { name: /Expelliarmus/ })
+    // The whole row is the toggle (named by the wizard). Compact: the spell is
+    // hidden until the row is expanded — not shown on the collapsed row.
+    const toggle = screen.getByRole('button', { name: /Harry/ })
     expect(toggle).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByText('Expelliarmus')).not.toBeInTheDocument()
 
-    // Expand the collapsible pool.
+    // Expand the collapsible pool — the equipped spell + pool now appear.
     fireEvent.click(toggle)
     expect(toggle).toHaveAttribute('aria-expanded', 'true')
+    // Equipped-spell label + the active pool button both read "Expelliarmus".
+    expect(screen.getAllByText('Expelliarmus').length).toBeGreaterThan(0)
 
     // Click the non-active pool spell.
     const stupeficiumBtn = screen.getByRole('button', { name: 'Stupeficium' })

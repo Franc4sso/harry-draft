@@ -3,12 +3,10 @@ import { useState, type ReactNode } from 'react'
 import type { DraftedWizard, ActiveSynergy, Synergy, House, Role } from '@/types'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { Chip } from '@/components/ui/Chip'
-import { Tooltip } from '@/components/ui/Tooltip'
 import { RoleIcon } from '@/components/cards/RoleIcon'
 import { houseTheme } from '@/lib/theme'
 import { displayName } from '@/lib/displayName'
 import { synergyBonusText, spellTypeChip } from '@/lib/glossary'
-import { roleTooltip } from '@/lib/roleInfo'
 import { SPELL_BY_ID } from '@/data/spells'
 
 /** Role accent colours mirror the spell-type palette (Attaccante↔Attacco, etc.),
@@ -103,13 +101,12 @@ function HpBar({ current, max }: { current: number; max: number }) {
   const dead = current <= 0
   const color = dead ? '#6b7280' : ratio > 0.5 ? '#7CFC9B' : ratio > 0.25 ? '#F0D98A' : '#FF6B6B'
   return (
-    <div className="mt-1.5 flex items-center gap-1.5" title={`${Math.max(0, Math.round(current))} / ${max} PV`}>
-      <span aria-hidden className="text-[9px] font-bold uppercase tracking-wider text-white/40">PV</span>
+    <div className="mt-1 flex items-center gap-1.5" title={`${Math.max(0, Math.round(current))} / ${max} PV`}>
       <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-black/50 ring-1 ring-inset ring-white/5">
         <div className="h-full rounded-full transition-[width] duration-500"
           style={{ width: `${ratio * 100}%`, background: color, boxShadow: dead ? 'none' : `0 0 6px ${color}88` }} />
       </div>
-      <span className="w-11 shrink-0 text-right text-[10px] font-semibold tabular-nums text-white/70">
+      <span className="shrink-0 text-right text-[9.5px] font-semibold tabular-nums text-white/60">
         {dead ? 'K.O.' : `${Math.max(0, Math.round(current))}/${max}`}
       </span>
     </div>
@@ -135,67 +132,74 @@ function MemberRow({
   const spellPool = m.wizard.spellPool ?? []
   const canSelect = Boolean(onSetSpell) && spellPool.length > 0
 
+  const roleColor = m.wizard.role ? ROLE_COLOR[m.wizard.role] : '#ffffff80'
+  // The whole row is the tap target: it toggles the spell + pool detail (only when there's
+  // a pool to choose from). Kept compact — portrait + name + role + inline HP — so five
+  // members fit the sidebar without pushing the relics below the fold.
+  const RowTag = canSelect ? 'button' : 'div'
+
   return (
     <div
       data-house={m.wizard.house}
-      className="flex flex-col rounded-xl border bg-black/30 p-1.5"
+      className="rounded-xl border bg-black/30"
       style={{ borderColor: `${theme.color}55` }}
     >
-      <div className="flex items-center gap-2.5">
-        <span className="h-11 w-11 shrink-0 overflow-hidden rounded-lg">
+      <RowTag
+        type={canSelect ? 'button' : undefined}
+        onClick={canSelect ? () => setOpen((v) => !v) : undefined}
+        aria-expanded={canSelect ? open : undefined}
+        className="flex w-full items-center gap-2 p-1.5 text-left disabled:cursor-default"
+      >
+        <span className="h-8 w-8 shrink-0 overflow-hidden rounded-lg">
           <PortraitImage id={m.wizard.id} house={m.wizard.house} alt={m.wizard.name} variant="bust" />
         </span>
-        <span className="min-w-0 flex-1 text-sm font-semibold leading-tight text-white/90">{displayName(m)}</span>
-        {m.wizard.role && (
-          <Tooltip
-            triggerClassName="grid h-5 w-5 shrink-0 place-items-center rounded-full border border-white/25 bg-black/40"
-            content={roleTooltip(m.wizard.role)}
-          >
-            <RoleIcon role={m.wizard.role} size={11} className="text-white/85" />
-          </Tooltip>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-1.5">
+            <span className="min-w-0 flex-1 truncate text-[12.5px] font-semibold leading-tight text-white/90">{displayName(m)}</span>
+            {m.wizard.role && (
+              <span className="shrink-0 text-[8.5px] font-bold uppercase tracking-wide" style={{ color: roleColor }}>
+                {m.wizard.role}
+              </span>
+            )}
+          </span>
+          <HpBar current={m.currentHp ?? m.maxHp} max={m.maxHp} />
+        </span>
+        <span className="shrink-0 text-[9px] font-bold text-[#F0D98A]">Lv.{m.level ?? 1}</span>
+        {canSelect && (
+          <span aria-hidden className="shrink-0 text-white/35 transition-transform" style={{ transform: open ? 'rotate(90deg)' : 'none' }}>›</span>
         )}
-        <Chip label={`Lv. ${m.level ?? 1}`} color="#F0D98A" />
-      </div>
+      </RowTag>
 
-      <HpBar current={m.currentHp ?? m.maxHp} max={m.maxHp} />
-
-      {spell && (
-        <button
-          type="button"
-          onClick={canSelect ? () => setOpen((v) => !v) : undefined}
-          aria-expanded={canSelect ? open : undefined}
-          disabled={!canSelect}
-          className="mt-1.5 flex items-center gap-1.5 rounded-lg bg-black/20 px-1.5 py-1 text-left disabled:cursor-default"
-        >
-          <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-white/75">{spell.name}</span>
-          {typeChip && <Chip label={typeChip.label} color={typeChip.color} icon={typeChip.icon} />}
-        </button>
-      )}
-
-      {open && canSelect && (
-        <div className="mt-1.5 flex flex-wrap gap-1 px-0.5" role="group" aria-label={`Incantesimi di ${m.wizard.name}`}>
-          {spellPool.map((sid) => {
-            const poolSpell = SPELL_BY_ID[sid]
-            if (!poolSpell) return null
-            const active = spell?.id === sid
-            return (
-              <button
-                key={sid}
-                type="button"
-                onClick={() => onSetSpell?.(m.wizard.id, sid)}
-                aria-pressed={active}
-                title={poolSpell.desc}
-                className={
-                  'rounded-md border px-2 py-0.5 text-[11px] transition ' +
-                  (active
-                    ? 'border-amber-300/70 bg-amber-300/15 text-amber-100'
-                    : 'border-white/10 bg-white/[0.04] text-white/70 hover:bg-white/10')
-                }
-              >
-                {poolSpell.name}
-              </button>
-            )
-          })}
+      {open && canSelect && spell && (
+        <div className="border-t border-white/10 px-1.5 pb-1.5 pt-1.5">
+          <div className="mb-1.5 flex items-center gap-1.5">
+            <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-white/70">{spell.name}</span>
+            {typeChip && <Chip label={typeChip.label} color={typeChip.color} icon={typeChip.icon} />}
+          </div>
+          <div className="flex flex-wrap gap-1 px-0.5" role="group" aria-label={`Incantesimi di ${m.wizard.name}`}>
+            {spellPool.map((sid) => {
+              const poolSpell = SPELL_BY_ID[sid]
+              if (!poolSpell) return null
+              const active = spell?.id === sid
+              return (
+                <button
+                  key={sid}
+                  type="button"
+                  onClick={() => onSetSpell?.(m.wizard.id, sid)}
+                  aria-pressed={active}
+                  title={poolSpell.desc}
+                  className={
+                    'rounded-md border px-2 py-0.5 text-[11px] transition ' +
+                    (active
+                      ? 'border-amber-300/70 bg-amber-300/15 text-amber-100'
+                      : 'border-white/10 bg-white/[0.04] text-white/70 hover:bg-white/10')
+                  }
+                >
+                  {poolSpell.name}
+                </button>
+              )
+            })}
+          </div>
         </div>
       )}
     </div>

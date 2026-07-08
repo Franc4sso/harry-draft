@@ -1,4 +1,6 @@
 import type { ActiveRelic, DraftedWizard } from '@/types'
+import type { Keyword } from '@/types/keyword'
+import type { RelicRarity } from '@/types/relic'
 import { cn } from '@/lib/cn'
 import { RELIC_RARITY_COLOR } from '@/lib/relicRarity'
 import { isDead } from '@/game/engine/roster'
@@ -8,6 +10,28 @@ interface RelicBarProps {
   className?: string
   onUse?: (relicId: string) => void
   team?: DraftedWizard[]
+}
+
+// Player-facing labels. The stored ids are camelCase build-keywords / kebab rarities;
+// these turn them into the words the player reads in the tooltip.
+const RARITY_LABEL: Record<RelicRarity, string> = {
+  comune: 'Comune',
+  'non-comune': 'Non comune',
+  rara: 'Rara',
+  epica: 'Epica',
+}
+const KEYWORD_LABEL: Record<Keyword, string> = {
+  veleno: 'Veleno',
+  colpoFortunato: 'Colpo Fortunato',
+  velocita: 'Velocità',
+  scudo: 'Scudo',
+  controllo: 'Controllo',
+  rigenerazione: 'Rigenerazione',
+  esecuzione: 'Esecuzione',
+  sacrificio: 'Sacrificio',
+  magieOscure: 'Magie Oscure',
+  evocazione: 'Evocazione',
+  crescendo: 'Crescendo',
 }
 
 export function RelicBar({ relics, className, onUse, team }: RelicBarProps) {
@@ -20,10 +44,13 @@ export function RelicBar({ relics, className, onUse, team }: RelicBarProps) {
       {relics.map(({ relic }) => {
         const color = RELIC_RARITY_COLOR[relic.rarity]
         return (
+          // `group` + `relative` so the styled tooltip below reveals on hover/focus.
+          // The pill is focusable (tabIndex) so keyboard users get the effect too — the
+          // native `title` is gone (invisible on touch, unstyled), replaced by this panel.
           <span
             key={relic.id}
-            title={relic.desc}
-            className="px-2.5 py-1 rounded-full text-xs border bg-white/5 inline-flex items-center gap-1.5"
+            tabIndex={0}
+            className="group relative px-2.5 py-1 rounded-full text-xs border bg-white/5 inline-flex items-center gap-1.5 outline-none focus-visible:ring-2 focus-visible:ring-white/30"
             style={{ borderColor: `${color}55`, color }}
           >
             {relic.name}
@@ -37,6 +64,56 @@ export function RelicBar({ relics, className, onUse, team }: RelicBarProps) {
                 Usa
               </button>
             )}
+
+            {/* Tooltip — opens to the RIGHT into the map area (ample space, never off-screen,
+                matches the enemy-preview pattern in MapScreen). Shown on hover/focus.
+                A filled header band in the rarity colour + a side arrow read faster than the
+                old flat panel. */}
+            <span
+              role="tooltip"
+              className="pointer-events-none absolute left-full top-0 z-[60] ml-3 w-56 overflow-hidden rounded-xl border opacity-0 shadow-2xl transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+              style={{
+                background: '#181327',
+                borderColor: color,
+                boxShadow: `0 0 0 1px ${color}33, 0 18px 44px -12px rgba(0,0,0,0.95)`,
+              }}
+            >
+              {/* side arrow (points back at the pill) */}
+              <span
+                aria-hidden
+                className="absolute right-full top-3.5 border-[6px] border-transparent"
+                style={{ borderRightColor: color }}
+              />
+              <span
+                className="flex items-center gap-2 px-2.5 py-1.5"
+                style={{ background: `color-mix(in srgb, ${color} 20%, #181327)` }}
+              >
+                <span
+                  className="h-2.5 w-2.5 shrink-0 rotate-45 rounded-[3px]"
+                  style={{ background: color, boxShadow: `0 0 8px -1px ${color}` }}
+                />
+                <span className="min-w-0 flex-1 truncate text-[12px] font-bold text-white">{relic.name}</span>
+                <span className="shrink-0 text-[8px] font-extrabold uppercase tracking-wider" style={{ color }}>
+                  {RARITY_LABEL[relic.rarity]}
+                </span>
+              </span>
+              <span className="block px-2.5 py-2">
+                <span className="block text-[11px] leading-relaxed text-white/75">{relic.desc}</span>
+                {relic.keywords && relic.keywords.length > 0 && (
+                  <span className="mt-1.5 flex flex-wrap gap-1">
+                    {relic.keywords.map(k => (
+                      <span
+                        key={k}
+                        className="rounded-full border px-1.5 py-0.5 text-[8px] uppercase tracking-wide"
+                        style={{ color, borderColor: `${color}66` }}
+                      >
+                        {KEYWORD_LABEL[k]}
+                      </span>
+                    ))}
+                  </span>
+                )}
+              </span>
+            </span>
           </span>
         )
       })}
