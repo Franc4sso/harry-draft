@@ -1,7 +1,32 @@
 # Handoff — dove riprendere
 
-Aggiornato: **2026-07-07**. Ultimo commit su `origin/master`: `9df3ed3`.
+Aggiornato: **2026-07-08**. Ultimo commit su `origin/master`: `9bfce11`.
 Da un altro PC: `git pull origin master`, `npm install`, poi leggi questo file.
+
+## Carte draft "poster" 2026-07-08 (leggibilità del valore)
+
+Review finale whole-branch (opus): SPEC ✅ / quality approved. 1215 test verdi, tsc + build ok.
+Spec+piano+mockup in `docs/superpowers/{specs,plans,mockups}/2026-07-07-draft-poster*`. La carta
+del DRAFT (`components/cards/WizardCardColumn.tsx` — è QUESTA la card viva, via `DraftScreen →
+DraftCandidateCard → WizardCardColumn`; NON `WizardCard`, che era dead code e ora è rimosso) è
+stata ridisegnata a "poster": ritratto a tutta carta, icona-ruolo pulita in alto (solo icona, il
+volto respira), ruolo + nome monumentale (Cinzel) + epiteto, blocco-magia grande, **targa oro =
+abilità personale del mago**, stat colorate, nudge sinergia. Tolte le pillole affiliazione (feedback
+utente "troppe pillole").
+- **L'abilità personale = la SIGNATURE esistente del mago** (scoperta: tutti i 60 maghi hanno già
+  una `Signature` in `data/signatures.ts` con nome+desc, es. draco "Tocco Velenoso: i suoi colpi
+  possono avvelenare"). `abilityFor(id)` in `lib/wizardAbilities.ts` la legge (fallback role-based).
+  NIENTE 60 frasi scritte a mano — si riusa ciò che esiste, fedele alla meccanica. `epithetFor` è
+  role-based (`lib/wizardEpithet.ts`).
+- **Tooltip ruolo corretti** (`lib/roleInfo.ts`): erano obsoleti dopo i cambi combattimento (es.
+  "Controllo scavalca il Tank" → ora "scavalca la provocazione del Tank solo se riesce a stordirlo").
+  Aggiunti `ROLE_VERB` (Provoca/Colpisce/Cura/Disabilita) e `ROLE_ACCENT` (Tank #3aa0f2, Attaccante
+  #ff5140, Supporto #20d894, Controllo #b355ff).
+- Componenti nuovi riusabili: `RoleBadge`, `AbilityPlate`. `CARD_STAT_MAX` spostato in
+  `components/cards/cardStats.ts` (era in WizardCard, ora eliminato).
+- **PROSSIMO (slice futura, fuori scope)**: allineare le carte in COMBATTIMENTO (`UnitBust`) e in
+  TEAM/RECRUIT (`WizardCardRow`, orizzontale) allo stile poster — solo ritocco estetico, senza
+  toccare struttura/VFX (decisione utente).
 
 ## Stato in una riga
 
