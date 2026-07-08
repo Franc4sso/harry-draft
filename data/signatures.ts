@@ -139,7 +139,7 @@ export const SIGNATURES: Signature[] = [
   sig('harry', 'Coraggio del Grifondoro', 'Più è ferito più colpisce forte (fino a +70%); sotto metà vita l\'amore lo rigenera.', odFury(T1_FURY), tsWoundedSelfStatus('regen', T1_WOUND_HP, 3)),
 
   // Tier 2
-  sig('snape', 'Pozioni Letali', 'I suoi colpi avvelenano e possono esporre la difesa del bersaglio.', hitStatuses([{ statusId: 'burn', chance: T2_BURN, duration: 2 }, { statusId: 'expose2', chance: T2_EXPOSE }])),
+  sig('snape', 'Pozioni Letali', 'I suoi colpi avvelenano e possono esporre la difesa del bersaglio.', hitStatuses([{ statusId: 'veleno', chance: T2_BURN, duration: 2 }, { statusId: 'expose2', chance: T2_EXPOSE }])),
   sig('bellatrix', 'Tortura Cruciatus', 'I suoi colpi possono stordire il bersaglio.', hitStatus('stun', T2_PROC, 1)),
   sig('mcgonagall', 'Trasfigurazione Marziale', 'Subisce il 30% di danni in meno.', idReduce(T2_ID)),
   sig('sirius', 'Lealtà Feroce', 'Mettendo a segno un colpo può rinforzare il proprio attacco.', hitSelfStatus('atkUp', T2_PROC)),
@@ -153,7 +153,7 @@ export const SIGNATURES: Signature[] = [
   // Tier 3
   sig('hermione', 'Mente Brillante', 'I suoi colpi possono silenziare il bersaglio.', hitStatus('silence', T3_PROC, 2)),
   sig('ron', 'Mossa del Cavaliere', 'Subisce -16% danni.', idReduce(T3_ID)),
-  sig('draco', 'Tocco Velenoso', 'I suoi colpi possono avvelenare il bersaglio.', hitStatus('burn', T3_BURN, 2)),
+  sig('draco', 'Tocco Velenoso', 'I suoi colpi possono avvelenare il bersaglio.', hitStatus('veleno', T3_BURN, 2)),
   sig('ginny', 'Maleficio Pipistrello', 'I suoi colpi possono indebolire l\'attacco del bersaglio.', hitStatus('weaken2', T3_PROC)),
   sig('neville', 'Coraggio Tardivo', 'Quando un alleato cade, si infuria (+ATT).', adBuff('atk', T3_AD_ATK)),
   sig('luna', 'Serenità', 'Si rigenera vita a ogni turno.', tsSelfStatus('regen', 3)),
@@ -163,7 +163,7 @@ export const SIGNATURES: Signature[] = [
   sig('arthur', 'Tocco Premuroso', 'Le sue cure sono più efficaci (+20%).', healMod(T3_HEAL)),
   sig('tonks', 'Riflessi Mutanti', 'A inizio turno guadagna velocità.', tsSelfBuff('spd', T3_SPD)),
   sig('narcissa', 'Patto Materno', 'Sotto il 40% di vita si rigenera.', tsWoundedSelfStatus('regen', T3_WOUND_HP, 3)),
-  sig('dolohov', 'Maledizione Viola', 'I suoi colpi possono avvelenare e rallentare.', hitStatuses([{ statusId: 'burn', chance: T3_COMBO, duration: 2 }, { statusId: 'slow1', chance: T3_COMBO }])),
+  sig('dolohov', 'Maledizione Viola', 'I suoi colpi possono avvelenare e rallentare.', hitStatuses([{ statusId: 'veleno', chance: T3_COMBO, duration: 2 }, { statusId: 'slow1', chance: T3_COMBO }])),
   sig('greyback', 'Morso Selvaggio', 'Infligge +20% danni ai bersagli sotto metà vita.', odExecute(T3_EXEC, T3_EXEC_HP)),
   sig('cho', 'Lacrime Gelide', 'I suoi colpi possono congelare il bersaglio.', hitStatus('freeze', T3_FREEZE, 2)),
   // Uses the weaker, single-stack 'atkUp1' (not the shared 'atkUp' — see data/statuses.ts)

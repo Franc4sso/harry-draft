@@ -72,6 +72,20 @@ describe('signature catalog integrity', () => {
     }
   })
 
+  it('a signature whose text says "avvelen…" applies veleno, not burn (theme↔mechanic match)', () => {
+    const ctx: HookCtx = { turn: 1, actor: {} as never, target: {} as never, side: 'left', flags: [] }
+    const mismatched: string[] = []
+    for (const sig of SIGNATURES) {
+      if (!/avvelen/i.test(sig.desc)) continue
+      const statuses = sig.triggers.flatMap(t =>
+        t.kind === 'reactive' ? t.effects(ctx).flatMap(e => (e.kind === 'applyStatus' && e.statusId ? [e.statusId] : [])) : [])
+      // a "poisons" signature must apply veleno and must NOT apply burn as its DoT
+      if (!statuses.includes('veleno')) mismatched.push(`${sig.id}: text says avvelena but applies [${statuses.join(',')}]`)
+      if (statuses.includes('burn')) mismatched.push(`${sig.id}: text says avvelena but applies burn`)
+    }
+    expect(mismatched, mismatched.join('\n')).toEqual([])
+  })
+
   it('every referenced statusId exists and no trigger throws', () => {
     // Stub a wounded actor vs a low-HP target so wounded/execute branches run.
     const mk = (id: string) => ({
