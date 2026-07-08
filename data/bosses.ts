@@ -122,7 +122,7 @@ export const BELLATRIX: BossDef = {
   bossWizardId: 'bellatrix',
   ignoresTaunt: true,
   pinnedArea: 1,
-  unitCount: 3,
+  unitCount: 4, // 3->4 (USER 2026-07-08): boss must not field fewer units than an elite (area-2 elite 5->3)
 }
 
 // --- Seeded boss pool (Task 6, Reservation 2): one alternate per area, picked per-run by

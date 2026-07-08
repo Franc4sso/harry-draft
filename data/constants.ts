@@ -213,7 +213,10 @@ defenseK: 0.5,
     // area-2 elite was 8 (part of the earlier "più cattivo" pass); capped to 5 here and
     // structurally clamped at generation (buildBattlePackage + generateBossTeam) so a
     // future retune can never breach it again.
-    enemyCountByArea: [3, 5, 5] as readonly number[],
+    // area-2 elite trimmed 5→3 (USER DECISION 2026-07-08) so a boss (Bellatrix unitCount 4)
+    // is never SMALLER than an elite — a boss should read as the bigger threat, not a scrawnier
+    // one. Paired with Bellatrix 3→4; balance re-measured.
+    enemyCountByArea: [3, 3, 5] as readonly number[],
     maxEnemies: 5,
     // --- Displayed enemy LEVEL by (area, kind) ---
     // Honest, area-scaled threat tiers so an Elite/Boss reads as a real level (no
