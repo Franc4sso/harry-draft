@@ -9,7 +9,6 @@ import { CARD_STAT_MAX } from './cardStats'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { spellEffectChips, spellEffectDetails, formatSpellStats } from '@/lib/glossary'
 import { ROLE_ACCENT } from '@/lib/roleInfo'
-import { synergyName } from '@/lib/synergyBadge'
 import { TRAIT_BY_ID } from '@/data/traits'
 import { abilityFor } from '@/lib/wizardAbilities'
 import { epithetFor } from '@/lib/wizardEpithet'
@@ -53,7 +52,6 @@ export function WizardCardColumn({
   const shinyGlow = drafted.shiny ? ', 0 0 22px rgba(255,200,80,0.55), inset 0 0 0 2px rgba(255,210,90,0.7)' : ''
   const ability = abilityFor(wizard.id)
   const epithet = epithetFor(wizard.id)
-  const firstHotSynergy = hotSynergyIds?.size ? [...hotSynergyIds][0] : undefined
 
   return (
     <motion.div
@@ -190,7 +188,9 @@ export function WizardCardColumn({
 
         <AbilityPlate name={ability.name} blurb={ability.blurb} />
 
-        <div className="mt-3.5 flex justify-between px-1">
+        {/* Stats pinned to the bottom (mt-auto) so cards are the same height regardless
+            of spell/ability text length — homogeneous row. */}
+        <div className="mt-auto flex justify-between px-1 pt-3.5">
           {STAT_CELLS.map((c) => (
             <div key={c.key} className="flex flex-col items-center gap-0.5">
               <span className="text-[9.5px] font-bold uppercase tracking-wide text-white/45">{c.label}</span>
@@ -198,16 +198,6 @@ export function WizardCardColumn({
             </div>
           ))}
         </div>
-
-        {firstHotSynergy && (
-          <div
-            data-testid="synergy-nudge"
-            className="mt-2.5 rounded-lg border px-2.5 py-1.5 text-center text-[11px] font-semibold"
-            style={{ color: '#f3e6c4', borderColor: 'rgba(202,162,74,0.5)', background: 'rgba(120,90,40,0.22)' }}
-          >
-            Aggiunge {synergyName(firstHotSynergy)}
-          </div>
-        )}
       </div>
     </motion.div>
   )

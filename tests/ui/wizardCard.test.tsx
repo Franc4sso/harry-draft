@@ -41,11 +41,13 @@ describe('WizardCardColumn (poster layout, the LIVE draft card)', () => {
     expect(screen.getAllByText(name)).toHaveLength(1)
   })
 
-  it('shows the synergy nudge only when hotSynergyIds is non-empty', () => {
+  it('never shows the synergy nudge — it was removed (meant nothing to the player)', () => {
+    // The "Aggiunge 2 Tassorosso" nudge was removed per user feedback. hotSynergyIds is still
+    // an accepted prop (callers pass it) but the card renders no nudge for it.
     const { rerender } = render(<WizardCardColumn drafted={draftedTank()} />)
     expect(screen.queryByTestId('synergy-nudge')).toBeNull()
     rerender(<WizardCardColumn drafted={draftedTank()} hotSynergyIds={new Set(['gryffindor'])} />)
-    expect(screen.getByTestId('synergy-nudge')).toBeInTheDocument()
+    expect(screen.queryByTestId('synergy-nudge')).toBeNull()
   })
 
   it('conveys the house via data-house and keeps the testId prop wired', () => {
