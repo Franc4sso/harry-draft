@@ -1,4 +1,4 @@
-import { CARD_STAT_MAX } from './WizardCard'
+import { CARD_STAT_MAX } from './cardStats'
 
 export const STAT_CELLS: Array<{ key: keyof typeof CARD_STAT_MAX; label: string; color: string }> = [
   { key: 'hp', label: 'HP', color: '#7CFC9B' },
