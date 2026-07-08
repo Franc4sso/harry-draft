@@ -11,7 +11,6 @@ import { spellEffectChips, spellEffectDetails, formatSpellStats } from '@/lib/gl
 import { ROLE_ACCENT } from '@/lib/roleInfo'
 import { TRAIT_BY_ID } from '@/data/traits'
 import { abilityFor } from '@/lib/wizardAbilities'
-import { epithetFor } from '@/lib/wizardEpithet'
 import { displayName } from '@/lib/displayName'
 
 /**
@@ -51,7 +50,6 @@ export function WizardCardColumn({
   const shinyTrait = drafted.shiny ? TRAIT_BY_ID[drafted.shiny.traitId] : undefined
   const shinyGlow = drafted.shiny ? ', 0 0 22px rgba(255,200,80,0.55), inset 0 0 0 2px rgba(255,210,90,0.7)' : ''
   const ability = abilityFor(wizard.id)
-  const epithet = epithetFor(wizard.id)
 
   return (
     <motion.div
@@ -106,14 +104,8 @@ export function WizardCardColumn({
           <TierBadge tier={wizard.tier} />
         </div>
 
-        {/* Title block — role word pill + monumental name, over the portrait bottom. */}
+        {/* Title block — monumental name over the portrait bottom. */}
         <div className="absolute inset-x-3.5 bottom-2.5">
-          <span
-            className="mb-1 inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-black uppercase tracking-[0.1em] backdrop-blur-sm"
-            style={{ background: `${accent}47`, color: '#fff', border: `1px solid ${accent}80` }}
-          >
-            {wizard.role}
-          </span>
           <h3
             className="font-display text-[26px] font-extrabold leading-[0.95]"
             style={{ textShadow: '0 4px 20px rgba(0,0,0,0.85)' }}
@@ -121,14 +113,6 @@ export function WizardCardColumn({
             {displayName(drafted)}
             {drafted.shiny && <span aria-hidden className="ml-1 text-amber-300">✨</span>}
           </h3>
-          {epithet && (
-            <p
-              className="mt-0.5 text-[11px] font-semibold italic text-white/70"
-              style={{ textShadow: '0 2px 10px rgba(0,0,0,0.85)' }}
-            >
-              {epithet}
-            </p>
-          )}
         </div>
 
         {drafted.shiny && (

@@ -4,9 +4,9 @@ import { RoleIcon } from './RoleIcon'
 
 /**
  * The poster card's role gem — a clean, tinted icon badge, top-left over the
- * portrait. No text: the role WORD lives in the title block instead (see the
- * approved mockup, `.rgem`). `aria-label` carries the role for a11y since the
- * icon alone is decorative.
+ * portrait. No text: the role WORD pill was removed from the title block
+ * (2026-07-08, user request), so this badge is now the ONLY role indicator on
+ * the card. `aria-label` carries the role for a11y since the icon is decorative.
  */
 export function RoleBadge({ role, size = 18 }: { role: Role; size?: number }) {
   const color = ROLE_ACCENT[role]

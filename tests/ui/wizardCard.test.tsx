@@ -65,10 +65,13 @@ describe('WizardCardColumn (poster layout, the LIVE draft card)', () => {
     expect(handler).toHaveBeenCalledOnce()
   })
 
-  it('shows the role word (not the verb) next to the name', () => {
+  it('exposes the role via the badge (no visible role word — removed 2026-07-08)', () => {
     const d = draftedTank()
     render(<WizardCardColumn drafted={d} />)
-    expect(screen.getByText(d.wizard.role)).toBeInTheDocument()
+    // The role WORD pill was removed from the title block per user request; the role now
+    // lives only on the RoleBadge gem, carried for a11y via aria-label.
+    expect(screen.getByTestId('role-badge')).toHaveAttribute('aria-label', d.wizard.role)
+    expect(screen.queryByText(d.wizard.role)).not.toBeInTheDocument()
   })
 
   it('shows a trait chip when the wizard is shiny', () => {
