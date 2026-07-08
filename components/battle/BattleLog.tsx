@@ -73,7 +73,7 @@ export function describeEntry(
   }
 
   const crit = entry.flags.includes('crit') ? ' (critico!)' : ''
-  const pen = entry.flags.includes('pen') ? ' [armatura ignorata]' : ''
+  const pen = entry.flags.includes('pen') ? ' [armatura ridotta]' : ''
   const shatter = entry.flags.includes('shatter') ? ' — infrange il ghiaccio!' : ''
   if (typeof entry.value === 'number' && entry.value > 0) {
     return `${actor} lancia ${entry.action} su ${target ?? '?'}: ${entry.value} danni${crit}${pen}${shatter}`
