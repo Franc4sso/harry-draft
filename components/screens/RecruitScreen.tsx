@@ -113,6 +113,10 @@ export function RecruitScreen({
       </header>
 
       <div className="mx-auto grid max-w-5xl grid-cols-1 items-start gap-6 p-4 md:grid-cols-[1fr_280px]">
+        {/* Left column: the candidate grid + (when full) the replacement list BELOW it at
+            full width — the replace list must NOT sit inside the 3-col candidate grid, or it
+            gets squeezed into a single cell (unreadable). */}
+        <div className="flex flex-col gap-5">
         {/* Candidates — the SAME poster card as the first draft (WizardCardColumn),
             laid out side by side (sm+) like the draft's 3 candidates. */}
         <Stagger
@@ -141,8 +145,10 @@ export function RecruitScreen({
               <WizardCardColumn drafted={d} selected={pick === d.wizard.id} />
             </StaggerItem>
           ))}
+        </Stagger>
 
-          {full && (
+        {/* Replacement list — full width under the candidate grid when the squad is full. */}
+        {full && (
             <div className="mt-1">
               <h2 className="mb-2 text-sm text-white/70">
                 {pickedWizard
@@ -191,7 +197,7 @@ export function RecruitScreen({
               </div>
             </div>
           )}
-        </Stagger>
+        </div>
 
         {/* Synergy rail (right column) — same sticky aside position as the draft. */}
         <aside>
