@@ -7,7 +7,6 @@ import { RoleBadge } from './RoleBadge'
 import { AbilityPlate } from './AbilityPlate'
 import { CARD_STAT_MAX } from './WizardCard'
 import { PortraitImage } from '@/components/ui/PortraitImage'
-import { affiliationChips } from '@/lib/affiliationChips'
 import { spellEffectChips, spellEffectDetails, formatSpellStats } from '@/lib/glossary'
 import { ROLE_ACCENT, ROLE_INFO } from '@/lib/roleInfo'
 import { synergyName } from '@/lib/synergyBadge'
@@ -49,7 +48,6 @@ export function WizardCardColumn({
   const effectChips = spellEffectChips(spell)
   const effectDetails = spellEffectDetails(spell)
   const spellStats = formatSpellStats(spell)
-  const specialChips = affiliationChips(wizard).filter((c) => c.kind === 'special')
   const shinyTrait = drafted.shiny ? TRAIT_BY_ID[drafted.shiny.traitId] : undefined
   const shinyGlow = drafted.shiny ? ', 0 0 22px rgba(255,200,80,0.55), inset 0 0 0 2px rgba(255,210,90,0.7)' : ''
   const signature = SIGNATURE_BY_ID[wizard.id]
@@ -136,31 +134,8 @@ export function WizardCardColumn({
 
       {/* BODY */}
       <div className="flex flex-1 flex-col p-3.5 pt-3">
-        {(specialChips.length > 0 || signature || shinyTrait) && (
+        {(signature || shinyTrait) && (
           <div className="mb-2.5 flex flex-wrap items-center gap-1">
-            {specialChips.length > 0 && (
-              <div data-testid="affiliation-strip" className="flex flex-wrap items-center gap-1">
-                {specialChips.map((c) => {
-                  const hot = c.synergyId ? hotSynergyIds?.has(c.synergyId) ?? false : false
-                  return (
-                    <span
-                      key={c.id}
-                      data-synergy={c.synergyId}
-                      data-hot={hot ? '' : undefined}
-                      className="inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold"
-                      style={
-                        hot
-                          ? { color: '#f3e6c4', borderColor: '#caa24a', background: 'rgba(120,90,40,0.6)', boxShadow: '0 0 8px rgba(202,162,74,0.6)' }
-                          : { color: '#ead9b0', borderColor: 'rgba(176,141,87,0.55)', background: 'rgba(176,141,87,0.12)' }
-                      }
-                    >
-                      <span aria-hidden style={{ color: '#caa24a' }}>◆</span>
-                      {c.label}
-                    </span>
-                  )
-                })}
-              </div>
-            )}
             {signature && (
               <span
                 className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold"

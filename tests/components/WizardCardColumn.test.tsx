@@ -22,13 +22,9 @@ describe('WizardCardColumn', () => {
     expect(screen.getAllByText(d.spell.name).length).toBeGreaterThan(0)
     for (const l of ['HP', 'ATT', 'DIF', 'VEL']) expect(screen.getByText(l)).toBeInTheDocument()
   })
-  it('exposes the affiliation strip with special synergies', () => {
+  it('renders without the affiliation strip (removed per approved mockup)', () => {
     render(<WizardCardColumn drafted={harry()} />)
-    expect(screen.getByTestId('affiliation-strip')).toBeInTheDocument()
-  })
-  it('marks a hot synergy chip', () => {
-    render(<WizardCardColumn drafted={harry()} hotSynergyIds={new Set(['goldenTrio'])} />)
-    expect(screen.getByTestId('affiliation-strip').querySelector('[data-synergy="goldenTrio"][data-hot]')).not.toBeNull()
+    expect(screen.queryByTestId('affiliation-strip')).toBeNull()
   })
   it('fires onClick when clicked', () => {
     const onClick = vi.fn()
