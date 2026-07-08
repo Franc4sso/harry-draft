@@ -9,6 +9,7 @@ import { WIZARD_BY_ID } from '@/data/wizards'
 import { SPELLS } from '@/data/spells'
 import { TRAIT_BY_ID } from '@/data/traits'
 import { displayName } from '@/lib/displayName'
+import { abilityFor } from '@/lib/wizardAbilities'
 
 const harry = () => draftWizard(createRng(1), WIZARD_BY_ID['harry']!)
 // Tank fixture (role === 'Tank') for the poster-layout render tests below.
@@ -153,12 +154,22 @@ describe('WizardCardColumn (poster layout, the LIVE draft card)', () => {
     for (const k of ['HP', 'ATT', 'DIF', 'VEL']) expect(screen.getByText(k)).toBeInTheDocument()
   })
 
-  it('shows the ability plate fed by the temp stub (spell name + role blurb)', () => {
+  it('shows the ability plate with the wizard Signature (name + blurb)', () => {
     const d = draftedTank()
     render(<WizardCardColumn drafted={d} />)
     const plate = screen.getByTestId('ability-plate')
     expect(plate).toHaveTextContent(/Abilità personale/i)
-    expect(within(plate).getByText(d.spell.name)).toBeInTheDocument()
+    const { name, blurb } = abilityFor(d.wizard.id)
+    expect(within(plate).getByText(name)).toBeInTheDocument()
+    expect(within(plate).getByText(blurb)).toBeInTheDocument()
+  })
+
+  it('does not show a duplicate signature pill at the top of the card', () => {
+    const d = draftedTank()
+    render(<WizardCardColumn drafted={d} />)
+    const { name } = abilityFor(d.wizard.id)
+    // The signature name now lives only in the gold ability plate.
+    expect(screen.getAllByText(name)).toHaveLength(1)
   })
 
   it('shows the synergy nudge only when hotSynergyIds is non-empty', () => {

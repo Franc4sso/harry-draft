@@ -8,10 +8,11 @@ import { AbilityPlate } from './AbilityPlate'
 import { CARD_STAT_MAX } from './WizardCard'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { spellEffectChips, spellEffectDetails, formatSpellStats } from '@/lib/glossary'
-import { ROLE_ACCENT, ROLE_INFO } from '@/lib/roleInfo'
+import { ROLE_ACCENT } from '@/lib/roleInfo'
 import { synergyName } from '@/lib/synergyBadge'
 import { TRAIT_BY_ID } from '@/data/traits'
-import { SIGNATURE_BY_ID } from '@/data/signatures'
+import { abilityFor } from '@/lib/wizardAbilities'
+import { epithetFor } from '@/lib/wizardEpithet'
 import { displayName } from '@/lib/displayName'
 
 /**
@@ -50,11 +51,8 @@ export function WizardCardColumn({
   const spellStats = formatSpellStats(spell)
   const shinyTrait = drafted.shiny ? TRAIT_BY_ID[drafted.shiny.traitId] : undefined
   const shinyGlow = drafted.shiny ? ', 0 0 22px rgba(255,200,80,0.55), inset 0 0 0 2px rgba(255,210,90,0.7)' : ''
-  const signature = SIGNATURE_BY_ID[wizard.id]
-  // TEMP stub — replaced by abilityFor in Task 5. The real per-wizard personal
-  // ability text (name + blurb) lands in lib/wizardAbilities.ts; until then the
-  // plate shows the equipped spell's name paired with the role's behaviour blurb.
-  const ability = { name: spell.name, blurb: ROLE_INFO[wizard.role] }
+  const ability = abilityFor(wizard.id)
+  const epithet = epithetFor(wizard.id)
   const firstHotSynergy = hotSynergyIds?.size ? [...hotSynergyIds][0] : undefined
 
   return (
@@ -125,6 +123,14 @@ export function WizardCardColumn({
             {displayName(drafted)}
             {drafted.shiny && <span aria-hidden className="ml-1 text-amber-300">✨</span>}
           </h3>
+          {epithet && (
+            <p
+              className="mt-0.5 text-[11px] font-semibold italic text-white/70"
+              style={{ textShadow: '0 2px 10px rgba(0,0,0,0.85)' }}
+            >
+              {epithet}
+            </p>
+          )}
         </div>
 
         {drafted.shiny && (
@@ -134,25 +140,14 @@ export function WizardCardColumn({
 
       {/* BODY */}
       <div className="flex flex-1 flex-col p-3.5 pt-3">
-        {(signature || shinyTrait) && (
+        {shinyTrait && (
           <div className="mb-2.5 flex flex-wrap items-center gap-1">
-            {signature && (
-              <span
-                className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold"
-                style={{ color: '#f3e0b0', borderColor: 'rgba(202,162,74,0.6)', background: 'rgba(120,90,40,0.28)' }}
-              >
-                <span aria-hidden className="text-amber-300">★</span>
-                {signature.name}
-              </span>
-            )}
-            {shinyTrait && (
-              <span
-                className="inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold"
-                style={{ color: '#c4dff3', borderColor: 'rgba(100,160,220,0.5)', background: 'rgba(60,110,180,0.18)' }}
-              >
-                {shinyTrait.name}
-              </span>
-            )}
+            <span
+              className="inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold"
+              style={{ color: '#c4dff3', borderColor: 'rgba(100,160,220,0.5)', background: 'rgba(60,110,180,0.18)' }}
+            >
+              {shinyTrait.name}
+            </span>
           </div>
         )}
 
