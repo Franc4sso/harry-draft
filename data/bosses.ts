@@ -95,15 +95,14 @@ export const MURO: BossDef = {
   unitCount: 3,
 }
 
-/** Area-1 scripted boss: Bellatrix Lestrange. Signature effect: ignores the enemy
- *  Tank's taunt (provocazione), so her side targets by real threat and hits the backline.
- *  Calibrated 2026-07-01 (Task 8): ignoresTaunt (whole-side scope) is the dominant lever here —
- *  budget/hpMult barely move campaignBalanceB in isolation (0.1417 flat across budget 500→900 at
- *  hpMult 1.25, and flat at 0.1500 across budget 200→900 once unitCount=3/hpMult=1.0). unitCount=3
- *  (matches Muro's pattern) plus hpMult trimmed below 1.0 was needed to clear the floor: hpMult
- *  0.85 passes at 0.1583 across budget∈[200,450] (stable plateau); hpMult flips to 0.1500 (fails
- *  strict >) at 0.88+ (boundary measured at 0.875 pass / 0.88 fail — 1-seed margin, same fragility
- *  pattern as the final-boss and Muro tunings). See campaignBalanceB.test.ts.
+/** Area-1 scripted boss: Bellatrix Lestrange.
+ *  ignoresTaunt REMOVED 2026-07-08 (USER DECISION): no enemy mage may ever ignore the
+ *  player's Tank taunt. Was the "dominant lever" calibrated in Task 8 (whole-side scope,
+ *  hpMult 0.85 → 0.1583 plateau) — that calibration is now void; budget/hpMult/unitCount
+ *  are the only remaining levers for this boss. Re-measure campaignBalanceB.
+ *  --- historical calibration notes below (kept for context) ---
+ *  Task 8 (2026-07-01): budget/hpMult barely moved campaignBalanceB in isolation (0.1417 flat
+ *  across budget 500→900 at hpMult 1.25); hpMult 0.85 passed at 0.1583 across budget∈[200,450].
  *  unitCount TRIMMED 3→2 (2026-07-02, Task 25, STARTER_PICKS=3 exploration): part of the
  *  Task-25 sweep to recover the 0.15 floor after STARTER_PICKS reverted 4→3; kept as-is
  *  since area-1/Bellatrix was confirmed NOT the live bottleneck in the final Task 25 sweep
@@ -120,7 +119,9 @@ export const BELLATRIX: BossDef = {
   budget: 300,
   hpMult: 0.85,
   bossWizardId: 'bellatrix',
-  ignoresTaunt: true,
+  // ignoresTaunt REMOVED (USER 2026-07-08): no enemy mage may ignore the player's
+  // Tank taunt. The mechanic stays in targeting.ts for a possible future character,
+  // but is set on NO battle. Re-measure campaignBalanceB after this change.
   pinnedArea: 1,
   unitCount: 4, // 3->4 (USER 2026-07-08): boss must not field fewer units than an elite (area-2 elite 5->3)
 }
@@ -154,8 +155,7 @@ export const MURO_ALT: BossDef = {
   bossWizardId: 'marcus',
 }
 
-/** Area-1 alt: same ignoresTaunt mechanic and calibrated numbers as BELLATRIX, reskinned
- *  as a fellow Death Eater. */
+/** Area-1 alt: same calibrated numbers as BELLATRIX, reskinned as a fellow Death Eater. */
 export const BELLATRIX_ALT: BossDef = {
   ...BELLATRIX,
   id: 'dolohov_boss',
