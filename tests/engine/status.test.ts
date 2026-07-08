@@ -39,10 +39,16 @@ describe('status core', () => {
     const slows = u.statusEffects.filter(e => e.statusId === 'slow')
     expect(slows).toHaveLength(2) // cumulative, not refreshed
   })
-  it('stack policy (burn) adds instances up to maxStacks', () => {
+  it('burn does NOT stack — one instance whose duration EXTENDS on re-apply', () => {
+    // Burn is a single fire that lasts longer the more you re-ignite it; it never adds
+    // separate stacking instances (damage/turn stays flat). stack: 'extend'.
     const u = unit()
-    applyStatus(u, 'burn'); applyStatus(u, 'burn'); applyStatus(u, 'burn'); applyStatus(u, 'burn')
-    expect(u.statusEffects.filter(e => e.statusId === 'burn')).toHaveLength(3)
+    applyStatus(u, 'burn', { duration: 2 })
+    applyStatus(u, 'burn', { duration: 2 })
+    applyStatus(u, 'burn', { duration: 2 })
+    const burns = u.statusEffects.filter(e => e.statusId === 'burn')
+    expect(burns).toHaveLength(1)          // one instance, never multiple
+    expect(burns[0]!.remaining).toBe(6)    // 2 + 2 + 2 — duration extended, not stacked
   })
   it('tickStatuses applies burn tickDamage and regen tickHeal', () => {
     const u = unit({ hp: 50 })

@@ -6,7 +6,9 @@ export const STATUS_DEFS: StatusDef[] = [
   { id: 'freeze', name: 'Congelamento', kind: 'freeze', family: 'control', prevents: ['action'], defaultDuration: 2, stack: 'refresh', priority: 100, removable: true },
   { id: 'silence', name: 'Silenziato', kind: 'silence', family: 'control', prevents: ['spell'], defaultDuration: 2, stack: 'refresh', priority: 90, removable: true },
   { id: 'disarm', name: 'Disarmato', kind: 'disarm', family: 'control', prevents: ['attack'], defaultDuration: 2, stack: 'refresh', priority: 90, removable: true },
-  { id: 'burn', name: 'Bruciatura', kind: 'dot', family: 'dot', tickDamage: 8, defaultDuration: 2, stack: 'stack', maxStacks: MAX_STAT_STACKS, priority: 50, removable: true },
+  // Burn is a SINGLE fire (no stacking): re-igniting a burning target EXTENDS its duration
+  // (2+2+…) rather than adding parallel instances. Damage/turn stays flat at tickDamage.
+  { id: 'burn', name: 'Bruciatura', kind: 'dot', family: 'dot', tickDamage: 8, defaultDuration: 2, stack: 'extend', priority: 50, removable: true },
   // Veleno is PERMANENT (USER DESIGN 2026-07-04): once applied it ticks EVERY turn until
   // the target dies or combat ends — it never falls off (see status.ts tickStatuses, which
   // skips the `remaining` decrement for permanent statuses). Stacks accumulate up to 8; the
