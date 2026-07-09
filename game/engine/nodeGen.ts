@@ -26,8 +26,9 @@ interface Slot { floor: number; idx: number }
  * would place a 2nd recruit in the same area becomes a battle instead. Remaining
  * middle nodes are weighted fillers (battle/recruit/relic), with a (now small) recruit
  * bias when the team is incomplete.
+ * In endless mode, shop and spellForge nodes are excluded entirely.
  */
-export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias): RunNodeType[][] {
+export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias, endless = false): RunNodeType[][] {
   if (widths.length < 3) throw new Error(`area needs >=3 floors, got ${widths.length}`)
   if (widths[0] !== 1 || widths[widths.length - 1] !== 1) {
     throw new Error(`entry and boss floors must have width 1, got widths[0]=${widths[0]}, widths[last]=${widths[widths.length - 1]}`)
@@ -86,7 +87,7 @@ export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias)
   //    all-filler-same case (e.g. 3-wide floor rolling battle/battle/battle).
   let recruitCount = 0
   const rollFiller = (): Filler => {
-    const cat = pickFiller(rng, bias)
+    const cat = pickFiller(rng, bias, endless)
     if (cat === 'recruit') {
       if (recruitCount >= 1) return 'battle'
       recruitCount++
@@ -126,10 +127,16 @@ export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias)
   return cats
 }
 
-function pickFiller(rng: Rng, bias: AreaBias): Filler {
+function pickFiller(rng: Rng, bias: AreaBias, endless = false): Filler {
   const cw = BALANCE.map.categoryWeights
   const recruitW = cw.recruit + (bias.teamSize < bias.teamMax ? BALANCE.map.recruitBiasBoost : 0)
-  const entries: [Filler, number][] = [['battle', cw.battle], ['recruit', recruitW], ['relic', cw.relic], ['event', cw.event], ['spellForge', cw.spellForge], ['shop', cw.shop]]
+  let entries: [Filler, number][] = [['battle', cw.battle], ['recruit', recruitW], ['relic', cw.relic], ['event', cw.event], ['spellForge', cw.spellForge], ['shop', cw.shop]]
+
+  // In endless mode, exclude shop and spellForge by zeroing their weights
+  if (endless) {
+    entries = entries.map(([cat, w]) => [cat, (cat === 'shop' || cat === 'spellForge') ? 0 : w])
+  }
+
   const total = entries.reduce((a, [, v]) => a + v, 0)
   let roll = rng.next() * total
   for (const [cat, v] of entries) {
