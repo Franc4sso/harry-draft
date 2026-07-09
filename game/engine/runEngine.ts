@@ -71,7 +71,7 @@ export function starterOffer(seed: string, house: House): DraftedWizard[] {
 }
 const draftChannelForStarters = 11
 
-function areaRng(seed: string, area: number): Rng {
+export function areaRng(seed: string, area: number): Rng {
   return createRng(seed).fork(mapRngChannel).fork(area)
 }
 
