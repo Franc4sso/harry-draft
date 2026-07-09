@@ -19,7 +19,7 @@ export function globalFloor(state: RunState): number {
 export function advanceEndlessArea(state: RunState, _rng: Rng): RunState {
   const nextArea = (state.area ?? 0) + 1
   const map = generateArea(areaRng(state.seed, nextArea), state.seed, nextArea,
-    { teamSize: state.team.length, teamMax: state.teamMax ?? 5 })
+    { teamSize: state.team.length, teamMax: state.teamMax ?? 5 }, true)
   const entry = map.find(n => parseAreaNodeId(n.id).floor === 0)!
   const team = state.team.map(dw => ({ ...dw, currentHp: dw.maxHp }))
   return { ...state, team, area: nextArea, map, currentNodeId: entry.id, phase: 'map' }

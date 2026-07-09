@@ -10,10 +10,15 @@ describe('endlessEnemyLevel', () => {
   it('rises linearly with floor', () => {
     const b = BALANCE.endless.normalLevelBase
     const k = BALANCE.endless.levelPerFloor
-    expect(endlessEnemyLevel(5)).toBe(b + 5 * k)
+    // endlessEnemyLevel rounds to a whole level (Math.round) — match that, rather than
+    // comparing against the unrounded formula, so this holds for any calibrated k.
+    expect(endlessEnemyLevel(5)).toBe(Math.round(b + 5 * k))
   })
 
   it('is UNCAPPED — exceeds levelMax past the clamp point', () => {
-    expect(endlessEnemyLevel(50)).toBeGreaterThan(BALANCE.leveling.levelMax)
+    // Pick a floor far enough out to clear levelMax regardless of the calibrated
+    // (possibly small) levelPerFloor, rather than hardcoding a floor tuned to one k.
+    const floor = Math.ceil((BALANCE.leveling.levelMax + 1) / Math.max(BALANCE.endless.levelPerFloor, 0.01))
+    expect(endlessEnemyLevel(floor)).toBeGreaterThan(BALANCE.leveling.levelMax)
   })
 })

@@ -33,7 +33,7 @@ export function parseAreaNodeId(id: string): { area: number; floor: number; idx:
  * `mapRng.fork(area)`) so two areas with equal widths don't generate identical
  * categories/layouts. (Spec §6.4: fork per (seed, mapChannel, area).)
  */
-export function generateArea(rng: Rng, seed: string, area: number, bias: AreaBias): RunNode[] {
+export function generateArea(rng: Rng, seed: string, area: number, bias: AreaBias, endless = false): RunNode[] {
   const { floorsPerArea } = BALANCE.map
   const last = floorsPerArea - 1
 
@@ -91,7 +91,7 @@ export function generateArea(rng: Rng, seed: string, area: number, bias: AreaBia
     const { floor } = parseAreaNodeId(node.id)
     // Exclude the last-2 themes used in this area (recent-neighbor anti-repetition).
     const { battle, preview, themeId } = buildBattlePackage(
-      seed, area, floor, node.type, usedThemes.slice(-2),
+      seed, area, floor, node.type, usedThemes.slice(-2), endless,
     )
     node.battle = battle
     node.preview = preview
