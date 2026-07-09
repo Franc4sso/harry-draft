@@ -29,8 +29,8 @@ describe('recruit swap of a dead wizard', () => {
     const base = offerRecruits(createRng('base'), { exclude: new Set() }).slice(0, 3)
     const team = base.map((d, i) =>
       i === 1
-        ? { ...recruitVia(d, 'test'), currentHp: 0 }  // dead
-        : recruitVia(d, 'test'),
+        ? { ...recruitVia(d, 'test', 1), currentHp: 0 }  // dead
+        : recruitVia(d, 'test', 1),
     )
     const deadId = team[1]!.wizard.id
 
@@ -61,8 +61,8 @@ describe('recruit swap of a dead wizard', () => {
     const base = offerRecruits(createRng('base2'), { exclude: new Set() }).slice(0, 3)
     const team = base.map((d, i) =>
       i === 0
-        ? { ...recruitVia(d, 'test'), currentHp: 0 }  // dead
-        : recruitVia(d, 'test'),
+        ? { ...recruitVia(d, 'test', 1), currentHp: 0 }  // dead
+        : recruitVia(d, 'test', 1),
     )
     const deadId = team[0]!.wizard.id
     const survivorIds = team.slice(1).map(d => d.wizard.id)

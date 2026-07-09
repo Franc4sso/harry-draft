@@ -8,7 +8,7 @@ import type { RunState, RunNode } from '@/types'
 
 function starterState(): RunState {
   const team = offerRecruits(createRng(1), { exclude: new Set() })
-    .slice(0, 2).map(d => recruitVia(d, 'iniziale'))
+    .slice(0, 2).map(d => recruitVia(d, 'iniziale', 1))
   const map = generateArea(createRng(1).fork(4).fork(0), 'test', 0, { teamSize: 2, teamMax: 5 })
   return { seed: 's', phase: 'map', team, activeSynergies: [], stage: 0, relics: [],
     map, currentNodeId: map[0]!.id, house: 'Serpeverde', area: 0, teamMax: 5, log: [], pendingLevelUps: [] }

@@ -6,7 +6,7 @@ import type { RunNode, RunState } from '@/types'
 
 function baseState(): RunState {
   const team = offerRecruits(createRng(1), { exclude: new Set() })
-    .slice(0, 2).map(d => recruitVia(d, 'iniziale'))
+    .slice(0, 2).map(d => recruitVia(d, 'iniziale', 1))
   return { seed: 's', phase: 'event-node', team, activeSynergies: [], stage: 0, relics: [],
     area: 0, teamMax: 5, log: [] }
 }

@@ -100,11 +100,10 @@ export function applyEventEffects(state: RunState, effects: EventEffect[], rng: 
         if (pool.length === 0) break
         const wizard = rng.pick(pool)
         const drafted = draftWizard(rng, wizard, true)
-        const recruited = recruitVia(drafted, 'evento')
         const targetLevel = preWeakestLevel + effect.levelsAboveWeakest
-        const { dw: leveled } = gainLevels(recruited, targetLevel - (recruited.level ?? 1))
-        s = { ...s, team: [...s.team, leveled] }
-        log.push(`addWizard ${wizard.id} level=${leveled.level}`)
+        const recruited = recruitVia(drafted, 'evento', targetLevel)
+        s = { ...s, team: [...s.team, recruited] }
+        log.push(`addWizard ${wizard.id} level=${recruited.level}`)
         break
       }
       case 'grantRelic': {
