@@ -5,7 +5,7 @@ import {
   moveTo, resolveCurrent, reachable as engineReachable, registerCoreResolvers,
 } from '@/game/engine/runEngine'
 import { createRng } from '@/game/engine/rng'
-import { saveRun } from '@/lib/runStore'
+import { saveRun, RUN_KEY } from '@/lib/runStore'
 import { prepareCombat, combatRng, type ActiveBattleB } from './useRunB.combat'
 import { markSeen, saveProfile, grantCioccorane, spendCioccorane } from '@/lib/metaStore'
 import type { MetaProfile } from '@/lib/metaStore'
@@ -77,6 +77,10 @@ export interface UseRunSharedOpts {
    *  hook to fire the once-only reward ceremony on 'win'/'defeat'; endless mode may pass
    *  a no-op or a different terminal handler. */
   onCommit?: (next: RunState, view: RunSharedView) => void
+  /** localStorage key `commit` persists under (via lib/runStore's saveRun). Defaults to
+   *  the campaign RUN_KEY. Endless passes RUN_KEY_ENDLESS so an in-progress endless run
+   *  and an in-progress campaign run never clobber each other's save. */
+  runKey?: string
 }
 
 export interface RunSharedController {
@@ -109,7 +113,7 @@ export interface RunSharedController {
  *  ceremony, draft/relic pool restriction, area-advance semantics) stays in the caller
  *  and is threaded in via `opts` or layered on top of `commit`/`runRef`. */
 export function useRunShared(opts: UseRunSharedOpts): RunSharedController {
-  const { initialRun, profileRef, onCommit } = opts
+  const { initialRun, profileRef, onCommit, runKey = RUN_KEY } = opts
   const [run, setRunState] = useState<RunState>(initialRun)
   const [view, setView] = useState<RunSharedView>(() => opts.initialView ?? viewForPhase(initialRun.phase))
   const [battle, setBattle] = useState<ActiveBattleB | null>(() =>
@@ -119,11 +123,11 @@ export function useRunShared(opts: UseRunSharedOpts): RunSharedController {
   const runRef = useRef(run); runRef.current = run
 
   const commit = useCallback((next: RunState, v?: RunSharedView) => {
-    runRef.current = next; setRunState(next); saveRun(next)
+    runRef.current = next; setRunState(next); saveRun(next, runKey)
     const resolvedView = v ?? viewForPhase(next.phase)
     setView(resolvedView)
     onCommit?.(next, resolvedView)
-  }, [onCommit])
+  }, [onCommit, runKey])
 
   const chooseNode = useCallback((nodeId: string) => {
     const moved = moveTo(runRef.current, nodeId)

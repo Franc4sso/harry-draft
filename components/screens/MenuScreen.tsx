@@ -155,6 +155,15 @@ export function MenuScreen() {
             Gioca
           </SealButton>
 
+          <button
+            type="button"
+            onClick={() => router.push('/endless')}
+            data-testid="endless-cta"
+            className="font-display text-sm uppercase tracking-wider text-gold/80 transition-colors hover:text-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f3e6a0]"
+          >
+            Modalità infinita
+          </button>
+
           {hasSavedRun && (
             <button
               type="button"

@@ -2,9 +2,13 @@
 import type { ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import type { DraftedWizard, RunNode, RunState } from '@/types'
 import { screenVariants } from '@/components/ui/motion'
 import { Frame } from '@/components/ui/Frame'
-import { useRunB } from '@/hooks/useRunB'
+import { useRunB, type RunBController } from '@/hooks/useRunB'
+import type { EndlessController } from '@/hooks/useEndless'
+import type { ActiveBattleB } from '@/hooks/useRunB.combat'
+import type { RunSharedView, CurrentEventView } from '@/hooks/useRunShared'
 import { DraftScreen } from './DraftScreen'
 import { MapScreen } from './MapScreen'
 import { BattleScreen } from './BattleScreen'
@@ -28,11 +32,61 @@ import { BOSSES } from '@/data/bosses'
 import { BALANCE } from '@/data/constants'
 import { parseAreaNodeId } from '@/game/engine/map'
 
-export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: () => void }) {
-  const c = useRunB(seed)
+/** Structural subset of {@link RunBController} (campaign) / {@link EndlessController}
+ *  (endless) that RunBRunner actually drives. Fields that only campaign phases ever
+ *  reach ('draft', 'shop', 'win') are optional here — EndlessController doesn't
+ *  implement them because endless never produces those views (endless's draft/house
+ *  pick happens in EndlessRunner BEFORE RunBRunner mounts; endless areas exclude shop
+ *  nodes; endless never sets phase:'win', see game/engine/endless.ts advanceEndlessArea).
+ *  Both concrete controllers satisfy this structurally — no runtime adapter needed. */
+export interface RunnerController {
+  run: RunState; view: RunSharedView
+  battle: ActiveBattleB | null; reachable: RunNode[]; currentNode: RunNode | undefined
+  lastFallen: string[]
+  areasTotal?: number
+  completeDraft?: (picked: DraftedWizard[]) => void
+  chooseNode: (nodeId: string) => void
+  commitBattle: () => void
+  acknowledgeVictory: () => void
+  chooseRecruit: (wizardId: string, replaceId?: string) => void
+  skipRecruit: () => void
+  chooseRelic: (relicId: string, assignedTo?: string) => void
+  ackInfirmary: () => void
+  currentEvent: CurrentEventView | null
+  chooseEventOption: (optionId: string) => void
+  chooseSpellUpgrade: (wizardId: string) => void
+  setWizardSpell: (wizardId: string, spellId: string) => void
+  useConsumableRelic: (relicId: string) => void
+  cioccorane?: number
+  buyShopItem?: (slotId: string, opts?: { carrierId?: string; targetWizardId?: string }) => void
+  rerollShop?: () => void
+  leaveShop?: () => void
+  advanceArea: () => void
+  restart?: () => void
+  runReward?: RunBController['runReward']
+}
+
+export function RunBRunner({
+  seed, controller, onExit: _onExit,
+}: {
+  seed: string
+  /** Injected run controller — defaults to useRunB(seed) (campaign, unchanged). Pass
+   *  useEndless(seed) to drive this SAME view tree in endless mode with zero rebuild. */
+  controller?: RunnerController
+  onExit?: () => void
+}) {
+  // Rules-of-hooks note: `seed` never changes identity across a component's lifetime
+  // (it comes from the URL/route param that mounted this screen), and `controller`'s
+  // presence is a per-route constant (RunBRunner is only ever rendered bare — campaign
+  // — or with `controller` — endless — never toggled at runtime on the same instance).
+  // So this call is unconditional in practice despite the `if`, and never runs both
+  // useRunB AND useEndless simultaneously (which would double up pool-restriction
+  // globals and localStorage writes under different keys for no reason).
+  const c: RunnerController = controller ?? useRunB(seed) // eslint-disable-line react-hooks/rules-of-hooks
+  const area = c.run.area ?? 0
   const router = useRouter()
   const reduce = useReducedMotion()
-  const animKey = `${c.view}-${c.run.currentNodeId ?? c.area}`
+  const animKey = `${c.view}-${c.run.currentNodeId ?? area}`
 
   // Between-battle phases (map / recruit / relic) show the roster + owned relics as a
   // larger LEFT sidebar beside the screen content, so the player can read their wizards
@@ -67,7 +121,11 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
   const renderView = () => {
     switch (c.view) {
       case 'draft':
-        return <DraftScreen seed={c.run.seed} onComplete={c.completeDraft} />
+        // Campaign-only: endless's draft/house-pick phase is handled by EndlessRunner
+        // BEFORE RunBRunner ever mounts (see hooks/useEndless.ts — the recorded/replayed
+        // starterOffer+chooseStarters flow is a different UI than DraftScreen's free
+        // 2-of-N pick). Guard defensively rather than crash if ever reached without it.
+        return c.completeDraft ? <DraftScreen seed={c.run.seed} onComplete={c.completeDraft} /> : null
 
       case 'map':
         return withTeamSidebar(
@@ -76,7 +134,7 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
             currentNodeId={c.run.currentNodeId ?? ''}
             reachableIds={c.reachable.map(n => n.id)}
             onChoose={c.chooseNode}
-            area={c.area}
+            area={area}
             areasTotal={c.areasTotal}
           />,
           false, // tree view: read-only, no spell selector
@@ -166,22 +224,26 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
         )
 
       case 'shop':
-        return withTeamSidebar(
-          <ShopScreen
-            stock={shopOffer(c.run, c.currentNode!, createRng(c.run.seed))}
-            bought={c.currentNode?.shopBought ?? []}
-            cioccorane={c.cioccorane}
-            team={c.run.team}
-            onBuy={c.buyShopItem}
-            onReroll={c.rerollShop}
-            onLeave={c.leaveShop}
-          />,
-        )
+        // Campaign-only: endless areas never generate shop nodes (Decision 2 — excluded
+        // from generateArea when state.endless), so this view is unreachable in endless.
+        return c.buyShopItem && c.rerollShop && c.leaveShop
+          ? withTeamSidebar(
+              <ShopScreen
+                stock={shopOffer(c.run, c.currentNode!, createRng(c.run.seed))}
+                bought={c.currentNode?.shopBought ?? []}
+                cioccorane={c.cioccorane ?? 0}
+                team={c.run.team}
+                onBuy={c.buyShopItem}
+                onReroll={c.rerollShop}
+                onLeave={c.leaveShop}
+              />,
+            )
+          : null
 
       case 'area-cleared':
         return (
           <AreaClearedScreen
-            area={c.area}
+            area={area}
             areasTotal={c.areasTotal}
             summary={runSummary(c.run)}
             onContinue={c.advanceArea}
@@ -189,30 +251,47 @@ export function RunBRunner({ seed, onExit: _onExit }: { seed: string; onExit?: (
         )
 
       case 'win':
-        return (
+        // Campaign: the LAST area's boss win — show the terminal win screen.
+        // Endless: 'win' is NOT terminal. The shared combat resolver
+        // (game/engine/resolvers/combat.ts phaseAfterNode) isn't endless-aware — it
+        // sets phase:'win' after ANY boss win once area >= BALANCE.map.areas-1, which
+        // in an infinite run means every area from index 2 onward. useEndless.test.tsx's
+        // driver documents this explicitly and treats 'win' exactly like 'area-cleared'
+        // (call advanceArea to generate the next area) — mirror that here.
+        return c.restart ? (
           <ResultScreen
             outcome="win"
             seed={c.run.seed}
-            stageReached={c.area + 1}
-            enemyCount={c.areasTotal}
+            stageReached={area + 1}
+            enemyCount={c.areasTotal ?? area + 1}
             onRestart={c.restart}
             reward={c.runReward}
             onCollection={() => router.push('/collection')}
+          />
+        ) : (
+          <AreaClearedScreen
+            area={area}
+            areasTotal={c.areasTotal}
+            summary={runSummary(c.run)}
+            onContinue={c.advanceArea}
           />
         )
 
       case 'defeat':
-        return (
+        // Endless's own defeat/wipeout screen (EndlessResult) is rendered by
+        // EndlessRunner OUTSIDE this component once c.score !== null, so this
+        // campaign ResultScreen branch is only reached for campaign (c.restart set).
+        return c.restart ? (
           <ResultScreen
             outcome="defeat"
             seed={c.run.seed}
-            stageReached={c.area + 1}
-            enemyCount={c.areasTotal}
+            stageReached={area + 1}
+            enemyCount={c.areasTotal ?? area + 1}
             onRestart={c.restart}
             reward={c.runReward}
             onCollection={() => router.push('/collection')}
           />
-        )
+        ) : null
 
       default:
         return null

@@ -10,7 +10,8 @@ export function AreaClearedScreen({
   area, areasTotal, summary, onContinue,
 }: {
   area: number
-  areasTotal: number
+  /** Omit for an infinite run (endless) — shows "∞" instead of a fixed denominator. */
+  areasTotal?: number
   summary: RunSummary
   onContinue: () => void
 }) {
@@ -27,7 +28,7 @@ export function AreaClearedScreen({
           transition={{ duration: 0.45, delay: 0.35, ease: EASE_CINEMATIC }}
           className="text-white/70"
         >
-          Prossima area: {Math.min(area + 2, areasTotal)} / {areasTotal}
+          Prossima area: {areasTotal !== undefined ? `${Math.min(area + 2, areasTotal)} / ${areasTotal}` : `${area + 2} / ∞`}
         </motion.p>
         <motion.p
           initial={reduce ? false : { opacity: 0, y: 10 }}

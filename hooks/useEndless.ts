@@ -12,6 +12,7 @@ import { loadProfile } from '@/lib/metaStore'
 import type { MetaProfile } from '@/lib/metaStore'
 import { encodeChallenge } from '@/lib/challengeCode'
 import { ENGINE_VERSION, type PlayerAction, type RunLog } from '@/game/engine/endlessReplay'
+import { RUN_KEY_ENDLESS } from '@/lib/runStore'
 import type { ActiveBattleB } from './useRunB.combat'
 import { useRunShared, type RunSharedView, type CurrentEventView } from './useRunShared'
 
@@ -26,6 +27,7 @@ export interface EndlessController {
   chooseStarters: (house: House, starterIds: string[]) => void
   chooseNode: (nodeId: string) => void
   commitBattle: () => void
+  acknowledgeVictory: () => void
   chooseRecruit: (wizardId: string, replaceId?: string) => void
   skipRecruit: () => void
   chooseRelic: (relicId: string, assignedTo?: string) => void
@@ -73,7 +75,7 @@ export function useEndless(seed: string): EndlessController {
     }
   }, [])
 
-  const shared = useRunShared({ initialRun, profileRef, onCommit })
+  const shared = useRunShared({ initialRun, profileRef, onCommit, runKey: RUN_KEY_ENDLESS })
   const { run, view, battle, lastFallen, runRef, commit } = shared
 
   const starterOffer = useCallback((house: House) => starterOfferEngine(seed, house), [seed])
@@ -94,6 +96,15 @@ export function useEndless(seed: string): EndlessController {
     actionsRef.current.push({ t: 'resolve', choice: { kind: 'combat-ack' } })
     shared.commitBattle()
   }, [shared])
+
+  // 'victory' (non-boss combat win) is a UI-only pause — replayRun's move/resolve loop
+  // never special-cases it (moveTo doesn't gate on phase; see game/engine/runEngine.ts),
+  // so unlike every other transition here this one is NOT recorded as a PlayerAction:
+  // the next real decision (a 'move') is what replay actually re-applies. Mirrors
+  // useRunB's acknowledgeVictory (same phase-only commit back to 'map').
+  const acknowledgeVictory = useCallback(() => {
+    commit({ ...runRef.current, phase: 'map' }, 'map')
+  }, [commit, runRef])
 
   const chooseRecruit = useCallback((wizardId: string, replaceId?: string) => {
     actionsRef.current.push({ t: 'resolve', choice: { kind: 'recruit-pick', wizardId, replaceId } })
@@ -157,7 +168,7 @@ export function useEndless(seed: string): EndlessController {
     floor: globalFloor(run), score,
     lastFallen,
     starterOffer, chooseStarters,
-    chooseNode, commitBattle,
+    chooseNode, commitBattle, acknowledgeVictory,
     chooseRecruit, skipRecruit, chooseRelic, ackInfirmary,
     currentEvent: shared.currentEvent, chooseEventOption, chooseSpellUpgrade,
     setWizardSpell: setWizardSpellCb,
