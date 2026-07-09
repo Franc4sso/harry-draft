@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { replayRun, type RunLog, ENGINE_VERSION } from '@/game/engine/endlessReplay'
+import { scoreForEndlessRun } from '@/game/engine/endless'
 import { registerCoreResolvers } from '@/game/engine/runEngine'
 
 registerCoreResolvers()
@@ -78,11 +79,47 @@ describe('replayRun', () => {
   })
 
   it('a recorded valid run replays to valid:true and a scorable state', () => {
-    // This case is filled in once Task 4 can RECORD a real log; wire that recorded log here.
-    // Until then, assert the shape contract only.
-    const out = replayRun(baseLog([]))
-    expect(out).toHaveProperty('valid')
-    expect(out).toHaveProperty('state')
+    // Recorded by driving useEndless('endless-ui-seed') to wipeout (see
+    // tests/hooks/useEndless.test.tsx's parity test, which recorded and replayed this
+    // exact log — same seed/house/starters/actions, in call order) and dumping
+    // getChallengeCode()'s decoded RunLog. Played score was 1610; asserted below via
+    // scoreForEndlessRun so this case stays a real end-to-end fixture, not just a shape check.
+    const log: RunLog = {
+      v: 1,
+      engine: ENGINE_VERSION,
+      seed: 'endless-ui-seed',
+      house: 'Grifondoro',
+      starterIds: ['dumbledore', 'harry', 'mcgonagall'],
+      actions: [
+        { t: 'move', nodeId: 'a0f1n1' },
+        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'mappa-malandrino' } },
+        { t: 'move', nodeId: 'a0f2n0' },
+        { t: 'resolve', choice: { kind: 'combat-ack' } },
+        { t: 'move', nodeId: 'a0f3n0' },
+        { t: 'resolve', choice: { kind: 'combat-ack' } },
+        { t: 'move', nodeId: 'a0f4n0' },
+        { t: 'resolve', choice: { kind: 'combat-ack' } },
+        { t: 'move', nodeId: 'a1f1n0' },
+        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'bezoar' } },
+        { t: 'move', nodeId: 'a1f2n1' },
+        { t: 'resolve', choice: { kind: 'combat-ack' } },
+        { t: 'move', nodeId: 'a1f3n1' },
+        { t: 'resolve', choice: { kind: 'combat-ack' } },
+        { t: 'move', nodeId: 'a1f4n0' },
+        { t: 'resolve', choice: { kind: 'combat-ack' } },
+        { t: 'move', nodeId: 'a2f1n0' },
+        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'lacrime-fenice' } },
+        { t: 'move', nodeId: 'a2f2n0' },
+        { t: 'resolve', choice: { kind: 'event-choice', optionId: 'risk' } },
+        { t: 'move', nodeId: 'a2f3n0' },
+        { t: 'resolve', choice: { kind: 'combat-ack' } },
+        { t: 'move', nodeId: 'a2f4n0' },
+        { t: 'resolve', choice: { kind: 'combat-ack' } },
+      ],
+    }
+    const out = replayRun(log)
+    expect(out.valid).toBe(true)
+    expect(scoreForEndlessRun(out.state)).toBe(1610)
   })
 
   it('rejects a log whose engine version does not match', () => {
