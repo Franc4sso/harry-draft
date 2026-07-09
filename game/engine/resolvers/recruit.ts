@@ -5,6 +5,7 @@ import { offerRelics, offerJokers } from '../relics'
 import { detectSynergies } from '../synergy'
 import { livingOf } from '../roster'
 import { parseAreaNodeId } from '../map'
+import { enemyLevelFor } from '../combat/threat'
 import { BALANCE } from '@/data/constants'
 import type { NodeResolver, ResolverChoice } from './types'
 
@@ -30,7 +31,8 @@ export const recruitResolver: NodeResolver = {
     const offer = recruitOffer(state, node, rng)
     const picked = offer.find(d => d.wizard.id === choice.wizardId)
     if (!picked) return state
-    const recruit = recruitVia(picked, 'Reclutamento')
+    const { area } = parseAreaNodeId(node.id)
+    const recruit = recruitVia(picked, 'Reclutamento', enemyLevelFor(area, 'normal', false))
     const team = choice.replaceId
       ? replaceMember(state.team, choice.replaceId, recruit)
       : [...state.team, recruit]

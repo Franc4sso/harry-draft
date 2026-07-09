@@ -3,6 +3,7 @@ import type { Rng } from './rng'
 import { createDraftPool } from './draft'
 import { draftWizard } from './statRoll'
 import { BALANCE } from '@/data/constants'
+import { expForLevel } from './leveling'
 
 /** Tier-weighted pick (rarer tiers less likely). Mutates the passed array by splicing out the pick — callers pass a throwaway copy. */
 function takeWeighted(rng: Rng, pool: Wizard[]): Wizard {
@@ -43,8 +44,9 @@ export function offerRecruits(
   return chosen.map(w => draftWizard(rng, w, true))
 }
 
-export function recruitVia(dw: DraftedWizard, via: string): DraftedWizard {
-  return { ...dw, recruitedVia: via, level: 1, exp: 0, growthChoices: [] }
+export function recruitVia(dw: DraftedWizard, via: string, targetLevel: number): DraftedWizard {
+  const level = Math.max(1, Math.floor(targetLevel))
+  return { ...dw, recruitedVia: via, level, exp: expForLevel(level), growthChoices: [] }
 }
 
 export function replaceMember(

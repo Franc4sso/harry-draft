@@ -7,7 +7,7 @@ import type { RunState } from '@/types'
 
 function baseState(): RunState {
   const team = offerRecruits(createRng(1), { exclude: new Set() })
-    .slice(0, 2).map(d => recruitVia(d, 'iniziale'))
+    .slice(0, 2).map(d => recruitVia(d, 'iniziale', 1))
   const map = generateArea(createRng(2).fork(4).fork(0), 'test', 0, { teamSize: 2, teamMax: 5 })
   // Relic is the only still-guaranteed filler category (recruit is now rare/capped —
   // see nodeGen.ts); any node works for offer determinism, so use the one that's

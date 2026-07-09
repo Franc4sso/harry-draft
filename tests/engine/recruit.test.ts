@@ -30,7 +30,7 @@ describe('recruit', () => {
   })
   it('recruitVia sets provenance and initializes progression', () => {
     const base = offerRecruits(createRng(2), { exclude: new Set() })[0]!
-    const r = recruitVia(base, 'Elite')
+    const r = recruitVia(base, 'Elite', 1)
     expect(r.recruitedVia).toBe('Elite')
     expect(r.level).toBe(1)
     expect(r.exp).toBe(0)

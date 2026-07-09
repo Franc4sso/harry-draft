@@ -53,7 +53,7 @@ export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatR
   // Single source of truth: read the pre-generated package from the node. Legacy
   // saves (no node.battle) reconstruct it from the SAME builder — no divergence. The
   // combat path adds ZERO new rng draws: the team/relics are pre-built.
-  const pkg = node.battle ?? buildBattlePackage(state.seed, area, floor, node.type as 'battle' | 'elite' | 'boss').battle
+  const pkg = node.battle ?? buildBattlePackage(state.seed, area, floor, node.type as 'battle' | 'elite' | 'boss', [], state.endless ?? false).battle
   // Enemies now carry a real level (stamped in buildBattlePackage) and go through the
   // SAME leveling path as the player, so a level-N enemy shows level-N stats instead
   // of flat level-1 stats propped up entirely by menace.

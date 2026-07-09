@@ -21,7 +21,7 @@ function mapWithRecruitNode(): { map: RunState['map']; recruitNode: NonNullable<
 
 function baseState(): RunState {
   const team = offerRecruits(createRng(1), { exclude: new Set() })
-    .slice(0, 2).map(d => recruitVia(d, 'iniziale'))
+    .slice(0, 2).map(d => recruitVia(d, 'iniziale', 1))
   const { map, recruitNode } = mapWithRecruitNode()
   return { seed: 's', phase: 'recruit-node', team, activeSynergies: [], stage: 0, relics: [],
     map, currentNodeId: recruitNode.id, house: 'Tassorosso', area: 0, teamMax: 5, log: [], pendingLevelUps: [] }

@@ -5,7 +5,7 @@ import { RecruitScreen } from '@/components/screens/RecruitScreen'
 import { offerRecruits, recruitVia } from '@/game/engine/recruit'
 import { createRng } from '@/game/engine/rng'
 
-const team = offerRecruits(createRng(1), { exclude: new Set() }).slice(0, 2).map(d => recruitVia(d, 'iniziale'))
+const team = offerRecruits(createRng(1), { exclude: new Set() }).slice(0, 2).map(d => recruitVia(d, 'iniziale', 1))
 const offer = offerRecruits(createRng(2), { exclude: new Set(team.map(t => t.wizard.id)) })
 
 describe('RecruitScreen', () => {
@@ -80,8 +80,8 @@ describe('RecruitScreen', () => {
 
   describe('dead wizard in the replace picker', () => {
     // Build a full team of 2 wizards where index 0 is dead (currentHp = 0).
-    const deadMember = { ...recruitVia(offerRecruits(createRng(10), { exclude: new Set() })[0]!, 'test'), currentHp: 0 }
-    const livingMember = recruitVia(offerRecruits(createRng(10), { exclude: new Set([deadMember.wizard.id]) })[0]!, 'test')
+    const deadMember = { ...recruitVia(offerRecruits(createRng(10), { exclude: new Set() })[0]!, 'test', 1), currentHp: 0 }
+    const livingMember = recruitVia(offerRecruits(createRng(10), { exclude: new Set([deadMember.wizard.id]) })[0]!, 'test', 1)
     const mixedTeam = [deadMember, livingMember]
     const mixedOffer = offerRecruits(createRng(20), { exclude: new Set(mixedTeam.map(t => t.wizard.id)) })
 

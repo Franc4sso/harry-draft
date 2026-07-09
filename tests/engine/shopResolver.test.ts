@@ -5,7 +5,7 @@ import { offerRecruits, recruitVia } from '@/game/engine/recruit'
 import type { RunNode, RunState } from '@/types'
 
 function team(n: number) {
-  return offerRecruits(createRng(1), { exclude: new Set() }).slice(0, n).map(d => recruitVia(d, 'iniziale'))
+  return offerRecruits(createRng(1), { exclude: new Set() }).slice(0, n).map(d => recruitVia(d, 'iniziale', 1))
 }
 function state(over: Partial<RunState> = {}): RunState {
   const node: RunNode = { id: 'a0f1n0', type: 'shop', next: [] }
