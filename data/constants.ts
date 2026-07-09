@@ -319,6 +319,14 @@ defenseK: 0.5,
     enemyRelicsElite: 0,
     enemyRelicsBoss: 1,
   },
+  // Endless mode (Plan A) — DECOUPLED from campaign/campaignB. Difficulty scales via
+  // UNCAPPED enemy level (past leveling.levelMax:10), which drives real per-level stat
+  // growth. `levelPerFloor` is the calibration lever (see tests/engine/endlessScaling).
+  endless: {
+    normalLevelBase: 2,   // enemy level at floor 0 (matches campaignB area-0 normal)
+    levelPerFloor: 1,     // PLACEHOLDER — calibrated in Task 7 (endlessScaling sweep)
+    pointsPerFloor: 100,  // score base unit (see endlessScore.ts, Task 5)
+  },
   // Task 21 (2026-07-02, final calibration): USER DECISION set the final boss
   // (Voldemort/BOSSES[0]) unitCount 2→3 (felt too scrawny at 2), which is a genuine
   // difficulty INCREASE — campaignBalanceB dropped from 0.1583 to 0.0833, then to 0.0500

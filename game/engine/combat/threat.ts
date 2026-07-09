@@ -42,3 +42,11 @@ export function globalDepth(area: number, floor: number): number {
 export function budgetB(depth: number): number {
   return BALANCE.campaignB.baseBudget + depth * BALANCE.campaignB.budgetStep
 }
+
+/** Endless-mode enemy level. UNCAPPED (no levelMax clamp) — this is the infinite
+ *  difficulty lever. Reuses the level→stat-growth pipeline; campaign is untouched.
+ *  `levelPerFloor` is calibrated from tests/engine/endlessScaling.test.ts. */
+export function endlessEnemyLevel(floor: number): number {
+  const e = BALANCE.endless
+  return Math.max(1, Math.round(e.normalLevelBase + Math.max(0, floor) * e.levelPerFloor))
+}
