@@ -1,7 +1,7 @@
 import type { House, RunState } from '@/types'
 import type { ResolverChoice } from './resolvers/types'
 import {
-  startRunB, chooseStarters, starterOffer, moveTo, resolveCurrent,
+  startRunB, chooseStarters, starterOffer, moveTo, resolveCurrentChecked,
   setWizardSpell, useConsumableRelic, reachable, registerCoreResolvers,
 } from './runEngine'
 import { advanceEndlessArea } from './endless'
@@ -66,16 +66,47 @@ export function replayRun(log: RunLog): { state: RunState; valid: boolean; reaso
       if (!reachable(s).some(n => n.id === a.nodeId)) return { state: s, valid: false, reason: 'unreachable node' }
       s = moveTo(s, a.nodeId)
     } else if (a.t === 'resolve') {
-      s = resolveCurrent(s, a.choice, createRng(log.seed))
+      // Use the CHECKED variant: resolveCurrent always rewraps the resolver's raw
+      // result (`{ ...resolved, map, phase }`), so its output is a fresh object even
+      // when the inner resolver no-op'd on an illegal choice (e.g. a relic-pick /
+      // recruit-pick id never offered) — `s === before` below can therefore never
+      // observe an illegal resolve. resolveCurrentChecked reports the resolver's raw
+      // no-op signal (raw result reference-equal to the input state) directly, before
+      // that rewrapping happens. Calls the resolver exactly once — same single RNG
+      // draw as resolveCurrent, so no double-draw / determinism hazard.
+      const checked = resolveCurrentChecked(s, a.choice, createRng(log.seed))
+      // Exemption reasoning (must be exhaustive — every resolver no-op that's NOT
+      // cheating has to be listed here, or a legitimate player action gets rejected):
+      //  - 'combat-ack': combatResolver ignores the choice and always returns a new
+      //    object, so this never actually no-ops today — exempted defensively in case
+      //    that ever changes, since ack is always a legitimate combat-resolution step.
+      //  - 'skip': the recruit/relic/event resolvers have no dedicated 'skip' branch —
+      //    "decline the offer" is implemented by falling through their own
+      //    `choice.kind !== expected -> return state` guard (see hooks/useRunShared.ts
+      //    skipRecruit, which sends exactly {kind:'skip'}). A real player's skip is
+      //    therefore indistinguishable from a no-op by state-equality alone, so it must
+      //    be trusted by choice kind, not inferred.
+      //  - Everything else that no-ops (wrong choice kind for the node, or a
+      //    'relic-pick'/'recruit-pick'/'event-choice'/'spell-upgrade'/'shop-buy' whose
+      //    id/target isn't in that node's actual offer) is illegal and must be rejected.
+      //    'shop-buy' and 'spell-upgrade' additionally never legitimately appear in an
+      //    endless log at all (no shop/spellForge nodes in endless — Decision 2), so a
+      //    no-op from either here is illegal by construction too.
+      if (checked.wasNoOp && a.choice.kind !== 'combat-ack' && a.choice.kind !== 'skip') {
+        return { state: s, valid: false, reason: `illegal resolve choice: ${JSON.stringify(a)}` }
+      }
+      s = checked.state
     } else if (a.t === 'set-spell') {
       s = setWizardSpell(s, a.wizardId, a.spellId)
     } else if (a.t === 'use-consumable') {
       s = useConsumableRelic(s, a.relicId)
     }
-    // Strict legality: a resolver/action that returned the SAME state object is a no-op
-    // (illegal choice) — invalidate rather than accept a divergent run. (move already
-    // validated above; combat-ack legitimately transitions, so exempt ack from this.)
-    if (s === before && !(a.t === 'resolve' && a.choice.kind === 'combat-ack')) {
+    // Strict legality for move/set-spell/use-consumable: a no-op here means an illegal
+    // action (move already validated via `reachable` above and throws rather than
+    // no-op'ing; set-spell/use-consumable no-op on invalid ids — see useConsumableRelic
+    // doc comment). resolve is handled above via resolveCurrentChecked instead, since
+    // resolveCurrent's wrapping defeats reference-equality against `before`.
+    if (a.t !== 'resolve' && s === before) {
       return { state: s, valid: false, reason: `no-op action: ${JSON.stringify(a)}` }
     }
     // Advance area at boundary (endless never wins).

@@ -108,10 +108,16 @@ function markResolved(state: RunState, nodeId: string): RunNode[] {
   return state.map!.map(n => (n.id === nodeId ? { ...n, resolved: true } : n))
 }
 
-export function resolveCurrent(state: RunState, choice: ResolverChoice, rng: Rng): RunState {
+/** Shared implementation: resolves the current node's choice exactly once
+ *  (single RNG draw) and reports whether the resolver treated the choice as
+ *  a no-op (raw resolver result reference-equal to the input state — the
+ *  resolvers' convention for "illegal/no-op choice", see e.g.
+ *  useConsumableRelic above and each resolver's `resolve`). */
+function resolveCurrentImpl(state: RunState, choice: ResolverChoice, rng: Rng): { state: RunState; wasNoOp: boolean } {
   const node = state.map!.find(n => n.id === state.currentNodeId)!
   const resolver = resolverFor(node.type)
   const resolved = resolver.resolve(state, node, choice, rng)
+  const wasNoOp = resolved === state
   const map = markResolved(resolved, node.id)
   const wiped = resolved.team.length > 0 && resolved.team.every(dw => (dw.currentHp ?? dw.maxHp) <= 0)
   const phase = phaseAfterNode({
@@ -120,7 +126,21 @@ export function resolveCurrent(state: RunState, choice: ResolverChoice, rng: Rng
     areas: BALANCE.map.areas,
     wiped,
   })
-  return { ...resolved, map, phase }
+  return { state: { ...resolved, map, phase }, wasNoOp }
+}
+
+export function resolveCurrent(state: RunState, choice: ResolverChoice, rng: Rng): RunState {
+  return resolveCurrentImpl(state, choice, rng).state
+}
+
+/** Same work as resolveCurrent, but also reports whether the inner resolver
+ *  no-op'd on an illegal/invalid choice (raw result === input state). Used by
+ *  replayRun's anti-cheat legality check: resolveCurrent always returns a
+ *  FRESH wrapper object (`{ ...resolved, map, phase }`) even on a no-op, so
+ *  `newState === oldState` can never catch an illegal resolve — this checked
+ *  variant inspects the resolver's raw return before that wrapping happens. */
+export function resolveCurrentChecked(state: RunState, choice: ResolverChoice, rng: Rng): { state: RunState; wasNoOp: boolean } {
+  return resolveCurrentImpl(state, choice, rng)
 }
 
 /** Use a consumable relic identified by `relicId`.

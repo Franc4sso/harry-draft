@@ -25,6 +25,58 @@ describe('replayRun', () => {
     expect(out.valid).toBe(false)
   })
 
+  // The seed/house/starterIds/first-move below were discovered by driving the real engine
+  // (startRunB -> chooseStarters -> reachable -> moveTo) for seed 'replay-seed' house
+  // 'Grifondoro': starterOffer offers ["dumbledore","harry","mcgonagall","..."] and the
+  // FIRST reachable node from the start is a0f1n2, a 'relic' node offering exactly
+  // ["giratempo","fiala-supporto","pensatoio"] (deterministic per seed+node id).
+  const REAL_SEED = 'replay-seed'
+  const REAL_HOUSE: RunLog['house'] = 'Grifondoro'
+  const REAL_STARTERS = ['dumbledore', 'harry', 'mcgonagall']
+  const REAL_FIRST_MOVE = 'a0f1n2' // relic node
+  const REAL_RELIC_OFFER_IDS: string[] = ['giratempo', 'fiala-supporto', 'pensatoio']
+  const REAL_RELIC_OFFER_ID_0 = REAL_RELIC_OFFER_IDS[0]!
+
+  it('rejects a relic-pick id never present in the REAL offer at a real relic node (the bug the reviewer reproduced)', () => {
+    // Sanity: the id below must genuinely not be one of the node's offered relics.
+    expect(REAL_RELIC_OFFER_IDS).not.toContain('totally-bogus-relic-id')
+    const log = baseLog([
+      { t: 'move', nodeId: REAL_FIRST_MOVE },
+      { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'totally-bogus-relic-id' } },
+    ])
+    log.house = REAL_HOUSE
+    log.starterIds = REAL_STARTERS
+    const out = replayRun(log)
+    expect(out.valid).toBe(false)
+    expect(out.reason).toMatch(/illegal resolve/i)
+  })
+
+  it('accepts a legitimate skip at a real relic node (skip must not be flagged as cheating)', () => {
+    const log = baseLog([
+      { t: 'move', nodeId: REAL_FIRST_MOVE },
+      { t: 'resolve', choice: { kind: 'skip' } },
+    ])
+    log.house = REAL_HOUSE
+    log.starterIds = REAL_STARTERS
+    const out = replayRun(log)
+    expect(out.valid).toBe(true)
+    // Skip must not have granted a relic.
+    expect(out.state.relics.length).toBe(0)
+  })
+
+  it('accepts a legitimate relic-pick for an id that IS in the real offer', () => {
+    const log = baseLog([
+      { t: 'move', nodeId: REAL_FIRST_MOVE },
+      { t: 'resolve', choice: { kind: 'relic-pick', relicId: REAL_RELIC_OFFER_ID_0 } },
+    ])
+    log.house = REAL_HOUSE
+    log.starterIds = REAL_STARTERS
+    const out = replayRun(log)
+    expect(out.valid).toBe(true)
+    expect(out.state.relics.length).toBe(1)
+    expect(out.state.relics[0]?.relic.id).toBe(REAL_RELIC_OFFER_ID_0)
+  })
+
   it('a recorded valid run replays to valid:true and a scorable state', () => {
     // This case is filled in once Task 4 can RECORD a real log; wire that recorded log here.
     // Until then, assert the shape contract only.
