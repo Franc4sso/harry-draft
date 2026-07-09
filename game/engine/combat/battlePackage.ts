@@ -1,7 +1,7 @@
 import type { ActiveSynergy, DraftedWizard, NodeBattle, NodePreview } from '@/types'
 import { createRng } from '../rng'
 import { themedEnemyTeam, generateBossTeam } from './teamGen'
-import { enemyLevelFor, globalDepth, budgetB } from './threat'
+import { enemyLevelFor, endlessEnemyLevel, globalDepth, budgetB } from './threat'
 import { detectSynergies } from '../synergy'
 import { selectEnemyRelics } from '../relics'
 import { BALANCE } from '@/data/constants'
@@ -15,7 +15,7 @@ const enemyKind = (k: Kind): 'normal' | 'elite' | 'boss' => (k === 'battle' ? 'n
  *  (createRng(seed).fork(2).fork(area).fork(floor)) so a pre-generated package is
  *  identical to what the live resolver would have produced. */
 export function buildBattlePackage(
-  seed: string, area: number, floor: number, kind: Kind, excludeThemes: string[] = [],
+  seed: string, area: number, floor: number, kind: Kind, excludeThemes: string[] = [], endless = false,
 ): { battle: NodeBattle; preview: NodePreview; themeId: string | null } {
   const cb = BALANCE.campaignB
   const isBoss = kind === 'boss'
@@ -24,7 +24,7 @@ export function buildBattlePackage(
   const isBellatrixBoss = isBoss && !isFinalBoss && area === BELLATRIX.pinnedArea
   const ek = enemyKind(kind)
   const depth = globalDepth(area, floor)
-  const enemyLevel = enemyLevelFor(area, ek, isFinalBoss)
+  const enemyLevel = endless ? endlessEnemyLevel(depth) : enemyLevelFor(area, ek, isFinalBoss)
 
   // Canonical combat fork (channel 2), then the same enemy/relics sub-forks the
   // resolver used (depth+1 enemy, depth+200 relics).

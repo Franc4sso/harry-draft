@@ -88,4 +88,5 @@ export interface RunState {
   teamMax?: number
   log?: RunEvent[]
   pendingLevelUps?: PendingLevelUp[]
+  endless?: boolean
 }
