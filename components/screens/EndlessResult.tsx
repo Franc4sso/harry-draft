@@ -9,8 +9,10 @@ import { getLocalBests, getNickname, setNickname, recordLocalBest } from '@/lib/
 
 /** Terminal endless-mode screen: shown OUTSIDE RunBRunner once useEndless's `score`
  *  is set (a full-team wipeout). Records the run as a local personal-best on mount,
- *  shows the local bests board + a nickname prompt, and a Submit placeholder — the
- *  leaderboard network call is Task 9; this button is a stub with a TODO. */
+ *  shows the local bests board + a nickname prompt, and a Submit button that posts
+ *  the challenge code to submit-score (server re-simulates and computes the
+ *  authoritative score — see netlify/functions/submit-score.ts). Network failure is
+ *  fail-silent: the local best (already recorded) stands and an offline note shows. */
 export function EndlessResult({
   score, floor, challengeCode,
 }: {
@@ -22,6 +24,8 @@ export function EndlessResult({
   const [nickname, setNicknameState] = useState('')
   const [copied, setCopied] = useState(false)
   const [bests, setBests] = useState<{ score: number; floor: number }[]>([])
+  const [submitState, setSubmitState] = useState<'idle' | 'submitting' | 'done' | 'offline'>('idle')
+  const [rank, setRank] = useState<number | null>(null)
 
   // Record the just-finished run as a local best exactly once on mount (not on every
   // re-render — score/floor are stable props for the lifetime of this screen, but a
@@ -50,10 +54,35 @@ export function EndlessResult({
     setCopied(true)
   }
 
-  // TODO(Task 9): wire this to the leaderboard submit endpoint (nickname + score +
-  // floor + challengeCode). Kept as a no-op placeholder here — Task 7 only renders
-  // the button and the nickname flow.
-  const submitPlaceholder = () => {}
+  // Submits the challenge code (never a client-computed score — the server re-simulates
+  // and computes the authoritative score/floor itself, see netlify/functions/submit-score.ts)
+  // and the player's nickname. Zero-euro fail-silent: any network/parse failure is caught
+  // and just leaves the run as a LOCAL best (already recorded on mount above), showing a
+  // small offline note rather than blocking or erroring the UI.
+  const submitScore = async () => {
+    let name = nickname || getNickname()
+    if (!name) {
+      name = (typeof window !== 'undefined' ? window.prompt('Nome per la classifica online:') : null) ?? ''
+      if (!name) return
+      saveNickname(name)
+    }
+    setSubmitState('submitting')
+    try {
+      const res = await fetch('/.netlify/functions/submit-score', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ challengeCode, nickname: name }),
+      })
+      if (!res.ok) throw new Error('submit failed')
+      const data = await res.json() as { rank: number; score: number; floor: number }
+      setRank(data.rank)
+      setSubmitState('done')
+      // Best-effort leaderboard refresh — its own failure must not affect submit status.
+      void fetch('/.netlify/functions/leaderboard').catch(() => {})
+    } catch {
+      setSubmitState('offline')
+    }
+  }
 
   return (
     <main className="relative flex-1 flex flex-col items-center justify-center gap-8 p-8 text-center">
@@ -127,8 +156,21 @@ export function EndlessResult({
             className="rounded-lg border border-white/15 bg-white/[0.04] px-3 py-2 text-sm text-white/85 outline-none transition-colors focus:border-gold/40 focus-visible:ring-2 focus-visible:ring-[#f3e6a0]"
           />
         </label>
-        <Button onClick={submitPlaceholder} disabled className="w-full">Invia punteggio</Button>
-        <p className="text-[10px] uppercase tracking-widest text-white/30">In arrivo: classifica online</p>
+        <Button
+          onClick={submitScore}
+          disabled={submitState === 'submitting' || submitState === 'done'}
+          className="w-full"
+        >
+          {submitState === 'submitting' ? 'Invio…' : submitState === 'done' ? 'Inviato' : 'Invia punteggio'}
+        </Button>
+        {submitState === 'done' && rank !== null && (
+          <p className="text-[10px] uppercase tracking-widest text-white/40">Posizione in classifica: #{rank}</p>
+        )}
+        {submitState === 'offline' && (
+          <p className="text-[10px] uppercase tracking-widest text-white/30">
+            Offline — punteggio salvato in locale
+          </p>
+        )}
       </motion.div>
 
       <motion.div
