@@ -89,13 +89,23 @@ export function combatRngForNode(seed: string, nodeId: string): Rng {
   return createRng(seed).fork(combatChannel).fork(area).fork(floor)
 }
 
+/** Used by BOTH campaign (useRunB) and endless (useEndless). `state.endless` is already
+ *  `true` on the incoming state for the endless entry path (useEndless's initialRun sets
+ *  it before mount, and endlessReplay.ts sets it on startRunB's result before calling this)
+ *  — campaign's startRunB/confirmDraftPicks path never sets it, so it's undefined/false
+ *  there. Threading it into generateArea excludes shop/spellForge from endless area 0 too
+ *  (every other endless area already gets this via advanceEndlessArea) — without it, the
+ *  endless controller's missing shop handler soft-locks on the ~45% of area-0 maps that
+ *  roll a shop node. Campaign's call is unaffected: state.endless is always falsy there, so
+ *  this preserves byte-identical campaign area-0 generation. */
 export function chooseStarters(state: RunState, house: House, starterIds: string[], _rng: Rng): RunState {
   const offer = starterOffer(state.seed, house)
   const starters = starterIds
     .map(id => offer.find(d => d.wizard.id === id))
     .filter((d): d is DraftedWizard => !!d)
     .map(d => recruitVia(d, 'iniziale', 1))
-  const map = generateArea(areaRng(state.seed, 0), state.seed, 0, { teamSize: starters.length, teamMax: state.teamMax ?? 5 })
+  const map = generateArea(areaRng(state.seed, 0), state.seed, 0,
+    { teamSize: starters.length, teamMax: state.teamMax ?? 5 }, state.endless ?? false)
   const entry = map.find(n => parseAreaNodeId(n.id).floor === 0)!
   return { ...state, house, area: 0, team: starters, activeSynergies: detectSynergies(starters),
     map, currentNodeId: entry.id, phase: 'map' }

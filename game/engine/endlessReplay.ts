@@ -57,8 +57,12 @@ export function replayRun(log: RunLog): { state: RunState; valid: boolean; reaso
   if (!log.starterIds.length || !log.starterIds.every(id => offeredIds.has(id))) {
     return { state: null as unknown as RunState, valid: false, reason: 'illegal starters' }
   }
-  let s = chooseStarters(startRunB(log.seed), log.house, log.starterIds, rng)
-  s = { ...s, endless: true }
+  // endless:true must be set BEFORE chooseStarters runs (not after): chooseStarters reads
+  // state.endless to decide whether area 0 excludes shop/spellForge nodes (the same flag
+  // useEndless's initialRun sets before mount — see chooseStarters's doc comment in
+  // runEngine.ts). Setting it after, like this used to, would replay area 0 with the
+  // CAMPAIGN node-category weights and diverge from what live endless play generated.
+  let s = chooseStarters({ ...startRunB(log.seed), endless: true }, log.house, log.starterIds, rng)
 
   for (const a of log.actions) {
     const before = s
