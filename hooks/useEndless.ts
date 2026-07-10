@@ -1,8 +1,8 @@
 'use client'
 import { useCallback, useMemo, useRef, useState } from 'react'
-import type { DraftedWizard, House, RunNode, RunState } from '@/types'
+import type { DraftedWizard, RunNode, RunState } from '@/types'
 import {
-  startRunB, starterOffer as starterOfferEngine, chooseStarters as chooseStartersEngine,
+  startRunB, confirmDraftPicks,
   setWizardSpell, useConsumableRelic as useConsumableRelicEngine,
 } from '@/game/engine/runEngine'
 import { advanceEndlessArea, scoreForEndlessRun, globalFloor } from '@/game/engine/endless'
@@ -24,8 +24,7 @@ export interface EndlessController {
   floor: number; score: number | null
   lastFallen: string[]
   newlyDiscoveredDuoIds: string[]
-  starterOffer: (house: House) => DraftedWizard[]
-  chooseStarters: (house: House, starterIds: string[]) => void
+  completeDraft: (picked: DraftedWizard[]) => void
   chooseNode: (nodeId: string) => void
   commitBattle: () => void
   acknowledgeVictory: () => void
@@ -66,8 +65,7 @@ export function useEndless(seed: string): EndlessController {
   // actually performed them (chooseNode/resolve/set-spell/use-consumable), mirroring
   // exactly the loop replayRun re-applies.
   const actionsRef = useRef<PlayerAction[]>([])
-  const houseRef = useRef<House | null>(null)
-  const starterIdsRef = useRef<string[]>([])
+  const draftPicksRef = useRef<string[]>([])
   const [score, setScore] = useState<number | null>(null)
 
   const onCommit = useCallback((next: RunState) => {
@@ -79,12 +77,9 @@ export function useEndless(seed: string): EndlessController {
   const shared = useRunShared({ initialRun, profileRef, onCommit, runKey: RUN_KEY_ENDLESS })
   const { run, view, battle, lastFallen, newlyDiscoveredDuoIds, runRef, commit } = shared
 
-  const starterOffer = useCallback((house: House) => starterOfferEngine(seed, house), [seed])
-
-  const chooseStarters = useCallback((house: House, starterIds: string[]) => {
-    houseRef.current = house
-    starterIdsRef.current = starterIds
-    const next = chooseStartersEngine(runRef.current, house, starterIds, createRng(runRef.current.seed))
+  const completeDraft = useCallback((picked: DraftedWizard[]) => {
+    draftPicksRef.current = picked.map(d => d.wizard.id)
+    const next = confirmDraftPicks({ ...runRef.current, endless: true }, picked, createRng(runRef.current.seed))
     commit({ ...next, endless: true }, 'map')
   }, [commit, runRef])
 
@@ -157,8 +152,7 @@ export function useEndless(seed: string): EndlessController {
       v: 1,
       engine: ENGINE_VERSION,
       seed: runRef.current.seed,
-      house: houseRef.current ?? runRef.current.house!,
-      starterIds: starterIdsRef.current,
+      draftPicks: draftPicksRef.current,
       actions: actionsRef.current,
     }
     return encodeChallenge(log)
@@ -168,7 +162,7 @@ export function useEndless(seed: string): EndlessController {
     run, view, battle, reachable: shared.reachable, currentNode: shared.currentNode,
     floor: globalFloor(run), score,
     lastFallen, newlyDiscoveredDuoIds,
-    starterOffer, chooseStarters,
+    completeDraft,
     chooseNode, commitBattle, acknowledgeVictory,
     chooseRecruit, skipRecruit, chooseRelic, ackInfirmary,
     currentEvent: shared.currentEvent, chooseEventOption, chooseSpellUpgrade,

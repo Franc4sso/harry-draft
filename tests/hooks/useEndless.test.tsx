@@ -7,9 +7,22 @@ import { scoreForEndlessRun } from '@/game/engine/endless'
 import { clearRun } from '@/lib/runStore'
 import { relicOffer } from '@/game/engine/resolvers/recruit'
 import { createRng } from '@/game/engine/rng'
-import type { House } from '@/types'
+import { startDraft, pickFrom } from '@/game/engine/draftSession'
+import { STARTER_PICKS } from '@/game/engine/runEngine'
+import type { DraftedWizard } from '@/types'
 
 beforeEach(() => { try { clearRun() } catch {} ; localStorage.clear() })
+
+/** Greedily drafts STARTER_PICKS wizards (always index 0) from a fresh, seeded
+ *  DraftSession — mirrors endlessReplay's own reconstruction loop so the picks
+ *  driveToWipeout records are guaranteed legal against a real live draft. */
+function draftStarters(seed: string): DraftedWizard[] {
+  let session = startDraft(seed, STARTER_PICKS)
+  while (session.picks.length < STARTER_PICKS) {
+    session = pickFrom(session, 0)
+  }
+  return session.picks
+}
 
 /** Greedily drives an endless run to wipeout, using only the controller's own
  *  offered starters + reachable nodes. Combat auto-acks (deterministic — no
@@ -20,11 +33,10 @@ beforeEach(() => { try { clearRun() } catch {} ; localStorage.clear() })
  *  (Task 5, not yet landed, is what excludes them from endless map gen; a real
  *  player CAN still encounter them today) — if genuinely unavoidable the test
  *  fails loudly rather than silently mis-recording, so a stuck seed is visible. */
-function driveToWipeout(result: { current: ReturnType<typeof useEndless> }) {
-  const house: House = 'Grifondoro'
-  const offer = result.current.starterOffer(house)
-  const starterIds = offer.slice(0, 3).map(d => d.wizard.id)
-  act(() => result.current.chooseStarters(house, starterIds))
+function driveToWipeout(result: { current: ReturnType<typeof useEndless> }): string[] {
+  const picked = draftStarters(result.current.run.seed)
+  act(() => result.current.completeDraft(picked))
+  expect(result.current.run.phase).toBe('map')
 
   let guard = 0
   const MAX_STEPS = 2000
@@ -74,18 +86,22 @@ function driveToWipeout(result: { current: ReturnType<typeof useEndless> }) {
       throw new Error(`unhandled view in driveToWipeout: ${view}`)
     }
   }
+  return picked.map(d => d.wizard.id)
 }
 
 describe('useEndless record + replay parity', () => {
   it('a played run recorded to a challenge code replays to the SAME score', () => {
     const { result } = renderHook(() => useEndless('endless-ui-seed'))
-    driveToWipeout(result)
+    const draftPicks = driveToWipeout(result)
 
     const code = result.current.getChallengeCode()
     const played = result.current.score!
     expect(played).not.toBeNull()
 
-    const { state, valid } = replayRun(decodeChallenge(code))
+    const decoded = decodeChallenge(code)
+    expect(decoded.draftPicks).toEqual(draftPicks)
+
+    const { state, valid } = replayRun(decoded)
     expect(valid).toBe(true)
     expect(scoreForEndlessRun(state)).toBe(played)
   })
