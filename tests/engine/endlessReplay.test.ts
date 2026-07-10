@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import { replayRun, type RunLog, ENGINE_VERSION } from '@/game/engine/endlessReplay'
 import { startDraft, pickFrom } from '@/game/engine/draftSession'
 import { setDraftPoolRestriction } from '@/game/engine/draft'
@@ -7,6 +7,8 @@ import { scoreForEndlessRun } from '@/game/engine/endless'
 import { registerCoreResolvers } from '@/game/engine/runEngine'
 
 registerCoreResolvers()
+
+afterEach(() => setDraftPoolRestriction(null))
 
 // Legal draft picks for a seed: drive the same DraftSession replayRun will, pick index 0 each screen.
 function legalDraftPicks(seed: string): string[] {

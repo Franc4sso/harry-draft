@@ -1,7 +1,9 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, afterEach } from 'vitest'
 import { startRunB, confirmDraftPicks, starterOffer, STARTER_PICKS } from '@/game/engine/runEngine'
 import { createRng } from '@/game/engine/rng'
 import { setDraftPoolRestriction } from '@/game/engine/draft'
+
+afterEach(() => setDraftPoolRestriction(null))
 
 // Build 3 real drafted wizards deterministically via the (kept) starterOffer helper.
 function threeStarters(seed: string) {
