@@ -13,6 +13,7 @@ import { BALANCE } from '@/data/constants'
 import { enemyLevelFor, menaceForLevel, globalDepth } from '../combat/threat'
 import type { EnemyKind } from '../combat/threat'
 import type { NodeResolver } from './types'
+import { detectDuos } from '../duos'
 
 // Re-export the pure threat helpers (moved to combat/threat.ts to break the
 // resolver↔battlePackage import cycle) so existing external importers still resolve.
@@ -85,9 +86,11 @@ export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatR
   // Levels apply HERE, before combat — engine stays pure.
   const ready = battleReadyTeam(livingOf(state.team))
   const playerSyn = detectSynergies(ready)
+  const leftDuos = detectDuos(ready, state.relics)
   const result = simulateBattle(ready, enemy, battleRng, {
     leftSyn: playerSyn, rightSyn: enemySyn, leftRelics: state.relics,
     rightRelics, rightMenace, rightDamageReduction, rightIgnoresTaunt,
+    leftDuos, kind: nodeType,
   })
 
   // Persist HP onto the ORIGINAL (unleveled) roster via the existing helper, then grant

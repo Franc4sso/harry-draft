@@ -69,6 +69,13 @@ export interface BattleUnit extends DraftedWizard {
   ignoresTaunt?: boolean
   /** Set each turn: true while this unit's side has a live Supporto (Tenacia aura). */
   controlResist?: boolean
+  // --- Duo stamps (player-only; see game/engine/duoEffects/stamp.ts) ---
+  poisonAmp?: { threshold: number; mult: number }   // CANCRENA (stamped on ENEMY units)
+  livingWall?: boolean                               // MURO VIVENTE (player Tanks)
+  coldExecute?: { threshold: number; instakill: boolean } // ESECUZIONE A FREDDO (player attackers)
+  reaper?: boolean                                   // MIETITORE (player units)
+  spreadsPoison?: boolean                            // MIASMA (battle owns left)
+  spitsPoisonOnHeal?: boolean                        // UNTORE (player units)
 }
 
 export type LogFlag = 'crit' | 'dodge' | 'kill' | 'heal' | 'block' | 'stun' | 'dot' | 'pen' | 'shatter' | 'wait' | 'recoil' | 'revive'

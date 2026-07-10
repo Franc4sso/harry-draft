@@ -1,5 +1,5 @@
 import type {
-  ActiveRelic, ActiveSynergy, BattleResult, BattleUnit, DraftedWizard, HookCtx, LogEntry, LogFlag, Side, StepSnapshot, UnitSnapshot,
+  ActiveDuo, ActiveRelic, ActiveSynergy, BattleResult, BattleUnit, DraftedWizard, HookCtx, LogEntry, LogFlag, Side, StepSnapshot, UnitSnapshot,
 } from '@/types'
 import type { Rng } from '../rng'
 import { BALANCE } from '@/data/constants'
@@ -22,6 +22,7 @@ import { selectSpell } from './selectSpell'
 import { deadToRaise, mostWounded, selectTarget } from './targeting'
 import { SPELL_BY_ID } from '@/data/spells'
 import { applyTenaciaAura, cleanseOneControl } from './roleCounter'
+import { stampDuoFields } from '../duoEffects/stamp'
 
 export function toBattleUnits(
   team: DraftedWizard[], side: Side, synergies: ActiveSynergy[], relics: ActiveRelic[] = [], menacePct = 0, damageReduction = 0,
@@ -67,7 +68,14 @@ export function simulateBattle(
   left: DraftedWizard[],
   right: DraftedWizard[],
   rng: Rng,
-  opts: { leftSyn?: ActiveSynergy[]; rightSyn?: ActiveSynergy[]; leftRelics?: ActiveRelic[]; rightRelics?: ActiveRelic[]; rightMenace?: number; rightDamageReduction?: number; rightIgnoresTaunt?: boolean } = {},
+  opts: {
+    leftSyn?: ActiveSynergy[]; rightSyn?: ActiveSynergy[]; leftRelics?: ActiveRelic[]; rightRelics?: ActiveRelic[]
+    rightMenace?: number; rightDamageReduction?: number; rightIgnoresTaunt?: boolean
+    /** Player's active Duos (computed at resolve time from the living team + relics). Player-only — never set for enemy-vs-enemy sims. */
+    leftDuos?: ActiveDuo[]
+    /** Node kind (normal/elite/boss) — read by some Duo stamps for scaling. */
+    kind?: 'normal' | 'elite' | 'boss'
+  } = {},
 ): BattleResult {
   const leftSyn = opts.leftSyn ?? []
   const rightSyn = opts.rightSyn ?? []
@@ -75,6 +83,7 @@ export function simulateBattle(
   const rightRelics = opts.rightRelics ?? []
   const L = toBattleUnits(left, 'left', leftSyn, leftRelics)
   const R = toBattleUnits(right, 'right', rightSyn, rightRelics, opts.rightMenace ?? 0, opts.rightDamageReduction ?? 0, opts.rightIgnoresTaunt ?? false)
+  stampDuoFields(L, R, opts.leftDuos ?? [], opts.kind ?? 'normal')
   const regen: Record<Side, number> = {
     left: totalRegen(leftSyn) + totalRelicRegen(left, leftRelics),
     right: totalRegen(rightSyn) + totalRelicRegen(right, rightRelics),
