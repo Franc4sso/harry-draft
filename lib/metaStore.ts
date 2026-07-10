@@ -12,6 +12,7 @@ export interface MetaCodex {
   relicsSeen: string[]
   synergiesSeen: string[]
   bossesSeen: string[]
+  duosSeen: string[]
 }
 
 export interface MetaProfile {
@@ -37,7 +38,7 @@ export function defaultProfile(): MetaProfile {
       runsPlayed: 0, runsWon: 0, bossesKilled: 0,
       bestStageReached: 0, totalCioccoraneEarned: 0, wizardUsage: {},
     },
-    codex: { wizardsSeen: [], relicsSeen: [], synergiesSeen: [], bossesSeen: [] },
+    codex: { wizardsSeen: [], relicsSeen: [], synergiesSeen: [], bossesSeen: [], duosSeen: [] },
   }
 }
 
@@ -95,8 +96,8 @@ export function unlockRelic(p: MetaProfile, id: string): MetaProfile {
 }
 
 export function markSeen(
-  p: MetaProfile, kind: 'wizard' | 'relic' | 'synergy' | 'boss', id: string,
+  p: MetaProfile, kind: 'wizard' | 'relic' | 'synergy' | 'boss' | 'duo', id: string,
 ): MetaProfile {
-  const key = ({ wizard: 'wizardsSeen', relic: 'relicsSeen', synergy: 'synergiesSeen', boss: 'bossesSeen' } as const)[kind]
+  const key = ({ wizard: 'wizardsSeen', relic: 'relicsSeen', synergy: 'synergiesSeen', boss: 'bossesSeen', duo: 'duosSeen' } as const)[kind]
   return { ...p, codex: { ...p.codex, [key]: addUnique(p.codex[key], id) } }
 }
