@@ -1,10 +1,9 @@
 import type { ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard, RunState } from '@/types'
 import type { Rng } from '@/game/engine/rng'
-import { createRng } from '@/game/engine/rng'
 import { resolveCombat } from '@/game/engine/resolvers/combat'
 import { battleReadyTeam } from '@/game/engine/battlePrep'
 import { detectSynergies } from '@/game/engine/synergy'
-import { parseAreaNodeId } from '@/game/engine/map'
+import { combatRngForNode } from '@/game/engine/runEngine'
 
 export interface ActiveBattleB {
   result: BattleResult
@@ -28,13 +27,12 @@ export interface ActiveBattleB {
   rightIgnoresTaunt: boolean
 }
 
-const combatChannel = 2
-
-/** Deterministic rng for the current combat node; shared by snapshot + commit. */
+/** Deterministic rng for the current combat node; shared by snapshot + commit.
+ *  Thin wrapper over runEngine's combatRngForNode (the single source of truth for this
+ *  fork chain — also used by endlessReplay.ts so replay reconstructs the exact stream
+ *  live play used). */
 export function combatRng(run: RunState): Rng {
-  const node = run.map!.find(n => n.id === run.currentNodeId)!
-  const { area, floor } = parseAreaNodeId(node.id)
-  return createRng(run.seed).fork(combatChannel).fork(area).fork(floor)
+  return combatRngForNode(run.seed, run.currentNodeId!)
 }
 
 /** Build the replay snapshot: the leveled roster that fought + the pure result. */

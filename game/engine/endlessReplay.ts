@@ -2,7 +2,7 @@ import type { House, RunState } from '@/types'
 import type { ResolverChoice } from './resolvers/types'
 import {
   startRunB, chooseStarters, starterOffer, moveTo, resolveCurrentChecked,
-  setWizardSpell, useConsumableRelic, reachable, registerCoreResolvers,
+  setWizardSpell, useConsumableRelic, reachable, registerCoreResolvers, combatRngForNode,
 } from './runEngine'
 import { advanceEndlessArea } from './endless'
 import { setDraftPoolRestriction } from './draft'
@@ -74,7 +74,20 @@ export function replayRun(log: RunLog): { state: RunState; valid: boolean; reaso
       // no-op signal (raw result reference-equal to the input state) directly, before
       // that rewrapping happens. Calls the resolver exactly once — same single RNG
       // draw as resolveCurrent, so no double-draw / determinism hazard.
-      const checked = resolveCurrentChecked(s, a.choice, createRng(log.seed))
+      //
+      // RNG stream must match what LIVE play actually used, or a replayed combat draws
+      // different crits/dodges than the original fight (score divergence — the bug the
+      // final whole-branch review flagged as CRITICAL). Live combat resolves via
+      // hooks/useRunShared.ts's commitBattle, which uses combatRng(run) (now
+      // combatRngForNode, hoisted into runEngine.ts as the single source of truth) — a
+      // FORKED stream (`fork(combatChannel).fork(area).fork(floor)`), NOT the raw seed
+      // rng every non-combat resolver uses (see chooseRecruit/chooseRelic/ackInfirmary/
+      // chooseEventOption/chooseSpellUpgrade in useRunShared.ts — all `createRng(seed)`
+      // with no fork). Mirror that split here exactly.
+      const currentNode = s.map!.find(n => n.id === s.currentNodeId)
+      const isCombatNode = currentNode?.type === 'battle' || currentNode?.type === 'elite' || currentNode?.type === 'boss'
+      const resolveRng = isCombatNode ? combatRngForNode(log.seed, s.currentNodeId!) : createRng(log.seed)
+      const checked = resolveCurrentChecked(s, a.choice, resolveRng)
       // Exemption reasoning (must be exhaustive — every resolver no-op that's NOT
       // cheating has to be listed here, or a legitimate player action gets rejected):
       //  - 'combat-ack': combatResolver ignores the choice and always returns a new

@@ -75,6 +75,20 @@ export function areaRng(seed: string, area: number): Rng {
   return createRng(seed).fork(mapRngChannel).fork(area)
 }
 
+/** RNG channel dedicated to combat resolution (distinct from the map/draft channels). */
+export const combatChannel = 2
+
+/** Deterministic rng for a combat node: `fork(combatChannel).fork(area).fork(floor)`.
+ *  Single source of truth for the fork chain live play uses to resolve a battle — shared by
+ *  hooks/useRunB.combat.ts (snapshot + commit) and game/engine/endlessReplay.ts (replay), so
+ *  a replayed combat draws from the EXACT same rng stream the original play did. Any other
+ *  caller that needs "the rng live combat would use for this node" must go through this
+ *  function rather than hand-rolling the fork chain. */
+export function combatRngForNode(seed: string, nodeId: string): Rng {
+  const { area, floor } = parseAreaNodeId(nodeId)
+  return createRng(seed).fork(combatChannel).fork(area).fork(floor)
+}
+
 export function chooseStarters(state: RunState, house: House, starterIds: string[], _rng: Rng): RunState {
   const offer = starterOffer(state.seed, house)
   const starters = starterIds
