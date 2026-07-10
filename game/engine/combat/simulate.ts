@@ -23,6 +23,7 @@ import { deadToRaise, mostWounded, selectTarget } from './targeting'
 import { SPELL_BY_ID } from '@/data/spells'
 import { applyTenaciaAura, cleanseOneControl } from './roleCounter'
 import { stampDuoFields } from '../duoEffects/stamp'
+import { maybeSpreadPoison } from '../duoEffects/spreadOnDeath'
 
 export function toBattleUnits(
   team: DraftedWizard[], side: Side, synergies: ActiveSynergy[], relics: ActiveRelic[] = [], menacePct = 0, damageReduction = 0,
@@ -84,6 +85,8 @@ export function simulateBattle(
   const L = toBattleUnits(left, 'left', leftSyn, leftRelics)
   const R = toBattleUnits(right, 'right', rightSyn, rightRelics, opts.rightMenace ?? 0, opts.rightDamageReduction ?? 0, opts.rightIgnoresTaunt ?? false)
   stampDuoFields(L, R, opts.leftDuos ?? [], opts.kind ?? 'normal')
+  // MIASMA: computed once per battle — cheaper than re-scanning leftDuos at every death site.
+  const miasma = (opts.leftDuos ?? []).some(d => d.duo.id === 'miasma')
   const regen: Record<Side, number> = {
     left: totalRegen(leftSyn) + totalRelicRegen(left, leftRelics),
     right: totalRegen(rightSyn) + totalRelicRegen(right, rightRelics),
@@ -299,6 +302,9 @@ export function simulateBattle(
         for (const ally of allyPool) {
           if (ally.alive && ally !== realTarget) fireReactive('onAllyDeath', ally, turn)
         }
+        // MIASMA: after the death is fully resolved, jump the dead enemy's veleno stacks
+        // to one random living enemy (deterministic single rng.pick; no-op if none left).
+        if (miasma && realTarget.side === 'right') maybeSpreadPoison(realTarget, R, rng)
       }
       // Recoil can kill the ACTOR via its own dark spell — sync + KO-log + onDeath for the actor too.
       sync(actor)
@@ -313,6 +319,8 @@ export function simulateBattle(
         for (const ally of allyPool) {
           if (ally.alive && ally !== actor) fireReactive('onAllyDeath', ally, turn)
         }
+        // MIASMA: recoil self-kill can drop an enemy caster too.
+        if (miasma && actor.side === 'right') maybeSpreadPoison(actor, R, rng)
       }
       // onHpThreshold: HP of the target changed this action.
       checkThreshold(realTarget, turn)
@@ -347,6 +355,9 @@ export function simulateBattle(
         for (const ally of allyPool) {
           if (ally.alive && ally !== u) fireReactive('onAllyDeath', ally, turn)
         }
+        // MIASMA: a DoT-tick death (often veleno itself) also spreads — this operates on the
+        // already-resolved death and does not recurse into any further deaths it might cause.
+        if (miasma && u.side === 'right') maybeSpreadPoison(u, R, rng)
       }
       if (u.alive && regen[u.side] > 0) {
         const before = u.hp
@@ -390,6 +401,8 @@ export function simulateBattle(
             for (const ally of allyPool) {
               if (ally.alive && ally !== u) fireReactive('onAllyDeath', ally, turn)
             }
+            // MIASMA: fatigue (anti-stall) kills also spread.
+            if (miasma && u.side === 'right') maybeSpreadPoison(u, R, rng)
           }
         }
       }
