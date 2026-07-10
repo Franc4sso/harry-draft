@@ -4,7 +4,7 @@ import type { EventBus } from './eventBus'
 import { BALANCE } from '@/data/constants'
 import { STATUS_BY_ID } from '@/data/statuses'
 import { absorbDamage, applyInlineEffect, applyStatus, canAttack, effectiveStats } from '../status'
-import { HARD_CONTROL_KINDS, roleMult } from './roleCounter'
+import { HARD_CONTROL_KINDS, isUnderHardControl, roleMult } from './roleCounter'
 
 export interface EffectCtx { rng: Rng; turn: number; actor: BattleUnit; target: BattleUnit; flags: LogFlag[]; bus?: EventBus; allies?: BattleUnit[]; dark?: boolean }
 export interface EffectResult { value?: number; dodged?: boolean; wardTarget?: BattleUnit }
@@ -77,6 +77,16 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
     if (dm && ctx.dark && dm.recoil > 0 && residual > 0) {
       ctx.actor.hp -= Math.round(residual * dm.recoil)
       ctx.flags.push('recoil')
+    }
+    // ESECUZIONE A FREDDO: a hard-controlled (stun/freeze/silence) enemy under the HP
+    // threshold is finished outright — or, in boss battles, takes a chunk of bonus damage
+    // instead (the boss climax must stay hard). Fixed at stamp time via coldExecute.instakill.
+    const ce = ctx.actor.coldExecute
+    if (ce && ctx.target.side !== ctx.actor.side && ctx.target.alive) {
+      if (isUnderHardControl(ctx.target) && ctx.target.hp / ctx.target.maxHp < ce.threshold) {
+        if (ce.instakill) ctx.target.hp = 0
+        else ctx.target.hp = Math.max(0, ctx.target.hp - Math.round(ctx.target.maxHp * 0.25))
+      }
     }
     // Report the HP actually removed (post-shield), NOT the gross hit: the log `value` must
     // equal the real HP delta so buildReplay (which has no shield model) stays in sync.
