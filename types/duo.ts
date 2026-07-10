@@ -1,6 +1,3 @@
-import type { DraftedWizard } from './combat'
-import type { ActiveRelic } from './relic'
-
 export type DuoSignal =
   | 'veleno' | 'esecuzione' | 'scudirigen' | 'magieOscure'
   | 'taunt' | 'attaccante' | 'supporto' | 'controllo'

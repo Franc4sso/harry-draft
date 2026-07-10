@@ -6,7 +6,6 @@ export function stampDuoFields(
   left: BattleUnit[], right: BattleUnit[], duos: ActiveDuo[], kind: 'normal' | 'elite' | 'boss',
 ): void {
   const has = (id: string) => duos.some(d => d.duo.id === id)
-  if (has('miasma')) for (const u of left) u.spreadsPoison = true
   if (has('cancrena')) for (const u of right) u.poisonAmp = { threshold: 0.4, mult: 2 }
   if (has('muro-vivente')) for (const u of left) if (u.wizard.role === 'Tank') u.livingWall = true
   if (has('esecuzione-a-freddo')) {
@@ -14,6 +13,7 @@ export function stampDuoFields(
     const instakill = kind !== 'boss'
     for (const u of left) u.coldExecute = { threshold: 0.5, instakill }
   }
-  if (has('untore')) for (const u of left) u.spitsPoisonOnHeal = true
   if (has('mietitore')) for (const u of left) u.reaper = true
+  // MIASMA and UNTORE have no stamp branch — the sim reads battle-level `miasma`/`untore`
+  // booleans (computed once in simulate.ts) instead of a per-unit flag.
 }

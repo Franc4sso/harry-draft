@@ -183,12 +183,19 @@ function relicLightsADuoSignal(r: { keywords?: string[]; grantsExecute?: unknown
     || !!r.grantsExecute || !!r.grantsShieldConvert || !!r.grantsDarkMagic
 }
 
+// The parity gate below only cares about Duos that draw an EXTRA rng mid-battle — MIASMA
+// (maybeSpreadPoison) and UNTORE (maybeSpitPoison) — since those are the only ones whose
+// extra draw could desync a replay. The other 4 Duos (CANCRENA/MURO VIVENTE/ESECUZIONE A
+// FREDDO/MIETITORE) are rng-free stat stamps and prove nothing about replay-rng parity.
+const RNG_DRAWING_DUO_IDS = new Set(['miasma', 'untore'])
+
 /** Duo-biased variant of playAndRecord: identical structure/rng-per-action-kind, but recruit
  *  and relic picks prefer whatever most quickly lights a Duo tag-signal. Also tracks (via
  *  `detectDuos`, the SAME function resolvers/combat.ts calls at battle-resolve time) whether
  *  any battle-ack action in the recorded log fired while the living team + relics had an
- *  ACTIVE Duo — the proof this run's log genuinely exercises Duo combat rng. */
-function playAndRecordDuoBiased(seed: string): { playedScore: number; log: RunLog; sawDuoBattle: boolean } {
+ *  ACTIVE rng-drawing Duo (MIASMA/UNTORE) — the proof this run's log genuinely exercises the
+ *  extra Duo combat rng draw that caused the original combat-replay defect. */
+function playAndRecordDuoBiased(seed: string): { playedScore: number; log: RunLog; sawRngDuoBattle: boolean } {
   const house = 'Grifondoro' as const
   const offer = starterOffer(seed, house)
   // Starters biased too (not just recruit/relic): pickNode below fights nearly every floor
@@ -197,7 +204,7 @@ function playAndRecordDuoBiased(seed: string): { playedScore: number; log: RunLo
   // SEEDS harness above) would almost never accumulate 2 tag-sharing wizards at all.
   const starterIds = [...offer].sort((a, b) => preferDuoScore(b) - preferDuoScore(a)).slice(0, 3).map(d => d.wizard.id)
   const actions: PlayerAction[] = []
-  let sawDuoBattle = false
+  let sawRngDuoBattle = false
 
   let s: RunState = { ...startRunB(seed), endless: true }
   s = chooseStarters(s, house, starterIds, createRng(seed))
@@ -220,8 +227,10 @@ function playAndRecordDuoBiased(seed: string): { playedScore: number; log: RunLo
         if (reviveRelic) s = useConsumableRelic(s, reviveRelic.relic.id)
       }
       // Mirrors resolvers/combat.ts's own detectDuos(livingOf(state.team), state.relics) call —
-      // the exact check that decides whether this battle runs with leftDuos active.
-      if (detectDuos(livingOf(s.team), s.relics).length > 0) sawDuoBattle = true
+      // the exact check that decides whether this battle runs with leftDuos active. Only
+      // MIASMA/UNTORE count here — see RNG_DRAWING_DUO_IDS above.
+      const activeDuos = detectDuos(livingOf(s.team), s.relics)
+      if (activeDuos.some(d => RNG_DRAWING_DUO_IDS.has(d.duo.id))) sawRngDuoBattle = true
       actions.push({ t: 'resolve', choice: { kind: 'combat-ack' } })
       s = resolveCurrent(s, { kind: 'combat-ack' }, combatRngForNode(seed, node.id))
       continue
@@ -266,7 +275,7 @@ function playAndRecordDuoBiased(seed: string): { playedScore: number; log: RunLo
   }
 
   const log: RunLog = { v: 1, engine: ENGINE_VERSION, seed, house, starterIds, actions }
-  return { playedScore: scoreForEndlessRun(s), log, sawDuoBattle }
+  return { playedScore: scoreForEndlessRun(s), log, sawRngDuoBattle }
 }
 
 const DUO_SEEDS = Array.from({ length: 30 }, (_, i) => `duo-parity-${i}`)
@@ -274,10 +283,10 @@ const DUO_SEEDS = Array.from({ length: 30 }, (_, i) => `duo-parity-${i}`)
 describe('endless replay parity — Duo-active runs (MIASMA/UNTORE draw extra rng mid-battle)', () => {
   it('replayed score equals played score for every Duo-biased seed', () => {
     const mismatches: { seed: string; played: number; replayed: number | null; valid: boolean; reason?: string }[] = []
-    let anyDuoBattle = false
+    let anyRngDuoBattle = false
     for (const seed of DUO_SEEDS) {
-      const { playedScore, log, sawDuoBattle } = playAndRecordDuoBiased(seed)
-      if (sawDuoBattle) anyDuoBattle = true
+      const { playedScore, log, sawRngDuoBattle } = playAndRecordDuoBiased(seed)
+      if (sawRngDuoBattle) anyRngDuoBattle = true
       const out = replayRun(log)
       const replayedScore = out.valid ? scoreForEndlessRun(out.state) : null
       if (!out.valid || replayedScore !== playedScore) {
@@ -289,10 +298,11 @@ describe('endless replay parity — Duo-active runs (MIASMA/UNTORE draw extra rn
       console.log('[endlessReplayParity duo] mismatches:', JSON.stringify(mismatches, null, 2))
     }
     // eslint-disable-next-line no-console
-    console.log(`[endlessReplayParity duo] seeds=${DUO_SEEDS.length} anyDuoBattle=${anyDuoBattle} mismatches=${mismatches.length}`)
-    // Sanity check the bias is real: if NO seed ever fielded an active Duo, this suite would
-    // be silently testing nothing new — fail loudly instead of passing on a technicality.
-    expect(anyDuoBattle).toBe(true)
+    console.log(`[endlessReplayParity duo] seeds=${DUO_SEEDS.length} anyRngDuoBattle=${anyRngDuoBattle} mismatches=${mismatches.length}`)
+    // Sanity check the bias is real: if NO seed ever fielded an active rng-drawing Duo
+    // (MIASMA/UNTORE), this suite would be silently testing nothing new for the replay-rng
+    // defect it exists to guard — fail loudly instead of passing on a technicality.
+    expect(anyRngDuoBattle).toBe(true)
     expect(mismatches).toEqual([])
   })
 
