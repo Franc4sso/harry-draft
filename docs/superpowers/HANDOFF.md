@@ -3,6 +3,25 @@
 Aggiornato: **2026-07-10**. Da un altro PC: `git pull origin master`, `npm install` (l'Endless batch ha
 aggiunto `@netlify/blobs`), poi leggi questo file.
 
+## Endless draft = draft campagna 2026-07-10 (SHIPPED + merged su master)
+
+Il draft iniziale della modalità **Endless** ora è **identico a quello della campagna**: 3 schermate da
+3 candidati tier-weighted, si pesca 1 per schermata (3 totali), **niente scelta della casata**. Il pool
+resta il **roster completo** (`setDraftPoolRestriction(null)`, indipendente dagli sblocchi → leaderboard
+equa). Prima l'utente sceglieva una casata e pescava i più forti — rimosso. Build subagent-driven (5 task
+TDD + review finale opus = "ready to merge"). **1360 test verdi, tsc pulito.**
+Spec/piano: `docs/superpowers/{specs,plans}/2026-07-10-endless-draft-parity*`.
+- Endless riusa il path campagna: `DraftScreen` → `useDraft`/`DraftSession` → `confirmDraftPicks`. L'unica
+  differenza campagna↔endless ora è il pool (campagna = sblocchi, endless = tutti).
+- **Anti-cheat riscritto:** il `RunLog` non codifica più `house`+`starterIds` ma le **pescate ordinate**
+  (`draftPicks`); `replayRun` ricostruisce la squadra guidando la STESSA `DraftSession` seedata e valida
+  che ogni pescata fosse legalmente sulla sua schermata. `ENGINE_VERSION` bumped `endless-1`→`endless-2`
+  → i vecchi codici Endless / voci leaderboard si invalidano (deciso, accettato).
+- **Determinismo (anti-cheat):** live e replay fanno entrambi `setDraftPoolRestriction(null)` poi
+  `startDraft(seed)` — la review finale ha tracciato l'ordine `useMemo`→`DraftScreen` come SICURO (nessun
+  pool campagna stantio può filtrare). `endlessReplayParity` resta 0-mismatch (20 + 30 seed Duo).
+- `starterOffer`/`chooseStarters` restano definiti in `runEngine.ts` (li usa solo il balance harness).
+
 ## Duo Combos 2026-07-10 (archetipi/combo — SHIPPED + merged su master)
 
 La direzione "archetipi/combo" è stata realizzata come **Duo Combos**: 6 poteri stile Hades che si
@@ -21,8 +40,8 @@ Spec/piano: `docs/superpowers/{specs,plans}/2026-07-10-duo-combos*`.
   ferro** — `tauntBonus=1000` già inchioda i nemici sul Tank e nessun boss ha `ignoresTaunt` (ritirato
   2026-07-08), quindi il retarget duro non aggiunge nulla nel roster attuale. Leve: un nemico/boss che
   ignora il taunt, oppure un bonus del muro indipendente (riflesso scudo / difesa retrovie).
-- **PROSSIMO: playtest utente dei Duo.** Poi tarare Muro Vivente + i 4 Duo fast-follow (Guscio Tossico,
-  Preda Facile, Ara/Sacrificio, Catene).
+- **PROSSIMO: playtest utente dei Duo** (e del nuovo draft Endless). Poi tarare Muro Vivente + i 4 Duo
+  fast-follow (Guscio Tossico, Preda Facile, Ara/Sacrificio, Catene).
 
 ## Carte draft "poster" 2026-07-08 (leggibilità del valore)
 
