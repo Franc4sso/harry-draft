@@ -45,8 +45,14 @@ export function budgetB(depth: number): number {
 
 /** Endless-mode enemy level. UNCAPPED (no levelMax clamp) — this is the infinite
  *  difficulty lever. Reuses the level→stat-growth pipeline; campaign is untouched.
- *  `levelPerFloor` is calibrated from tests/engine/endlessScaling.test.ts. */
+ *  Linear term `levelPerFloor` plus a small quadratic catch-up term
+ *  `levelPerFloorSq` (negligible near the early-game area-2 boss cliff, but it
+ *  eventually outpaces any run's uncapped win-based player leveling instead of
+ *  letting it compound indefinitely) — both calibrated from
+ *  tests/engine/endlessScaling.test.ts (see data/constants.ts's `endless` block for
+ *  the sweep). */
 export function endlessEnemyLevel(floor: number): number {
   const e = BALANCE.endless
-  return Math.max(1, Math.round(e.normalLevelBase + Math.max(0, floor) * e.levelPerFloor))
+  const f = Math.max(0, floor)
+  return Math.max(1, Math.round(e.normalLevelBase + f * e.levelPerFloor + f * f * e.levelPerFloorSq))
 }

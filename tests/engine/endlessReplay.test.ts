@@ -79,11 +79,21 @@ describe('replayRun', () => {
   })
 
   it('a recorded valid run replays to valid:true and a scorable state', () => {
-    // Recorded by driving useEndless('endless-ui-seed') to wipeout (see
-    // tests/hooks/useEndless.test.tsx's parity test, which recorded and replayed this
-    // exact log — same seed/house/starters/actions, in call order) and dumping
-    // getChallengeCode()'s decoded RunLog. Played score was 1610; asserted below via
-    // scoreForEndlessRun so this case stays a real end-to-end fixture, not just a shape check.
+    // RE-RECORDED (2026-07-09, endless map/scaling regression fix — see
+    // endlessScaling.test.ts's header for the full incident writeup): the previous
+    // fixture was recorded before `nodeGen.ts` started excluding shop/spellForge from
+    // endless areas. That change legitimately shifts the endless category-weight roll,
+    // so `a2f2n0` (an 'event' node in the old fixture, whose recorded action picked the
+    // 'risk' choice) is now a 'relic' node on the same seed — the OLD action log is
+    // simply stale, not illegal by any real bug. Re-recorded fresh by driving the same
+    // near-optimal greedy bot policy (tests/engine/endlessScaling.test.ts's pickNode)
+    // through startRunB('endless-ui-seed') -> chooseStarters('Grifondoro',
+    // ['dumbledore','harry','mcgonagall']) -> reachable/moveTo/resolveCurrent, dumping
+    // the exact move/resolve action sequence up to and including the area-2 boss fight
+    // (floor 14), and reading the final score off the wiped-out state via
+    // scoreForEndlessRun. Same seed/house/starters as before; the mid-run picks now
+    // differ only where the map layout itself legitimately differs (a1f1n2 now offers
+    // a recruit the bot takes; a2f2n0 is now a relic node instead of an event).
     const log: RunLog = {
       v: 1,
       engine: ENGINE_VERSION,
@@ -99,18 +109,18 @@ describe('replayRun', () => {
         { t: 'resolve', choice: { kind: 'combat-ack' } },
         { t: 'move', nodeId: 'a0f4n0' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
-        { t: 'move', nodeId: 'a1f1n0' },
-        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'bezoar' } },
-        { t: 'move', nodeId: 'a1f2n1' },
+        { t: 'move', nodeId: 'a1f1n2' },
+        { t: 'resolve', choice: { kind: 'recruit-pick', wizardId: 'astoria' } },
+        { t: 'move', nodeId: 'a1f2n2' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
         { t: 'move', nodeId: 'a1f3n1' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
         { t: 'move', nodeId: 'a1f4n0' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
-        { t: 'move', nodeId: 'a2f1n0' },
-        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'lacrime-fenice' } },
+        { t: 'move', nodeId: 'a2f1n1' },
+        { t: 'resolve', choice: { kind: 'combat-ack' } },
         { t: 'move', nodeId: 'a2f2n0' },
-        { t: 'resolve', choice: { kind: 'event-choice', optionId: 'risk' } },
+        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'marcia-di-guerra' } },
         { t: 'move', nodeId: 'a2f3n0' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
         { t: 'move', nodeId: 'a2f4n0' },
