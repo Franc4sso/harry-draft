@@ -1,7 +1,28 @@
 # Handoff — dove riprendere
 
-Aggiornato: **2026-07-08**. Ultimo commit su `origin/master`: `9bfce11`.
-Da un altro PC: `git pull origin master`, `npm install`, poi leggi questo file.
+Aggiornato: **2026-07-10**. Da un altro PC: `git pull origin master`, `npm install` (l'Endless batch ha
+aggiunto `@netlify/blobs`), poi leggi questo file.
+
+## Duo Combos 2026-07-10 (archetipi/combo — SHIPPED + merged su master)
+
+La direzione "archetipi/combo" è stata realizzata come **Duo Combos**: 6 poteri stile Hades che si
+auto-accendono all'incrocio di DUE "signal" di archetipo (tag ≥2 o reliquia; ruolo). **Solo player**
+(come i joker → il bot di bilanciamento resta un proxy valido). Build subagent-driven (9 task TDD,
+doppia review per task + review finale opus = "ready to merge"). **1354 test verdi, tsc pulito.**
+Spec/piano: `docs/superpowers/{specs,plans}/2026-07-10-duo-combos*`.
+- I 6 Duo: **Cancrena** (2× tick veleno <40%), **Miasma** (il veleno salta a un nemico vivo alla morte),
+  **Untore** (le cure sputano veleno), **Muro Vivente** (retrovie non bersagliabili dietro un Tank che
+  provoca con scudo), **Esecuzione a Freddo** (giustizia un nemico stordito <50%, boss-guarded),
+  **Mietitore** (le esecuzioni danno +atk al carnefice, per-battaglia, cap +18).
+- **Regole dure interiorizzate:** ogni rng di un Duo pesca dal `rng` del sim, pool ordinato, niente
+  pescata a pool vuoto (determinismo = anti-cheat, `endlessReplayParity` esteso a Duo rng-attivi). Il
+  bot NON capisce i Duo → `campaignBalanceB` resta piatto (0.2833); il vero gate è `tests/engine/duoStress.test.ts`.
+- **⚠️ Da tarare (deciso: ship ora, tune dopo):** **Muro Vivente è ridondante con la Provocazione di
+  ferro** — `tauntBonus=1000` già inchioda i nemici sul Tank e nessun boss ha `ignoresTaunt` (ritirato
+  2026-07-08), quindi il retarget duro non aggiunge nulla nel roster attuale. Leve: un nemico/boss che
+  ignora il taunt, oppure un bonus del muro indipendente (riflesso scudo / difesa retrovie).
+- **PROSSIMO: playtest utente dei Duo.** Poi tarare Muro Vivente + i 4 Duo fast-follow (Guscio Tossico,
+  Preda Facile, Ara/Sacrificio, Catene).
 
 ## Carte draft "poster" 2026-07-08 (leggibilità del valore)
 
