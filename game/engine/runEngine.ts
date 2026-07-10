@@ -57,7 +57,8 @@ export function startRunB(seed: string): RunState {
 /** Seed the run from the player's drafted starters: build the team, roll area 0, enter the map. */
 export function confirmDraftPicks(state: RunState, picked: DraftedWizard[], _rng: Rng): RunState {
   const starters = picked.slice(0, STARTER_PICKS).map(d => recruitVia(d, 'iniziale', 1))
-  const map = generateArea(areaRng(state.seed, 0), state.seed, 0, { teamSize: starters.length, teamMax: state.teamMax ?? 5 })
+  const map = generateArea(areaRng(state.seed, 0), state.seed, 0,
+    { teamSize: starters.length, teamMax: state.teamMax ?? 5 }, state.endless ?? false)
   const entry = map.find(n => parseAreaNodeId(n.id).floor === 0)!
   return { ...state, area: 0, team: starters, activeSynergies: detectSynergies(starters),
     map, currentNodeId: entry.id, phase: 'map' }
