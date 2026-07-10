@@ -1,15 +1,16 @@
-import type { House, RunState } from '@/types'
+import type { RunState } from '@/types'
 import type { ResolverChoice } from './resolvers/types'
 import {
-  startRunB, chooseStarters, starterOffer, moveTo, resolveCurrentChecked,
-  setWizardSpell, useConsumableRelic, reachable, registerCoreResolvers, combatRngForNode,
+  startRunB, confirmDraftPicks, moveTo, resolveCurrentChecked,
+  setWizardSpell, useConsumableRelic, reachable, registerCoreResolvers, combatRngForNode, STARTER_PICKS,
 } from './runEngine'
+import { startDraft, pickFrom } from './draftSession'
 import { advanceEndlessArea } from './endless'
 import { setDraftPoolRestriction } from './draft'
 import { createRng } from './rng'
 
 // Bump when any change to the engine could alter a replay's outcome (Decision 3).
-export const ENGINE_VERSION = 'endless-1'
+export const ENGINE_VERSION = 'endless-2'
 
 export type PlayerAction =
   | { t: 'move'; nodeId: string }
@@ -21,22 +22,19 @@ export interface RunLog {
   v: 1
   engine: string
   seed: string
-  house: House
-  starterIds: string[]
+  draftPicks: string[]
   actions: PlayerAction[]
 }
 
-const VALID_HOUSES = new Set<House>(['Grifondoro', 'Serpeverde', 'Corvonero', 'Tassorosso'])
 const VALID_ACTION_TAGS = new Set(['move', 'resolve', 'set-spell', 'use-consumable'])
 
 /** Structural integrity check for a decoded log, run BEFORE any simulation.
  *  `decodeChallenge` (lib/challengeCode.ts) validates only v/seed/actions — a
- *  hand-crafted or tampered challenge code can still carry a bogus `house`,
- *  non-array `starterIds`, or an action with an unrecognized `t` tag. Reject
- *  those here rather than let them throw or silently no-op mid-simulation. */
+ *  hand-crafted or tampered challenge code can still carry non-array
+ *  `draftPicks`, or an action with an unrecognized `t` tag. Reject those here
+ *  rather than let them throw or silently no-op mid-simulation. */
 function structurallyValid(log: RunLog): boolean {
-  if (!log.house || !VALID_HOUSES.has(log.house)) return false
-  if (!Array.isArray(log.starterIds) || !log.starterIds.every(id => typeof id === 'string')) return false
+  if (!Array.isArray(log.draftPicks) || !log.draftPicks.every(id => typeof id === 'string')) return false
   if (!Array.isArray(log.actions)) return false
   for (const a of log.actions) {
     if (!a || typeof a !== 'object' || !VALID_ACTION_TAGS.has((a as { t?: unknown }).t as string)) return false
@@ -48,21 +46,23 @@ export function replayRun(log: RunLog): { state: RunState; valid: boolean; reaso
   if (log.engine !== ENGINE_VERSION) return { state: null as unknown as RunState, valid: false, reason: 'engine version mismatch' }
   if (!structurallyValid(log)) return { state: null as unknown as RunState, valid: false, reason: 'malformed log' }
   registerCoreResolvers()
-  setDraftPoolRestriction(null) // Decision 4: full roster, profile-independent
 
   const rng = createRng(log.seed)
-  // Validate starters are in the deterministic offer for this seed+house.
-  const offer = starterOffer(log.seed, log.house)
-  const offeredIds = new Set(offer.map(d => d.wizard.id))
-  if (!log.starterIds.length || !log.starterIds.every(id => offeredIds.has(id))) {
-    return { state: null as unknown as RunState, valid: false, reason: 'illegal starters' }
+  // Reconstruct the starting team by driving the SAME seeded DraftSession the live draft used,
+  // validating each recorded pick was legally on its screen (anti-cheat). Full roster (null) —
+  // Decision 4: profile-independent, same as live endless play.
+  setDraftPoolRestriction(null)
+  let session = startDraft(log.seed, STARTER_PICKS)
+  for (const id of log.draftPicks) {
+    const idx = session.current.findIndex(c => c.wizard.id === id)
+    if (idx < 0) return { state: null as unknown as RunState, valid: false, reason: 'illegal draft pick' }
+    session = pickFrom(session, idx)
   }
-  // endless:true must be set BEFORE chooseStarters runs (not after): chooseStarters reads
-  // state.endless to decide whether area 0 excludes shop/spellForge nodes (the same flag
-  // useEndless's initialRun sets before mount — see chooseStarters's doc comment in
-  // runEngine.ts). Setting it after, like this used to, would replay area 0 with the
-  // CAMPAIGN node-category weights and diverge from what live endless play generated.
-  let s = chooseStarters({ ...startRunB(log.seed), endless: true }, log.house, log.starterIds, rng)
+  if (session.picks.length !== STARTER_PICKS) {
+    return { state: null as unknown as RunState, valid: false, reason: 'incomplete draft' }
+  }
+  // endless:true must be set BEFORE confirmDraftPicks so area-0 excludes shop/spellForge (Task 1).
+  let s = confirmDraftPicks({ ...startRunB(log.seed), endless: true }, session.picks, rng)
 
   for (const a of log.actions) {
     const before = s

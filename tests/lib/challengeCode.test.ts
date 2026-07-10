@@ -3,8 +3,8 @@ import { encodeChallenge, decodeChallenge } from '@/lib/challengeCode'
 import { ENGINE_VERSION, type RunLog } from '@/game/engine/endlessReplay'
 
 const sample: RunLog = {
-  v: 1, engine: ENGINE_VERSION, seed: 's1', house: 'Grifondoro',
-  starterIds: ['harry', 'ron'],
+  v: 1, engine: ENGINE_VERSION, seed: 's1',
+  draftPicks: ['harry', 'ron'],
   actions: [
     { t: 'move', nodeId: 'a0f1n0' },
     { t: 'resolve', choice: { kind: 'combat-ack' } },
@@ -15,6 +15,10 @@ const sample: RunLog = {
 describe('challenge code', () => {
   it('round-trips a RunLog through encode/decode', () => {
     expect(decodeChallenge(encodeChallenge(sample))).toEqual(sample)
+  })
+  it('round-trip preserves draftPicks', () => {
+    const decoded = decodeChallenge(encodeChallenge(sample))
+    expect(decoded.draftPicks).toEqual(['harry', 'ron'])
   })
   it('throws on malformed input', () => {
     expect(() => decodeChallenge('not-valid-base64url!!')).toThrow()
