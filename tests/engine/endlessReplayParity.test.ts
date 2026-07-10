@@ -8,9 +8,10 @@ import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
 import { eventResolver } from '@/game/engine/resolvers/event'
 import { createRng } from '@/game/engine/rng'
 import { powerOf } from '@/game/engine/combat/teamGen'
-import { isDead } from '@/game/engine/roster'
+import { isDead, livingOf } from '@/game/engine/roster'
+import { detectDuos } from '@/game/engine/duos'
 import { replayRun, ENGINE_VERSION, type RunLog, type PlayerAction } from '@/game/engine/endlessReplay'
-import type { RunNode, RunState } from '@/types'
+import type { DraftedWizard, RunNode, RunState } from '@/types'
 
 // CRITICAL regression gate for the replay combat RNG mismatch (final whole-branch review,
 // defect 1): live combat resolves with combatRngForNode(seed, nodeId) (== the fork chain
@@ -147,6 +148,157 @@ describe('endless replay parity (record -> replay score must match)', () => {
   it('is deterministic (same seed replayed twice yields the same score)', () => {
     for (const seed of SEEDS.slice(0, 5)) {
       const { log } = playAndRecord(seed)
+      const a = replayRun(log)
+      const b = replayRun(log)
+      expect(a.valid).toBe(true)
+      expect(b.valid).toBe(true)
+      expect(scoreForEndlessRun(a.state)).toBe(scoreForEndlessRun(b.state))
+    }
+  })
+})
+
+// Task 9 (Duo Combos verification): the plain SEEDS above are NOT guaranteed to ever field a
+// Duo-active player team — detectDuos requires 2 team members sharing a tag (or a matching
+// relic), and pickNode/playAndRecord above draft purely by raw power, never by tag. Without a
+// Duo-active battle in the recorded log, the replay parity gate above never actually exercises
+// the Duo primitives that draw EXTRA rng mid-battle (MIASMA's maybeSpreadPoison,
+// UNTORE's maybeSpitPoison) — exactly the kind of rng-stream divergence that caused the
+// original combat-replay defect this file's header comment documents. A desync there would
+// only ever show up on a run whose recorded log actually contains a Duo-active combat-ack.
+//
+// Fix: a DEDICATED biased policy (mirrors campaignBalanceB.test.ts's `preferVeleno` pattern)
+// that prefers recruits/relics carrying a Duo tag-signal (veleno/esecuzione/scudirigen/
+// magieOscure) over the raw-power pick. Otherwise IDENTICAL to playAndRecord above: same
+// action shapes/order, same per-action-kind rng split (combatRngForNode for combat, raw
+// createRng(seed) otherwise) a real getChallengeCode()/hooks/useEndless.ts run would use.
+function preferDuoScore(dw: DraftedWizard): number {
+  const tags = dw.wizard.tags ?? []
+  const tagHits = ['veleno', 'esecuzione', 'scudirigen', 'magieOscure'].filter(t => tags.includes(t)).length
+  const roleHit = dw.wizard.role === 'Supporto' || dw.wizard.role === 'Controllo' || dw.wizard.role === 'Tank' ? 1 : 0
+  return tagHits * 1000 + roleHit * 100 + powerOf(dw)
+}
+function relicLightsADuoSignal(r: { keywords?: string[]; grantsExecute?: unknown; grantsShieldConvert?: unknown; grantsDarkMagic?: unknown }): boolean {
+  const kw = r.keywords ?? []
+  return kw.includes('veleno') || kw.includes('esecuzione') || kw.includes('scudo') || kw.includes('magieOscure')
+    || !!r.grantsExecute || !!r.grantsShieldConvert || !!r.grantsDarkMagic
+}
+
+/** Duo-biased variant of playAndRecord: identical structure/rng-per-action-kind, but recruit
+ *  and relic picks prefer whatever most quickly lights a Duo tag-signal. Also tracks (via
+ *  `detectDuos`, the SAME function resolvers/combat.ts calls at battle-resolve time) whether
+ *  any battle-ack action in the recorded log fired while the living team + relics had an
+ *  ACTIVE Duo — the proof this run's log genuinely exercises Duo combat rng. */
+function playAndRecordDuoBiased(seed: string): { playedScore: number; log: RunLog; sawDuoBattle: boolean } {
+  const house = 'Grifondoro' as const
+  const offer = starterOffer(seed, house)
+  // Starters biased too (not just recruit/relic): pickNode below fights nearly every floor
+  // and only rarely routes to a recruit/relic node, so the STARTER trio is what actually
+  // shapes team composition for most of a run — a raw-power starter pick (like the plain
+  // SEEDS harness above) would almost never accumulate 2 tag-sharing wizards at all.
+  const starterIds = [...offer].sort((a, b) => preferDuoScore(b) - preferDuoScore(a)).slice(0, 3).map(d => d.wizard.id)
+  const actions: PlayerAction[] = []
+  let sawDuoBattle = false
+
+  let s: RunState = { ...startRunB(seed), endless: true }
+  s = chooseStarters(s, house, starterIds, createRng(seed))
+  s = { ...s, endless: true }
+
+  let guard = 0
+  while (guard++ < 5000) {
+    if (s.phase === 'defeat') break
+    if (s.team.length > 0 && s.team.every(dw => (dw.currentHp ?? dw.maxHp) <= 0)) break
+    if (s.phase === 'map') {
+      const nodeId = pickNode(s).id
+      actions.push({ t: 'move', nodeId })
+      s = moveTo(s, nodeId)
+      continue
+    }
+    const node = s.map!.find(n => n.id === s.currentNodeId)!
+    if (s.phase === 'battle') {
+      if (s.team.some(dw => isDead(dw))) {
+        const reviveRelic = s.relics.find(a => a.relic.active === 'revive')
+        if (reviveRelic) s = useConsumableRelic(s, reviveRelic.relic.id)
+      }
+      // Mirrors resolvers/combat.ts's own detectDuos(livingOf(state.team), state.relics) call —
+      // the exact check that decides whether this battle runs with leftDuos active.
+      if (detectDuos(livingOf(s.team), s.relics).length > 0) sawDuoBattle = true
+      actions.push({ t: 'resolve', choice: { kind: 'combat-ack' } })
+      s = resolveCurrent(s, { kind: 'combat-ack' }, combatRngForNode(seed, node.id))
+      continue
+    }
+    if (s.phase === 'recruit-node') {
+      const off = recruitOffer(s, node, createRng(seed))
+      const best = [...off].sort((a, b) => preferDuoScore(b) - preferDuoScore(a))[0]
+      if (!best) {
+        actions.push({ t: 'resolve', choice: { kind: 'skip' } })
+        s = resolveCurrent(s, { kind: 'skip' }, createRng(seed))
+      } else {
+        const full = s.team.length >= (s.teamMax ?? 5)
+        const replaceId = full ? [...s.team].sort((a, b) => preferDuoScore(a) - preferDuoScore(b))[0]!.wizard.id : undefined
+        actions.push({ t: 'resolve', choice: { kind: 'recruit-pick', wizardId: best.wizard.id, replaceId } })
+        s = resolveCurrent(s, { kind: 'recruit-pick', wizardId: best.wizard.id, replaceId }, createRng(seed))
+      }
+      s = { ...s, phase: 'map' }; continue
+    }
+    if (s.phase === 'relic-node') {
+      const off = relicOffer(s, node, createRng(seed))
+      const preferred = off.find(relicLightsADuoSignal)
+      const relicId = preferred?.id ?? off[0]?.id ?? '__none__'
+      actions.push({ t: 'resolve', choice: { kind: 'relic-pick', relicId } })
+      s = resolveCurrent(s, { kind: 'relic-pick', relicId }, createRng(seed))
+      s = { ...s, phase: 'map' }; continue
+    }
+    if (s.phase === 'infirmary-node') {
+      actions.push({ t: 'resolve', choice: { kind: 'combat-ack' } })
+      s = resolveCurrent(s, { kind: 'combat-ack' }, createRng(seed))
+      s = { ...s, phase: 'map' }; continue
+    }
+    if (s.phase === 'area-cleared' || s.phase === 'win') { s = advanceEndlessArea(s, createRng(seed)); continue }
+    if (s.phase === 'victory') { s = { ...s, phase: 'map' }; continue }
+    if (s.phase === 'event-node') {
+      const entry = eventResolver.enter(s, node, createRng(seed))
+      const optionId = entry.event!.choices[0]!.id
+      actions.push({ t: 'resolve', choice: { kind: 'event-choice', optionId } })
+      s = resolveCurrent(s, { kind: 'event-choice', optionId }, createRng(seed))
+      s = { ...s, phase: 'map' }; continue
+    }
+    break
+  }
+
+  const log: RunLog = { v: 1, engine: ENGINE_VERSION, seed, house, starterIds, actions }
+  return { playedScore: scoreForEndlessRun(s), log, sawDuoBattle }
+}
+
+const DUO_SEEDS = Array.from({ length: 30 }, (_, i) => `duo-parity-${i}`)
+
+describe('endless replay parity — Duo-active runs (MIASMA/UNTORE draw extra rng mid-battle)', () => {
+  it('replayed score equals played score for every Duo-biased seed', () => {
+    const mismatches: { seed: string; played: number; replayed: number | null; valid: boolean; reason?: string }[] = []
+    let anyDuoBattle = false
+    for (const seed of DUO_SEEDS) {
+      const { playedScore, log, sawDuoBattle } = playAndRecordDuoBiased(seed)
+      if (sawDuoBattle) anyDuoBattle = true
+      const out = replayRun(log)
+      const replayedScore = out.valid ? scoreForEndlessRun(out.state) : null
+      if (!out.valid || replayedScore !== playedScore) {
+        mismatches.push({ seed, played: playedScore, replayed: replayedScore, valid: out.valid, reason: out.reason })
+      }
+    }
+    if (mismatches.length > 0) {
+      // eslint-disable-next-line no-console
+      console.log('[endlessReplayParity duo] mismatches:', JSON.stringify(mismatches, null, 2))
+    }
+    // eslint-disable-next-line no-console
+    console.log(`[endlessReplayParity duo] seeds=${DUO_SEEDS.length} anyDuoBattle=${anyDuoBattle} mismatches=${mismatches.length}`)
+    // Sanity check the bias is real: if NO seed ever fielded an active Duo, this suite would
+    // be silently testing nothing new — fail loudly instead of passing on a technicality.
+    expect(anyDuoBattle).toBe(true)
+    expect(mismatches).toEqual([])
+  })
+
+  it('is deterministic (same Duo-biased seed replayed twice yields the same score)', () => {
+    for (const seed of DUO_SEEDS.slice(0, 5)) {
+      const { log } = playAndRecordDuoBiased(seed)
       const a = replayRun(log)
       const b = replayRun(log)
       expect(a.valid).toBe(true)
