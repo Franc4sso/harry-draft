@@ -24,6 +24,7 @@ import { SPELL_BY_ID } from '@/data/spells'
 import { applyTenaciaAura, cleanseOneControl } from './roleCounter'
 import { stampDuoFields } from '../duoEffects/stamp'
 import { maybeSpreadPoison } from '../duoEffects/spreadOnDeath'
+import { maybeSpitPoison } from '../duoEffects/spitOnHeal'
 
 export function toBattleUnits(
   team: DraftedWizard[], side: Side, synergies: ActiveSynergy[], relics: ActiveRelic[] = [], menacePct = 0, damageReduction = 0,
@@ -87,6 +88,8 @@ export function simulateBattle(
   stampDuoFields(L, R, opts.leftDuos ?? [], opts.kind ?? 'normal')
   // MIASMA: computed once per battle — cheaper than re-scanning leftDuos at every death site.
   const miasma = (opts.leftDuos ?? []).some(d => d.duo.id === 'miasma')
+  // UNTORE: computed once per battle — same reasoning as MIASMA above.
+  const untore = (opts.leftDuos ?? []).some(d => d.duo.id === 'untore')
   const regen: Record<Side, number> = {
     left: totalRegen(leftSyn) + totalRelicRegen(left, leftRelics),
     right: totalRegen(rightSyn) + totalRelicRegen(right, rightRelics),
@@ -276,6 +279,12 @@ export function simulateBattle(
       // onHeal: after a heal resolves on any target.
       if (entry.flags.includes('heal')) {
         fireReactive('onHeal', realTarget, turn)
+        // UNTORE: any heal landing on a player ally spits 1 veleno dose onto a random living
+        // enemy (deterministic single rng.pick; no-op if none left). Credited to the healer
+        // (the acting caster), not the healed unit — mirrors how score credits `actor`.
+        if (untore && realTarget.side === 'left') {
+          maybeSpitPoison(R, rng, `${actor.side}:${actor.wizard.id}`)
+        }
       }
       if (entry.value) {
         const scoreKey = `${actor.side}:${actor.wizard.id}`

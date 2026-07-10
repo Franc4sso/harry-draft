@@ -14,5 +14,6 @@ export function stampDuoFields(
     const instakill = kind !== 'boss'
     for (const u of left) u.coldExecute = { threshold: 0.5, instakill }
   }
-  // MIETITORE / UNTORE branches added by their tasks.
+  if (has('untore')) for (const u of left) u.spitsPoisonOnHeal = true
+  // MIETITORE branch added by its own commit.
 }
