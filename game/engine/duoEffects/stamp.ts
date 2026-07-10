@@ -15,5 +15,5 @@ export function stampDuoFields(
     for (const u of left) u.coldExecute = { threshold: 0.5, instakill }
   }
   if (has('untore')) for (const u of left) u.spitsPoisonOnHeal = true
-  // MIETITORE branch added by its own commit.
+  if (has('mietitore')) for (const u of left) u.reaper = true
 }

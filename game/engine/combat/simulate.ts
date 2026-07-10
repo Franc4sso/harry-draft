@@ -25,6 +25,7 @@ import { applyTenaciaAura, cleanseOneControl } from './roleCounter'
 import { stampDuoFields } from '../duoEffects/stamp'
 import { maybeSpreadPoison } from '../duoEffects/spreadOnDeath'
 import { maybeSpitPoison } from '../duoEffects/spitOnHeal'
+import { maybeReap } from '../duoEffects/reap'
 
 export function toBattleUnits(
   team: DraftedWizard[], side: Side, synergies: ActiveSynergy[], relics: ActiveRelic[] = [], menacePct = 0, damageReduction = 0,
@@ -314,6 +315,11 @@ export function simulateBattle(
         // MIASMA: after the death is fully resolved, jump the dead enemy's veleno stacks
         // to one random living enemy (deterministic single rng.pick; no-op if none left).
         if (miasma && realTarget.side === 'right') maybeSpreadPoison(realTarget, R, rng)
+        // MIETITORE: a direct-hit kill by a `reaper`-flagged player unit grants the killer one
+        // stack of raccolto (+6 atk, rest of battle). Scoped to direct-hit kills only — `actor`
+        // is the known killer here; DoT/fatigue kills (elsewhere in this file) have no attacker
+        // to credit.
+        if (actor.side === 'left' && actor.reaper) maybeReap(actor)
       }
       // Recoil can kill the ACTOR via its own dark spell — sync + KO-log + onDeath for the actor too.
       sync(actor)

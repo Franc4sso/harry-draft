@@ -49,6 +49,14 @@ export const STATUS_DEFS: StatusDef[] = [
   { id: 'slow1', name: 'Lentezza', kind: 'debuff', family: 'debuff', statMod: { stat: 'spd', amount: 15, pct: true }, defaultDuration: 2, stack: 'stack', maxStacks: MAX_STAT_STACKS, priority: 20, removable: true },
   { id: 'slow2', name: 'Lentezza', kind: 'debuff', family: 'debuff', statMod: { stat: 'spd', amount: 25, pct: true }, defaultDuration: 2, stack: 'stack', maxStacks: MAX_STAT_STACKS, priority: 20, removable: true },
   { id: 'slow3', name: 'Lentezza', kind: 'debuff', family: 'debuff', statMod: { stat: 'spd', amount: 40, pct: true }, defaultDuration: 2, stack: 'stack', maxStacks: MAX_STAT_STACKS, priority: 20, removable: true },
+  // MIETITORE (Duo Combos, player-only): each execute/kill by a player unit grants the killer
+  // one stack of this. Modeled directly on atkUp — kind:'buff' so tickStatuses never decrements
+  // `remaining` (lasts the rest of the battle), and stack:'stack' so re-applying pushes a NEW
+  // entry rather than bumping a `stacks` counter, which is what actually compounds the atk bonus
+  // (statsWithMods sums every entry; it does not multiply a single entry's amount by `.stacks`).
+  // Shares the same MAX_STAT_STACKS cap as every other stacking stat buff (atkUp/defUp/spdUp) so
+  // a long fight with many kills can't snowball without bound.
+  { id: 'raccolto', name: 'Raccolto Oscuro', kind: 'buff', family: 'buff', statMod: { stat: 'atk', amount: 6 }, defaultDuration: 2, stack: 'stack', maxStacks: MAX_STAT_STACKS, priority: 20, removable: true },
 ]
 
 export const STATUS_BY_ID: Record<string, StatusDef> = Object.fromEntries(

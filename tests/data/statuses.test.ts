@@ -23,4 +23,9 @@ describe('statuses data', () => {
     expect(Object.keys(STATUS_BY_ID).length).toBe(STATUS_DEFS.length)
     expect(STATUS_BY_ID['burn']?.tickDamage).toBeGreaterThan(0)
   })
+  it('raccolto (MIETITORE) is a stacking atk buff', () => {
+    expect(STATUS_BY_ID['raccolto']?.statMod).toEqual({ stat: 'atk', amount: 6 })
+    expect(STATUS_BY_ID['raccolto']?.kind).toBe('buff')
+    expect(STATUS_BY_ID['raccolto']?.stack).toBe('stack')
+  })
 })
