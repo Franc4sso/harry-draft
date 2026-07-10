@@ -1,0 +1,13 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`useRunB campaign behavior (regression guard for extraction) > produces a stable view sequence for a fixed seed + scripted choices 1`] = `
+[
+  "draft",
+  "map",
+  "relic",
+  "battle",
+  "defeat",
+  "battle",
+  "defeat",
+]
+`;

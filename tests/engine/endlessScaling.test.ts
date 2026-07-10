@@ -68,6 +68,44 @@ import type { DraftedWizard, RunNode, RunState, Spell } from '@/types'
 // (Voldemort)'s own budget/hpMult/unitCount is now a floor-sensitive lever for ENDLESS
 // too (in addition to campaignBalanceB, which it already was): any future change must
 // re-run this sweep.
+//
+// *** REGRESSION + RE-CALIBRATION (2026-07-09, "exclude shop + spellForge from endless
+// areas") *** That change zeros the shop/spellForge weights in nodeGen.ts's endless
+// filler roll and redistributes them across battle/recruit/relic/event. That doesn't
+// just densify relics: it widens the variance of how many combats a run packs into N
+// floors, which widens how many WIN-BASED, UNCAPPED-BY-DESIGN player levels
+// (leveling.ts gainLevels) a run banks per floor. Any run that gets lucky/skilled enough
+// to clear the floor-14 Voldemort cliff then compounds player level faster than a
+// purely-linear per-FLOOR enemy slope can ever track — confirmed by an exhaustive
+// re-sweep of levelPerFloor alone (0.02 through 8.0) post-exclusion: EVERY value either
+// lets >50% of seeds run out the clock at the test's SAFETY_CAP_FLOOR (500, later
+// spot-checked immortal even at floor 20000), or crushes the median back down to the
+// SAME floor-14 cliff (its position is set by Voldemort's fixed stats, independent of
+// slope — a slope steep enough to prevent the late-game runaway is also steep enough to
+// fail the cliff for most seeds; no linear-only value threads both). Confirmed the map
+// change (not a stray RNG/determinism bug) is the trigger: temporarily disabling the
+// shop/spellForge exclusion reproduces the ORIGINAL numbers exactly (median=21, p90=63,
+// max=121) on the same 60 seeds.
+// Fix: `endlessEnemyLevel` (game/engine/combat/threat.ts) gained a small quadratic
+// catch-up term (`BALANCE.endless.levelPerFloorSq`) on top of the linear slope —
+// negligible near floor 14 (preserves the original escape-the-wall dynamics) but
+// eventually dominates and catches any run that escapes, instead of letting it compound
+// indefinitely. Re-swept with levelPerFloor held at its original 0.10:
+//   levelPerFloorSq=0.000 (unchanged) -> median=500, p90=500        (immortal >50% of seeds)
+//   levelPerFloorSq=0.005             -> median=19,  p90=174        (tail still very long)
+//   levelPerFloorSq=0.008             -> median=19,  p90=129
+//   levelPerFloorSq=0.010             -> median=19,  p90=99,  max=124  (passes, healthy margin)
+//   levelPerFloorSq=0.011             -> median=14                  (cliff — same sharp
+//                                        threshold character as the original sweep)
+// SHIPPED: levelPerFloorSq=0.010 (levelPerFloor unchanged at 0.10) — median=19/p90=99,
+// no seed anywhere near the safety cap (spot-checked to floor 20000), comfortable margin
+// from the 0.011 cliff rather than a fragile 1-seed boundary. Relic accumulation
+// (including owning every joker relic simultaneously in very long runs) stays fully
+// unbounded by design — see docs/superpowers/specs/2026-07-09-endless-plan-b-design.md
+// ("Relic pool is likewise the full relic set in Endless") — this fix does not cap
+// relics; it only makes enemy scaling itself keep pace over arbitrarily long runs.
+// Floor-sensitive on TWO axes now: any change to endless enemy scaling OR to endless map
+// generation (node-category weights) must re-run this sweep.
 registerCoreResolvers()
 
 const SEEDS = Array.from({ length: 60 }, (_, i) => `endless-${i}`)
@@ -157,8 +195,20 @@ function endlessDeathFloor(seed: string): number {
       s = { ...s, phase: 'map' }; continue
     }
     if (s.phase === 'relic-node') {
+      // Sufficiently long endless runs can exhaust the finite relic pool (45 relics
+      // total: 31 non-joker + 14 joker — offerRelics/offerJokers return [] once every
+      // relic in the rolled sub-pool, joker vs non-joker per relicOffer's internal
+      // jokerNodeChance roll, is already owned). assignAreaCategories only guarantees a
+      // relic-typed NODE per area, never a non-empty OFFER at it. The resolver already
+      // treats an unmatched relicId as a legal no-op (see relicResolver.resolve in
+      // resolvers/recruit.ts: relic not found in offer -> state returned unchanged), so
+      // route an empty offer through resolveCurrent with a sentinel id — exactly what a
+      // real player facing an empty stand would do (walk away). This correctly marks the
+      // node resolved and advances the run; leaving the node unresolved instead (e.g. a
+      // manual phase-only skip) would loop forever, since pickNode's `relics.length<3`
+      // bias keeps re-selecting the same never-resolved node.
       const off = relicOffer(s, node, createRng(seed))
-      s = resolveCurrent(s, { kind: 'relic-pick', relicId: off[0]!.id }, createRng(seed))
+      s = resolveCurrent(s, { kind: 'relic-pick', relicId: off[0]?.id ?? '__none__' }, createRng(seed))
       s = { ...s, phase: 'map' }; continue
     }
     if (s.phase === 'infirmary-node') {

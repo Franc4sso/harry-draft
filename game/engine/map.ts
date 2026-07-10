@@ -50,7 +50,7 @@ export function generateArea(rng: Rng, seed: string, area: number, bias: AreaBia
   }
 
   // 2. Categories (hard guarantees live in nodeGen).
-  const cats = assignAreaCategories(rng.fork(777), widths, bias)
+  const cats = assignAreaCategories(rng.fork(777), widths, bias, endless)
 
   // 3. Nodes.
   const floorNodes: RunNode[][] = widths.map((w, f) =>

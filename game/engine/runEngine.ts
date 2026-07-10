@@ -75,13 +75,37 @@ export function areaRng(seed: string, area: number): Rng {
   return createRng(seed).fork(mapRngChannel).fork(area)
 }
 
+/** RNG channel dedicated to combat resolution (distinct from the map/draft channels). */
+export const combatChannel = 2
+
+/** Deterministic rng for a combat node: `fork(combatChannel).fork(area).fork(floor)`.
+ *  Single source of truth for the fork chain live play uses to resolve a battle — shared by
+ *  hooks/useRunB.combat.ts (snapshot + commit) and game/engine/endlessReplay.ts (replay), so
+ *  a replayed combat draws from the EXACT same rng stream the original play did. Any other
+ *  caller that needs "the rng live combat would use for this node" must go through this
+ *  function rather than hand-rolling the fork chain. */
+export function combatRngForNode(seed: string, nodeId: string): Rng {
+  const { area, floor } = parseAreaNodeId(nodeId)
+  return createRng(seed).fork(combatChannel).fork(area).fork(floor)
+}
+
+/** Used by BOTH campaign (useRunB) and endless (useEndless). `state.endless` is already
+ *  `true` on the incoming state for the endless entry path (useEndless's initialRun sets
+ *  it before mount, and endlessReplay.ts sets it on startRunB's result before calling this)
+ *  — campaign's startRunB/confirmDraftPicks path never sets it, so it's undefined/false
+ *  there. Threading it into generateArea excludes shop/spellForge from endless area 0 too
+ *  (every other endless area already gets this via advanceEndlessArea) — without it, the
+ *  endless controller's missing shop handler soft-locks on the ~45% of area-0 maps that
+ *  roll a shop node. Campaign's call is unaffected: state.endless is always falsy there, so
+ *  this preserves byte-identical campaign area-0 generation. */
 export function chooseStarters(state: RunState, house: House, starterIds: string[], _rng: Rng): RunState {
   const offer = starterOffer(state.seed, house)
   const starters = starterIds
     .map(id => offer.find(d => d.wizard.id === id))
     .filter((d): d is DraftedWizard => !!d)
     .map(d => recruitVia(d, 'iniziale', 1))
-  const map = generateArea(areaRng(state.seed, 0), state.seed, 0, { teamSize: starters.length, teamMax: state.teamMax ?? 5 })
+  const map = generateArea(areaRng(state.seed, 0), state.seed, 0,
+    { teamSize: starters.length, teamMax: state.teamMax ?? 5 }, state.endless ?? false)
   const entry = map.find(n => parseAreaNodeId(n.id).floor === 0)!
   return { ...state, house, area: 0, team: starters, activeSynergies: detectSynergies(starters),
     map, currentNodeId: entry.id, phase: 'map' }
@@ -108,10 +132,16 @@ function markResolved(state: RunState, nodeId: string): RunNode[] {
   return state.map!.map(n => (n.id === nodeId ? { ...n, resolved: true } : n))
 }
 
-export function resolveCurrent(state: RunState, choice: ResolverChoice, rng: Rng): RunState {
+/** Shared implementation: resolves the current node's choice exactly once
+ *  (single RNG draw) and reports whether the resolver treated the choice as
+ *  a no-op (raw resolver result reference-equal to the input state — the
+ *  resolvers' convention for "illegal/no-op choice", see e.g.
+ *  useConsumableRelic above and each resolver's `resolve`). */
+function resolveCurrentImpl(state: RunState, choice: ResolverChoice, rng: Rng): { state: RunState; wasNoOp: boolean } {
   const node = state.map!.find(n => n.id === state.currentNodeId)!
   const resolver = resolverFor(node.type)
   const resolved = resolver.resolve(state, node, choice, rng)
+  const wasNoOp = resolved === state
   const map = markResolved(resolved, node.id)
   const wiped = resolved.team.length > 0 && resolved.team.every(dw => (dw.currentHp ?? dw.maxHp) <= 0)
   const phase = phaseAfterNode({
@@ -120,7 +150,21 @@ export function resolveCurrent(state: RunState, choice: ResolverChoice, rng: Rng
     areas: BALANCE.map.areas,
     wiped,
   })
-  return { ...resolved, map, phase }
+  return { state: { ...resolved, map, phase }, wasNoOp }
+}
+
+export function resolveCurrent(state: RunState, choice: ResolverChoice, rng: Rng): RunState {
+  return resolveCurrentImpl(state, choice, rng).state
+}
+
+/** Same work as resolveCurrent, but also reports whether the inner resolver
+ *  no-op'd on an illegal/invalid choice (raw result === input state). Used by
+ *  replayRun's anti-cheat legality check: resolveCurrent always returns a
+ *  FRESH wrapper object (`{ ...resolved, map, phase }`) even on a no-op, so
+ *  `newState === oldState` can never catch an illegal resolve — this checked
+ *  variant inspects the resolver's raw return before that wrapping happens. */
+export function resolveCurrentChecked(state: RunState, choice: ResolverChoice, rng: Rng): { state: RunState; wasNoOp: boolean } {
+  return resolveCurrentImpl(state, choice, rng)
 }
 
 /** Use a consumable relic identified by `relicId`.

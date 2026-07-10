@@ -321,14 +321,45 @@ defenseK: 0.5,
   },
   // Endless mode (Plan A) — DECOUPLED from campaign/campaignB. Difficulty scales via
   // UNCAPPED enemy level (past leveling.levelMax:10), which drives real per-level stat
-  // growth. `levelPerFloor` is the calibration lever (see tests/engine/endlessScaling).
-  // SHIPPED (Task 7, 2026-07-09): 0.1, from a 60-seed near-optimal-bot death-floor sweep —
-  // median=21, p90=63 (see that test file's header for the full sweep table, including a
-  // sharp cliff at levelPerFloor>=0.18 driven by the recurring area-2+ scripted boss).
-  // Floor-sensitive: any change to endless enemy scaling must re-run that sweep.
+  // growth. `levelPerFloor`/`levelPerFloorSq` are the calibration levers (see
+  // tests/engine/endlessScaling). Floor-sensitive: any change to endless enemy scaling
+  // (or to endless MAP generation — e.g. node-category weights — which changes how much
+  // relic/recruit/combat density a run accumulates per floor) must re-run that sweep.
+  //
+  // RE-CALIBRATED (regression fix, 2026-07-09): shipping a LINEAR-only formula
+  // (levelPerFloor=0.1, median=21/p90=63) went immortal (bot survives to the test's
+  // 500-floor safety cap on >50% of seeds) once `nodeGen.ts` started excluding
+  // shop/spellForge from endless areas — that change redistributes their category
+  // weight across battle/recruit/relic/event, which doesn't just densify relics: it
+  // widens the variance of how many combats a run packs into N floors, which in turn
+  // widens how many WIN-BASED PLAYER LEVELS (leveling.ts: gainLevels, uncapped by user
+  // directive) a run banks per floor. A run that gets lucky/skilled enough to clear the
+  // area-2 boss cliff (floor 14, Voldemort — see endlessScaling's header) then compounds
+  // player levels faster than any constant per-FLOOR enemy slope can track, because
+  // enemy level was a function of raw floor count, never of how many fights actually
+  // happened. No `levelPerFloor` value threads both needles post-exclusion (verified by
+  // an exhaustive sweep from 0.02 to 8.0: every value either lets >50% of seeds go
+  // immortal, or crushes the median back down to the SAME floor-14 cliff — the cliff's
+  // position is set by Voldemort's fixed stats, independent of slope, so a steep-enough
+  // slope to prevent runaway is also steep enough to fail the cliff for most seeds).
+  // Fix: add a small quadratic acceleration term (`levelPerFloorSq`) on top of the
+  // existing linear slope in `endlessEnemyLevel` (game/engine/combat/threat.ts) — negligible
+  // near the floor-14 cliff (preserving the original escape-the-wall dynamics) but it
+  // eventually catches any run that escapes and would otherwise compound indefinitely.
+  // 60-seed sweep (levelPerFloor held at 0.1, quadratic-only sweep):
+  //   levelPerFloorSq=0.000 (unchanged)     -> median=500, p90=500      (immortal >50%)
+  //   levelPerFloorSq=0.005                 -> median=19,  p90=174      (tail still long)
+  //   levelPerFloorSq=0.008                 -> median=19,  p90=129
+  //   levelPerFloorSq=0.010                 -> median=19,  p90=99, max=124  (passes, healthy margin)
+  //   levelPerFloorSq=0.011                 -> median=14   (cliff — same sharp threshold
+  //                                             character as the original levelPerFloor sweep)
+  // SHIPPED: levelPerFloorSq=0.010 — median=19/p90=99/max=124 across 60 seeds, no seed
+  // anywhere near the safety cap even at 20000 floors (spot-checked), comfortable margin
+  // from the 0.011 cliff (not a fragile 1-seed boundary).
   endless: {
     normalLevelBase: 2,   // enemy level at floor 0 (matches campaignB area-0 normal)
     levelPerFloor: 0.1,
+    levelPerFloorSq: 0.010, // quadratic catch-up term — see re-calibration note above
     pointsPerFloor: 100,  // score base unit (see endlessScore.ts, Task 5)
   },
   // Task 21 (2026-07-02, final calibration): USER DECISION set the final boss
