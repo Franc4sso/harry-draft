@@ -9,6 +9,7 @@ import { saveRun, RUN_KEY } from '@/lib/runStore'
 import { prepareCombat, combatRng, type ActiveBattleB } from './useRunB.combat'
 import { markSeen, saveProfile, grantCioccorane, spendCioccorane } from '@/lib/metaStore'
 import type { MetaProfile } from '@/lib/metaStore'
+import { detectDuos } from '@/game/engine/duos'
 import { relicOffer } from '@/game/engine/resolvers/recruit'
 import { eventResolver, resolveEventChoice } from '@/game/engine/resolvers/event'
 import { EVENT_BY_ID, type EventRequirement } from '@/data/events'
@@ -105,6 +106,10 @@ export interface RunSharedController {
   currentEvent: CurrentEventView | null
   chooseEventOption: (optionId: string) => void
   chooseSpellUpgrade: (wizardId: string) => void
+  /** Duo ids newly added to `profile.codex.duosSeen` by the LAST `chooseNode` call (empty
+   *  the rest of the time). Set only when that call entered battle. The battle intro reads
+   *  this to render `DuoToast` — see `components/screens/RunBRunner.tsx`'s 'battle' case. */
+  newlyDiscoveredDuoIds: string[]
 }
 
 /** Mode-agnostic run-driving primitives shared by useRunB (campaign) and the future
@@ -120,6 +125,7 @@ export function useRunShared(opts: UseRunSharedOpts): RunSharedController {
     initialRun.phase === 'battle' || initialRun.phase === 'victory' ? prepareCombat(initialRun) : null,
   )
   const [lastFallen, setLastFallen] = useState<string[]>([])
+  const [newlyDiscoveredDuoIds, setNewlyDiscoveredDuoIds] = useState<string[]>([])
   const runRef = useRef(run); runRef.current = run
 
   const commit = useCallback((next: RunState, v?: RunSharedView) => {
@@ -140,9 +146,19 @@ export function useRunShared(opts: UseRunSharedOpts): RunSharedController {
       for (const a of moved.activeSynergies ?? []) p = markSeen(p, 'synergy', a.synergy.id)
       const node = moved.map!.find(n => n.id === nodeId)
       if (node?.type === 'boss' && node.preview?.bossName) p = markSeen(p, 'boss', node.preview.bossName)
+      // Duo discovery: same team/relics source detectDuos uses at battle-resolve time
+      // (game/engine/resolvers/combat.ts) — the living team + owned relics going into
+      // THIS battle. New (not-yet-seen) active Duos are marked in the SAME profile
+      // update as the rest of this node's codex writes, and surfaced for the battle
+      // intro's DuoToast.
+      const activeDuoIds = detectDuos(moved.team, moved.relics).map(a => a.duo.id)
+      const newDuoIds = activeDuoIds.filter(id => !p.codex.duosSeen.includes(id))
+      for (const id of newDuoIds) p = markSeen(p, 'duo', id)
       profileRef.current = p; saveProfile(p)
+      setNewlyDiscoveredDuoIds(newDuoIds)
       commit(moved, 'battle')
     } else {
+      setNewlyDiscoveredDuoIds([])
       if (moved.phase === 'relic-node') {
         const node = moved.map!.find(n => n.id === nodeId)!
         const offer = relicOffer(moved, node, createRng(moved.seed))
@@ -233,5 +249,6 @@ export function useRunShared(opts: UseRunSharedOpts): RunSharedController {
     reachable, currentNode,
     chooseNode, commitBattle, chooseRecruit, skipRecruit, chooseRelic, ackInfirmary,
     currentEvent, chooseEventOption, chooseSpellUpgrade,
+    newlyDiscoveredDuoIds,
   }
 }

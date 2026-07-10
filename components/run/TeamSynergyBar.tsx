@@ -1,6 +1,7 @@
 'use client'
 import { useState, type ReactNode } from 'react'
-import type { DraftedWizard, ActiveSynergy, Synergy, House, Role } from '@/types'
+import type { DraftedWizard, ActiveSynergy, ActiveRelic, Synergy, House, Role } from '@/types'
+import { DuoBar } from '@/components/run/DuoBar'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { Chip } from '@/components/ui/Chip'
 import { RoleIcon } from '@/components/cards/RoleIcon'
@@ -216,10 +217,13 @@ function MemberRow({
  * (formerly the separate LOADOUT box) when `onSetSpell` is provided.
  */
 export function TeamSynergyBar({
-  team, synergies, orientation = 'horizontal', onSetSpell,
+  team, synergies, relics = [], orientation = 'horizontal', onSetSpell,
 }: {
   team: DraftedWizard[]
   synergies: ActiveSynergy[]
+  /** Active relics — only used to compute the Duo panel (vertical orientation). Optional
+   *  and defaults to none so existing (non-Duo-aware) call sites/tests are unaffected. */
+  relics?: ActiveRelic[]
   orientation?: 'horizontal' | 'vertical'
   /** Wires the inline spell selector in vertical rows; omit to hide it. */
   onSetSpell?: (wizardId: string, spellId: string) => void
@@ -251,6 +255,8 @@ export function TeamSynergyBar({
             </p>
           )}
         </div>
+
+        <DuoBar team={team} relics={relics} />
       </div>
     )
   }

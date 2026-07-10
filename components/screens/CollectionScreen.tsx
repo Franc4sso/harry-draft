@@ -18,6 +18,7 @@ import { WIZARDS } from '@/data/wizards'
 import { RELICS } from '@/data/relics'
 import { BOSSES_BY_AREA } from '@/data/bosses'
 import { SYNERGIES } from '@/data/synergies'
+import { DUOS, SIGNAL_LABEL } from '@/data/duos'
 import {
   STARTER_WIZARDS, STARTER_RELICS, MILESTONES, wizardUnlockCost, relicUnlockCost,
 } from '@/data/unlocks'
@@ -25,7 +26,7 @@ import {
   loadProfile, saveProfile, spendCioccorane, unlockWizard, unlockRelic,
 } from '@/lib/metaStore'
 import type { MetaProfile } from '@/lib/metaStore'
-import type { Wizard, Tier, Synergy } from '@/types'
+import type { Wizard, Tier, Synergy, Duo } from '@/types'
 import type { Relic, RelicRarity } from '@/types/relic'
 import type { BossDef } from '@/data/bosses'
 
@@ -354,6 +355,37 @@ function SynergyTile({ synergy, status, hint }: { synergy: Synergy; status: Disc
   )
 }
 
+/** Duo entries are a recipe book (Hades model, spec §7): name + the two ingredient
+ *  signals ALWAYS show (so the player can chase them), unlike SynergyTile which hides
+ *  everything behind "???" until seen. Only the effect text is gated on discovery. */
+function DuoTile({ duo, seen }: { duo: Duo; seen: boolean }) {
+  return (
+    <div
+      className={cn(
+        'relative flex flex-col gap-1.5 overflow-hidden rounded-xl border p-3 text-left transition-transform duration-200',
+        seen ? 'border-gold/45 bg-gradient-to-b from-gold/12 to-transparent hover:-translate-y-0.5' : 'border-gold/20',
+      )}
+    >
+      <p className="flex items-center gap-1.5 font-display text-[13px] font-semibold text-[#f3e6c4]">
+        <Zap size={12} className="text-gold/80" />
+        {duo.name}
+      </p>
+      <div className="flex flex-wrap gap-1">
+        {duo.signals.map((s) => (
+          <span key={s} className="rounded-full bg-white/8 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-white/60">
+            {SIGNAL_LABEL[s]}
+          </span>
+        ))}
+      </div>
+      {seen ? (
+        <p className="text-[10px] leading-snug text-white/45">{duo.desc}</p>
+      ) : (
+        <p className="text-[10px] leading-snug text-white/30">??? — scoprila in battaglia</p>
+      )}
+    </div>
+  )
+}
+
 export function CollectionScreen() {
   const [profile, setProfile] = useState<MetaProfile | null>(null)
   const reduce = useReducedMotion()
@@ -376,6 +408,7 @@ export function CollectionScreen() {
   const seenRelics = useMemo(() => new Set(profile?.codex.relicsSeen ?? []), [profile])
   const seenBosses = useMemo(() => new Set(profile?.codex.bossesSeen ?? []), [profile])
   const seenSynergies = useMemo(() => new Set(profile?.codex.synergiesSeen ?? []), [profile])
+  const seenDuos = useMemo(() => new Set(profile?.codex.duosSeen ?? []), [profile])
 
   const buy = (kind: Kind, id: string, cost: number) => {
     if (!profile) return
@@ -401,8 +434,9 @@ export function CollectionScreen() {
   const relFound = RELICS.filter((r) => statusFor(r.id, unlockedRelics, seenRelics) !== 'hidden').length
   const bossFound = ALL_BOSSES.filter(({ boss }) => seenBosses.has(boss.name)).length
   const synFound = NAMED_SYNERGIES.filter((s) => seenSynergies.has(s.id)).length
-  const totalFound = wizFound + relFound + bossFound + synFound
-  const grandTotal = WIZARDS.length + RELICS.length + ALL_BOSSES.length + NAMED_SYNERGIES.length
+  const duoFound = DUOS.filter((d) => seenDuos.has(d.id)).length
+  const totalFound = wizFound + relFound + bossFound + synFound + duoFound
+  const grandTotal = WIZARDS.length + RELICS.length + ALL_BOSSES.length + NAMED_SYNERGIES.length + DUOS.length
 
   return (
     <main className="relative flex-1">
@@ -535,6 +569,18 @@ export function CollectionScreen() {
                     status={seenSynergies.has(synergy.id) ? 'seen' : 'hidden'}
                     hint={synergyHint(synergy)}
                   />
+                ))}
+              </div>
+            </section>
+          </StaggerItem>
+
+          {/* Duo */}
+          <StaggerItem>
+            <section className="w-full">
+              <SectionHeader icon={<Zap size={17} />} title="Duo" found={duoFound} total={DUOS.length} accent="#C9A24B" />
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
+                {DUOS.map((duo) => (
+                  <DuoTile key={duo.id} duo={duo} seen={seenDuos.has(duo.id)} />
                 ))}
               </div>
             </section>

@@ -31,6 +31,7 @@ export interface RunBController {
   run: RunState; view: RunBView
   battle: ActiveBattleB | null; reachable: RunNode[]; currentNode: RunNode | undefined
   area: number; areasTotal: number; lastFallen: string[]
+  newlyDiscoveredDuoIds: string[]
   runReward: RunReward | null
   completeDraft: (picked: DraftedWizard[]) => void
   chooseNode: (nodeId: string) => void
@@ -83,7 +84,7 @@ export function useRunB(seed: string): RunBController {
   }, [])
 
   const shared = useRunShared({ initialRun, profileRef, onCommit })
-  const { run, view, battle, lastFallen, runRef, commit, setBattle, setLastFallen } = shared
+  const { run, view, battle, lastFallen, newlyDiscoveredDuoIds, runRef, commit, setBattle, setLastFallen } = shared
 
   const completeDraft = useCallback((picked: DraftedWizard[]) => {
     const next = confirmDraftPicks(runRef.current, picked, createRng(runRef.current.seed))
@@ -144,7 +145,7 @@ export function useRunB(seed: string): RunBController {
 
   return {
     run, view, battle, reachable: shared.reachable, currentNode: shared.currentNode,
-    area: run.area ?? 0, areasTotal: BALANCE.map.areas, lastFallen, runReward,
+    area: run.area ?? 0, areasTotal: BALANCE.map.areas, lastFallen, newlyDiscoveredDuoIds, runReward,
     completeDraft, chooseNode: shared.chooseNode, commitBattle: shared.commitBattle, acknowledgeVictory,
     chooseRecruit: shared.chooseRecruit, skipRecruit: shared.skipRecruit, chooseRelic: shared.chooseRelic, ackInfirmary: shared.ackInfirmary,
     currentEvent: shared.currentEvent, chooseEventOption: shared.chooseEventOption, chooseSpellUpgrade: shared.chooseSpellUpgrade,

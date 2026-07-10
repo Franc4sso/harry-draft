@@ -23,6 +23,7 @@ export interface EndlessController {
   battle: ActiveBattleB | null; reachable: RunNode[]; currentNode: RunNode | undefined
   floor: number; score: number | null
   lastFallen: string[]
+  newlyDiscoveredDuoIds: string[]
   starterOffer: (house: House) => DraftedWizard[]
   chooseStarters: (house: House, starterIds: string[]) => void
   chooseNode: (nodeId: string) => void
@@ -76,7 +77,7 @@ export function useEndless(seed: string): EndlessController {
   }, [])
 
   const shared = useRunShared({ initialRun, profileRef, onCommit, runKey: RUN_KEY_ENDLESS })
-  const { run, view, battle, lastFallen, runRef, commit } = shared
+  const { run, view, battle, lastFallen, newlyDiscoveredDuoIds, runRef, commit } = shared
 
   const starterOffer = useCallback((house: House) => starterOfferEngine(seed, house), [seed])
 
@@ -166,7 +167,7 @@ export function useEndless(seed: string): EndlessController {
   return {
     run, view, battle, reachable: shared.reachable, currentNode: shared.currentNode,
     floor: globalFloor(run), score,
-    lastFallen,
+    lastFallen, newlyDiscoveredDuoIds,
     starterOffer, chooseStarters,
     chooseNode, commitBattle, acknowledgeVictory,
     chooseRecruit, skipRecruit, chooseRelic, ackInfirmary,

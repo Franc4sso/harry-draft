@@ -22,6 +22,7 @@ import { InfirmaryScreen } from './InfirmaryScreen'
 import { AreaClearedScreen } from './AreaClearedScreen'
 import { ShopScreen } from './ShopScreen'
 import { TeamSynergyBar } from '@/components/run/TeamSynergyBar'
+import { DuoToast } from '@/components/run/DuoToast'
 import { RelicBar } from '@/components/relics/RelicBar'
 import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
 import { shopOffer } from '@/game/engine/resolvers/shop'
@@ -43,6 +44,9 @@ export interface RunnerController {
   run: RunState; view: RunSharedView
   battle: ActiveBattleB | null; reachable: RunNode[]; currentNode: RunNode | undefined
   lastFallen: string[]
+  /** Duo ids newly discovered by the move that just entered battle (empty otherwise) —
+   *  rendered as a DuoToast in the 'battle' case. */
+  newlyDiscoveredDuoIds?: string[]
   areasTotal?: number
   completeDraft?: (picked: DraftedWizard[]) => void
   chooseNode: (nodeId: string) => void
@@ -106,6 +110,7 @@ export function RunBRunner({
         <TeamSynergyBar
           team={c.run.team}
           synergies={c.run.activeSynergies}
+          relics={c.run.relics}
           orientation="vertical"
           onSetSpell={editable ? c.setWizardSpell : undefined}
         />
@@ -144,21 +149,24 @@ export function RunBRunner({
         const b = c.battle!
         const title = b.isFinalBoss ? `Boss: ${b.bossName ?? BOSSES[0]!.name}` : b.isBoss ? 'Boss' : 'Battaglia'
         return (
-          <BattleScreen
-            result={b.result}
-            playerTeam={b.playerTeam}
-            playerSyn={b.playerSyn}
-            playerRelics={c.run.relics}
-            enemy={b.enemy}
-            enemySyn={b.enemySyn}
-            enemyLevel={b.enemyLevel}
-            rightMenace={b.rightMenace}
-            rightRelics={b.rightRelics}
-            rightDamageReduction={b.rightDamageReduction}
-            rightIgnoresTaunt={b.rightIgnoresTaunt}
-            title={title}
-            onFinish={c.commitBattle}
-          />
+          <>
+            <DuoToast duoIds={c.newlyDiscoveredDuoIds ?? []} />
+            <BattleScreen
+              result={b.result}
+              playerTeam={b.playerTeam}
+              playerSyn={b.playerSyn}
+              playerRelics={c.run.relics}
+              enemy={b.enemy}
+              enemySyn={b.enemySyn}
+              enemyLevel={b.enemyLevel}
+              rightMenace={b.rightMenace}
+              rightRelics={b.rightRelics}
+              rightDamageReduction={b.rightDamageReduction}
+              rightIgnoresTaunt={b.rightIgnoresTaunt}
+              title={title}
+              onFinish={c.commitBattle}
+            />
+          </>
         )
       }
 
