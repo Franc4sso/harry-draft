@@ -28,6 +28,28 @@ describe('ESECUZIONE A FREDDO — finish a hard-controlled low-HP enemy (boss-gu
     expect(enemy.hp).toBe(0)
   })
 
+  it('log value = total HP removed on the instakill path (buildReplay parity)', () => {
+    const actor = unit({ side: 'left', coldExecute: { threshold: 0.5, instakill: true } })
+    const enemy = unit({ side: 'right', hp: 400, maxHp: 1000 }) // 40% HP
+    applyStatus(enemy, 'stun')
+    const hpBefore = enemy.hp
+    const r = EFFECT_HANDLERS.damage({ rng: noChance, turn: 1, actor, target: enemy, flags: [] }, { kind: 'damage', power: 1 })
+    // Returned value MUST equal the real HP delta (residual hit + cold-execute chunk), else
+    // buildReplay (hp = runningTotal - value) desyncs on the finisher moment.
+    expect(enemy.hp).toBe(0)
+    expect(r.value).toBe(hpBefore - enemy.hp)
+  })
+
+  it('log value = total HP removed on the boss bonus-damage path (buildReplay parity)', () => {
+    const actor = unit({ side: 'left', coldExecute: { threshold: 0.5, instakill: false } })
+    const enemy = unit({ side: 'right', hp: 400, maxHp: 1000 }) // 40% HP
+    applyStatus(enemy, 'stun')
+    const hpBefore = enemy.hp
+    const r = EFFECT_HANDLERS.damage({ rng: noChance, turn: 1, actor, target: enemy, flags: [] }, { kind: 'damage', power: 1 })
+    expect(enemy.hp).toBeGreaterThan(0)
+    expect(r.value).toBe(hpBefore - enemy.hp)
+  })
+
   it('boss battle (instakill:false): the same hit does bonus damage but does NOT instakill', () => {
     const actor = unit({ side: 'left', coldExecute: { threshold: 0.5, instakill: false } })
     // High enough HP that the bonus 25%-maxHp chunk plus the normal hit still leaves it alive.

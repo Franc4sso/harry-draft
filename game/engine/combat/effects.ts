@@ -88,15 +88,19 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
     // ESECUZIONE A FREDDO: a hard-controlled (stun/freeze/silence) enemy under the HP
     // threshold is finished outright — or, in boss battles, takes a chunk of bonus damage
     // instead (the boss climax must stay hard). Fixed at stamp time via coldExecute.instakill.
-    if (ce && ctx.target.side !== ctx.actor.side && ctx.target.alive) {
+    let coldExtra = 0
+    if (ce && ctx.target.side !== ctx.actor.side && ctx.target.alive && ctx.target.maxHp > 0) {
       if (coldExecuteControlled && ctx.target.hp / ctx.target.maxHp < ce.threshold) {
+        const hpBefore = ctx.target.hp
         if (ce.instakill) ctx.target.hp = 0
         else ctx.target.hp = Math.max(0, ctx.target.hp - Math.round(ctx.target.maxHp * 0.25))
+        coldExtra = hpBefore - ctx.target.hp
       }
     }
     // Report the HP actually removed (post-shield), NOT the gross hit: the log `value` must
     // equal the real HP delta so buildReplay (which has no shield model) stays in sync.
-    return { value: residual }
+    // Cold-execute removes HP beyond the hit's residual, so fold that extra into the value too.
+    return { value: residual + coldExtra }
   },
   heal: (ctx, eff) => {
     if (eff.kind !== 'heal') return {}

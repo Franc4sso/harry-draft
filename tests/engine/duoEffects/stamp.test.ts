@@ -18,4 +18,15 @@ describe('stampDuoFields', () => {
     stampDuoFields(L, R, [], 'normal')
     expect(L[0]!.spreadsPoison).toBeUndefined()
   })
+  it('ESECUZIONE A FREDDO stamps coldExecute with instakill=true in a non-boss battle', () => {
+    const L = [unit('left')], R = [unit('right')]
+    stampDuoFields(L, R, [duo('esecuzione-a-freddo')], 'normal')
+    expect(L[0]!.coldExecute).toEqual({ threshold: 0.5, instakill: true })
+    expect(R[0]!.coldExecute).toBeUndefined() // player-only
+  })
+  it('ESECUZIONE A FREDDO stamps instakill=false in a BOSS battle (boss climax stays hard)', () => {
+    const L = [unit('left')], R = [unit('right')]
+    stampDuoFields(L, R, [duo('esecuzione-a-freddo')], 'boss')
+    expect(L[0]!.coldExecute).toEqual({ threshold: 0.5, instakill: false })
+  })
 })
