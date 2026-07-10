@@ -102,7 +102,11 @@ export function tickStatuses(turn: number, unit: BattleUnit, opts: { velenoMult?
       const flat = baseTick * stacks * (isVeleno ? (opts.velenoMult ?? 1) : 1)
       const pctStacks = def?.tickStackCapForPct != null ? Math.min(stacks, def.tickStackCapForPct) : stacks
       const pct = def?.tickPctMaxHp ? pctStacks * def.tickPctMaxHp * unit.maxHp : 0
-      const total = Math.round(flat + pct)
+      // CANCRENA (Duo Combos): veleno-only amp on low-HP poisoned units. `poisonAmp` is only
+      // ever stamped on ENEMY (right) units by stampDuoFields — never on player units — so this
+      // read-only check can't cause friendly fire even though it lives in the shared tick path.
+      const cancrena = isVeleno && unit.poisonAmp != null && unit.hp / unit.maxHp < unit.poisonAmp.threshold
+      const total = Math.round((flat + pct) * (cancrena ? unit.poisonAmp!.mult : 1))
       unit.hp -= total
       // Attribute the tick to the CASTER (sourceId "side:id") so poison/burn damage credits the
       // poisoner — not the victim — for MVP and the log. Fall back to the bearer if source-less.
