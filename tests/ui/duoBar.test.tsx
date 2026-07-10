@@ -24,4 +24,18 @@ describe('DuoBar', () => {
     const { container } = render(<DuoBar team={bare} relics={[]} />)
     expect(container).toBeEmptyDOMElement()
   })
+
+  it('ignores FALLEN wizards — a Duo whose 2nd signal contributor is dead is not active', () => {
+    // Two Attaccante mages BOTH carrying veleno+esecuzione would light Cancrena — but one is
+    // K.O. (currentHp 0). With only one living contributor neither signal reaches its >=2
+    // threshold, so Cancrena must NOT show as active (it won't activate in the real battle).
+    const withFallen = [
+      { wizard: { id: 'live', name: 'Vivo', house: 'Grifondoro', role: 'Attaccante', tags: ['veleno', 'esecuzione'] }, level: 1, stats: {}, maxHp: 100, currentHp: 80 },
+      { wizard: { id: 'dead', name: 'Morto', house: 'Grifondoro', role: 'Attaccante', tags: ['veleno', 'esecuzione'] }, level: 1, stats: {}, maxHp: 100, currentHp: 0 },
+    ] as any
+    const { container } = render(<DuoBar team={withFallen} relics={[]} />)
+    // No active Cancrena card (a live pair would produce one).
+    expect(container.querySelector('[data-duo="cancrena"][data-active]')).toBeNull()
+    expect(screen.queryByText('Cancrena')).not.toBeInTheDocument()
+  })
 })

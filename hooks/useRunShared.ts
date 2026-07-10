@@ -10,6 +10,7 @@ import { prepareCombat, combatRng, type ActiveBattleB } from './useRunB.combat'
 import { markSeen, saveProfile, grantCioccorane, spendCioccorane } from '@/lib/metaStore'
 import type { MetaProfile } from '@/lib/metaStore'
 import { detectDuos } from '@/game/engine/duos'
+import { livingOf } from '@/game/engine/roster'
 import { relicOffer } from '@/game/engine/resolvers/recruit'
 import { eventResolver, resolveEventChoice } from '@/game/engine/resolvers/event'
 import { EVENT_BY_ID, type EventRequirement } from '@/data/events'
@@ -147,11 +148,12 @@ export function useRunShared(opts: UseRunSharedOpts): RunSharedController {
       const node = moved.map!.find(n => n.id === nodeId)
       if (node?.type === 'boss' && node.preview?.bossName) p = markSeen(p, 'boss', node.preview.bossName)
       // Duo discovery: same team/relics source detectDuos uses at battle-resolve time
-      // (game/engine/resolvers/combat.ts) — the living team + owned relics going into
-      // THIS battle. New (not-yet-seen) active Duos are marked in the SAME profile
-      // update as the rest of this node's codex writes, and surfaced for the battle
-      // intro's DuoToast.
-      const activeDuoIds = detectDuos(moved.team, moved.relics).map(a => a.duo.id)
+      // (game/engine/resolvers/combat.ts computes leftDuos from livingOf(team)) — the
+      // LIVING team + owned relics going into THIS battle, so a fallen wizard whose
+      // role/tag was a signal's second contributor never falsely marks a Duo seen. New
+      // (not-yet-seen) active Duos are marked in the SAME profile update as the rest of
+      // this node's codex writes, and surfaced for the battle intro's DuoToast.
+      const activeDuoIds = detectDuos(livingOf(moved.team), moved.relics).map(a => a.duo.id)
       const newDuoIds = activeDuoIds.filter(id => !p.codex.duosSeen.includes(id))
       for (const id of newDuoIds) p = markSeen(p, 'duo', id)
       profileRef.current = p; saveProfile(p)

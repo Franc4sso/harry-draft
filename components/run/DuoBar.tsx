@@ -1,6 +1,7 @@
 'use client'
 import type { ActiveRelic, DraftedWizard } from '@/types'
 import { duoProgress } from '@/game/engine/duos'
+import { livingOf } from '@/game/engine/roster'
 import { SIGNAL_LABEL } from '@/data/duos'
 
 // Same accent language as SynergyTracker (draft/SynergyTracker.tsx:119-121): gold = active,
@@ -15,7 +16,10 @@ const GREEN = '#3ecb6a'
  * presentational over `duoProgress`; mounted inside TeamSynergyBar's vertical sidebar.
  */
 export function DuoBar({ team, relics }: { team: DraftedWizard[]; relics: ActiveRelic[] }) {
-  const progress = duoProgress(team, relics)
+  // Only LIVING wizards field in combat, so a Duo lights here exactly when it will in the
+  // actual battle (game/engine/resolvers/combat.ts computes leftDuos from livingOf(team)).
+  // A fallen wizard whose role/tag was a signal's second contributor must NOT light a Duo.
+  const progress = duoProgress(livingOf(team), relics)
   const active = progress.filter((p) => p.active)
   const near = progress.filter((p) => !p.active && p.missing.length === 1)
 
