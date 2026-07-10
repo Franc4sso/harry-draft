@@ -14,13 +14,13 @@ import { ENGINE_VERSION, type RunLog } from '@/game/engine/endlessReplay'
 
 describe('submit-score processing', () => {
   it('rejects a challenge with an illegal starter (invalid replay)', async () => {
-    const log: RunLog = { v: 1, engine: ENGINE_VERSION, seed: 's', house: 'Grifondoro', starterIds: ['nope'], actions: [] }
+    const log: RunLog = { v: 1, engine: ENGINE_VERSION, seed: 's', draftPicks: ['nope'], actions: [] }
     const res = await processSubmission({ challengeCode: encodeChallenge(log), nickname: 'X' })
     expect(res.status).toBe(400)
   })
 
   it('rejects an engine-version mismatch', async () => {
-    const log: RunLog = { v: 1, engine: 'ancient-0', seed: 's', house: 'Grifondoro', starterIds: [], actions: [] }
+    const log: RunLog = { v: 1, engine: 'ancient-0', seed: 's', draftPicks: [], actions: [] }
     const res = await processSubmission({ challengeCode: encodeChallenge(log), nickname: 'X' })
     expect(res.status).toBe(409)
   })
@@ -29,14 +29,17 @@ describe('submit-score processing', () => {
   // illegal action (a relic-pick id never actually offered at that node) must be
   // rejected outright — never accepted with a score computed from the tampered state.
   it('rejects a tampered challenge with an injected illegal relic-pick, never inflating a score', async () => {
+    // Same seed/draftPicks/first-move as tests/engine/endlessReplay.test.ts's
+    // REAL_SEED/REAL_STARTERS/REAL_FIRST_MOVE fixture: legalDraftPicks('replay-seed')
+    // (index-0 pick at each of the 3 DraftSession screens) is ["cedric","arthur","george"],
+    // and a0f1n0 is a real reachable relic node from the start of that run.
     const log: RunLog = {
       v: 1,
       engine: ENGINE_VERSION,
       seed: 'replay-seed',
-      house: 'Grifondoro',
-      starterIds: ['dumbledore', 'harry', 'mcgonagall'],
+      draftPicks: ['cedric', 'arthur', 'george'],
       actions: [
-        { t: 'move', nodeId: 'a0f1n2' },
+        { t: 'move', nodeId: 'a0f1n0' },
         { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'totally-bogus-relic-id' } },
       ],
     }
@@ -46,42 +49,43 @@ describe('submit-score processing', () => {
     expect(written.length).toBe(0)
   })
 
-  // A legitimately recorded run (same fixture as tests/engine/endlessReplay.test.ts's
-  // "a recorded valid run replays to valid:true and a scorable state", known score 1610)
-  // must be ACCEPTED, and the score in the response/write must be the SERVER-computed
-  // one (1610) — a client-claimed score field doesn't even exist in the request shape,
-  // so there is nothing for a forged number to override.
+  // A legitimately recorded run (SAME fixture as tests/engine/endlessReplay.test.ts's
+  // "a recorded valid run replays to valid:true and a scorable state" — driven by the real
+  // engine via startDraft('replay-fixture-1')/pickFrom -> confirmDraftPicks(..., {
+  // endless:true }) -> reachable/moveTo/resolveCurrent, known score 1610) must be ACCEPTED,
+  // and the score in the response/write must be the SERVER-computed one (1610) — a
+  // client-claimed score field doesn't even exist in the request shape, so there is
+  // nothing for a forged number to override.
   it('accepts a legitimate recorded run and returns the SERVER-computed score, not any client number', async () => {
     written.length = 0
     const log: RunLog = {
       v: 1,
       engine: ENGINE_VERSION,
-      seed: 'endless-ui-seed',
-      house: 'Grifondoro',
-      starterIds: ['dumbledore', 'harry', 'mcgonagall'],
+      seed: 'replay-fixture-1',
+      draftPicks: ['cedric', 'crabbe', 'hagrid'],
       actions: [
-        { t: 'move', nodeId: 'a0f1n1' },
-        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'mappa-malandrino' } },
+        { t: 'move', nodeId: 'a0f1n0' },
+        { t: 'resolve', choice: { kind: 'recruit-pick', wizardId: 'neville' } },
         { t: 'move', nodeId: 'a0f2n0' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
         { t: 'move', nodeId: 'a0f3n0' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
         { t: 'move', nodeId: 'a0f4n0' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
-        { t: 'move', nodeId: 'a1f1n2' },
-        { t: 'resolve', choice: { kind: 'recruit-pick', wizardId: 'astoria' } },
-        { t: 'move', nodeId: 'a1f2n2' },
+        { t: 'move', nodeId: 'a1f1n1' },
+        { t: 'resolve', choice: { kind: 'recruit-pick', wizardId: 'susan' } },
+        { t: 'move', nodeId: 'a1f2n0' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
         { t: 'move', nodeId: 'a1f3n1' },
-        { t: 'resolve', choice: { kind: 'combat-ack' } },
+        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'ampolla-veleno' } },
         { t: 'move', nodeId: 'a1f4n0' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
         { t: 'move', nodeId: 'a2f1n1' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
         { t: 'move', nodeId: 'a2f2n0' },
-        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'marcia-di-guerra' } },
-        { t: 'move', nodeId: 'a2f3n0' },
-        { t: 'resolve', choice: { kind: 'combat-ack' } },
+        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'medaglione-serpeverde' } },
+        { t: 'move', nodeId: 'a2f3n1' },
+        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'collezionista-anime' } },
         { t: 'move', nodeId: 'a2f4n0' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
       ],

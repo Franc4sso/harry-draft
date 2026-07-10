@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest'
 import {
-  startRunB, starterOffer, chooseStarters, reachable, moveTo, resolveCurrent,
-  registerCoreResolvers, useConsumableRelic, combatRngForNode,
+  startRunB, confirmDraftPicks, reachable, moveTo, resolveCurrent,
+  registerCoreResolvers, useConsumableRelic, combatRngForNode, STARTER_PICKS,
 } from '@/game/engine/runEngine'
+import { startDraft, pickFrom, type DraftSession } from '@/game/engine/draftSession'
+import { setDraftPoolRestriction } from '@/game/engine/draft'
 import { advanceEndlessArea, scoreForEndlessRun, globalFloor } from '@/game/engine/endless'
 import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
 import { eventResolver } from '@/game/engine/resolvers/event'
@@ -48,20 +50,34 @@ function pickNode(s: RunState): RunNode {
   return opts.find(n => n.type === 'boss') ?? opts[0]!
 }
 
+/** Drive a real endless DraftSession (full roster, no house restriction — matches
+ *  replayRun's reconstruction) to STARTER_PICKS picks, choosing the highest-power
+ *  candidate on each screen. Returns the picked ids (the RunLog's draftPicks) alongside
+ *  the session's own picks (DraftedWizard[]) for confirmDraftPicks. */
+function draftByPower(seed: string): { draftPicks: string[]; picks: DraftedWizard[] } {
+  setDraftPoolRestriction(null)
+  let session: DraftSession = startDraft(seed, STARTER_PICKS)
+  const draftPicks: string[] = []
+  for (let i = 0; i < STARTER_PICKS; i++) {
+    const idx = session.current.reduce((best, c, j) => (powerOf(c) > powerOf(session.current[best]!) ? j : best), 0)
+    draftPicks.push(session.current[idx]!.wizard.id)
+    session = pickFrom(session, idx)
+  }
+  return { draftPicks, picks: session.picks }
+}
+
 /** Drive a real endless run to wipeout, RECORDING a RunLog exactly as hooks/useEndless.ts
  *  would (action shapes/order identical to its wrapped callbacks), and using the SAME rng
  *  per action kind hooks/useRunShared.ts's callbacks use (combatRngForNode for combat,
  *  raw createRng(seed) otherwise). Returns the played score (scoreForEndlessRun at wipeout)
  *  and the RunLog a real getChallengeCode() would have produced for this run. */
 function playAndRecord(seed: string): { playedScore: number; log: RunLog } {
-  const house = 'Grifondoro' as const
-  const offer = starterOffer(seed, house)
-  const starterIds = [...offer].sort((a, b) => powerOf(b) - powerOf(a)).slice(0, 3).map(d => d.wizard.id)
+  const { draftPicks, picks } = draftByPower(seed)
   const actions: PlayerAction[] = []
 
-  let s: RunState = { ...startRunB(seed), endless: true }
-  s = chooseStarters(s, house, starterIds, createRng(seed))
-  s = { ...s, endless: true }
+  // endless:true must be set BEFORE confirmDraftPicks so area-0 excludes shop/spellForge —
+  // mirrors replayRun's own reconstruction (game/engine/endlessReplay.ts).
+  let s: RunState = confirmDraftPicks({ ...startRunB(seed), endless: true }, picks, createRng(seed))
 
   let guard = 0
   while (guard++ < 5000) {
@@ -123,7 +139,7 @@ function playAndRecord(seed: string): { playedScore: number; log: RunLog } {
     break
   }
 
-  const log: RunLog = { v: 1, engine: ENGINE_VERSION, seed, house, starterIds, actions }
+  const log: RunLog = { v: 1, engine: ENGINE_VERSION, seed, draftPicks, actions }
   return { playedScore: scoreForEndlessRun(s), log }
 }
 
@@ -189,6 +205,27 @@ function relicLightsADuoSignal(r: { keywords?: string[]; grantsExecute?: unknown
 // FREDDO/MIETITORE) are rng-free stat stamps and prove nothing about replay-rng parity.
 const RNG_DRAWING_DUO_IDS = new Set(['miasma', 'untore'])
 
+/** Duo-biased draft: at each of the STARTER_PICKS DraftSession screens, pick whichever
+ *  candidate in `session.current` most lights a Duo tag-signal (preferDuoScore); if no
+ *  candidate scores above 0 (no tag/role hit), fall back to index 0 — mirrors the old
+ *  house-offer bias, just applied to the DraftSession's own screen instead. */
+function draftByDuoBias(seed: string): { draftPicks: string[]; picks: DraftedWizard[] } {
+  setDraftPoolRestriction(null)
+  let session: DraftSession = startDraft(seed, STARTER_PICKS)
+  const draftPicks: string[] = []
+  for (let i = 0; i < STARTER_PICKS; i++) {
+    let idx = 0
+    let bestScore = -Infinity
+    session.current.forEach((c, j) => {
+      const score = preferDuoScore(c)
+      if (score > bestScore) { bestScore = score; idx = j }
+    })
+    draftPicks.push(session.current[idx]!.wizard.id)
+    session = pickFrom(session, idx)
+  }
+  return { draftPicks, picks: session.picks }
+}
+
 /** Duo-biased variant of playAndRecord: identical structure/rng-per-action-kind, but recruit
  *  and relic picks prefer whatever most quickly lights a Duo tag-signal. Also tracks (via
  *  `detectDuos`, the SAME function resolvers/combat.ts calls at battle-resolve time) whether
@@ -196,19 +233,17 @@ const RNG_DRAWING_DUO_IDS = new Set(['miasma', 'untore'])
  *  ACTIVE rng-drawing Duo (MIASMA/UNTORE) — the proof this run's log genuinely exercises the
  *  extra Duo combat rng draw that caused the original combat-replay defect. */
 function playAndRecordDuoBiased(seed: string): { playedScore: number; log: RunLog; sawRngDuoBattle: boolean } {
-  const house = 'Grifondoro' as const
-  const offer = starterOffer(seed, house)
   // Starters biased too (not just recruit/relic): pickNode below fights nearly every floor
   // and only rarely routes to a recruit/relic node, so the STARTER trio is what actually
   // shapes team composition for most of a run — a raw-power starter pick (like the plain
   // SEEDS harness above) would almost never accumulate 2 tag-sharing wizards at all.
-  const starterIds = [...offer].sort((a, b) => preferDuoScore(b) - preferDuoScore(a)).slice(0, 3).map(d => d.wizard.id)
+  const { draftPicks, picks } = draftByDuoBias(seed)
   const actions: PlayerAction[] = []
   let sawRngDuoBattle = false
 
-  let s: RunState = { ...startRunB(seed), endless: true }
-  s = chooseStarters(s, house, starterIds, createRng(seed))
-  s = { ...s, endless: true }
+  // endless:true must be set BEFORE confirmDraftPicks so area-0 excludes shop/spellForge —
+  // mirrors replayRun's own reconstruction (game/engine/endlessReplay.ts).
+  let s: RunState = confirmDraftPicks({ ...startRunB(seed), endless: true }, picks, createRng(seed))
 
   let guard = 0
   while (guard++ < 5000) {
@@ -274,7 +309,7 @@ function playAndRecordDuoBiased(seed: string): { playedScore: number; log: RunLo
     break
   }
 
-  const log: RunLog = { v: 1, engine: ENGINE_VERSION, seed, house, starterIds, actions }
+  const log: RunLog = { v: 1, engine: ENGINE_VERSION, seed, draftPicks, actions }
   return { playedScore: scoreForEndlessRun(s), log, sawRngDuoBattle }
 }
 
