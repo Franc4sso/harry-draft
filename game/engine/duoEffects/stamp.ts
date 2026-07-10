@@ -8,5 +8,6 @@ export function stampDuoFields(
   const has = (id: string) => duos.some(d => d.duo.id === id)
   if (has('miasma')) for (const u of left) u.spreadsPoison = true
   if (has('cancrena')) for (const u of right) u.poisonAmp = { threshold: 0.4, mult: 2 }
-  // MURO VIVENTE / ESECUZIONE A FREDDO / MIETITORE / UNTORE branches added by their tasks.
+  if (has('muro-vivente')) for (const u of left) if (u.wizard.role === 'Tank') u.livingWall = true
+  // ESECUZIONE A FREDDO / MIETITORE / UNTORE branches added by their tasks.
 }

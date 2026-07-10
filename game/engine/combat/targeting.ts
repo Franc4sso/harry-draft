@@ -114,6 +114,14 @@ export function selectTarget(
   enemies: BattleUnit[],
   spell?: Spell,
 ): BattleUnit | undefined {
+  // MURO VIVENTE: a shielded, taunting player Tank hard-blocks the backline. This runs before
+  // any role dispatch (and before ignoresTaunt is even read) — it overrides everything, including
+  // Bellatrix-style taunt-ignoring. `enemies` only ever contains a livingWall unit when `actor` is
+  // an enemy (right) attacking the player (left) team, so this can never cause friendly fire.
+  const wall = enemies.find(e => e.alive && e.livingWall && !isUnderHardControl(e)
+    && e.statusEffects.some(s => s.statusId === 'shield' && (s.absorbLeft ?? 0) > 0))
+  if (wall) return wall
+
   const liveEnemies = enemies.filter(e => e.alive)
   const liveAllies = allies.filter(a => a.alive)
 
