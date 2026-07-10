@@ -60,6 +60,15 @@ describe('ESECUZIONE A FREDDO — finish a hard-controlled low-HP enemy (boss-gu
     expect(enemy.hp).toBeGreaterThan(0)
   })
 
+  it('a frozen enemy under 50% HP is instakilled too, despite freeze-shatter clearing the ' +
+     'freeze status on the very same hit', () => {
+    const actor = unit({ side: 'left', coldExecute: { threshold: 0.5, instakill: true } })
+    const enemy = unit({ side: 'right', hp: 400, maxHp: 1000 }) // 40% HP
+    applyStatus(enemy, 'freeze')
+    EFFECT_HANDLERS.damage({ rng: noChance, turn: 1, actor, target: enemy, flags: [] }, { kind: 'damage', power: 1 })
+    expect(enemy.hp).toBe(0)
+  })
+
   it('friendly-fire guard: a player ally is never cold-executed', () => {
     const actor = unit({ side: 'left', coldExecute: { threshold: 0.5, instakill: true } })
     const ally = unit({ side: 'left', hp: 400, maxHp: 1000 }) // 40% HP, same side

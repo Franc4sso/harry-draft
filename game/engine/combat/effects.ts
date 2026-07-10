@@ -57,6 +57,13 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
     if (cun && ctx.target.maxHp > 0 && ctx.target.hp / ctx.target.maxHp < cun.threshold) {
       dmg = Math.round(dmg * (1 + cun.bonus))
     }
+    // ESECUZIONE A FREDDO reads hard-control status here, BEFORE the freeze-shatter block
+    // below can strip 'freeze' off the target on this very hit — otherwise a coldExecute
+    // attacker's own hit would never see the target as frozen (shatter unconditionally
+    // clears freeze whenever a hit lands on it, so a post-shatter check only ever catches
+    // stun/silence, never freeze).
+    const ce = ctx.actor.coldExecute
+    const coldExecuteControlled = !!ce && isUnderHardControl(ctx.target)
     // Shatter: a direct hit on a frozen target ends the freeze and amplifies THIS hit.
     const frozen = ctx.target.statusEffects.some(e => e.kind === 'freeze')
     if (frozen) {
@@ -81,9 +88,8 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
     // ESECUZIONE A FREDDO: a hard-controlled (stun/freeze/silence) enemy under the HP
     // threshold is finished outright — or, in boss battles, takes a chunk of bonus damage
     // instead (the boss climax must stay hard). Fixed at stamp time via coldExecute.instakill.
-    const ce = ctx.actor.coldExecute
     if (ce && ctx.target.side !== ctx.actor.side && ctx.target.alive) {
-      if (isUnderHardControl(ctx.target) && ctx.target.hp / ctx.target.maxHp < ce.threshold) {
+      if (coldExecuteControlled && ctx.target.hp / ctx.target.maxHp < ce.threshold) {
         if (ce.instakill) ctx.target.hp = 0
         else ctx.target.hp = Math.max(0, ctx.target.hp - Math.round(ctx.target.maxHp * 0.25))
       }
