@@ -36,9 +36,15 @@ neutralizzato dal bot che ottimizza le magie.
 
 ## Architettura
 
-### 1. Modello dati — `types/wizard.ts` + `data/wizards.ts`
+### 1. Modello dati — `data/wizards.ts`
 
-`Wizard.spellPool: string[]` → `Wizard.signature: string`.
+**Deviazione dal design iniziale (motivata):** NON si rinomina il campo. Il nome `signature`
+è già occupato da un sistema esistente (`types/signature.ts` / `SIGNATURE_BY_ID`, abilità
+passive). Inoltre un rename toccherebbe ~40 letterali di test + UI + replay. Quindi il campo
+resta `Wizard.spellPool: string[]` ma **collassa a un array di un solo elemento** (la firma),
+con un invariante di dato (`spellPool.length === 1`) che lo blocca. Vantaggi: `rng.pick([firma])`
+è già deterministico e consuma una `gen()` → parità RNG anti-cheat gratis; zero churn sui test;
+nessuna collisione di nomi. Un eventuale rename a `spellId` è un cleanup post-playtest.
 
 Ogni mago (60) riceve una firma autorata a mano:
 - **In-ruolo**: Attaccante→attacco, Supporto→cura/utility, Tank→scudo/taunt, Controllo→controllo.
