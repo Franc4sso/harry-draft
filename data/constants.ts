@@ -294,6 +294,23 @@ defenseK: 0.5,
     budgetStep: 10,
     eliteBudgetMult: 0.5,
     bossBudgetMult: 0.6,
+    // --- Enemy-wizard VARIETY (2026-07-11) ---
+    // The budget levers above are vestigial for wizard SELECTION: per-unit budget (~8-15)
+    // sits far below budgetWindow's percentile floor (140), so the candidate window collapsed
+    // to `sorted.slice(0, count*3)` — the same ~9 weakest wizards every normal/elite fight,
+    // identical across all areas (~85% of the 60-wizard roster never appeared). Difficulty is
+    // carried by enemy LEVEL (leveledStats), NOT by which wizard is drawn, so these two knobs
+    // buy variety at a small, measured base-power cost (see _probeVariety + campaignBalanceB):
+    //   varietyWindowSize — ABSOLUTE number of candidate wizards the window spans (was an
+    //                       implicit count*3 ≈ 9). Made absolute (not count-scaled) so normal
+    //                       (3 units) and elite (5 units) draw an EVEN-size pool at even power,
+    //                       instead of elite silently pulling a whole-roster window.
+    //   varietyWeightBias — weightedPick exponent: 1=legacy (window's strongest few dominate),
+    //                       →0 flattens toward uniform so the wide window actually surfaces its
+    //                       members. Lower bias also holds avg power near the roster-weak end.
+    // Scoped to normal/elite (themedEnemyTeam); boss/legacy draft keep the tight default window.
+    varietyWindowSize: 30,
+    varietyWeightBias: 0.5,
     // --- MENACE REMOVED (2026-07-01, urgent balance fix) ---
     // Historically every enemy team's stats were ALSO multiplied by (1 + menacePct),
     // where menacePct = (level-1)*menacePerLevel + menaceOffset (normal/elite/area-boss)

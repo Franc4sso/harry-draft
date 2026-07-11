@@ -34,7 +34,7 @@ function expectedPower(w: Wizard): number {
  *  `base_attack` for every role, so a fielded Supporto still threatens like any other
  *  unit (see statRoll.ts). The ≤1-Supporto cap and role-variety guarantee are enforced
  *  downstream after the team is drawn (see `capSupporto`), so this window stays uniform. */
-export function budgetWindow(targetPer: number, count: number): Wizard[] {
+export function budgetWindow(targetPer: number, count: number, spanMult = 3): Wizard[] {
   const sorted = [...WIZARDS].sort((a, b) => expectedPower(a as Wizard) - expectedPower(b as Wizard))
   const n = sorted.length
   const minBudget = BALANCE.campaign.baseBudget / BALANCE.draft.teamSize
@@ -43,9 +43,18 @@ export function budgetWindow(targetPer: number, count: number): Wizard[] {
     BALANCE.draft.teamSize
   const t = Math.min(1, Math.max(0, (targetPer - minBudget) / Math.max(1, maxBudget - minBudget)))
   const centerIdx = Math.round(t * (n - 1))
-  const half = Math.floor((count * 3) / 2)
-  const start = Math.max(0, Math.min(n - count * 3, centerIdx - half))
-  return sorted.slice(start, start + count * 3) as Wizard[]
+  // Window spans `count * spanMult` wizards. Default spanMult=3 is the tight, difficulty-
+  // anchored window the legacy draft + boss path rely on. themedEnemyTeam passes a much
+  // larger spanMult (derived from BALANCE.campaignB.varietyWindowSize) so normal/elite packs
+  // draw from a wide slice of the roster instead of recycling the same ~9 weakest wizards — the budget
+  // percentile floors at index 0 in the live loop (per-unit budget << minBudget), so without
+  // this the window collapses to `sorted.slice(0, count*3)` every single fight. Difficulty is
+  // carried by enemy LEVEL (leveledStats), not by which wizard is drawn, so widening trades
+  // pure variety for a small, measured base-power shift (see campaignBalanceB / _probeVariety).
+  const span = Math.min(n, count * spanMult)
+  const half = Math.floor(span / 2)
+  const start = Math.max(0, Math.min(n - span, centerIdx - half))
+  return sorted.slice(start, start + span) as Wizard[]
 }
 
 /** Enforces "≤1 Supporto, alongside other roles" (enemy elite/boss only, USER DECISION
@@ -137,12 +146,28 @@ export function generateBossTeam(rng: Rng, boss: BossDef): DraftedWizard[] {
 }
 
 /** Weighted index into `arr`: stronger (later, since callers pass power-sorted
- *  ascending) entries are more likely. Linear weights by 1-based rank. Deterministic. */
-function weightedPick<T>(rng: Rng, arr: T[]): T {
-  const totalWeight = (arr.length * (arr.length + 1)) / 2
-  let r = rng.next() * totalWeight
+ *  ascending) entries are more likely. Weight of the i-th entry (0-based) is
+ *  `(i+1)**bias`. `bias=1` is the original linear rank weighting (top of the window
+ *  dominates); `bias→0` flattens toward uniform (every wizard in the window roughly
+ *  equally likely — the variety lever, so a WIDE window actually surfaces its members
+ *  instead of always re-drawing its strongest few); `bias<0` would favor the weak end.
+ *  Deterministic. */
+function weightedPick<T>(rng: Rng, arr: T[], bias = 1): T {
+  if (bias === 1) {
+    // Fast path preserves the exact original draw sequence (and thus every existing seed).
+    const totalWeight = (arr.length * (arr.length + 1)) / 2
+    let r = rng.next() * totalWeight
+    for (let i = 0; i < arr.length; i++) {
+      r -= i + 1
+      if (r <= 0) return arr[i]!
+    }
+    return arr[arr.length - 1]!
+  }
+  let total = 0
+  for (let i = 0; i < arr.length; i++) total += (i + 1) ** bias
+  let r = rng.next() * total
   for (let i = 0; i < arr.length; i++) {
-    r -= i + 1
+    r -= (i + 1) ** bias
     if (r <= 0) return arr[i]!
   }
   return arr[arr.length - 1]!
@@ -156,11 +181,19 @@ export function themedEnemyTeam(rng: Rng, opts: {
   excludeThemes: string[]
 }): { team: DraftedWizard[]; themeId: string | null } {
   const { area, kind, budget, count, excludeThemes } = opts
+  const cb = BALANCE.campaignB
+  const bias = cb.varietyWeightBias
   const perUnit = budget / BALANCE.draft.teamSize
   // Power-sorted ascending so weightedPick favors the stronger end of the window.
   // Supporto is included (USER DECISION 2026-07-07): elite/boss packs cap it at ≤1 after
   // drafting (see capSupporto below), rather than excluding it from the window up front.
-  const window = [...budgetWindow(perUnit, count)]
+  // varietyWindowSize widens the candidate slice far beyond the legacy count*3 so normal/elite
+  // packs stop recycling the same ~9 weakest wizards (see budgetWindow); varietyWeightBias
+  // flattens the pick so that wide window's members actually appear. The window is an ABSOLUTE
+  // wizard count, so we back out the count-relative spanMult budgetWindow expects (floored at 3
+  // = the legacy width) to keep normal (3) and elite (5) packs on an even-size, even-power pool.
+  const spanMult = Math.max(3, Math.ceil(cb.varietyWindowSize / Math.max(1, count)))
+  const window = [...budgetWindow(perUnit, count, spanMult)]
     .sort((a, b) => expectedPower(a) - expectedPower(b))
 
   const strength = themeStrengthFor(area, kind)
@@ -204,7 +237,7 @@ export function themedEnemyTeam(rng: Rng, opts: {
     const pool = themed.filter(w => !used.has(w.id))
     let avail = [...pool]
     for (let i = 0; i < wantThemed && avail.length > 0; i++) {
-      const w = weightedPick(drawRng, avail)
+      const w = weightedPick(drawRng, avail, bias)
       chosen.push(w); used.add(w.id)
       avail = avail.filter(x => x.id !== w.id)
     }
@@ -212,7 +245,7 @@ export function themedEnemyTeam(rng: Rng, opts: {
   // Fill the rest from the whole window (excluding already-picked), weighted.
   let rest = window.filter(w => !used.has(w.id))
   while (chosen.length < count && rest.length > 0) {
-    const w = weightedPick(drawRng, rest)
+    const w = weightedPick(drawRng, rest, bias)
     chosen.push(w); used.add(w.id)
     rest = rest.filter(x => x.id !== w.id)
   }
