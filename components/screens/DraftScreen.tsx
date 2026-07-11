@@ -11,6 +11,7 @@ import { Insegna } from '@/components/ui/Insegna'
 import { Frame } from '@/components/ui/Frame'
 import { Parchment } from '@/components/ui/Parchment'
 import { synergyProgress, previewSynergies } from '@/game/engine/synergy'
+import { previewDuos } from '@/game/engine/duos'
 import { displayName } from '@/lib/displayName'
 
 export function DraftScreen({
@@ -43,6 +44,14 @@ export function DraftScreen({
     for (const c of current) {
       m.set(c.wizard.id, new Set(previewSynergies(picks, c).filter((p) => p.advances).map((p) => p.synergy.id)))
     }
+    return m
+  }, [current, picks])
+  // Duo completes/advances preview per candidate. Relics are empty at the initial
+  // draft (a run has no relics until it starts), so the honesty check falls back
+  // to team composition alone.
+  const duoByCandidate = useMemo(() => {
+    const m = new Map<string, ReturnType<typeof previewDuos>>()
+    for (const c of current) m.set(c.wizard.id, previewDuos(picks, [], c))
     return m
   }, [current, picks])
 
@@ -88,6 +97,7 @@ export function DraftScreen({
                   drafted={c}
                   testId={`draft-pick-${i}`}
                   hotSynergyIds={hotByCandidate.get(c.wizard.id)}
+                  duoPreview={duoByCandidate.get(c.wizard.id)}
                   onConsider={() => setConsidered(c)}
                   onPick={() => { setConsidered(null); pick(i) }}
                 />

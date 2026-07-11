@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import type { DraftedWizard } from '@/types'
+import type { ActiveRelic, DraftedWizard } from '@/types'
 import { WizardCardRow } from '@/components/cards/WizardCardRow'
 import { WizardCardColumn } from '@/components/cards/WizardCardColumn'
 import { Button } from '@/components/ui/Button'
@@ -11,6 +11,7 @@ import { Parchment } from '@/components/ui/Parchment'
 import { Stagger, StaggerItem } from '@/components/ui/motion'
 import { powerOf } from '@/game/engine/combat/teamGen'
 import { previewSynergies, type SynergyPreview } from '@/game/engine/synergy'
+import { previewDuos } from '@/game/engine/duos'
 import { synergyBonusText } from '@/lib/glossary'
 import { displayName } from '@/lib/displayName'
 import { isDead } from '@/game/engine/roster'
@@ -72,11 +73,12 @@ function ActivationRail({ candidate, activating }: { candidate: DraftedWizard | 
 }
 
 export function RecruitScreen({
-  offer, team, teamMax, onPick, onSkip,
+  offer, team, teamMax, relics, onPick, onSkip,
 }: {
   offer: DraftedWizard[]
   team: DraftedWizard[]
   teamMax: number
+  relics: ActiveRelic[]
   onPick: (wizardId: string, replaceId?: string) => void
   /** Leave the node without recruiting (decline the offer / keep the squad as-is). */
   onSkip?: () => void
@@ -124,27 +126,30 @@ export function RecruitScreen({
           className="grid grid-cols-1 content-start gap-4 sm:grid-cols-2 lg:grid-cols-3"
           onPointerLeave={() => setConsidered(null)}
         >
-          {offer.map(d => (
-            <StaggerItem
-              key={d.wizard.id}
-              data-testid={`recruit-${d.wizard.id}`}
-              role="button"
-              tabIndex={0}
-              aria-pressed={pick === d.wizard.id}
-              onClick={() => setPick(d.wizard.id)}
-              onPointerEnter={() => setConsidered(d)}
-              onFocus={() => setConsidered(d)}
-              onKeyDown={e => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault()
-                  setPick(d.wizard.id)
-                }
-              }}
-              className="cursor-pointer rounded-2xl"
-            >
-              <WizardCardColumn drafted={d} selected={pick === d.wizard.id} />
-            </StaggerItem>
-          ))}
+          {offer.map(d => {
+            const duoPreview = previewDuos(team, relics, d)
+            return (
+              <StaggerItem
+                key={d.wizard.id}
+                data-testid={`recruit-${d.wizard.id}`}
+                role="button"
+                tabIndex={0}
+                aria-pressed={pick === d.wizard.id}
+                onClick={() => setPick(d.wizard.id)}
+                onPointerEnter={() => setConsidered(d)}
+                onFocus={() => setConsidered(d)}
+                onKeyDown={e => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault()
+                    setPick(d.wizard.id)
+                  }
+                }}
+                className="cursor-pointer rounded-2xl"
+              >
+                <WizardCardColumn drafted={d} selected={pick === d.wizard.id} duoPreview={duoPreview} />
+              </StaggerItem>
+            )
+          })}
         </Stagger>
 
         {/* Replacement list — full width under the candidate grid when the squad is full. */}

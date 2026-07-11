@@ -201,6 +201,7 @@ export function RunBRunner({
             offer={recruitOffer(c.run, c.currentNode!, createRng(c.run.seed))}
             team={c.run.team}
             teamMax={c.run.teamMax ?? 5}
+            relics={c.run.relics}
             onPick={c.chooseRecruit}
             onSkip={c.skipRecruit}
           />,
