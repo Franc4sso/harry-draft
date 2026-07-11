@@ -14,18 +14,24 @@ describe('bilateral relics', () => {
   it('a right-side relic changes the battle outcome vs baseline with no right relics', () => {
     const left = team(['harry', 'sirius', 'lupin', 'mcgonagall', 'snape'])
     const right = team(['voldemort', 'bellatrix', 'lucius', 'snape', 'sirius'])
-
-    // Baseline: no right relics.
-    const base = simulateBattle(left, right, createRng('b'), {})
-
-    // Same battle, but the ENEMY gets a strong flat-stat relic.
     const enemyRelic: ActiveRelic[] = [{ relic: RELIC_BY_ID['mappa-malandrino']!, stageObtained: 0 }]
-    const withEnemyRelic = simulateBattle(left, right, createRng('b'), { rightRelics: enemyRelic })
 
-    // The enemy got stronger → the outcome (winner or turn count or final HP) must differ.
-    const baseRightHp = base.finalSnapshot.filter(u => u.side === 'right').reduce((s, u) => s + u.hp, 0)
-    const buffRightHp = withEnemyRelic.finalSnapshot.filter(u => u.side === 'right').reduce((s, u) => s + u.hp, 0)
-    expect(buffRightHp === baseRightHp && base.winner === withEnemyRelic.winner && base.turns === withEnemyRelic.turns).toBe(false)
+    // UN MAGO, UNA MAGIA (Task 2) made every wizard's spell choice deterministic (no more
+    // pool-of-many rng.pick variance), which made this exact fixed roster a near-total left
+    // curbstomp (right-side HP already at 0 pre-relic) for most battle seeds — a flat +6 atk
+    // enemy relic literally cannot change an already-0 finalSnapshot HP / turn / winner. So
+    // search seeds for one where the fight is close enough for the relic to matter, instead
+    // of relying on a single hardcoded seed.
+    let differs = false
+    for (let i = 0; i < 40 && !differs; i++) {
+      const seed = `rs-${i}`
+      const base = simulateBattle(left, right, createRng(seed), {})
+      const withEnemyRelic = simulateBattle(left, right, createRng(seed), { rightRelics: enemyRelic })
+      const baseRightHp = base.finalSnapshot.filter(u => u.side === 'right').reduce((s, u) => s + u.hp, 0)
+      const buffRightHp = withEnemyRelic.finalSnapshot.filter(u => u.side === 'right').reduce((s, u) => s + u.hp, 0)
+      differs = !(buffRightHp === baseRightHp && base.winner === withEnemyRelic.winner && base.turns === withEnemyRelic.turns)
+    }
+    expect(differs).toBe(true)
   })
 
   it('parity: identical result when rightRelics is absent vs empty', () => {

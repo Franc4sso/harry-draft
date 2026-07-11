@@ -86,17 +86,23 @@ describe('boss/elite pack rules', () => {
 
 describe('enemy offense bias', () => {
   it('preferOffense always equips a damaging spell when the pool has one', () => {
-    // mcgonagall (Tank) mixes offensive (reducto/bombarda) and non-offensive
-    // (protego_maxima/fianto/protego) spells, so the bias is doing real work
-    // (not passing trivially). Harry (Attaccante) no longer qualifies: the
-    // Supporto-archetype rewrite dropped his only non-offensive spell (confundo),
-    // and the Attaccante whitelist is now 100% offensive spells by design.
-    const mcgonagall = WIZARD_BY_ID['mcgonagall']!
-    const offensiveInPool = mcgonagall.spellPool.filter(id => spellIsOffensive(SPELL_BY_ID[id]))
+    // UN MAGO, UNA MAGIA (Task 2): every real wizard's spellPool is now exactly 1 element,
+    // so no real roster entry can ever mix offensive and non-offensive spells any more —
+    // mcgonagall (used here previously) is now single-signature `protego_maxima` only. The
+    // `preferOffense` candidate-restriction logic in pickSpell (statRoll.ts) is unchanged
+    // by this task and still operates on whatever pool it's given, so exercise it against a
+    // synthetic mixed-pool wizard (mirrors the dummy-wizard pattern already used in
+    // tests/engine/statRoll.test.ts) to keep real coverage of the mechanism itself.
+    const mixedPoolTank = {
+      ...WIZARD_BY_ID['mcgonagall']!,
+      id: 'dummy_mixed_tank',
+      spellPool: ['protego_maxima', 'fianto', 'reducto', 'bombarda', 'protego'],
+    }
+    const offensiveInPool = mixedPoolTank.spellPool.filter(id => spellIsOffensive(SPELL_BY_ID[id]))
     expect(offensiveInPool.length).toBeGreaterThan(0)
-    expect(offensiveInPool.length).toBeLessThan(mcgonagall.spellPool.length)
+    expect(offensiveInPool.length).toBeLessThan(mixedPoolTank.spellPool.length)
     for (let s = 0; s < 25; s++) {
-      const dw = draftWizard(createRng(`o-${s}`), mcgonagall, false, true)
+      const dw = draftWizard(createRng(`o-${s}`), mixedPoolTank, false, true)
       expect(spellIsOffensive(dw.spell), `seed ${s} → ${dw.spell.id}`).toBe(true)
     }
   })

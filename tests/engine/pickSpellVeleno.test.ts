@@ -11,12 +11,20 @@ const venomOffRole = WIZARDS.find(w => (w.tags ?? []).includes('veleno') && w.ro
 const plainMage = WIZARDS.find(w => !(w.tags ?? []).includes('veleno'))!
 
 describe('pickSpell venom vs role', () => {
-  // The venom guarantee holds ONLY when venom fits the mage's role. A venom Attaccante
-  // (dolohov/blaise) always equips serpensortia — that IS its job (damage-over-time attacker).
-  it('a venom ATTACCANTE always equips a venom spell, across many seeds', () => {
+  // UN MAGO, UNA MAGIA (Task 2) collapsed every spellPool to exactly 1 signature. dolohov/
+  // blaise (venom Attaccante) were authored with their most iconic Attacco (sectumsempra)
+  // rather than serpensortia — the Duo veleno signal is TAG-driven (game/engine/duos.ts's
+  // signalActive/wizardDuoSignals key off wizard.tags, never off the equipped spell), so
+  // this is an intentional data choice (see tests/data/velenoSpells.test.ts). pickSpell
+  // itself is UNCHANGED in this task (Task 3 scope) — its "venom guarantee" candidate
+  // restriction (statRoll.ts) simply becomes a no-op once spellPool has no venom candidate:
+  // the sole signature is always returned regardless of the venom tag. Task 3 should
+  // revisit whether pickSpell's now-dead venom-guarantee branch should be removed.
+  it('a venom ATTACCANTE with a non-venom signature deterministically equips that signature (guarantee is now a no-op)', () => {
+    expect(SPELL_IS_VENOM.has(venomAttacker.spellPool[0]!)).toBe(false)
     for (let i = 0; i < 50; i++) {
       const spell = pickSpell(createRng(`s${i}`), venomAttacker)
-      expect(SPELL_IS_VENOM.has(spell.id), `seed ${i} → ${spell.id}`).toBe(true)
+      expect(spell.id, `seed ${i} → ${spell.id}`).toBe(venomAttacker.spellPool[0])
     }
   })
 

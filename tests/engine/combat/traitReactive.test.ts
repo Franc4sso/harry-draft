@@ -24,18 +24,26 @@ describe('reactive traits in battle', () => {
   })
 
   it('Benedizione shields Lupin when he is healed', () => {
-    // Lupin (benedizione) has episkey/vulnera in his spell pool — he heals himself.
-    // onHeal fires with actor=lupin, target=lupin; shield EffectSpec lands on ctx.target=lupin.
-    // A healer ally (mcgonagall) ensures heals happen regularly; harry is the right-side target.
-    // Seed 14 gives Lupin the 'vulnera' healing spell (Supporto archetype rewrite shifted spell picks).
-    const lupin = { ...wiz('lupin', 14), shiny: { traitId: 'benedizione' } }
-    const left = [lupin, wiz('mcgonagall', 2)]
-    const right = [wiz('harry', 3)]
-    const res = simulateBattle(left, right, createRng(0))
-    // Some snapshot must show a unit with statusId:'shield' (set by the shield handler)
-    // or kind:'shield' (belt-and-suspenders match for inline shield push).
-    const shielded = res.snapshots.some(s =>
-      Object.values(s).some(u => u.statusEffects.some(e => e.statusId === 'shield' || e.kind === 'shield')))
+    // UN MAGO, UNA MAGIA (Task 2): Lupin's signature collapsed to 'expecto' (a self Difesa
+    // buff, not a heal) — he can no longer self-heal, so the old "Lupin heals himself" setup
+    // no longer applies. But game/engine/combat/simulate.ts's onHeal reactive fires with
+    // `unit = realTarget` (the unit that RECEIVED the heal, not the caster) and
+    // game/engine/traits.ts's ownerOf('actor') resolves to that same unit — Benedizione
+    // fires whenever its holder is healed by ANYONE, not only by self-cast. So pair Lupin
+    // with a real healer ally (molly -> episkey) instead, and search seeds for a battle
+    // where Lupin takes damage and molly's heal actually lands on him.
+    let shielded = false
+    for (let s = 0; s < 80 && !shielded; s++) {
+      const lupin = { ...wiz('lupin', s), shiny: { traitId: 'benedizione' } }
+      const molly = wiz('molly', s + 100)
+      const left = [lupin, molly]
+      const right = [wiz('sirius', s + 200)]
+      const res = simulateBattle(left, right, createRng(s + 300))
+      // Some snapshot must show a unit with statusId:'shield' (set by the shield handler)
+      // or kind:'shield' (belt-and-suspenders match for inline shield push).
+      shielded = res.snapshots.some(snap =>
+        Object.values(snap).some(u => u.statusEffects.some(e => e.statusId === 'shield' || e.kind === 'shield')))
+    }
     expect(shielded).toBe(true)
   })
 })

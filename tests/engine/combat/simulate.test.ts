@@ -89,16 +89,24 @@ describe('simulate', () => {
 
   it('a reviver brings a fallen ally back into the fight (Rennervate fires on a corpse)', () => {
     // Left: a fragile ally that will die + a Supporto forced to cast Rennervate (the revive).
-    // Right: two heavy attackers to guarantee a kill. Search seeds for a battle where the
+    // Right: a heavy attacker to guarantee a kill. Search seeds for a battle where the
     // ally actually falls and gets raised — proving the end-to-end revive path fires.
+    //
+    // UN MAGO, UNA MAGIA (Task 2): voldemort's spellPool collapsed to `['avada']` only —
+    // previously avada was ~20% of his random picks, now EVERY draft guarantees it. Avada
+    // (power 3.2, penetrating) one-shots the fragile 90-110 HP Supporto units used here, and
+    // with TWO voldemorts (the original setup) it also one-shots the reviver itself before
+    // his cooldown-2 Rennervate can ever fire — turn 1 wipe on every one of 500 seeds tried.
+    // Swapped to a single, less extreme attacker (ginny/reducto) so the reviver reliably
+    // survives long enough to actually cast the revive once an ally falls.
     const reviverBase = WIZARDS.find(w => w.id === 'lupin')!
     const fragileBase = WIZARDS.find(w => w.role === 'Supporto' && w.id !== 'lupin')!
-    const heavyBase = WIZARDS.find(w => w.id === 'voldemort')!
+    const heavyBase = WIZARDS.find(w => w.id === 'ginny')!
     let sawRevive = false
     for (let s = 1; s <= 80 && !sawRevive; s++) {
       const reviver = { ...draftWizard(createRng(s), reviverBase), spell: SPELL_BY_ID['rennervate']! }
       const fragile = draftWizard(createRng(s + 100), fragileBase)
-      const right = [draftWizard(createRng(s + 200), heavyBase), draftWizard(createRng(s + 300), heavyBase)]
+      const right = [draftWizard(createRng(s + 200), heavyBase)]
       const res = simulateBattle([fragile, reviver], right, createRng(s + 400))
       if (res.log.some(e => e.action === 'Rennervate' && (e.flags ?? []).includes('revive'))) sawRevive = true
     }
