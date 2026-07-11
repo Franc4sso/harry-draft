@@ -2,7 +2,6 @@ import type { DraftedWizard, RunState } from '@/types'
 import type { EventEffect } from '@/data/events'
 import type { Rng } from './rng'
 import { gainLevels } from './leveling'
-import { setWizardSpell } from './runEngine'
 import { recruitVia } from './recruit'
 import { createDraftPool } from './draft'
 import { draftWizard } from './statRoll'
@@ -75,16 +74,6 @@ export function applyEventEffects(state: RunState, effects: EventEffect[], rng: 
         const { dw } = gainLevels(target, effect.levels)
         s = { ...s, team: s.team.map(m => (m.wizard.id === target.wizard.id ? dw : m)) }
         log.push(`levelWizard ${effect.which} +${effect.levels}`)
-        break
-      }
-      case 'swapSpell': {
-        const target = pickWizard(s.team, effect.which, rng)
-        if (!target) break
-        const alternatives = target.wizard.spellPool.filter(id => id !== target.spell.id)
-        if (alternatives.length === 0) break
-        const newSpellId = rng.pick(alternatives)
-        s = setWizardSpell(s, target.wizard.id, newSpellId)
-        log.push(`swapSpell ${effect.which} -> ${newSpellId}`)
         break
       }
       case 'removeWizard': {

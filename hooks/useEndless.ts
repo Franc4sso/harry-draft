@@ -3,7 +3,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import type { DraftedWizard, RunNode, RunState } from '@/types'
 import {
   startRunB, confirmDraftPicks,
-  setWizardSpell, useConsumableRelic as useConsumableRelicEngine,
+  useConsumableRelic as useConsumableRelicEngine,
 } from '@/game/engine/runEngine'
 import { advanceEndlessArea, scoreForEndlessRun, globalFloor } from '@/game/engine/endless'
 import { createRng } from '@/game/engine/rng'
@@ -35,7 +35,6 @@ export interface EndlessController {
   currentEvent: CurrentEventView | null
   chooseEventOption: (optionId: string) => void
   chooseSpellUpgrade: (wizardId: string) => void
-  setWizardSpell: (wizardId: string, spellId: string) => void
   useConsumableRelic: (relicId: string) => void
   advanceArea: () => void
   getChallengeCode: () => string
@@ -62,7 +61,7 @@ export function useEndless(seed: string): EndlessController {
   // Actions recorded in call order — the single source of truth for getChallengeCode().
   // A ref (not state) because pushing to it must never trigger a re-render, and every
   // wrapped callback below appends to it synchronously in the same order the player
-  // actually performed them (chooseNode/resolve/set-spell/use-consumable), mirroring
+  // actually performed them (chooseNode/resolve/use-consumable), mirroring
   // exactly the loop replayRun re-applies.
   const actionsRef = useRef<PlayerAction[]>([])
   const draftPicksRef = useRef<string[]>([])
@@ -132,11 +131,6 @@ export function useEndless(seed: string): EndlessController {
     shared.chooseSpellUpgrade(wizardId)
   }, [shared])
 
-  const setWizardSpellCb = useCallback((wizardId: string, spellId: string) => {
-    actionsRef.current.push({ t: 'set-spell', wizardId, spellId })
-    commit(setWizardSpell(runRef.current, wizardId, spellId))
-  }, [commit, runRef])
-
   const useConsumableRelicCb = useCallback((relicId: string) => {
     actionsRef.current.push({ t: 'use-consumable', relicId })
     commit(useConsumableRelicEngine(runRef.current, relicId))
@@ -166,7 +160,6 @@ export function useEndless(seed: string): EndlessController {
     chooseNode, commitBattle, acknowledgeVictory,
     chooseRecruit, skipRecruit, chooseRelic, ackInfirmary,
     currentEvent: shared.currentEvent, chooseEventOption, chooseSpellUpgrade,
-    setWizardSpell: setWizardSpellCb,
     useConsumableRelic: useConsumableRelicCb,
     advanceArea,
     getChallengeCode,

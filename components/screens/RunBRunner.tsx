@@ -59,7 +59,6 @@ export interface RunnerController {
   currentEvent: CurrentEventView | null
   chooseEventOption: (optionId: string) => void
   chooseSpellUpgrade: (wizardId: string) => void
-  setWizardSpell: (wizardId: string, spellId: string) => void
   useConsumableRelic: (relicId: string) => void
   cioccorane?: number
   buyShopItem?: (slotId: string, opts?: { carrierId?: string; targetWizardId?: string }) => void
@@ -96,10 +95,7 @@ export function RunBRunner({
   // larger LEFT sidebar beside the screen content, so the player can read their wizards
   // and relics while choosing a path / recruit / relic. Battle and the end screens
   // don't use it (battle shows relics in-fight).
-  // `editable` gates the per-wizard spell selector. The map (tree) view is a read-only
-  // overview — you pick a path there, you don't manage loadouts — so it omits onSetSpell
-  // and the rows stay collapsed with no spell pool. Other nodes keep it editable.
-  const withTeamSidebar = (content: ReactNode, editable = true) => (
+  const withTeamSidebar = (content: ReactNode) => (
     <div className="flex-1 flex flex-row items-start gap-4 p-3">
       <motion.aside
         initial={reduce ? false : { opacity: 0, x: -18 }}
@@ -112,7 +108,6 @@ export function RunBRunner({
           synergies={c.run.activeSynergies}
           relics={c.run.relics}
           orientation="vertical"
-          onSetSpell={editable ? c.setWizardSpell : undefined}
         />
         <Frame variant="panel" innerClassName="p-3" className="[&>.frame-inner]:!overflow-visible">
           <span className="font-display text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Reliquie</span>
@@ -142,7 +137,6 @@ export function RunBRunner({
             area={area}
             areasTotal={c.areasTotal}
           />,
-          false, // tree view: read-only, no spell selector
         )
 
       case 'battle': {

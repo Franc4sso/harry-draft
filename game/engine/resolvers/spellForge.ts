@@ -5,8 +5,8 @@ import type { NodeResolver } from './types'
 /**
  * "Aumento Magia" node: the player picks one wizard whose equipped spell levels up,
  * scaling its power/heal for the rest of the run (see `upgradeWizardSpell`). The magic
- * level is a per-wizard mastery that carries across spell swaps (`setWizardSpell`). No
- * RNG — the choice is the only input. Picking a wizard already at the cap is a no-op.
+ * level is a per-wizard mastery on the wizard's single fixed spell. No RNG — the choice
+ * is the only input. Picking a wizard already at the cap is a no-op.
  */
 export const spellForgeResolver: NodeResolver = {
   id: 'spellForge',

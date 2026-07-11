@@ -8,7 +8,7 @@ const sample: RunLog = {
   actions: [
     { t: 'move', nodeId: 'a0f1n0' },
     { t: 'resolve', choice: { kind: 'combat-ack' } },
-    { t: 'set-spell', wizardId: 'harry', spellId: 'expelliarmus' },
+    { t: 'use-consumable', relicId: 'lacrime-fenice' },
   ],
 }
 

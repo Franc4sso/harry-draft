@@ -2,7 +2,7 @@ import type { RunState } from '@/types'
 import type { ResolverChoice } from './resolvers/types'
 import {
   startRunB, confirmDraftPicks, moveTo, resolveCurrentChecked,
-  setWizardSpell, useConsumableRelic, reachable, registerCoreResolvers, combatRngForNode, STARTER_PICKS,
+  useConsumableRelic, reachable, registerCoreResolvers, combatRngForNode, STARTER_PICKS,
 } from './runEngine'
 import { startDraft, pickFrom } from './draftSession'
 import { advanceEndlessArea } from './endless'
@@ -15,7 +15,6 @@ export const ENGINE_VERSION = 'endless-2'
 export type PlayerAction =
   | { t: 'move'; nodeId: string }
   | { t: 'resolve'; choice: ResolverChoice }
-  | { t: 'set-spell'; wizardId: string; spellId: string }
   | { t: 'use-consumable'; relicId: string }
 
 export interface RunLog {
@@ -26,7 +25,7 @@ export interface RunLog {
   actions: PlayerAction[]
 }
 
-const VALID_ACTION_TAGS = new Set(['move', 'resolve', 'set-spell', 'use-consumable'])
+const VALID_ACTION_TAGS = new Set(['move', 'resolve', 'use-consumable'])
 
 /** Structural integrity check for a decoded log, run BEFORE any simulation.
  *  `decodeChallenge` (lib/challengeCode.ts) validates only v/seed/actions — a
@@ -113,14 +112,12 @@ export function replayRun(log: RunLog): { state: RunState; valid: boolean; reaso
         return { state: s, valid: false, reason: `illegal resolve choice: ${JSON.stringify(a)}` }
       }
       s = checked.state
-    } else if (a.t === 'set-spell') {
-      s = setWizardSpell(s, a.wizardId, a.spellId)
     } else if (a.t === 'use-consumable') {
       s = useConsumableRelic(s, a.relicId)
     }
-    // Strict legality for move/set-spell/use-consumable: a no-op here means an illegal
+    // Strict legality for move/use-consumable: a no-op here means an illegal
     // action (move already validated via `reachable` above and throws rather than
-    // no-op'ing; set-spell/use-consumable no-op on invalid ids — see useConsumableRelic
+    // no-op'ing; use-consumable no-ops on invalid ids — see useConsumableRelic
     // doc comment). resolve is handled above via resolveCurrentChecked instead, since
     // resolveCurrent's wrapping defeats reference-equality against `before`.
     if (a.t !== 'resolve' && s === before) {

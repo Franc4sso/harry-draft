@@ -6,7 +6,6 @@ import {
   SPELL_LEVEL_STEP, SPELL_LEVEL_MAX,
 } from '@/game/engine/spellForge'
 import { spellForgeResolver } from '@/game/engine/resolvers/spellForge'
-import { setWizardSpell } from '@/game/engine/runEngine'
 import { createRng } from '@/game/engine/rng'
 
 const ATK = 'expelliarmus' // power 1.4 attack spell
@@ -91,18 +90,5 @@ describe('spellForge — resolver', () => {
     const out = spellForgeResolver.resolve(s, node, { kind: 'spell-upgrade', wizardId: 'w1' }, createRng('s'))
     expect(out.team[0]!.spellLevel).toBe(SPELL_LEVEL_MAX)
     expect(out).toBe(s) // no-op returns the same state
-  })
-})
-
-describe('spellForge — mastery carries across spell swaps', () => {
-  it('setWizardSpell applies the wizard spellLevel to the newly equipped spell', () => {
-    const upgraded = upgradeWizardSpell(dw(ATK)) // spellLevel 2, equips ATK
-    const s: RunState = {
-      seed: 's', phase: 'map', team: [upgraded], activeSynergies: [], stage: 0, relics: [],
-      area: 0, teamMax: 5, log: [],
-    }
-    const next = setWizardSpell(s, 'w1', ALT)
-    expect(next.team[0]!.spell.id).toBe(ALT)
-    expect(next.team[0]!.spell.power).toBeCloseTo(SPELL_BY_ID[ALT]!.power! * spellMultiplier(2))
   })
 })
