@@ -9,6 +9,8 @@ import { TRAIT_BY_ID } from '@/data/traits'
 import { displayName } from '@/lib/displayName'
 
 const harry = () => draftWizard(createRng(1), WIZARD_BY_ID['harry']!)
+// Veleno-tagged fixture (feeds the Duo signal system), mirrors tests/ui/wizardCard.test.tsx.
+const velenoDrafted = () => draftWizard(createRng(1), WIZARD_BY_ID['pansy']!)
 
 describe('WizardCardRow', () => {
   it('renders name, all four stat labels and the spell name', () => {
@@ -66,5 +68,22 @@ describe('WizardCardRow', () => {
   it('does not use a vertical card width', () => {
     const { container } = render(<WizardCardRow drafted={harry()} />)
     expect(container.querySelector('.w-56')).toBeNull()
+  })
+})
+
+describe('WizardCardRow Duo affordance', () => {
+  it('shows compact signal marks for a veleno mage', () => {
+    render(<WizardCardRow drafted={velenoDrafted()} />)
+    expect(screen.getByTestId('duo-signal-marks')).toBeInTheDocument()
+  })
+
+  it('shows a completes ribbon when duoPreview completes', () => {
+    render(
+      <WizardCardRow
+        drafted={velenoDrafted()}
+        duoPreview={{ completes: [{ id: 'cancrena', name: 'Cancrena', desc: '', signals: ['veleno', 'esecuzione'] }], advances: [] }}
+      />,
+    )
+    expect(screen.getByTestId('duo-ribbon')).toHaveAttribute('data-kind', 'completes')
   })
 })
