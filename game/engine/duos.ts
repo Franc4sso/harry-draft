@@ -1,5 +1,6 @@
-import type { ActiveDuo, ActiveRelic, DraftedWizard, DuoProgress, DuoSignal } from '@/types'
+import type { ActiveDuo, ActiveRelic, DraftedWizard, Duo, DuoProgress, DuoSignal, Wizard } from '@/types'
 import { DUOS } from '@/data/duos'
+import { livingOf } from '@/game/engine/roster'
 
 const ROLE_OF: Partial<Record<DuoSignal, string>> = {
   attaccante: 'Attaccante', supporto: 'Supporto', controllo: 'Controllo',
@@ -45,4 +46,44 @@ export function duoProgress(team: DraftedWizard[], relics: ActiveRelic[]): DuoPr
     const litPair = duo.signals.map(s => lit.has(s)) as [boolean, boolean]
     return { duo, lit: litPair, active: litPair.every(Boolean), missing: duo.signals.filter(s => !lit.has(s)) }
   })
+}
+
+const ROLE_SIGNAL: Record<string, DuoSignal> = {
+  Tank: 'taunt', Attaccante: 'attaccante', Supporto: 'supporto', Controllo: 'controllo',
+}
+const TAG_SIGNALS: DuoSignal[] = ['veleno', 'esecuzione', 'scudirigen', 'magieOscure']
+
+/** The Duo signals that appear in at least one shipped Duo. */
+export const DUO_SIGNALS_IN_USE: ReadonlySet<DuoSignal> = new Set(DUOS.flatMap(d => d.signals))
+
+/** A wizard's Duo signals that feed a SHIPPED Duo (role-signal if in use, + its Duo-family tags). */
+export function wizardDuoSignals(wizard: Wizard): DuoSignal[] {
+  const out: DuoSignal[] = []
+  const roleSig = ROLE_SIGNAL[wizard.role]
+  if (roleSig && DUO_SIGNALS_IN_USE.has(roleSig)) out.push(roleSig)
+  const tags = wizard.tags ?? []
+  for (const t of TAG_SIGNALS) if (tags.includes(t) && DUO_SIGNALS_IN_USE.has(t)) out.push(t)
+  return out
+}
+
+/** The shipped Duos a given signal feeds (for the "→ alimenta: …" tooltip). */
+export function duosForSignal(signal: DuoSignal): Duo[] {
+  return DUOS.filter(d => d.signals.includes(signal))
+}
+
+export type DuoPreview = { completes: Duo[]; advances: Duo[] }
+
+/** Diff of duoProgress with `candidate` added: which Duos it completes (inactive→active)
+ *  and which it advances (two-away → one-away). Uses livingOf so a fallen ally never inflates it. */
+export function previewDuos(team: DraftedWizard[], relics: ActiveRelic[], candidate: DraftedWizard): DuoPreview {
+  const before = new Map(duoProgress(livingOf(team), relics).map(p => [p.duo.id, p]))
+  const after = duoProgress(livingOf([...team, candidate]), relics)
+  const completes: Duo[] = []
+  const advances: Duo[] = []
+  for (const a of after) {
+    const b = before.get(a.duo.id)!
+    if (a.active && !b.active) completes.push(a.duo)
+    else if (!a.active && a.missing.length === 1 && b.missing.length >= 2) advances.push(a.duo)
+  }
+  return { completes, advances }
 }

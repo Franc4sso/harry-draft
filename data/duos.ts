@@ -21,3 +21,13 @@ export const DUOS: Duo[] = [
 ]
 
 export const DUO_BY_ID: Record<string, Duo> = Object.fromEntries(DUOS.map(d => [d.id, d]))
+
+// Light per-signal glyph + accent for the card marks (data/duos.ts).
+export const SIGNAL_ICON: Record<DuoSignal, string> = {
+  veleno: '☠', esecuzione: '✖', scudirigen: '⛨', magieOscure: '☾',
+  taunt: '⚑', attaccante: '⚔', supporto: '✚', controllo: '✦',
+}
+export const SIGNAL_COLOR: Record<DuoSignal, string> = {
+  veleno: '#7ddc7d', esecuzione: '#ff8a7a', scudirigen: '#7db7ff', magieOscure: '#b98cff',
+  taunt: '#3aa0f2', attaccante: '#ff5140', supporto: '#20d894', controllo: '#b355ff',
+}
