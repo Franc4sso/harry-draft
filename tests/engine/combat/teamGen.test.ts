@@ -5,8 +5,7 @@ import { BALANCE } from '@/data/constants'
 import { BOSSES, MURO, BELLATRIX } from '@/data/bosses'
 import type { BossDef } from '@/data/bosses'
 import { detectSynergies } from '@/game/engine/synergy'
-import { draftWizard, spellIsOffensive } from '@/game/engine/statRoll'
-import { WIZARD_BY_ID } from '@/data/wizards'
+import { spellIsOffensive } from '@/game/engine/statRoll'
 import { SPELL_BY_ID } from '@/data/spells'
 
 describe('teamGen', () => {
@@ -84,26 +83,27 @@ describe('boss/elite pack rules', () => {
   })
 })
 
-describe('enemy offense bias', () => {
-  it('preferOffense always equips a damaging spell when the pool has one', () => {
-    // UN MAGO, UNA MAGIA (Task 2): every real wizard's spellPool is now exactly 1 element,
-    // so no real roster entry can ever mix offensive and non-offensive spells any more —
-    // mcgonagall (used here previously) is now single-signature `protego_maxima` only. The
-    // `preferOffense` candidate-restriction logic in pickSpell (statRoll.ts) is unchanged
-    // by this task and still operates on whatever pool it's given, so exercise it against a
-    // synthetic mixed-pool wizard (mirrors the dummy-wizard pattern already used in
-    // tests/engine/statRoll.test.ts) to keep real coverage of the mechanism itself.
-    const mixedPoolTank = {
-      ...WIZARD_BY_ID['mcgonagall']!,
-      id: 'dummy_mixed_tank',
-      spellPool: ['protego_maxima', 'fianto', 'reducto', 'bombarda', 'protego'],
+// UN MAGO, UNA MAGIA (Task 3): per-unit offense bias (preferOffense/guaranteeOffense) is
+// gone now that every pool is a single signature — it was dead code or, worse, forced an
+// attack onto a Supporto's kit. The safety net is now a TEAM-level guarantee: every
+// generated enemy team fields at least one attacker, while individual Supporto units are
+// never forced onto a damaging spell.
+describe('enemy offense guarantee (team-level)', () => {
+  it('ogni squadra nemica generata schiera almeno un attaccante', () => {
+    for (let seed = 0; seed < 40; seed++) {
+      const team = generateEnemyTeam(createRng(seed), 600)
+      const hasOffense = team.some(d => spellIsOffensive(d.spell))
+      expect(hasOffense, `seed ${seed} team senza attaccante`).toBe(true)
     }
-    const offensiveInPool = mixedPoolTank.spellPool.filter(id => spellIsOffensive(SPELL_BY_ID[id]))
-    expect(offensiveInPool.length).toBeGreaterThan(0)
-    expect(offensiveInPool.length).toBeLessThan(mixedPoolTank.spellPool.length)
-    for (let s = 0; s < 25; s++) {
-      const dw = draftWizard(createRng(`o-${s}`), mixedPoolTank, false, true)
-      expect(spellIsOffensive(dw.spell), `seed ${s} → ${dw.spell.id}`).toBe(true)
+  })
+
+  it('un Supporto nemico non equipaggia mai un attacco', () => {
+    for (let seed = 0; seed < 40; seed++) {
+      for (const d of generateEnemyTeam(createRng(seed), 600)) {
+        if (d.wizard.role === 'Supporto') {
+          expect(spellIsOffensive(d.spell), `${d.wizard.id} Supporto attacca`).toBe(false)
+        }
+      }
     }
   })
 })

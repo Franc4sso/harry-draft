@@ -4,7 +4,7 @@ import type { BossDef } from '@/data/bosses'
 import { BALANCE } from '@/data/constants'
 import { WIZARDS } from '@/data/wizards'
 import { SPELL_BY_ID } from '@/data/spells'
-import { draftWizard, guaranteeOffensiveSpell, spellIsOffensive } from '../statRoll'
+import { draftWizard, spellIsOffensive } from '../statRoll'
 import { pickTheme, themeStrengthFor, targetThemeMembers, type Theme } from './themes'
 
 export function powerOf(dw: DraftedWizard): number {
@@ -30,10 +30,10 @@ function expectedPower(w: Wizard): number {
  *  themed draft so both anchor difficulty to the same window.
  *
  *  Supporto is NOT excluded here (USER DECISION 2026-07-07, Task 3c): enemy elite/boss
- *  teams may field up to 1 Supporto, and guaranteeOffensiveSpell now falls back to
- *  `base_attack` for every role, so a fielded Supporto still threatens like any other
- *  unit (see statRoll.ts). The ≤1-Supporto cap and role-variety guarantee are enforced
- *  downstream after the team is drawn (see `capSupporto`), so this window stays uniform. */
+ *  teams may field up to 1 Supporto, and the team-level `ensureOffense` guarantee (Task 3)
+ *  makes sure the SQUAD still threatens even if that Supporto never attacks. The
+ *  ≤1-Supporto cap and role-variety guarantee are enforced downstream after the team is
+ *  drawn (see `capSupporto`), so this window stays uniform. */
 export function budgetWindow(targetPer: number, count: number, spanMult = 3): Wizard[] {
   const sorted = [...WIZARDS].sort((a, b) => expectedPower(a as Wizard) - expectedPower(b as Wizard))
   const n = sorted.length
@@ -58,13 +58,20 @@ export function budgetWindow(targetPer: number, count: number, spanMult = 3): Wi
 }
 
 /** Enforces "≤1 Supporto, alongside other roles" (enemy elite/boss only, USER DECISION
- *  2026-07-07): if the drafted `team` has ≥2 Supporto, keep the strongest one and
- *  replace every extra with the next-best NON-Supporto candidate from `window`
- *  (deterministic — reuses the rng that's already threaded through, no fresh draw
- *  source). `window` must be the same pool the team was drawn from, so replacements
- *  stay power-consistent with what was already on offer. */
+ *  2026-07-07, unconditional — no exceptions): if the drafted `team` has ≥2 Supporto,
+ *  keep the strongest one and replace every extra with the next-best NON-Supporto
+ *  candidate from `window` (deterministic — reuses the rng that's already threaded
+ *  through, no fresh draw source). `window` must be the same pool the team was drawn
+ *  from, so replacements stay power-consistent with what was already on offer.
+ *
+ *  `themedPool` (themedEnemyTeam only): every window member matching the pack's realized
+ *  theme. Best-effort only — prefer a replacement that ALSO matches the theme (keeps an
+ *  elite pack's synergy member-count intact even after the cap trims a themed Supporto);
+ *  falls back to any non-Supporto candidate if no themed one is available. This never
+ *  overrides the cap itself — role:Supporto is excluded from elite theme eligibility
+ *  precisely because it can't be honored under an unconditional ≤1-Supporto rule. */
 function capSupporto(
-  rng: Rng, team: DraftedWizard[], window: Wizard[], preferOffense: boolean, guaranteeOffense: boolean,
+  rng: Rng, team: DraftedWizard[], window: Wizard[], themedPool: Wizard[] = [],
 ): DraftedWizard[] {
   const supportoSlots = team
     .map((d, i) => ({ d, i }))
@@ -76,9 +83,14 @@ function capSupporto(
   const replaceIdxs = byPowerDesc.slice(1).map(x => x.i)
 
   const usedIds = new Set(team.map(d => d.wizard.id))
-  const candidates = window
-    .filter(w => w.role !== 'Supporto' && !usedIds.has(w.id))
+  const themedIds = new Set(themedPool.map(w => w.id))
+  const themedCandidates = window
+    .filter(w => w.role !== 'Supporto' && !usedIds.has(w.id) && themedIds.has(w.id))
     .sort((a, b) => expectedPower(b) - expectedPower(a))
+  const otherCandidates = window
+    .filter(w => w.role !== 'Supporto' && !usedIds.has(w.id) && !themedIds.has(w.id))
+    .sort((a, b) => expectedPower(b) - expectedPower(a))
+  const candidates = [...themedCandidates, ...otherCandidates]
 
   const out = [...team]
   let ci = 0
@@ -86,23 +98,55 @@ function capSupporto(
     const replacement = candidates[ci]
     ci += 1
     if (!replacement) continue // window exhausted — leave the extra Supporto rather than shrink the team
-    out[idx] = draftWizard(rng, replacement, false, preferOffense, guaranteeOffense)
+    out[idx] = draftWizard(rng, replacement, false)
     usedIds.add(replacement.id)
   }
   return out
 }
 
+/** Garanzia a livello di SQUADRA (sostituisce il vecchio bias offensivo per-unità):
+ *  una squadra nemica deve schierare ≥1 unità la cui firma fa danno, altrimenti è una
+ *  vittoria gratis. Se nessuna lo fa, rimpiazza l'unità più debole con il miglior
+ *  candidato dalla `window` la cui firma è offensiva. I Supporti restano Supporti:
+ *  non si forza mai un attacco su un ruolo non-offensivo.
+ *
+ *  `protectedIds` (themedEnemyTeam only): wizard ids that must NOT be the one replaced —
+ *  the members that realize an elite pack's forced synergy (design rule: elite packs
+ *  always field an active synergy). Replacing a protected member for an offense-only
+ *  swap could silently drop the team below the synergy's member threshold. If every
+ *  team slot happens to be protected, falls back to the plain weakest-of-team pick
+ *  (best effort — this only matters for the vanishingly rare all-protected team). */
+function ensureOffense(
+  rng: Rng, team: DraftedWizard[], window: Wizard[], protectedIds: Set<string> = new Set(),
+): DraftedWizard[] {
+  if (team.some(d => spellIsOffensive(d.spell))) return team
+  const usedIds = new Set(team.map(d => d.wizard.id))
+  const candidate = window
+    .filter(w => !usedIds.has(w.id) && spellIsOffensive(SPELL_BY_ID[w.spellPool[0]!]))
+    .sort((a, b) => expectedPower(b) - expectedPower(a))[0]
+  if (!candidate) return team
+  const replaceable = team.map((_, i) => i).filter(i => !protectedIds.has(team[i]!.wizard.id))
+  const pool = replaceable.length > 0 ? replaceable : team.map((_, i) => i)
+  const weakestIdx = pool.reduce((wi, i) => (powerOf(team[i]!) < powerOf(team[wi]!) ? i : wi), pool[0]!)
+  const out = [...team]
+  out[weakestIdx] = draftWizard(rng, candidate as Wizard, false)
+  return out
+}
+
 function pickTowardBudget(
-  rng: Rng, targetPer: number, count: number, preferOffense = false, guaranteeOffense = false,
+  rng: Rng, targetPer: number, count: number, capSupp = false,
 ): DraftedWizard[] {
   const window = budgetWindow(targetPer, count)
   const pool = rng.shuffle(window)
   const out: DraftedWizard[] = []
-  for (const w of pool) out.push(draftWizard(rng, w as Wizard, false, preferOffense, guaranteeOffense))
+  for (const w of pool) out.push(draftWizard(rng, w as Wizard, false))
   const team = out.sort((a, b) => powerOf(b) - powerOf(a)).slice(0, count)
-  // Elite/boss (guaranteeOffense) ⇒ cap Supporto at ≤1 so the fielded roster keeps role
-  // variety (USER DECISION 2026-07-07: Supporto may appear, but never dominate/mono-field).
-  return guaranteeOffense ? capSupporto(rng, team, window, preferOffense, guaranteeOffense) : team
+  // Elite/boss (capSupp) ⇒ cap Supporto at ≤1 so the fielded roster keeps role variety
+  // (USER DECISION 2026-07-07: Supporto may appear, but never dominate/mono-field). EVERY
+  // team (not just elite/boss) then gets the team-level offense guarantee — a squad that
+  // never attacks is a free win regardless of kind.
+  const capped = capSupp ? capSupporto(rng, team, window) : team
+  return ensureOffense(rng, capped, window)
 }
 
 export function generateEnemyTeam(rng: Rng, targetBudget: number): DraftedWizard[] {
@@ -116,10 +160,11 @@ export function generateBossTeam(rng: Rng, boss: BossDef): DraftedWizard[] {
   // max 5 avversari, bosses included). `boss.unitCount` sits between those bounds.
   const size = Math.min(BALANCE.campaignB.maxEnemies, Math.max(3, boss.unitCount ?? BALANCE.draft.teamSize))
   const perUnit = boss.budget / size
-  // Every boss unit (not just the leader) gets the strict offensive guarantee: a
-  // boss/elite enemy that can never damage the player is a free win (see
-  // guaranteeOffensiveSpell in statRoll.ts).
-  const team = pickTowardBudget(rng, perUnit, size, true, true)
+  // Every boss/elite team gets the team-level offense guarantee (ensureOffense, wired
+  // via pickTowardBudget's capSupp path): a boss squad that can never damage the player
+  // is a free win. Individual units (including a fielded Supporto leader) are never
+  // forced onto an attack — only the team as a whole is guaranteed to threaten.
+  const team = pickTowardBudget(rng, perUnit, size, true)
   let leader: DraftedWizard
   if (boss.bossWizardId) {
     const named = WIZARDS.find(w => w.id === boss.bossWizardId)
@@ -128,7 +173,7 @@ export function generateBossTeam(rng: Rng, boss: BossDef): DraftedWizard[] {
     if (idx < 0) {
       // replace the weakest unit with the guaranteed boss
       const weakest = team.reduce((w, d, i) => (powerOf(d) < powerOf(team[w]!) ? i : w), 0)
-      team[weakest] = draftWizard(rng, named as Wizard, false, true, true)
+      team[weakest] = draftWizard(rng, named as Wizard, false)
       idx = weakest
     }
     leader = team[idx]!
@@ -139,9 +184,6 @@ export function generateBossTeam(rng: Rng, boss: BossDef): DraftedWizard[] {
   leader.maxHp = leader.stats.hp
   const forced = boss.forcedSpellIds?.[0]
   if (forced && SPELL_BY_ID[forced]) leader.spell = SPELL_BY_ID[forced]!
-  // The forced-spell override runs AFTER the per-unit guarantee above, so re-check:
-  // a forced spell that happens to be non-offensive must not undo the guarantee.
-  if (!spellIsOffensive(leader.spell)) leader.spell = guaranteeOffensiveSpell(leader.wizard, leader.spell)
   return team
 }
 
@@ -203,8 +245,15 @@ export function themedEnemyTeam(rng: Rng, opts: {
   // coordinated squad). Force ≥2 themed members drawn from a HOUSE or ROLE theme —
   // those activate at their 2-member tier, unlike tag themes (weasley/order/… need 3).
   // Regular/boss packs keep the softer, strength-scaled theming.
+  //
+  // role:Supporto is excluded from elite eligibility (Task 3): it structurally conflicts
+  // with the ≤1-Supporto cap (USER DECISION 2026-07-07, capSupporto below) — a "2 Supporto"
+  // synergy can never be realized on a team that's also capped to ≤1 Supporto, so trying to
+  // force it would mean picking one hard rule over the other. Simplest resolution: it's
+  // just never offered as an elite theme, so both rules hold unconditionally.
   const forceSynergy = kind === 'elite'
-  const eligible = (t: Theme) => !forceSynergy || t.id.startsWith('house:') || t.id.startsWith('role:')
+  const eligible = (t: Theme) =>
+    !forceSynergy || ((t.id.startsWith('house:') || t.id.startsWith('role:')) && t.id !== 'role:Supporto')
   const minMembers = forceSynergy ? 2 : 0
 
   // Pick a realizable theme: try themes in turn until one has ≥2 members in the
@@ -250,14 +299,22 @@ export function themedEnemyTeam(rng: Rng, opts: {
     rest = rest.filter(x => x.id !== w.id)
   }
 
-  // Enemy packs prefer offensive spells so they actually deal damage (a squad of
-  // passive supports/controllers that never attacks feels toothless). Elite/boss packs
-  // get the STRICT guarantee on top: a degenerate zero-damage elite/boss enemy is a
-  // free win, so those kinds can never end up with a non-offensive active.
-  const guaranteeOffense = kind === 'elite' || kind === 'boss'
-  const draftedTeam = chosen.map(w => draftWizard(drawRng, w, false, true, guaranteeOffense))
-  // Elite/boss ⇒ cap Supporto at ≤1 (USER DECISION 2026-07-07: keep role variety, never a
-  // mono/heavy-Supporto squad). window still holds the full candidate pool for replacements.
-  const team = guaranteeOffense ? capSupporto(drawRng, draftedTeam, window, true, guaranteeOffense) : draftedTeam
+  // The members that realize the forced synergy (the first `wantThemed` picks above) must
+  // survive any later offense-only swap, or an elite pack could silently drop below its
+  // synergy's member threshold (design rule: elite packs always field an active synergy).
+  const themedIds = new Set(chosen.slice(0, wantThemed).map(w => w.id))
+
+  const draftedTeam = chosen.map(w => draftWizard(drawRng, w, false))
+  // Elite/boss ⇒ cap Supporto at ≤1, unconditionally (USER DECISION 2026-07-07: keep role
+  // variety, never a mono/heavy-Supporto squad). Pass the full themed candidate pool so a
+  // trimmed Supporto is best-effort replaced by a same-theme member when one's available
+  // (keeps the synergy count intact without breaking the cap). window still holds the
+  // full candidate pool as the ultimate fallback.
+  const capped = (kind === 'elite' || kind === 'boss')
+    ? capSupporto(drawRng, draftedTeam, window, themed)
+    : draftedTeam
+  // EVERY kind (not just elite/boss) then gets the team-level offense guarantee: a squad
+  // that never attacks is a free win regardless of kind (see ensureOffense above).
+  const team = ensureOffense(drawRng, capped, window, themedIds)
   return { team, themeId: realized ? realized.id : null }
 }
