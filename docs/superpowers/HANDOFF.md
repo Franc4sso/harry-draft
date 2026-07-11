@@ -22,6 +22,23 @@ Spec/piano: `docs/superpowers/{specs,plans}/2026-07-10-endless-draft-parity*`.
   pool campagna stantio può filtrare). `endlessReplayParity` resta 0-mismatch (20 + 30 seed Duo).
 - `starterOffer`/`chooseStarters` restano definiti in `runEngine.ts` (li usa solo il balance harness).
 
+## Duo — leggibilità sulle carte 2026-07-11 (SHIPPED + merged su master)
+
+Le carte ora spiegano **quali Duo alimenta un mago**. Build subagent-driven (5 task TDD + review
+finale opus = ready-to-merge). **1380 test verdi, tsc pulito.** Spec/piano:
+`docs/superpowers/{specs,plans}/2026-07-11-duo-card-discoverability*`.
+- **Helper puri** (`game/engine/duos.ts`): `wizardDuoSignals` (segnali del mago che alimentano un Duo
+  *spedito* — regola di onestà: niente chip per segnali senza Duo, es. attaccante), `duosForSignal`
+  (per il tooltip), `previewDuos(team, relics, candidate)` (completa/avanza, usa `livingOf`).
+- **UI**: `DuoSignalMarks` (segni per-segnale **icona-only** + tooltip "‹Segnale› → alimenta: ‹Duo›")
+  sul poster-card (draft) e sulla row-card (team/recruit); **nastro contestuale** sui candidati di
+  draft/recruit (oro "⚡ Completa 「…」" / verde "→ verso 「…」"). Combat busts intatti.
+- **Icona-only deliberato**: `SIGNAL_LABEL.taunt='Tank'` collide col test "niente parola-ruolo sulle
+  carte" → segni icona-only + tooltip (coerente con la preferenza "leggero"). OPZIONE se vuoi le
+  etichette sui tag-segnali: rinomina taunt→'Provocazione' e passa a non-compact.
+- **Recruit onesto a squadra piena**: `previewDuos` usa `baseTeam` (squadra meno il rimpiazzato), così
+  il nastro non promette un Duo che lo swap non attiverebbe.
+
 ## Duo Combos 2026-07-10 (archetipi/combo — SHIPPED + merged su master)
 
 La direzione "archetipi/combo" è stata realizzata come **Duo Combos**: 6 poteri stile Hades che si
