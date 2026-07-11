@@ -164,5 +164,24 @@ describe('RecruitScreen', () => {
         expect(row.querySelector('[data-testid="duo-ribbon"]')).toBeNull()
       }
     })
+
+    // Honesty on a FULL team: recruiting SWAPS OUT the weakest member, so the preview must run
+    // against team-minus-replaced, not the raw team. Here theodore (a 2nd veleno holder) is
+    // forced weakest ⇒ it's the default replace target. Team = [pansy(veleno), theodore(veleno,
+    // weakest), draco(esecuzione)], full (teamMax=3). Offering marcus (esecuzione) would, as a
+    // PURE ADDITION, light esecuzione (draco+marcus=2) alongside veleno(2) ⇒ falsely "complete"
+    // cancrena. But the swap removes theodore ⇒ veleno drops to 1 ⇒ cancrena does NOT activate,
+    // so no completes ribbon must be shown.
+    it('does NOT falsely show a completes ribbon when the swapped-out member holds the Duo signal', () => {
+      const onPick = vi.fn()
+      // Force theodore to be the weakest (default replace target) with rock-bottom stats.
+      const weakTheodore = { ...theodore, stats: { hp: 1, atk: 1, def: 1, spd: 1 } }
+      const fullTeam = [pansy, weakTheodore, draco]
+      render(<RecruitScreen offer={[marcus]} team={fullTeam} teamMax={fullTeam.length} onPick={onPick} relics={[]} />)
+      const tile = screen.getByTestId(`recruit-${marcus.wizard.id}`)
+      const ribbon = tile.querySelector('[data-testid="duo-ribbon"]')
+      // No completes ribbon for cancrena — the swap removed the 2nd veleno holder.
+      if (ribbon) expect(ribbon.getAttribute('data-kind')).not.toBe('completes')
+    })
   })
 })

@@ -127,7 +127,11 @@ export function RecruitScreen({
           onPointerLeave={() => setConsidered(null)}
         >
           {offer.map(d => {
-            const duoPreview = previewDuos(team, relics, d)
+            // Preview against baseTeam (team minus the member being swapped out when full),
+            // NOT the raw team — otherwise a full-squad recruit falsely claims "Completa" for a
+            // Duo whose 2nd signal-holder is the very member being replaced. Mirrors the synergy
+            // rail's own baseTeam logic so the ribbon stays consistent with it as replaceId changes.
+            const duoPreview = previewDuos(baseTeam, relics, d)
             return (
               <StaggerItem
                 key={d.wizard.id}
