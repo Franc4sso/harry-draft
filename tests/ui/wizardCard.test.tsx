@@ -12,6 +12,8 @@ import { abilityFor } from '@/lib/wizardAbilities'
 const harry = () => draftWizard(createRng(1), WIZARD_BY_ID['harry']!)
 // Tank fixture (role === 'Tank') for the poster-layout render tests below.
 const draftedTank = () => draftWizard(createRng(1), WIZARD_BY_ID['mcgonagall']!)
+// Veleno-tagged fixture (feeds the Duo signal system) for the signal-marks/ribbon tests below.
+const velenoDrafted = () => draftWizard(createRng(1), WIZARD_BY_ID['pansy']!)
 
 describe('WizardCardColumn (poster layout, the LIVE draft card)', () => {
   it('renders the role badge, spell block, name heading and all four stat labels', () => {
@@ -79,5 +81,32 @@ describe('WizardCardColumn (poster layout, the LIVE draft card)', () => {
     const shiny = { ...base, shiny: { traitId: 'furia' } }
     render(<WizardCardColumn drafted={shiny} />)
     expect(screen.getByText(TRAIT_BY_ID['furia']!.name)).toBeInTheDocument()
+  })
+
+  it('shows a Veleno signal mark for a veleno mage', () => {
+    render(<WizardCardColumn drafted={velenoDrafted()} />)
+    expect(screen.getByTestId('duo-signal-marks')).toBeInTheDocument()
+  })
+
+  it('shows a gold Completa ribbon when duoPreview completes a Duo', () => {
+    render(
+      <WizardCardColumn
+        drafted={velenoDrafted()}
+        duoPreview={{ completes: [{ id: 'cancrena', name: 'Cancrena', desc: '', signals: ['veleno', 'esecuzione'] }], advances: [] }}
+      />,
+    )
+    const ribbon = screen.getByTestId('duo-ribbon')
+    expect(ribbon).toHaveAttribute('data-kind', 'completes')
+    expect(ribbon).toHaveTextContent('Cancrena')
+  })
+
+  it('shows a green verso cue when duoPreview only advances', () => {
+    render(
+      <WizardCardColumn
+        drafted={velenoDrafted()}
+        duoPreview={{ completes: [], advances: [{ id: 'muro-vivente', name: 'Muro Vivente', desc: '', signals: ['scudirigen', 'taunt'] }] }}
+      />,
+    )
+    expect(screen.getByTestId('duo-ribbon')).toHaveAttribute('data-kind', 'advances')
   })
 })
