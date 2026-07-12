@@ -89,4 +89,48 @@ describe('traccia dei Duo nel log', () => {
     expect(ko[0]!.flags).toContain('duo')
     expect(ko[0]!.flags).toContain('kill') // il flag esistente non va perso
   })
+
+  it('MIASMA emette una riga quando il veleno salta a un altro nemico', () => {
+    // Due nemici: uno avvelenato che muore, uno vivo che eredita il veleno.
+    const left = [dw('vel', 'Attaccante', 'serpensortia', { atk: 30 })]
+    const right = [
+      dw('dying', 'Attaccante', 'base_attack', { hp: 30, atk: 2, spd: 1 }),
+      dw('heir', 'Attaccante', 'base_attack', { hp: 300, atk: 2, spd: 1 }),
+    ]
+
+    const res = simulateBattle(left, right, createRng('duo-miasma'), { leftDuos: duo('miasma') })
+
+    const spread = res.log.filter(e => e.duoId === 'miasma')
+    expect(spread.length).toBeGreaterThan(0)
+    expect(spread[0]!.flags).toContain('duo')
+    expect(spread[0]!.type).toBe('system')
+    expect(spread[0]!.value).toBeUndefined() // niente value: non si muovono HP (parità replay)
+  })
+
+  it('UNTORE emette una riga quando una cura sputa veleno su un nemico', () => {
+    const left = [
+      dw('sup', 'Supporto', 'episkey'),
+      dw('tank', 'Tank', 'base_attack', { hp: 200 }),
+    ]
+    const right = [dw('foe', 'Attaccante', 'base_attack', { hp: 300, atk: 25 })]
+
+    const res = simulateBattle(left, right, createRng('duo-untore'), { leftDuos: duo('untore') })
+
+    const spits = res.log.filter(e => e.duoId === 'untore')
+    expect(spits.length).toBeGreaterThan(0)
+    expect(spits[0]!.flags).toContain('duo')
+    expect(spits[0]!.targetSide).toBe('right')
+    expect(spits[0]!.value).toBeUndefined()
+  })
+
+  it('MURO VIVENTE non emette NESSUNA traccia — scelta di design, non dimenticanza', () => {
+    // Muro Vivente impedisce (le retrovie non sono bersagliabili): non esiste un istante
+    // da annunciare. Vive solo come pill persistente in arena. Vedi la spec, §4.
+    const left = [dw('tank', 'Tank', 'base_attack', { hp: 200 }), dw('att', 'Attaccante', 'base_attack')]
+    const right = [dw('foe', 'Attaccante', 'base_attack', { hp: 120 })]
+
+    const res = simulateBattle(left, right, createRng('duo-muro'), { leftDuos: duo('muro-vivente') })
+
+    expect(res.log.some(e => e.duoId === 'muro-vivente')).toBe(false)
+  })
 })

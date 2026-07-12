@@ -115,6 +115,17 @@ export function simulateBattle(
     return snap
   }
   const pushLog = (entry: LogEntry) => { log.push(entry); snapshots.push(captureSnapshot()) }
+  // MIASMA/UNTORE: le righe di log delle propagazioni. NESSUN `value`: qui si muovono stack
+  // di veleno, non HP — e buildReplay ricostruisce gli HP proprio dai `value` del log, quindi
+  // un value valorizzato farebbe divergere il replay dalla simulazione.
+  const logSpread = (dead: BattleUnit, t: number, spread: { recipient: BattleUnit; stacks: number } | null) => {
+    if (!spread) return
+    pushLog({
+      turn: t, actorId: dead.wizard.id, actorSide: dead.side, action: 'Miasma',
+      targetId: spread.recipient.wizard.id, targetSide: spread.recipient.side,
+      type: 'system', flags: ['duo'], duoId: 'miasma',
+    })
+  }
   // Score keyed by "side:wizard.id" to avoid merging same-id wizards on opposite teams
   const score: Record<string, number> = {}
   const kills = { left: 0, right: 0 }
@@ -284,7 +295,14 @@ export function simulateBattle(
         // enemy (deterministic single rng.pick; no-op if none left). Credited to the healer
         // (the acting caster), not the healed unit — mirrors how score credits `actor`.
         if (untore && realTarget.side === 'left') {
-          maybeSpitPoison(R, rng, `${actor.side}:${actor.wizard.id}`)
+          const bitten = maybeSpitPoison(R, rng, `${actor.side}:${actor.wizard.id}`)
+          if (bitten) {
+            pushLog({
+              turn, actorId: actor.wizard.id, actorSide: actor.side, action: 'Untore',
+              targetId: bitten.wizard.id, targetSide: bitten.side,
+              type: 'system', flags: ['duo'], duoId: 'untore',
+            })
+          }
         }
       }
       if (entry.value) {
@@ -320,7 +338,7 @@ export function simulateBattle(
         }
         // MIASMA: after the death is fully resolved, jump the dead enemy's veleno stacks
         // to one random living enemy (deterministic single rng.pick; no-op if none left).
-        if (miasma && realTarget.side === 'right') maybeSpreadPoison(realTarget, R, rng)
+        if (miasma && realTarget.side === 'right') logSpread(realTarget, turn, maybeSpreadPoison(realTarget, R, rng))
         // MIETITORE: a direct-hit kill by a `reaper`-flagged player unit grants the killer one
         // stack of raccolto (+6 atk, rest of battle). Scoped to direct-hit kills only — `actor`
         // is the known killer here; DoT/fatigue kills (elsewhere in this file) have no attacker
@@ -341,7 +359,7 @@ export function simulateBattle(
           if (ally.alive && ally !== actor) fireReactive('onAllyDeath', ally, turn)
         }
         // MIASMA: recoil self-kill can drop an enemy caster too.
-        if (miasma && actor.side === 'right') maybeSpreadPoison(actor, R, rng)
+        if (miasma && actor.side === 'right') logSpread(actor, turn, maybeSpreadPoison(actor, R, rng))
       }
       // onHpThreshold: HP of the target changed this action.
       checkThreshold(realTarget, turn)
@@ -378,7 +396,7 @@ export function simulateBattle(
         }
         // MIASMA: a DoT-tick death (often veleno itself) also spreads — this operates on the
         // already-resolved death and does not recurse into any further deaths it might cause.
-        if (miasma && u.side === 'right') maybeSpreadPoison(u, R, rng)
+        if (miasma && u.side === 'right') logSpread(u, turn, maybeSpreadPoison(u, R, rng))
       }
       if (u.alive && regen[u.side] > 0) {
         const before = u.hp
@@ -423,7 +441,7 @@ export function simulateBattle(
               if (ally.alive && ally !== u) fireReactive('onAllyDeath', ally, turn)
             }
             // MIASMA: fatigue (anti-stall) kills also spread.
-            if (miasma && u.side === 'right') maybeSpreadPoison(u, R, rng)
+            if (miasma && u.side === 'right') logSpread(u, turn, maybeSpreadPoison(u, R, rng))
           }
         }
       }

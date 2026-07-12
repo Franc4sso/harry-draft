@@ -6,12 +6,15 @@ import { applyStatus } from '@/game/engine/status'
  *  enemy with a dose of veleno. Deterministic by construction: the candidate pool is sorted by
  *  wizard.id before the single `rng.pick` draw, and NO draw happens when the pool is empty (a
  *  phantom draw would shift the whole downstream rng stream and desync replay). Mirrors
- *  `spreadOnDeath.ts`'s pick shape 1:1. */
-export function maybeSpitPoison(enemies: BattleUnit[], rng: Rng, sourceId: string): void {
+ *  `spreadOnDeath.ts`'s pick shape 1:1.
+ *
+ *  Returns the enemy it hit (or `null`) so the caller can log it — the spit used to be silent. */
+export function maybeSpitPoison(enemies: BattleUnit[], rng: Rng, sourceId: string): BattleUnit | null {
   const pool = enemies
     .filter(u => u.alive)
     .sort((a, b) => a.wizard.id.localeCompare(b.wizard.id))
-  if (pool.length === 0) return // no rng draw when there's no candidate (parity)
+  if (pool.length === 0) return null // no rng draw when there's no candidate (parity)
   const recipient = rng.pick(pool)
   applyStatus(recipient, 'veleno', { sourceId })
+  return recipient
 }
