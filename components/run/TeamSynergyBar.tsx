@@ -1,7 +1,7 @@
 'use client'
 import type { ReactNode } from 'react'
 import type { DraftedWizard, ActiveSynergy, ActiveRelic, Synergy, House, Role } from '@/types'
-import { DuoBar } from '@/components/run/DuoBar'
+import { DuoPanel } from '@/components/run/DuoPanel'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { Chip } from '@/components/ui/Chip'
 import { RoleIcon } from '@/components/cards/RoleIcon'
@@ -207,7 +207,7 @@ export function TeamSynergyBar({
           )}
         </div>
 
-        <DuoBar team={team} relics={relics} />
+        <DuoPanel team={team} relics={relics} />
       </div>
     )
   }
