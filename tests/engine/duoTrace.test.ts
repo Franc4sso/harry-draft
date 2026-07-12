@@ -4,6 +4,7 @@ import { createRng } from '@/game/engine/rng'
 import type { ActiveDuo, DraftedWizard, Role } from '@/types'
 import { DUO_BY_ID } from '@/data/duos'
 import { SPELL_BY_ID } from '@/data/spells'
+import { STATUS_BY_ID } from '@/data/statuses'
 
 /** Un mago pronto al combattimento, con la magia passata come firma.
  *  Adattato dal pattern `unit()`/DraftedWizard usato in
@@ -87,6 +88,28 @@ describe('traccia dei Duo nel log', () => {
     expect(ko[0]!.duoId).toBe('mietitore')
     expect(ko[0]!.flags).toContain('duo')
     expect(ko[0]!.flags).toContain('kill') // il flag esistente non va perso
+  })
+
+  it('MIETITORE smette di marchiare la riga KO una volta raggiunto il tetto degli stack di raccolto', () => {
+    // Lo stesso carnefice fa più uccisioni di quante `raccolto` ne possa accumulare (tetto =
+    // maxStacks di `raccolto`, letto da data/statuses.ts): le righe KO devono continuare ad
+    // esserci una per nemico morto, ma il marchio duoId si spegne appena il tetto è pieno —
+    // willReap smette di prevedere un atterraggio perché applyStatus sarebbe ormai un no-op.
+    const cap = STATUS_BY_ID['raccolto']!.maxStacks!
+    const killCount = cap + 2 // più uccisioni del tetto, cosi il marchio si spegne davvero
+    const left = [dw('att', 'Attaccante', 'base_attack', { atk: 60, hp: 500 })]
+    const right = Array.from(
+      { length: killCount },
+      (_, i) => dw(`foe${i}`, 'Attaccante', 'base_attack', { hp: 30, atk: 2, spd: 1 }),
+    )
+
+    const res = simulateBattle(left, right, createRng('duo-reap-cap'), { leftDuos: duo('mietitore') })
+
+    const ko = res.log.filter(e => e.action === 'KO' && e.targetSide === 'right')
+    expect(ko.length).toBe(killCount) // tutte le uccisioni avvengono, tetto o no
+
+    const marked = ko.filter(e => e.duoId === 'mietitore')
+    expect(marked.length).toBe(cap) // ma solo le prime `cap` sono marchiate
   })
 
   it('MIASMA emette una riga quando il veleno salta a un altro nemico', () => {
