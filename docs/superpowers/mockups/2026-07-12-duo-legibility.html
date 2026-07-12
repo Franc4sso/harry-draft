@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Combo Duo — redesign</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  :root {
+    --bg: #0a0712; --panel: #17112a; --panel-2: #1e1738; --raise: #241b41;
+    --hair: rgba(217,182,95,0.22); --hair-soft: rgba(255,255,255,0.08);
+    --ink: #ece9f6; --ink-mute: #a29fb8; --ink-faint: #6f6b86;
+    --gold: #d9b65f; --gold-hi: #f6ecc4; --gold-deep: #a9802f; --green: #3ecb6a;
+    --shadow: 0 22px 46px -14px rgba(0,0,0,0.85);
+    --serif: "Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+    --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "SF Mono", Consolas, monospace;
+  }
+  body {
+    background:
+      radial-gradient(120% 60% at 50% -6%, rgba(179,85,255,0.10), transparent 58%),
+      radial-gradient(80% 50% at 88% 4%, rgba(255,138,122,0.08), transparent 52%),
+      var(--bg);
+    color: var(--ink); font-family: var(--sans); line-height: 1.55;
+    padding: clamp(20px,5vw,60px) clamp(16px,5vw,40px) 80px;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; }
+  .eyebrow { font-family: var(--mono); font-size: 12px; letter-spacing: 0.22em; text-transform: uppercase; color: var(--gold); margin: 0 0 14px; }
+  h1 { font-family: var(--serif); font-weight: 800; font-size: clamp(30px,6vw,52px); line-height: 1.02; margin: 0 0 16px; text-wrap: balance; letter-spacing: -0.01em; }
+  h1 .thin { color: var(--ink-mute); font-style: italic; font-weight: 500; }
+  .lede { font-size: clamp(15px,2vw,18px); color: var(--ink-mute); max-width: 62ch; margin: 0; }
+  section { margin-top: clamp(42px,7vw,72px); }
+  .shead { display: flex; align-items: baseline; gap: 14px; margin: 0 0 6px; flex-wrap: wrap; }
+  .snum { font-family: var(--mono); font-size: 13px; color: var(--gold-deep); }
+  h2 { font-family: var(--serif); font-size: clamp(22px,3.2vw,30px); margin: 0; letter-spacing: -0.01em; }
+  .sub { color: var(--ink-mute); margin: 6px 0 24px; max-width: 64ch; font-size: 15px; }
+  .plate { background: linear-gradient(180deg, var(--panel-2), var(--panel)); border-radius: 18px; box-shadow: inset 0 0 0 1px var(--hair), inset 0 2px 0 rgba(255,255,255,0.05), var(--shadow); padding: clamp(16px,3vw,26px); }
+
+  /* ---- signal gem ---- */
+  .gem { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 5px 11px 5px 8px; font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+  .gem .ic { width: 20px; height: 20px; display: grid; place-items: center; border-radius: 50%; font-size: 12px; }
+  .gem.lit { box-shadow: inset 0 0 0 1px currentColor, 0 0 12px -2px currentColor; }
+  .gem.miss { color: var(--ink-faint) !important; box-shadow: inset 0 0 0 1.4px currentColor; border-style: dashed; background: transparent !important; opacity: 0.9; }
+  .gem.miss .ic { background: rgba(255,255,255,0.04); }
+  .plus { color: var(--ink-faint); font-weight: 700; font-size: 15px; }
+
+  /* ---- duo panel (the run sidebar, shown wide here) ---- */
+  .panelframe { max-width: 340px; }
+  .panelhead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .panelhead .t { font-size: 11px; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: var(--ink-mute); }
+  .panelhead .cnt { font-family: var(--mono); font-size: 11px; font-weight: 700; color: #1a1305; background: var(--gold); border-radius: 999px; padding: 1px 8px; }
+  .duo { border-radius: 14px; padding: 12px 13px; margin-bottom: 10px; position: relative; }
+  .duo.active { background: linear-gradient(180deg, rgba(217,182,95,0.16), rgba(217,182,95,0.06)); box-shadow: inset 0 0 0 1px rgba(217,182,95,0.5), 0 0 22px -8px rgba(217,182,95,0.6); }
+  .duo.near { background: rgba(62,203,106,0.05); box-shadow: inset 0 0 0 1px rgba(62,203,106,0.32); }
+  .duo.locked { background: rgba(255,255,255,0.02); box-shadow: inset 0 0 0 1px var(--hair-soft); opacity: 0.72; }
+  .duo .dtop { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; }
+  .duo .dname { font-family: var(--serif); font-weight: 800; font-size: 16px; }
+  .duo.active .dname { color: var(--gold-hi); }
+  .duo.near .dname { color: #cdEFd6; }
+  .duo.locked .dname { color: var(--ink-mute); }
+  .live { margin-left: auto; font-family: var(--mono); font-size: 9.5px; font-weight: 800; letter-spacing: 0.12em; color: #1a1305; background: var(--gold); border-radius: 5px; padding: 2px 6px; }
+  .recipe { display: flex; align-items: center; gap: 7px; flex-wrap: wrap; margin-bottom: 9px; }
+  .effect { font-size: 12.5px; line-height: 1.45; color: #d9cfae; }
+  .duo.near .effect, .duo.locked .effect { color: var(--ink-mute); }
+  .howto { display: flex; align-items: center; gap: 7px; margin-top: 9px; padding-top: 9px; box-shadow: inset 0 1px 0 var(--hair-soft); font-size: 11.5px; }
+  .howto .lbl { color: var(--green); font-weight: 700; }
+  .howto .val { color: var(--ink-mute); }
+
+  .callout { margin-top: 12px; display: flex; gap: 10px; align-items: flex-start; font-size: 13px; color: var(--ink-mute); }
+  .callout .b { color: var(--gold); font-size: 18px; line-height: 1; }
+
+  /* ---- battle ---- */
+  .arena { position: relative; border-radius: 16px; overflow: hidden; height: 340px; box-shadow: inset 0 0 0 1px var(--hair-soft); background: radial-gradient(80% 90% at 50% 120%, #2a1e3f, #0b0814 70%); }
+  .floor { position: absolute; inset: auto 0 0 0; height: 46%; background: linear-gradient(180deg, transparent, rgba(120,70,180,0.10)); }
+  .team { position: absolute; display: flex; gap: 18px; }
+  .team.left { left: 8%; top: 46%; }
+  .team.right { right: 8%; top: 30%; }
+  .unit { width: 44px; height: 44px; border-radius: 12px; box-shadow: inset 0 0 0 1px rgba(255,255,255,0.14), 0 8px 18px rgba(0,0,0,0.5); position: relative; }
+  .unit.foe { filter: saturate(0.9); }
+  .unit.dying { animation: fade 2.2s ease-in-out infinite; }
+  @keyframes fade { 0%,60%{opacity:1} 80%{opacity:0.25} 100%{opacity:1} }
+  .unit .hpbar { position: absolute; left: 4px; right: 4px; bottom: -8px; height: 4px; border-radius: 3px; background: rgba(0,0,0,0.5); }
+  .unit .hpbar i { display: block; height: 100%; border-radius: 3px; background: #ff5b5b; }
+  .cc { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); font-size: 13px; }
+
+  /* active-duo pills, persistent corner */
+  .duopills { position: absolute; left: 14px; top: 12px; display: flex; flex-direction: column; gap: 6px; z-index: 4; }
+  .dpill { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; font-size: 11px; font-weight: 800; color: var(--gold-hi); background: rgba(24,16,8,0.7); box-shadow: inset 0 0 0 1px rgba(217,182,95,0.45); border-radius: 999px; padding: 4px 10px 4px 7px; backdrop-filter: blur(3px); }
+  .dpill .dot { width: 14px; height: 14px; border-radius: 50%; display: grid; place-items: center; font-size: 9px; color: #1a1305; background: var(--gold); }
+
+  /* the telegraph */
+  .telegraph { position: absolute; left: 50%; top: 42%; transform: translate(-50%,-50%); text-align: center; z-index: 6; }
+  .tg-tag { font-family: var(--mono); font-size: 11px; letter-spacing: 0.34em; text-transform: uppercase; color: var(--gold); margin-bottom: 6px; }
+  .tg-name { font-family: var(--serif); font-weight: 800; font-size: clamp(26px,5vw,42px); color: #fff; letter-spacing: 0.01em; text-shadow: 0 0 26px rgba(217,182,95,0.7), 0 4px 18px rgba(0,0,0,0.9); }
+  .tg-name .spark { color: var(--gold-hi); }
+  .tg-sub { margin-top: 8px; font-size: 14px; font-weight: 700; color: #ffb0a4; }
+  .tg-glow { position: absolute; left: 50%; top: 42%; transform: translate(-50%,-50%); width: 460px; max-width: 90%; height: 180px; z-index: 5; background: radial-gradient(closest-side, rgba(217,182,95,0.22), transparent); filter: blur(6px); pointer-events: none; }
+  @media (prefers-reduced-motion: no-preference) {
+    .telegraph { animation: pop 2.6s ease-in-out infinite; }
+    @keyframes pop { 0%{opacity:0;transform:translate(-50%,-42%) scale(0.9)} 12%{opacity:1;transform:translate(-50%,-50%) scale(1)} 70%{opacity:1} 92%{opacity:0;transform:translate(-50%,-54%) scale(1.02)} 100%{opacity:0} }
+  }
+
+  /* ---- cards + legend ---- */
+  .twocol { display: grid; grid-template-columns: 250px 1fr; gap: 26px; align-items: start; }
+  @media (max-width: 720px){ .twocol{ grid-template-columns:1fr; } }
+  .minicard { width: 230px; border-radius: 16px; overflow: hidden; box-shadow: 0 0 0 2px var(--gold-deep), 0 0 0 3px rgba(0,0,0,0.7), var(--shadow); background: linear-gradient(180deg, rgba(179,85,255,0.12), #130f22 46%, #0c0917); }
+  .minihero { height: 120px; background: radial-gradient(80% 60% at 50% 14%, rgba(179,85,255,0.5), transparent 66%), linear-gradient(160deg,#2c2247,#0e0b1a); position: relative; }
+  .minihero::after{ content:""; position:absolute; inset:0; background:linear-gradient(180deg,transparent 40%,rgba(6,5,11,0.7) 80%,#130f22); }
+  .mininame{ position:absolute; left:12px; bottom:8px; font-family:var(--serif); font-weight:800; font-size:19px; color:#fff; text-shadow:0 3px 12px rgba(0,0,0,0.9); }
+  .minibody{ padding: 11px 12px 13px; }
+  .marks{ display:flex; gap:6px; flex-wrap:wrap; }
+  .mark{ display:inline-flex; align-items:center; gap:5px; border-radius:999px; padding:3px 9px 3px 6px; font-size:11px; font-weight:700; }
+  .mark .ic{ width:16px; height:16px; display:grid; place-items:center; border-radius:50%; font-size:10px; }
+  .feeds{ margin-top:8px; font-size:10.5px; color:var(--ink-faint); }
+
+  .legend{ display:grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap:10px; }
+  .leg{ display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:12px; background:rgba(255,255,255,0.02); box-shadow: inset 0 0 0 1px var(--hair-soft); }
+  .leg .ic{ width:26px; height:26px; flex:none; display:grid; place-items:center; border-radius:8px; font-size:14px; }
+  .leg .nm{ font-weight:800; font-size:13px; }
+  .leg .how{ font-size:11px; color:var(--ink-mute); }
+  .leg .grp{ margin-left:auto; font-family:var(--mono); font-size:9px; letter-spacing:0.1em; text-transform:uppercase; color:var(--ink-faint); }
+
+  .note { margin-top: 42px; padding: 18px 20px; border-radius: 14px; background: rgba(217,182,95,0.06); box-shadow: inset 0 0 0 1px var(--hair); color: var(--ink-mute); font-size: 14px; }
+  .note b { color: var(--ink); }
+  .foot { margin-top: 38px; color: var(--ink-faint); font-size: 12px; font-family: var(--mono); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <p class="eyebrow">Combo Duo · redesign proposta</p>
+  <h1>Le Combo Duo, <span class="thin">che finalmente si capiscono.</span></h1>
+  <p class="lede">Sei poteri che si accendono da soli quando la squadra combina 2 "segnali". Oggi scattano in silenzio e vivono in una barra minuscola. Questa proposta le <b>insegna</b> — con un pannello a ricetta ("come accendere") e un telegrafo in battaglia quando scattano.</p>
+
+  <!-- 01 PANEL -->
+  <section>
+    <div class="shead"><span class="snum">01</span><h2>Il pannello Duo (nel run)</h2></div>
+    <p class="sub">Ogni Duo è una ricetta a 2 segnali. Acceso = gemma luminosa; mancante = gemma tratteggiata con <b>come accenderla</b>. Attive in alto, "a un passo" nel mezzo, il resto sbiadito.</p>
+    <div class="plate panelframe">
+      <div class="panelhead"><span class="t">Combo Duo</span><span class="cnt" id="cnt">1 attiva</span></div>
+      <div id="panel"></div>
+      <div class="callout"><span class="b">✦</span><span>La differenza chiave: sotto ogni Duo "a un passo" leggi <b>esattamente</b> cosa aggiungere per accenderla — niente più "manca: Scudo/Rigen" senza spiegazione.</span></div>
+    </div>
+  </section>
+
+  <!-- 02 BATTLE -->
+  <section>
+    <div class="shead"><span class="snum">02</span><h2>In battaglia</h2></div>
+    <p class="sub">Il pezzo che oggi manca del tutto: quando una Duo scatta, un telegrafo la nomina e dice cos'ha fatto. In alto a sinistra, le Duo attive restano sempre visibili. Così colleghi causa → effetto e la impari giocando.</p>
+    <div class="plate">
+      <div class="arena">
+        <div class="floor"></div>
+        <div class="duopills" id="duopills"></div>
+        <div class="team left" id="tleft"></div>
+        <div class="team right" id="tright"></div>
+        <div class="tg-glow"></div>
+        <div class="telegraph">
+          <div class="tg-tag">Combo Duo</div>
+          <div class="tg-name"><span class="spark">⚡</span> Esecuzione a Freddo</div>
+          <div class="tg-sub">Theodore N. giustiziato all'istante!</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 03 CARDS + LEGEND -->
+  <section>
+    <div class="shead"><span class="snum">03</span><h2>Sulle card &amp; la legenda dei segnali</h2></div>
+    <p class="sub">Le marche sulla card diventano leggibili (icona + nome + "alimenta"). E una legenda spiega, una volta per tutte, gli 8 segnali e <b>come si accendono</b>.</p>
+    <div class="plate">
+      <div class="twocol">
+        <div class="minicard">
+          <div class="minihero"><div class="mininame">Dolohov</div></div>
+          <div class="minibody">
+            <div class="marks" id="cardmarks"></div>
+            <div class="feeds">alimenta: Cancrena · Esecuzione a Freddo · Mietitore</div>
+          </div>
+        </div>
+        <div>
+          <div class="legend" id="legend"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="note"><b>Cosa cambia sotto.</b> Il motore già sa quali segnali sono accesi/mancanti (<span style="font-family:var(--mono);font-size:12px">duoProgress</span>) e quando una Duo scatta. Serve: una mappa "come accendere" per segnale (statica), il restyle del pannello, il telegrafo in battaglia agganciato all'evento-Duo, e le card marks più chiare. Nessuna schermata nuova.</div>
+  <p class="foot">Mockup di design · icone/colori dei segnali da data/duos.ts · oro = attiva, verde = a un passo (come DuoBar)</p>
+
+</div>
+
+<script>
+  const SIG = {
+    veleno:      { ic:'☠', c:'#7ddc7d', nm:'Veleno',       how:'2 maghi Veleno · o 1 reliquia',        grp:'stile' },
+    esecuzione:  { ic:'✖', c:'#ff8a7a', nm:'Esecuzione',   how:'2 maghi Esecuzione · o 1 reliquia',    grp:'stile' },
+    scudirigen:  { ic:'⛨', c:'#7db7ff', nm:'Scudo/Rigen',  how:'2 maghi Scudo/Rigen · o 1 reliquia',   grp:'stile' },
+    magieOscure: { ic:'☾', c:'#b98cff', nm:'Magie Oscure', how:'2 maghi Magie Oscure · o 1 reliquia',  grp:'stile' },
+    taunt:       { ic:'⚑', c:'#3aa0f2', nm:'Tank',         how:'1 Tank in squadra',                    grp:'ruolo' },
+    attaccante:  { ic:'⚔', c:'#ff5140', nm:'Attaccante',   how:'2 Attaccanti',                         grp:'ruolo' },
+    supporto:    { ic:'✚', c:'#20d894', nm:'Supporto',     how:'2 Supporti',                           grp:'ruolo' },
+    controllo:   { ic:'✦', c:'#b355ff', nm:'Controllo',    how:'2 Controllori',                        grp:'ruolo' },
+  };
+  const gem = (s, lit) => {
+    const g = SIG[s];
+    if (lit) return `<span class="gem lit" style="color:${g.c};background:${g.c}1c"><span class="ic" style="background:${g.c}2e;color:${g.c}">${g.ic}</span>${g.nm}</span>`;
+    return `<span class="gem miss"><span class="ic">${g.ic}</span>${g.nm}</span>`;
+  };
+
+  // duos with a mock lit-state for the panel
+  const DUOS = [
+    { name:'Esecuzione a Freddo', sig:['esecuzione','controllo'], lit:[true,true],
+      eff:'Un nemico stordito o congelato sotto il 50% di vita viene giustiziato all’istante.' },
+    { name:'Muro Vivente', sig:['scudirigen','taunt'], lit:[false,true],
+      eff:'Finché il Tank che provoca ha uno scudo, le tue retrovie non possono essere colpite.' },
+    { name:'Cancrena', sig:['veleno','esecuzione'], lit:[false,true],
+      eff:'I nemici avvelenati sotto il 40% di vita subiscono il doppio dei danni da veleno.' },
+    { name:'Mietitore', sig:['esecuzione','magieOscure'], lit:[true,false],
+      eff:'Ogni nemico giustiziato dà al suo carnefice +6 attacco per il resto della battaglia.' },
+    { name:'Miasma', sig:['veleno','magieOscure'], lit:[false,false],
+      eff:'Quando un nemico avvelenato muore, il suo veleno si propaga a un nemico vivo a caso.' },
+    { name:'Untore', sig:['veleno','supporto'], lit:[false,false],
+      eff:'Ogni volta che curi, sputi 1 dose di veleno su un nemico a caso.' },
+  ];
+  const state = d => { const n = d.lit.filter(Boolean).length; return n===2?'active':(n===1?'near':'locked'); };
+  const order = { active:0, near:1, locked:2 };
+  const sorted = [...DUOS].sort((a,b)=>order[state(a)]-order[state(b)]);
+
+  document.getElementById('panel').innerHTML = sorted.map(d=>{
+    const st = state(d);
+    const missIdx = d.lit.indexOf(false);
+    const recipe = `${gem(d.sig[0],d.lit[0])}<span class="plus">+</span>${gem(d.sig[1],d.lit[1])}`;
+    const how = st==='near' ? `<div class="howto"><span class="lbl">come accendere ${SIG[d.sig[missIdx]].nm}:</span><span class="val">${SIG[d.sig[missIdx]].how}</span></div>` : '';
+    const live = st==='active' ? `<span class="live">⚡ ATTIVA</span>` : '';
+    return `<div class="duo ${st}"><div class="dtop"><span class="dname">${d.name}</span>${live}</div><div class="recipe">${recipe}</div><div class="effect">${d.eff}</div>${how}</div>`;
+  }).join('');
+  document.getElementById('cnt').textContent = DUOS.filter(d=>state(d)==='active').length + ' attiva';
+
+  // battle units
+  const mk = (foe, opts={}) => `<div class="unit ${foe?'foe':''} ${opts.dying?'dying':''}" style="background:linear-gradient(160deg, ${opts.c||'#3a2f55'}, #14101f)">${opts.cc?`<span class="cc">${opts.cc}</span>`:''}<div class="hpbar"><i style="width:${opts.hp??100}%"></i></div></div>`;
+  document.getElementById('tleft').innerHTML = [mk(false,{c:'#25406a'}), mk(false,{c:'#5a2f2a'}), mk(false,{c:'#5a2f6a'})].join('');
+  document.getElementById('tright').innerHTML = [mk(true,{c:'#4a2340',cc:'❄',hp:34,dying:true}), mk(true,{c:'#3a3350',hp:80}), mk(true,{c:'#4a3320',hp:60})].join('');
+
+  document.getElementById('duopills').innerHTML = [
+    { n:'Esecuzione a Freddo', ic:'✖' }, { n:'Mietitore', ic:'☾' },
+  ].map(p=>`<span class="dpill"><span class="dot">${p.ic}</span>${p.n}</span>`).join('');
+
+  // card marks for a "Dolohov"-like wizard: esecuzione + magieOscure (mock)
+  document.getElementById('cardmarks').innerHTML = ['esecuzione','magieOscure'].map(s=>{
+    const g=SIG[s];
+    return `<span class="mark" style="color:${g.c};background:${g.c}18;box-shadow:inset 0 0 0 1px ${g.c}55"><span class="ic" style="background:${g.c}2e">${g.ic}</span>${g.nm}</span>`;
+  }).join('');
+
+  // legend — all 8 signals grouped
+  const legOrder = ['taunt','attaccante','supporto','controllo','veleno','esecuzione','scudirigen','magieOscure'];
+  document.getElementById('legend').innerHTML = legOrder.map(s=>{
+    const g=SIG[s];
+    return `<div class="leg"><span class="ic" style="background:${g.c}22;color:${g.c}">${g.ic}</span><div><div class="nm" style="color:${g.c}">${g.nm}</div><div class="how">${g.how}</div></div><span class="grp">${g.grp}</span></div>`;
+  }).join('');
+</script>
+</body>
+</html>
