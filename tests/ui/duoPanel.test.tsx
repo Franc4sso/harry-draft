@@ -50,4 +50,17 @@ describe('DuoPanel', () => {
     const { container } = render(<DuoPanel team={team} relics={[]} />)
     expect(container.textContent).not.toContain('Attaccante')
   })
+
+  it('ignora i maghi CADUTI: un Duo il cui 2° contributore è morto non risulta attivo', () => {
+    // Due Attaccanti portano entrambi veleno+esecuzione, il che accenderebbe Cancrena — ma uno
+    // è K.O. (currentHp 0). Con un solo contributore vivo nessuno dei due segnali raggiunge la
+    // soglia >=2, quindi Cancrena NON deve risultare "active" (usa livingOf, non tutta la
+    // squadra: altrimenti la sidebar mentirebbe rispetto a cosa si accende in battaglia).
+    const withFallen = [
+      { wizard: { id: 'live', name: 'Vivo', house: 'Grifondoro', role: 'Attaccante', tags: ['veleno', 'esecuzione'] }, level: 1, stats: {}, maxHp: 100, currentHp: 80 },
+      { wizard: { id: 'dead', name: 'Morto', house: 'Grifondoro', role: 'Attaccante', tags: ['veleno', 'esecuzione'] }, level: 1, stats: {}, maxHp: 100, currentHp: 0 },
+    ] as any
+    const { container } = render(<DuoPanel team={withFallen} relics={[]} />)
+    expect(container.querySelector('[data-duo="cancrena"][data-state="active"]')).toBeNull()
+  })
 })

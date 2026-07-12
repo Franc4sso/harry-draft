@@ -62,7 +62,9 @@ export function DuoPanel({ team, relics }: { team: DraftedWizard[]; relics: Acti
         {sorted.map((p) => {
           const st = stateOf(p)
           const expanded = st !== 'locked' || opened === p.duo.id
-          const missing = p.missing[0]
+          // I Duo "a un passo" hanno un solo segnale mancante; i lontani ne hanno 2 e — quando
+          // espansi per curiosità — vanno spiegati ENTRAMBI, altrimenti l'howto è a metà.
+          const missing = p.missing
           return (
             <li
               key={p.duo.id}
@@ -110,15 +112,19 @@ export function DuoPanel({ team, relics }: { team: DraftedWizard[]; relics: Acti
                     </div>
                   )}
                   <p className="mt-1 text-[11px] leading-snug text-[#c9bfa0]">{p.duo.desc}</p>
-                  {missing && (
+                  {missing.map((sig, i) => (
                     <p
-                      data-testid={`howto-${p.duo.id}`}
+                      key={sig}
+                      // Manteniamo il testid sul PRIMO segnale mancante (senza indice) perché i
+                      // test esistenti lo cercano così; gli eventuali segnali successivi restano
+                      // renderizzati ma senza reggere quell'ancora specifica.
+                      data-testid={i === 0 ? `howto-${p.duo.id}` : undefined}
                       className="mt-1 border-t border-white/10 pt-1 text-[10px] leading-snug text-white/50"
                     >
-                      <span style={{ color: GREEN }}>accendi {SIGNAL_LABEL[missing]}:</span>{' '}
-                      {SIGNAL_HOWTO[missing]}
+                      <span style={{ color: GREEN }}>accendi {SIGNAL_LABEL[sig]}:</span>{' '}
+                      {SIGNAL_HOWTO[sig]}
                     </p>
-                  )}
+                  ))}
                 </>
               )}
             </li>
