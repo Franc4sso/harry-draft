@@ -57,6 +57,9 @@ describe('TeamSynergyBar', () => {
     // No spell-swap selector: no pool group, and the alternative pool spell never renders.
     expect(screen.queryByRole('group', { name: /Incantesimi di/ })).not.toBeInTheDocument()
     expect(screen.queryByText('Stupeficium')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+    // Mirata (non un divieto generico di bottoni): la sidebar ora contiene
+    // legittimamente i bottoni "espandi" dei Duo lontani (DuoPanel), quindi
+    // vietiamo solo un eventuale bottone con nome/etichetta da selettore di magie.
+    expect(screen.queryByRole('button', { name: /incantesim|spell|stupeficium/i })).not.toBeInTheDocument()
   })
 })
