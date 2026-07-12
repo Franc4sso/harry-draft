@@ -1,5 +1,5 @@
 'use client'
-import { useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import type { DraftedWizard, ActiveSynergy, ActiveRelic, Synergy, House, Role } from '@/types'
 import { DuoBar } from '@/components/run/DuoBar'
 import { PortraitImage } from '@/components/ui/PortraitImage'
@@ -8,7 +8,6 @@ import { RoleIcon } from '@/components/cards/RoleIcon'
 import { houseTheme } from '@/lib/theme'
 import { displayName } from '@/lib/displayName'
 import { synergyBonusText, spellTypeChip } from '@/lib/glossary'
-import { SPELL_BY_ID } from '@/data/spells'
 
 /** Role accent colours mirror the spell-type palette (Attaccante↔Attacco, etc.),
  *  so a role synergy reads with the same colour language as the wizard's kit. */
@@ -116,28 +115,14 @@ function HpBar({ current, max }: { current: number; max: number }) {
 
 /**
  * A single member row in the vertical sidebar. Folds in what used to be the
- * separate LOADOUT box: role icon (tooltip), equipped spell + type chip, and
- * a collapsible spell-pool selector (mirrors the old `LoadoutPanel`). Stays
- * collapsed by default to keep rows compact.
+ * separate LOADOUT box: role icon (tooltip) and equipped spell + type chip.
+ * A plain, non-interactive row — no swap selector (a wizard's spell is fixed).
  */
-function MemberRow({
-  m, onSetSpell,
-}: {
-  m: DraftedWizard
-  onSetSpell?: (wizardId: string, spellId: string) => void
-}) {
-  const [open, setOpen] = useState(false)
+function MemberRow({ m }: { m: DraftedWizard }) {
   const theme = houseTheme(m.wizard.house)
   const spell = m.spell
   const typeChip = spell?.type ? spellTypeChip(spell.type) : undefined
-  const spellPool = m.wizard.spellPool ?? []
-  const canSelect = Boolean(onSetSpell) && spellPool.length > 0
-
   const roleColor = m.wizard.role ? ROLE_COLOR[m.wizard.role] : '#ffffff80'
-  // The whole row is the tap target: it toggles the spell + pool detail (only when there's
-  // a pool to choose from). Kept compact — portrait + name + role + inline HP — so five
-  // members fit the sidebar without pushing the relics below the fold.
-  const RowTag = canSelect ? 'button' : 'div'
 
   return (
     <div
@@ -145,12 +130,7 @@ function MemberRow({
       className="rounded-xl border bg-black/30"
       style={{ borderColor: `${theme.color}55` }}
     >
-      <RowTag
-        type={canSelect ? 'button' : undefined}
-        onClick={canSelect ? () => setOpen((v) => !v) : undefined}
-        aria-expanded={canSelect ? open : undefined}
-        className="flex w-full items-center gap-2 p-1.5 text-left disabled:cursor-default"
-      >
+      <div className="flex w-full items-center gap-2 p-1.5 text-left">
         <span className="h-8 w-8 shrink-0 overflow-hidden rounded-lg">
           <PortraitImage id={m.wizard.id} house={m.wizard.house} alt={m.wizard.name} variant="bust" />
         </span>
@@ -166,40 +146,13 @@ function MemberRow({
           <HpBar current={m.currentHp ?? m.maxHp} max={m.maxHp} />
         </span>
         <span className="shrink-0 text-[9px] font-bold text-[#F0D98A]">Lv.{m.level ?? 1}</span>
-        {canSelect && (
-          <span aria-hidden className="shrink-0 text-white/35 transition-transform" style={{ transform: open ? 'rotate(90deg)' : 'none' }}>›</span>
-        )}
-      </RowTag>
+      </div>
 
-      {open && canSelect && spell && (
+      {spell && (
         <div className="border-t border-white/10 px-1.5 pb-1.5 pt-1.5">
-          <div className="mb-1.5 flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5">
             <span className="min-w-0 flex-1 truncate text-[11px] font-medium text-white/70">{spell.name}</span>
             {typeChip && <Chip label={typeChip.label} color={typeChip.color} icon={typeChip.icon} />}
-          </div>
-          <div className="flex flex-wrap gap-1 px-0.5" role="group" aria-label={`Incantesimi di ${m.wizard.name}`}>
-            {spellPool.map((sid) => {
-              const poolSpell = SPELL_BY_ID[sid]
-              if (!poolSpell) return null
-              const active = spell?.id === sid
-              return (
-                <button
-                  key={sid}
-                  type="button"
-                  onClick={() => onSetSpell?.(m.wizard.id, sid)}
-                  aria-pressed={active}
-                  title={poolSpell.desc}
-                  className={
-                    'rounded-md border px-2 py-0.5 text-[11px] transition ' +
-                    (active
-                      ? 'border-amber-300/70 bg-amber-300/15 text-amber-100'
-                      : 'border-white/10 bg-white/[0.04] text-white/70 hover:bg-white/10')
-                  }
-                >
-                  {poolSpell.name}
-                </button>
-              )
-            })}
           </div>
         </div>
       )}
@@ -213,11 +166,11 @@ function MemberRow({
  * detected. `orientation` switches between the compact top strip ('horizontal',
  * default) and a left-hand sidebar ('vertical') used next to the map tree, where
  * members get larger portraits so they read better. In vertical mode, each row
- * also folds in the role icon, equipped spell, and a collapsible spell selector
- * (formerly the separate LOADOUT box) when `onSetSpell` is provided.
+ * also folds in the role icon and equipped spell (formerly the separate LOADOUT
+ * box) — a plain display, no swap selector (a wizard's spell is fixed).
  */
 export function TeamSynergyBar({
-  team, synergies, relics = [], orientation = 'horizontal', onSetSpell,
+  team, synergies, relics = [], orientation = 'horizontal',
 }: {
   team: DraftedWizard[]
   synergies: ActiveSynergy[]
@@ -225,8 +178,6 @@ export function TeamSynergyBar({
    *  and defaults to none so existing (non-Duo-aware) call sites/tests are unaffected. */
   relics?: ActiveRelic[]
   orientation?: 'horizontal' | 'vertical'
-  /** Wires the inline spell selector in vertical rows; omit to hide it. */
-  onSetSpell?: (wizardId: string, spellId: string) => void
 }) {
   if (orientation === 'vertical') {
     return (
@@ -235,7 +186,7 @@ export function TeamSynergyBar({
         className="flex w-full flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3"
       >
         <div className="flex flex-col gap-2">
-          {team.map((m) => <MemberRow key={m.wizard.id} m={m} onSetSpell={onSetSpell} />)}
+          {team.map((m) => <MemberRow key={m.wizard.id} m={m} />)}
         </div>
 
         <div className="flex flex-col gap-1.5 border-t border-white/10 pt-2.5">

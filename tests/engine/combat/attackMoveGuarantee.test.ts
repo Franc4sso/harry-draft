@@ -2,46 +2,42 @@ import { describe, it, expect } from 'vitest'
 import { buildBattlePackage } from '@/game/engine/combat/battlePackage'
 import { generateBossTeam } from '@/game/engine/combat/teamGen'
 import { createRng } from '@/game/engine/rng'
-import { spellIsOffensive, guaranteeOffensiveSpell } from '@/game/engine/statRoll'
+import { spellIsOffensive } from '@/game/engine/statRoll'
 import { MURO_ALT } from '@/data/bosses'
 import { WIZARD_BY_ID } from '@/data/wizards'
 import { SPELL_BY_ID } from '@/data/spells'
 import type { Role } from '@/types'
 
-// Regression guard for the "degenerate enemy" bug: an ELITE or BOSS enemy wizard whose
-// equipped active spell never deals damage is a free win for the player. `preferOffense`
-// alone is only a soft bias with a silent no-op fallback — this suite proves the STRICT
-// guarantee (guaranteeOffensiveSpell, wired via draftWizard's `guaranteeOffense` param)
-// closes that hole for every enemy wizard in elite/boss battles, across many seeds.
-describe('attack move guarantee — enemy elite/boss', () => {
-  it('every ENEMY wizard in ELITE battles has an offensive active spell (many seeds/areas)', () => {
+// Regression guard for the "degenerate enemy" bug: an enemy TEAM whose every equipped
+// active spell never deals damage is a free win for the player. UN MAGO, UNA MAGIA
+// (Task 3) removed the per-unit offense guarantee (guaranteeOffensiveSpell / draftWizard's
+// preferOffense+guaranteeOffense) — forcing an individual Supporto onto an attack
+// contradicted "supports don't attack". The safety net now lives at the TEAM level
+// (teamGen.ts's ensureOffense): every generated enemy team fields at least one attacker,
+// while individual Supporto units are never forced onto a damaging spell.
+describe('attack move guarantee — enemy elite/boss (team-level)', () => {
+  it('every ELITE battle fields a team with at least one offensive active spell (many seeds/areas)', () => {
     const offenders: string[] = []
     for (let area = 0; area < 3; area++) {
       for (let floor = 0; floor < 5; floor++) {
         for (let s = 0; s < 30; s++) {
           const { battle } = buildBattlePackage(`elite-${area}-${floor}-${s}`, area, floor, 'elite')
-          for (const dw of battle.enemyTeam) {
-            if (!spellIsOffensive(dw.spell)) {
-              offenders.push(`area${area} floor${floor} seed${s} ${dw.wizard.id}→${dw.spell.id}`)
-            }
-          }
+          const hasOffense = battle.enemyTeam.some(dw => spellIsOffensive(dw.spell))
+          if (!hasOffense) offenders.push(`area${area} floor${floor} seed${s}`)
         }
       }
     }
     expect(offenders).toEqual([])
   })
 
-  it('every ENEMY wizard in BOSS battles has an offensive active spell (many seeds/areas)', () => {
+  it('every BOSS battle fields a team with at least one offensive active spell (many seeds/areas)', () => {
     const offenders: string[] = []
     for (let area = 0; area < 3; area++) {
       for (let floor = 0; floor < 5; floor++) {
         for (let s = 0; s < 30; s++) {
           const { battle } = buildBattlePackage(`boss-${area}-${floor}-${s}`, area, floor, 'boss')
-          for (const dw of battle.enemyTeam) {
-            if (!spellIsOffensive(dw.spell)) {
-              offenders.push(`area${area} floor${floor} seed${s} ${dw.wizard.id}→${dw.spell.id}`)
-            }
-          }
+          const hasOffense = battle.enemyTeam.some(dw => spellIsOffensive(dw.spell))
+          if (!hasOffense) offenders.push(`area${area} floor${floor} seed${s}`)
         }
       }
     }
@@ -50,9 +46,8 @@ describe('attack move guarantee — enemy elite/boss', () => {
 
   it('the MURO_ALT (marcus) leader ends up with an offensive active spell', () => {
     // Leader was pettigrew (a Supporto) — replaced by marcus (Serpeverde Attaccante) because
-    // no Supporto may be a boss-leader this slice (a Supporto is clamped to a Cura and can
-    // never hold the offensive spell the "no harmless boss" invariant demands). marcus is a
-    // real attacker, so the invariant holds natively here.
+    // no Supporto may be a boss-leader this slice. marcus's own signature is offensive
+    // (pool-of-1), so the invariant holds natively here — no per-unit guarantee needed.
     for (let s = 0; s < 25; s++) {
       const team = generateBossTeam(createRng(`muro-alt-${s}`), MURO_ALT)
       const leader = team.find(d => d.wizard.id === 'marcus')
@@ -78,19 +73,28 @@ describe('attack move guarantee — enemy elite/boss', () => {
     expect(found, 'no seed in [0,200) routed the area-0 boss pick to MURO_ALT/marcus').toBe(true)
   })
 
-  it('a Supporto forced through guaranteeOffensiveSpell gets base_attack (USER DECISION 2026-07-07: no more Cura clamp)', () => {
-    // REVERSED 2026-07-07 (USER DECISION, Task 3c): enemy elite/boss teams may now field
-    // ≤1 Supporto, and that Supporto must be able to attack — so a pure-support kit
-    // (pettigrew) forced through the offense guarantee now falls back to the universal
-    // `base_attack`, exactly like every other role, NOT episkey. See
-    // game/engine/statRoll.ts guaranteeOffensiveSpell.
+  it('pettigrew (pure-support Supporto) never equips an offensive spell, even when fielded on an elite/boss team', () => {
+    // USER DECISION 2026-07-07/Task 3: enemy elite/boss teams may field ≤1 Supporto, and
+    // that Supporto is NEVER forced onto an attack any more — the team-level guarantee
+    // (proven above) covers the "toothless enemy" risk instead.
     const pettigrew = WIZARD_BY_ID['pettigrew']!
-    // Precondition: pettigrew's pool is all support (no offensive spell) so the fallback fires.
     expect(pettigrew.spellPool.some(id => spellIsOffensive(SPELL_BY_ID[id]))).toBe(false)
-    const supportSpell = SPELL_BY_ID[pettigrew.spellPool[0]!]!
-    const guaranteed = guaranteeOffensiveSpell(pettigrew, supportSpell)
-    expect(guaranteed.id).toBe('base_attack')
-    expect(spellIsOffensive(guaranteed), `got ${guaranteed.id}`).toBe(true)
+    let sawPettigrew = false
+    for (let area = 0; area < 3; area++) {
+      for (let floor = 0; floor < 5; floor++) {
+        for (let s = 0; s < 20; s++) {
+          for (const kind of ['elite', 'boss'] as const) {
+            const { battle } = buildBattlePackage(`pettigrew-${kind}-${area}-${floor}-${s}`, area, floor, kind)
+            const dw = battle.enemyTeam.find(d => d.wizard.id === 'pettigrew')
+            if (dw) {
+              sawPettigrew = true
+              expect(spellIsOffensive(dw.spell), `${kind} area${area} floor${floor} seed${s} → ${dw.spell.id}`).toBe(false)
+            }
+          }
+        }
+      }
+    }
+    expect(sawPettigrew, 'pettigrew never appeared in the sweep — cannot exercise the invariant').toBe(true)
   })
 
   it('enemy elite/boss teams field AT MOST 1 Supporto, alongside other roles (many seeds/areas)', () => {

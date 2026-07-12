@@ -14,11 +14,9 @@ import { infirmaryResolver } from './resolvers/infirmary'
 import { eventResolver } from './resolvers/event'
 import { spellForgeResolver } from './resolvers/spellForge'
 import { shopResolver } from './resolvers/shop'
-import { scaledSpell } from './spellForge'
 import { registerResolver, resolverFor } from './resolvers'
 import type { ResolverChoice } from './resolvers/types'
 import { BALANCE } from '@/data/constants'
-import { SPELL_BY_ID } from '@/data/spells'
 
 /** Pure decision of the phase a node leads to once its resolver has run.
  *  Order: wipeout > boss (area-cleared unless final area → win) > victory.
@@ -185,21 +183,6 @@ export function useConsumableRelic(state: RunState, relicId: string): RunState {
   const relics = state.relics.filter(a => a.relic.id !== relicId)
   const activeSynergies = detectSynergies(livingOf(team))
   return { ...state, team, relics, activeSynergies }
-}
-
-/** Equip `spellId` as the active spell for team member `wizardId`, iff it is in that
- *  wizard's spellPool. Pure; no RNG. Returns the same state object on a no-op. */
-export function setWizardSpell(state: RunState, wizardId: string, spellId: string): RunState {
-  const base = SPELL_BY_ID[spellId]
-  const member = state.team.find(d => d.wizard.id === wizardId)
-  if (!base || !member || !member.wizard.spellPool.includes(spellId) || member.spell.id === spellId) {
-    return state
-  }
-  // Carry the wizard's magic mastery onto the newly equipped spell so an "Aumento Magia"
-  // bonus is never lost by switching spells.
-  const spell = scaledSpell(base, member.spellLevel)
-  const team = state.team.map(d => (d.wizard.id === wizardId ? { ...d, spell } : d))
-  return { ...state, team }
 }
 
 /** Leave a shop: mark the current node resolved and return to the map. */

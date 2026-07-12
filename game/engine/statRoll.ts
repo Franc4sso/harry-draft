@@ -1,6 +1,6 @@
 import type { DraftedWizard, Role, Spell, SpellType, Stats, Wizard } from '@/types'
 import type { Rng } from './rng'
-import { SPELL_BY_ID, SPELL_IS_VENOM } from '@/data/spells'
+import { SPELL_BY_ID } from '@/data/spells'
 import { BALANCE } from '@/data/constants'
 import { SHINY_TRAIT_IDS } from '@/data/traits'
 import { normalizeSpell } from './combat/normalizeSpell'
@@ -30,90 +30,22 @@ export function fixedStats(wizard: Wizard): Stats {
   }
 }
 
-/** STRICT guarantee (enemy elite/boss only — see draftWizard's `guaranteeOffense`):
- *  given a wizard's already-chosen active `spell`, returns it unchanged if it's
- *  offensive. Otherwise replaces it with the strongest (highest `power`) offensive
- *  spell in the wizard's own pool. If the pool has none at all (a pure-support kit),
- *  falls back to the universal `base_attack` — this applies to EVERY role, including
- *  Supporto: this function only ever runs on the enemy elite/boss path (player Supporto
- *  never reach it — their "zero direct attacks" identity comes from the cleaned pools,
- *  not from here), and an enemy elite/boss Supporto must be able to threaten like any
- *  other fielded unit (USER DECISION 2026-07-07: ≤1 Supporto is now allowed in enemy
- *  elite/boss teams, alongside other roles, and that Supporto must attack — see
- *  teamGen.ts's ≤1-Supporto cap). Deterministic (no rng draw): unlike `preferOffense`'s
- *  soft bias, this NEVER falls through to a spell weaker than the role's floor, closing
- *  the "boss/elite unit with a heal/shield active deals zero damage" degenerate case. */
-export function guaranteeOffensiveSpell(wizard: Wizard, spell: Spell): Spell {
-  if (spellIsOffensive(spell)) return spell
-  const offensiveIds = wizard.spellPool.filter(id => spellIsOffensive(SPELL_BY_ID[id]))
-  if (offensiveIds.length > 0) {
-    const strongestId = offensiveIds.reduce((best, id) =>
-      (SPELL_BY_ID[id]!.power ?? 0) > (SPELL_BY_ID[best]!.power ?? 0) ? id : best)
-    return SPELL_BY_ID[strongestId]!
-  }
-  const fallback = SPELL_BY_ID['base_attack']
-  if (!fallback) throw new Error('base_attack spell missing from registry')
-  return fallback
-}
-
-export function pickSpell(rng: Rng, wizard: Wizard, preferOffense = false): Spell {
-  // Venom-tagged mages always enter battle with a venom spell equipped. Restrict the
-  // candidate set BEFORE the single rng.pick — one draw, restricted outcome (keeps the
-  // rng-draw count identical for every caller). Defensive fallback to the full pool if a
-  // venom mage's pool somehow has no venom spell (a data test guards against this).
-  //
-  // `preferOffense` (enemy drafts only): a passive support/controller whose single
-  // equipped spell never deals damage stands idle in battle — enemies that never attack
-  // feel toothless. When set, restrict the candidate pool to the wizard's damaging spells
-  // BEFORE the single pick (same one-draw pattern as venom, so rng flow is unchanged and
-  // team COMPOSITION stays identical — only the equipped spell shifts). Falls back to the
-  // full pool if the wizard has no offensive spell at all (a pure-support kit).
-  let candidates = wizard.spellPool
-  // Role bias (default for player AND enemy): prefer a spell of the role's type so a role
-  // actually plays its part (esp. a Controllo needs a control spell for the Global Rule).
-  // Soft: falls back to the whole pool if the pool has none. Venom / preferOffense below
-  // still OVERRIDE this base (enemy offensive guarantee wins).
-  const roleTypes = ROLE_SPELL_TYPES[wizard.role]
-  let roleMatch: string[] = []
-  if (roleTypes) {
-    roleMatch = wizard.spellPool.filter(id => roleTypes.includes(SPELL_BY_ID[id]?.type as SpellType))
-    if (roleMatch.length > 0) candidates = roleMatch
-  }
-  // Venom guarantee, but ROLE WINS. A venom Attaccante equips serpensortia (an Attacco —
-  // IN role: it's a damage-over-time attacker). A venom Controllo/Tank/Supporto must NOT be
-  // forced onto serpensortia against its role ("the Controllo goes on the attack" bug) — it
-  // only equips a venom spell if that venom spell is also in-role, or if it has no in-role
-  // spell at all. Restrict venom candidates to the in-role set when one exists.
-  const venomAll = (wizard.tags ?? []).includes('veleno')
-    ? wizard.spellPool.filter(id => SPELL_IS_VENOM.has(id))
-    : null
-  const venom = venomAll && venomAll.length > 0
-    ? (roleMatch.length > 0 ? venomAll.filter(id => roleMatch.includes(id)) : venomAll)
-    : null
-  if (venom && venom.length > 0) {
-    candidates = venom
-  } else if (preferOffense) {
-    const offensive = wizard.spellPool.filter(id => spellIsOffensive(SPELL_BY_ID[id]))
-    if (offensive.length > 0) candidates = offensive
-  }
-  const id = rng.pick(candidates)
+export function pickSpell(rng: Rng, wizard: Wizard): Spell {
+  // UN MAGO, UNA MAGIA: il pool contiene esattamente una firma. Si pesca comunque via
+  // rng.pick per BRUCIARE esattamente una gen() — identico al vecchio pool multi-spell —
+  // così il draw-count del draft resta byte-per-byte uguale e la parità replay endless
+  // non si tocca. L'esito è deterministico: la firma del mago.
+  const id = rng.pick(wizard.spellPool)
   const spell = SPELL_BY_ID[id]
   if (!spell) throw new Error(`unknown spell ${id} for ${wizard.id}`)
   return spell
 }
 
-export function draftWizard(
-  rng: Rng, wizard: Wizard, allowShiny = false, preferOffense = false, guaranteeOffense = false,
-): DraftedWizard {
+export function draftWizard(rng: Rng, wizard: Wizard, allowShiny = false): DraftedWizard {
   const stats = fixedStats(wizard)
-  let spell = pickSpell(rng, wizard, preferOffense)
-  // `guaranteeOffense` (enemy elite/boss drafts ONLY, wired from teamGen.ts): unlike
-  // `preferOffense`'s bias, this can never leave a non-offensive spell equipped. Player
-  // drafts and normal-enemy drafts never opt in, so their spell choice is unaffected.
-  if (guaranteeOffense) spell = guaranteeOffensiveSpell(wizard, spell)
-  // Always DRAW the roll (keeps the rng stream identical for every caller), but only
-  // ATTACH shiny when the caller opts in. Enemies/boss teams never opt in → never shiny,
-  // yet their draft stream (and thus composition) is unchanged. Shiny is PLAYER-DRAFT ONLY.
+  const spell = pickSpell(rng, wizard)
+  // Bruciamo sempre il roll shiny (mantiene lo stream identico per ogni caller), ma lo
+  // ATTACCHIAMO solo se il caller lo richiede (draft del giocatore). Nemici → mai shiny.
   const rolled = rng.chance(BALANCE.draft.shinyChance) ? { traitId: rng.pick(SHINY_TRAIT_IDS) } : undefined
   const shiny = allowShiny ? rolled : undefined
   return { wizard, stats, maxHp: stats.hp, spell, ...(shiny ? { shiny } : {}) }

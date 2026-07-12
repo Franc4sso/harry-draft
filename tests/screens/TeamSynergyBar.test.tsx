@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { describe, it, expect } from 'vitest'
+import { render, screen } from '@testing-library/react'
 import { TeamSynergyBar } from '@/components/run/TeamSynergyBar'
 
 const team = [
@@ -45,31 +45,18 @@ describe('TeamSynergyBar', () => {
     expect(screen.getByText(/Astuzia/)).toBeInTheDocument()
   })
 
-  it('vertical row: expands the spell selector and wires a pool click to onSetSpell(wizardId, spellId)', () => {
-    const spy = vi.fn()
-    render(
-      <TeamSynergyBar team={[memberWithPool]} synergies={[]} orientation="vertical" onSetSpell={spy} />,
-    )
+  it('vertical row: shows the equipped spell with no swap selector (one wizard, one spell)', () => {
+    render(<TeamSynergyBar team={[memberWithPool]} synergies={[]} orientation="vertical" />)
 
     // The role now reads as a text label on the compact row.
     expect(screen.getByText('Attaccante')).toBeInTheDocument()
 
-    // The whole row is the toggle (named by the wizard). Compact: the spell is
-    // hidden until the row is expanded — not shown on the collapsed row.
-    const toggle = screen.getByRole('button', { name: /Harry/ })
-    expect(toggle).toHaveAttribute('aria-expanded', 'false')
-    expect(screen.queryByText('Expelliarmus')).not.toBeInTheDocument()
+    // The equipped spell is shown directly — no toggle/expand needed.
+    expect(screen.getByText('Expelliarmus')).toBeInTheDocument()
 
-    // Expand the collapsible pool — the equipped spell + pool now appear.
-    fireEvent.click(toggle)
-    expect(toggle).toHaveAttribute('aria-expanded', 'true')
-    // Equipped-spell label + the active pool button both read "Expelliarmus".
-    expect(screen.getAllByText('Expelliarmus').length).toBeGreaterThan(0)
-
-    // Click the non-active pool spell.
-    const stupeficiumBtn = screen.getByRole('button', { name: 'Stupeficium' })
-    fireEvent.click(stupeficiumBtn)
-
-    expect(spy).toHaveBeenCalledWith('harry', 'stupeficium')
+    // No spell-swap selector: no pool group, and the alternative pool spell never renders.
+    expect(screen.queryByRole('group', { name: /Incantesimi di/ })).not.toBeInTheDocument()
+    expect(screen.queryByText('Stupeficium')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button')).not.toBeInTheDocument()
   })
 })

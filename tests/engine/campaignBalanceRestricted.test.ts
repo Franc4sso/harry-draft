@@ -1,19 +1,16 @@
 import { describe, it, expect } from 'vitest'
 import {
   startRunB, starterOffer, chooseStarters, reachable, moveTo, resolveCurrent,
-  clearAreaAndAdvance, registerCoreResolvers, useConsumableRelic, setWizardSpell,
+  clearAreaAndAdvance, registerCoreResolvers, useConsumableRelic,
 } from '@/game/engine/runEngine'
 import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
 import { eventResolver } from '@/game/engine/resolvers/event'
 import { createRng } from '@/game/engine/rng'
 import { powerOf } from '@/game/engine/combat/teamGen'
 import { isDead } from '@/game/engine/roster'
-import { spellIsOffensive } from '@/game/engine/statRoll'
-import { normalizeSpell } from '@/game/engine/combat/normalizeSpell'
-import { SPELL_BY_ID } from '@/data/spells'
 import { setDraftPoolRestriction } from '@/game/engine/draft'
 import { STARTER_WIZARDS } from '@/data/unlocks'
-import type { DraftedWizard, RunNode, RunState, Spell } from '@/types'
+import type { RunNode, RunState } from '@/types'
 
 registerCoreResolvers()
 
@@ -47,54 +44,14 @@ function isVeleno(dw: { wizard: { tags?: string[] } }): boolean {
   return (dw.wizard.tags ?? []).includes('veleno')
 }
 
-// *** Spell-optimization experiment (2026-07-04) *** — see campaignBalanceB.test.ts for
-// the full writeup. Kept bit-for-bit identical here: after the team is set (starters,
-// and after every recruit), swap each member onto the single highest-direct-damage
-// spell in ITS OWN spellPool (skip wizards with no attack spell — default stands).
-function spellDamagePower(spell: Spell): number {
-  return normalizeSpell(spell).filter(e => e.kind === 'damage').reduce((sum, e) => sum + e.power, 0)
-}
-
-/** The strongest ATTACK (direct-damage) spell id in a wizard's own pool, or undefined
- *  if it has none (pure-support kit — leave the default spell in place). */
-function strongestAttackSpellId(dw: DraftedWizard): string | undefined {
-  let bestId: string | undefined
-  let bestPower = -Infinity
-  for (const id of dw.wizard.spellPool) {
-    const spell = SPELL_BY_ID[id]
-    if (!spell || !spellIsOffensive(spell)) continue
-    const power = spellDamagePower(spell)
-    if (power > bestPower) { bestPower = power; bestId = id }
-  }
-  return bestId
-}
-
-let spellSwitchCount = 0
-let avadaSwitchCount = 0
-let spellSwitchPowerSum = 0
-
-/** Equip every current team member with its strongest attack spell (human-like spell
- *  optimization). No-ops (and isn't tallied) for a member already on its best spell or
- *  with no attack spell in its pool. */
-function optimizeTeamSpells(state: RunState): RunState {
-  let s = state
-  for (const dw of s.team) {
-    const id = strongestAttackSpellId(dw)
-    if (!id || dw.spell.id === id) continue
-    s = setWizardSpell(s, dw.wizard.id, id)
-    spellSwitchCount++
-    if (id === 'avada') avadaSwitchCount++
-    spellSwitchPowerSum += spellDamagePower(SPELL_BY_ID[id]!)
-  }
-  return s
-}
-
 function runOne(seed: string, battleTurns?: number[], preferVeleno = false): 'win' | 'defeat' {
   let s = startRunB(seed)
   const offer = starterOffer(seed, 'Grifondoro')
   const starters = [...offer].sort((a, b) => powerOf(b) - powerOf(a)).slice(0, 3).map(d => d.wizard.id)
   s = chooseStarters(s, 'Grifondoro', starters, createRng(seed))
-  s = optimizeTeamSpells(s)
+  // No spell optimization — spell-swap system removed (2026-07-11, "UN MAGO, UNA MAGIA"
+  // Task 1). The team fights with each wizard's signature (default) spell; see
+  // campaignBalanceB.test.ts for the retired spell-optimization experiment's history.
   let guard = 0
   while (guard++ < 200) {
     if (s.phase === 'win') return 'win'
@@ -123,7 +80,6 @@ function runOne(seed: string, battleTurns?: number[], preferVeleno = false): 'wi
       const full = s.team.length >= (s.teamMax ?? 5)
       const replaceId = full ? [...s.team].sort((a, b) => powerOf(a) - powerOf(b))[0]!.wizard.id : undefined
       s = resolveCurrent(s, { kind: 'recruit-pick', wizardId: best.wizard.id, replaceId }, createRng(seed))
-      s = optimizeTeamSpells(s)
       s = { ...s, phase: 'map' }; continue
     }
     if (s.phase === 'relic-node') {
@@ -159,10 +115,6 @@ describe('restricted starter pool is winnable (Reservation 1 gate)', () => {
 
   // eslint-disable-next-line no-console
   console.log(`[campaignBalanceRestricted] winRate=${winRate.toFixed(4)}`)
-  // eslint-disable-next-line no-console
-  console.log(`[campaignBalanceRestricted spell-opt] switches=${spellSwitchCount} avada=${avadaSwitchCount} `
-    + `(${spellSwitchCount > 0 ? (avadaSwitchCount / spellSwitchCount * 100).toFixed(1) : '0.0'}%) `
-    + `avgPower=${spellSwitchCount > 0 ? (spellSwitchPowerSum / spellSwitchCount).toFixed(3) : 'n/a'}`)
 
   it('clears the same 0.07 floor as the full-pool harness', () => {
     // RE-TUNED 2026-07-04 ("too easy" hard re-tune): this is the PRIMARY difficulty
@@ -219,6 +171,11 @@ describe('restricted starter pool is winnable (Reservation 1 gate)', () => {
     // Smoke check left as-is (already >0/<=1): counters are not understood by the balance
     // bot, so the user's own playtest is the real gauge of role-counter feel/difficulty,
     // not this harness's winRate.
+    //
+    // Spell-swap removed (2026-07-11, "UN MAGO, UNA MAGIA" Task 1): setWizardSpell and the
+    // spell-optimization bot layer above are gone — the exploit the 2026-07-04 experiment
+    // found is no longer reachable by any player. The bot now fights with each wizard's
+    // signature (default) spell only; this smoke check (>0/<=1) still holds trivially.
     expect(winRate).toBeGreaterThan(0)
     expect(winRate).toBeLessThanOrEqual(1.0)
   })

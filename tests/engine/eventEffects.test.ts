@@ -59,16 +59,6 @@ describe('applyEventEffects', () => {
     }
   })
 
-  it('swapSpell changes the chosen wizard active spell to another in its pool', () => {
-    const s = buildState()
-    const target = weakestOf(s)
-    const beforeSpellId = target.spell.id
-    const r = applyEventEffects(s, [{ kind: 'swapSpell', which: 'weakest' }], createRng('swap'))
-    const after = r.state.team.find(dw => dw.wizard.id === target.wizard.id)!
-    expect(after.spell.id).not.toBe(beforeSpellId)
-    expect(target.wizard.spellPool).toContain(after.spell.id)
-  })
-
   it('removeWizard + addWizard(+2) trades weakest for a new one 2 levels above the removed', () => {
     const s = buildState()
     const target = weakestOf(s)

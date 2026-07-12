@@ -3,7 +3,6 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import type { DraftedWizard, RunNode, RunState } from '@/types'
 import {
   startRunB, confirmDraftPicks, clearAreaAndAdvance,
-  setWizardSpell,
   useConsumableRelic as useConsumableRelicEngine,
   leaveShop as leaveShopEngine, rerollShop as rerollShopEngine,
 } from '@/game/engine/runEngine'
@@ -44,7 +43,6 @@ export interface RunBController {
   currentEvent: CurrentEventView | null
   chooseEventOption: (optionId: string) => void
   chooseSpellUpgrade: (wizardId: string) => void
-  setWizardSpell: (wizardId: string, spellId: string) => void
   useConsumableRelic: (relicId: string) => void
   cioccorane: number
   buyShopItem: (slotId: string, opts?: { carrierId?: string; targetWizardId?: string }) => void
@@ -120,10 +118,6 @@ export function useRunB(seed: string): RunBController {
 
   const leaveShop = useCallback(() => { commit(leaveShopEngine(runRef.current), 'map') }, [commit, runRef])
 
-  const setWizardSpellCb = useCallback((wizardId: string, spellId: string) => {
-    commit(setWizardSpell(runRef.current, wizardId, spellId))
-  }, [commit, runRef])
-
   const useConsumableRelicCb = useCallback((relicId: string) => {
     commit(useConsumableRelicEngine(runRef.current, relicId))
   }, [commit, runRef])
@@ -149,7 +143,6 @@ export function useRunB(seed: string): RunBController {
     completeDraft, chooseNode: shared.chooseNode, commitBattle: shared.commitBattle, acknowledgeVictory,
     chooseRecruit: shared.chooseRecruit, skipRecruit: shared.skipRecruit, chooseRelic: shared.chooseRelic, ackInfirmary: shared.ackInfirmary,
     currentEvent: shared.currentEvent, chooseEventOption: shared.chooseEventOption, chooseSpellUpgrade: shared.chooseSpellUpgrade,
-    setWizardSpell: setWizardSpellCb,
     useConsumableRelic: useConsumableRelicCb,
     cioccorane: profileRef.current.cioccorane,
     buyShopItem, rerollShop, leaveShop,

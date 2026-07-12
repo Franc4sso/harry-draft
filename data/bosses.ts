@@ -90,7 +90,13 @@ export const MURO: BossDef = {
   // as the difficulty intent, harmless either way).
   budget: 150,
   hpMult: 0.35,
-  unitDamageReduction: 0.4, // unchanged: wall-archetype mechanic, not a budget/power lever.
+  // SOFTENED 0.4→0.15 (2026-07-11, UN MAGO UNA MAGIA): the 40% wall reduction was a
+  // build-check — the player bypassed it by equipping a veleno spell. With one fixed
+  // signature per wizard, the player can no longer guarantee veleno, so the wall became
+  // an unbeatable forced-build gate (the exact pattern the user rejected). Kept a light
+  // 0.15 so Il Muro still reads as a "wall" (mildly damage-resistant) without being a
+  // hard build-check. See .superpowers/sdd/balance-report.md.
+  unitDamageReduction: 0.15,
   pinnedArea: 0,
   unitCount: 3,
 }

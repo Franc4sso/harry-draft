@@ -7,11 +7,11 @@ describe('wizards data', () => {
     expect(WIZARDS.length).toBeGreaterThanOrEqual(40)
     expect(new Set(WIZARDS.map(w => w.id)).size).toBe(WIZARDS.length)
   })
-  it('every wizard has a spell pool of 4-6 valid spells', () => {
+  it('every wizard has exactly 1 signature spell', () => {
     for (const w of WIZARDS) {
-      expect(w.spellPool.length).toBeGreaterThanOrEqual(4)
-      expect(w.spellPool.length).toBeLessThanOrEqual(6)
-      for (const id of w.spellPool) expect(SPELL_BY_ID[id], `${w.id} -> ${id}`).toBeTruthy()
+      // UN MAGO, UNA MAGIA: ogni mago ha esattamente una firma.
+      expect(w.spellPool.length, `${w.id} deve avere 1 firma`).toBe(1)
+      expect(SPELL_BY_ID[w.spellPool[0]!], `${w.id} -> ${w.spellPool[0]}`).toBeTruthy()
     }
   })
   it('ranges are ordered [min<=max] and positive', () => {

@@ -4,7 +4,6 @@ export type EventEffect =
   | { kind: 'healTeam'; pct: number }
   | { kind: 'damageTeam'; pct: number }
   | { kind: 'levelWizard'; which: 'weakest' | 'strongest' | 'random'; levels: number }
-  | { kind: 'swapSpell'; which: 'weakest' | 'strongest' | 'random' }
   | { kind: 'addWizard'; levelsAboveWeakest: number }
   | { kind: 'removeWizard'; which: 'weakest' | 'random' }
   | { kind: 'grantRelic'; pool: 'ruleBreaking' }
@@ -38,7 +37,6 @@ export const EVENTS: GameEvent[] = [
     text: 'Il vecchio Cappello si desta e ti offre la sua saggezza — a modo suo.',
     choices: [
       { id: 'level', label: 'Fatti consigliare (mago più debole +2 livelli)', effects: [{ kind: 'levelWizard', which: 'weakest', levels: 2 }], resultText: 'Il Cappello sussurra segreti: il tuo mago più debole cresce.' },
-      { id: 'reroll', label: 'Cambia idea (rimescola la magia del più debole)', effects: [{ kind: 'swapSpell', which: 'weakest' }], resultText: 'Una nuova vocazione: la sua magia cambia.' },
       { id: 'leave', label: 'Ringrazia e vai (cura squadra 15%)', effects: [{ kind: 'healTeam', pct: 0.15 }], resultText: 'Il Cappello ti augura buona fortuna.' },
     ],
   },
@@ -83,7 +81,7 @@ export const EVENTS: GameEvent[] = [
     title: "L'Ombra Danzante",
     text: "Un'ombra ti sfida a un gioco d'azzardo puro. Testa o croce del destino.",
     choices: [
-      { id: 'risk', label: 'Rischia (50%: reliquia rompi-regole · 50%: un mago perde la sua magia)', effects: [{ kind: 'gamble', chance: 0.5, win: [{ kind: 'grantRelic', pool: 'ruleBreaking' }], lose: [{ kind: 'swapSpell', which: 'random' }] }], resultText: "L'ombra ride mentre la moneta cade…" },
+      { id: 'risk', label: 'Rischia (50%: reliquia rompi-regole · 50%: -20% vita alla squadra)', effects: [{ kind: 'gamble', chance: 0.5, win: [{ kind: 'grantRelic', pool: 'ruleBreaking' }], lose: [{ kind: 'damageTeam', pct: 0.2 }] }], resultText: "L'ombra ride mentre la moneta cade…" },
       { id: 'walk', label: 'Allontanati', effects: [], resultText: 'Non tutti i giochi vanno giocati.' },
     ],
   },
