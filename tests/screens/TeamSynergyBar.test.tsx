@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import { TeamSynergyBar } from '@/components/run/TeamSynergyBar'
 
 const team = [
@@ -57,6 +57,14 @@ describe('TeamSynergyBar', () => {
     // No spell-swap selector: no pool group, and the alternative pool spell never renders.
     expect(screen.queryByRole('group', { name: /Incantesimi di/ })).not.toBeInTheDocument()
     expect(screen.queryByText('Stupeficium')).not.toBeInTheDocument()
-    expect(screen.queryByRole('button')).not.toBeInTheDocument()
+    // Strutturale, non testuale: il vecchio selettore di magie era un bottone-riga nel
+    // contenitore del MEMBRO della squadra, nominato col nome del mago (es. "Harry") — un
+    // pattern testuale su "incantesim/spell/..." non lo avrebbe mai intercettato. Restringiamo
+    // quindi la ricerca alla riga del mago (l'ancora è `[data-house]`, il contenitore di
+    // MemberRow), lasciando fuori dallo scope i bottoni "espandi" dei Duo lontani (DuoPanel),
+    // che vivono altrove nel DOM e sono legittimi.
+    const memberRow = document.querySelector('[data-house]') as HTMLElement
+    expect(memberRow).not.toBeNull()
+    expect(within(memberRow).queryByRole('button')).not.toBeInTheDocument()
   })
 })

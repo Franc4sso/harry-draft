@@ -114,7 +114,11 @@ export function tickStatuses(turn: number, unit: BattleUnit, opts: { velenoMult?
       const srcSide = ci > 0 ? (e.sourceId!.slice(0, ci) as Side) : unit.side
       const srcId = ci > 0 ? e.sourceId!.slice(ci + 1) : unit.wizard.id
       logs.push({ turn, actorId: srcId, actorSide: srcSide, action: def?.name ?? 'Veleno',
-        targetId: unit.wizard.id, targetSide: unit.side, type: 'Controllo', value: total, flags: ['dot'] })
+        targetId: unit.wizard.id, targetSide: unit.side, type: 'Controllo', value: total,
+        flags: cancrena ? ['dot', 'duo'] : ['dot'],
+        // Traccia: solo quando l'amplificazione si è applicata sul serio (non basta che il
+        // Duo sia attivo — il nemico deve essere sotto soglia).
+        ...(cancrena ? { duoId: 'cancrena' } : {}) })
     }
     if (tickHeal && unit.hp > 0) {
       // Never regen-heal a dead unit. Gate on LIVE hp, not `unit.alive`: within this same tick

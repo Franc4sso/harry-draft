@@ -76,7 +76,7 @@ export interface BattleUnit extends DraftedWizard {
   reaper?: boolean                                   // MIETITORE (player units)
 }
 
-export type LogFlag = 'crit' | 'dodge' | 'kill' | 'heal' | 'block' | 'stun' | 'dot' | 'pen' | 'shatter' | 'wait' | 'recoil' | 'revive'
+export type LogFlag = 'crit' | 'dodge' | 'kill' | 'heal' | 'block' | 'stun' | 'dot' | 'pen' | 'shatter' | 'wait' | 'recoil' | 'revive' | 'duo'
 
 export interface LogEntry {
   turn: number
@@ -90,6 +90,10 @@ export interface LogEntry {
   type: SpellType | 'system'
   value?: number
   flags: LogFlag[]
+  /** Il Duo (player-only) che ha causato o modificato questa riga. La UI lo usa per
+   *  nominare la combo nell'annuncio e per far lampeggiare la pill giusta. Puramente
+   *  osservativo: non cambia nessun comportamento della simulazione. */
+  duoId?: string
 }
 
 export interface UnitSnapshot { id: string; side: Side; hp: number; maxHp: number; alive: boolean }

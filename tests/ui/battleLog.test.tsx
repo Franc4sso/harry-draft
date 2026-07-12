@@ -16,6 +16,31 @@ describe('describeEntry shatter', () => {
   })
 })
 
+describe('describeEntry MIASMA/UNTORE narration', () => {
+  // Task 4 aggiunse queste righe di log senza dar loro una frase propria: cadevano nel
+  // fallback generico e producevano "dying lancia Miasma su heir" — un nemico MORTO che
+  // "lancia" un incantesimo. Qui inchiodiamo la narrazione corretta.
+  it('MIASMA: il veleno del cadavere si propaga, nessuno "lancia" niente', () => {
+    const entry = {
+      turn: 4, actorId: 'dying', actorSide: 'right', action: 'Miasma',
+      targetId: 'heir', targetSide: 'right', type: 'system', flags: ['duo'], duoId: 'miasma',
+    } as any
+    const out = describeEntry(entry, { 'right:dying': 'Nemico Morente', 'right:heir': 'Erede' })
+    expect(out.toLowerCase()).not.toContain('lancia')
+    expect(out).toContain('Erede')
+  })
+
+  it('UNTORE: una cura sputa una dose di veleno sul bersaglio nemico', () => {
+    const entry = {
+      turn: 5, actorId: 'sup', actorSide: 'left', action: 'Untore',
+      targetId: 'foe', targetSide: 'right', type: 'system', flags: ['duo'], duoId: 'untore',
+    } as any
+    const out = describeEntry(entry, { 'left:sup': 'Supporto', 'right:foe': 'Nemico' })
+    expect(out.toLowerCase()).not.toContain('lancia')
+    expect(out).toContain('Nemico')
+  })
+})
+
 describe('BattleLog full scrollable log', () => {
   function entries(n: number): LogEntry[] {
     return Array.from({ length: n }, (_, i) => ({

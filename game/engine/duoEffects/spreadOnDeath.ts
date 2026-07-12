@@ -8,16 +8,21 @@ const VELENO_CAP = 8
  *  ONE random living enemy. Deterministic by construction: the candidate pool is sorted by
  *  wizard.id before the single `rng.pick` draw, and NO draw happens when the pool is empty
  *  (a phantom draw would shift the whole downstream rng stream and desync replay). Operates
- *  only on the already-resolved death — never recurses into further deaths. */
-export function maybeSpreadPoison(dead: BattleUnit, enemiesOfDead: BattleUnit[], rng: Rng): void {
-  if (dead.side !== 'right') return // player-only owner ⇒ only enemy deaths spread poison
+ *  only on the already-resolved death — never recurses into further deaths.
+ *
+ *  Returns WHAT it did (recipient + stacks moved) so the caller can log it — the spread used
+ *  to be silent and the poison appeared out of nowhere. `null` = nothing happened. */
+export function maybeSpreadPoison(
+  dead: BattleUnit, enemiesOfDead: BattleUnit[], rng: Rng,
+): { recipient: BattleUnit; stacks: number } | null {
+  if (dead.side !== 'right') return null // player-only owner ⇒ only enemy deaths spread poison
   const velenoEffect = dead.statusEffects.find(e => e.statusId === 'veleno')
   const stacks = velenoEffect?.stacks ?? 0
-  if (stacks <= 0) return
+  if (stacks <= 0) return null
   const pool = enemiesOfDead
     .filter(u => u.alive && u !== dead)
     .sort((a, b) => a.wizard.id.localeCompare(b.wizard.id))
-  if (pool.length === 0) return // no rng draw when there's no candidate (parity)
+  if (pool.length === 0) return null // no rng draw when there's no candidate (parity)
   const recipient = rng.pick(pool)
   const have = recipient.statusEffects.find(e => e.statusId === 'veleno')?.stacks ?? 0
   const toAdd = Math.min(stacks, VELENO_CAP - have)
@@ -25,4 +30,6 @@ export function maybeSpreadPoison(dead: BattleUnit, enemiesOfDead: BattleUnit[],
   // not the dead unit's own identity — BattleUnit has no `sourceId` field, and crediting the
   // dead enemy itself would misattribute the DoT-tick score (see status.ts tickStatuses).
   for (let i = 0; i < toAdd; i++) applyStatus(recipient, 'veleno', { sourceId: velenoEffect?.sourceId })
+  if (toAdd <= 0) return null // il bersaglio era già al cap: nulla si è mosso, niente da loggare
+  return { recipient, stacks: toAdd }
 }

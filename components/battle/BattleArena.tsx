@@ -1,14 +1,16 @@
 'use client'
 import type React from 'react'
 import { useMemo } from 'react'
-import type { LogEntry, ActiveEffect } from '@/types'
+import type { LogEntry, ActiveEffect, ActiveDuo } from '@/types'
 import type { Replay, ReplayUnit } from '@/game/engine/combat/replay'
-import { unitKey } from '@/game/engine/combat/replay'
+import { firstDuoFireFrames, unitKey } from '@/game/engine/combat/replay'
 import { UnitBust } from './UnitBust'
 import { ArenaBackdrop } from './ArenaBackdrop'
 import { PixiArena } from './PixiArena'
 import { Callout } from './Callout'
+import { DuoPills } from './DuoPills'
 import { floatFor } from './damageFloat'
+import { DUO_BY_ID } from '@/data/duos'
 
 /** Big/ultimate enemy spells worth warning the player about a beat before they land. */
 const BIG_SPELLS = new Set([
@@ -25,7 +27,7 @@ const EMPTY_EFFECTS: ActiveEffect[] = []
  * defender. Statuses are derived per frame; HP comes from the current frame.
  */
 export function BattleArena({
-  replay, hp, entry, frameKey = 0, leftTitle = 'La tua squadra', rightTitle = 'Avversari', center, enemyLevel = 1, speed = 1,
+  replay, hp, entry, frameKey = 0, leftTitle = 'La tua squadra', rightTitle = 'Avversari', center, enemyLevel = 1, speed = 1, duos = [],
 }: {
   replay: Replay
   hp: Record<string, number>
@@ -38,8 +40,15 @@ export function BattleArena({
   enemyLevel?: number
   /** Replay playback speed — feeds the Pixi VFX layer's time budget. */
   speed?: number
+  /** Duo attivi del giocatore in questa battaglia (player-only). */
+  duos?: ActiveDuo[]
 }) {
-  const actingKey = entry?.actorSide ? unitKey(entry.actorSide, entry.actorId) : null
+  // Una riga di sistema marchiata da un Duo non ha un vero "attore che agisce": MIASMA la attribuisce
+  // al CADAVERE che contagia (giusto nel log, ma in arena accenderebbe l'aura "sta agendo" su un morto),
+  // e le altre (KO del Mietitore, sputo dell'Untore) sono conseguenze passive, non azioni. Su questi
+  // frame l'evidenziazione dell'attore resta spenta: parlano la pill che lampeggia e l'annuncio.
+  const duoSystemFrame = !!entry?.duoId && entry.type === 'system'
+  const actingKey = entry?.actorSide && !duoSystemFrame ? unitKey(entry.actorSide, entry.actorId) : null
   const targetKey = entry?.targetSide && entry.targetId ? unitKey(entry.targetSide, entry.targetId) : null
   const float = floatFor(entry)
   const frame = replay.frames[frameKey]
@@ -68,6 +77,17 @@ export function BattleArena({
     }
     return null
   }, [replay.frames, replay.units, frameKey])
+
+  // Primo scatto di ogni Duo in QUESTA battaglia: l'indice del primo frame che lo marchia. La stessa
+  // funzione pura la usa `useBattleReplay` per allungare SOLO quel frame — annuncio e ritmo devono
+  // concordare, quindi la mappa è una sola (game/engine/combat/replay.ts).
+  const firstFireAt = useMemo(() => firstDuoFireFrames(replay.frames), [replay.frames])
+
+  const firingId = entry?.duoId ?? null
+  // L'annuncio grosso col nome SOLO al primo scatto; dopo, la pill lampeggia e basta.
+  const duoName = firingId && firstFireAt.get(firingId) === frameKey
+    ? (DUO_BY_ID[firingId]?.name ?? null)
+    : null
 
   const left = useMemo(() => replay.units.filter(u => u.side === 'left'), [replay.units])
   const right = useMemo(() => replay.units.filter(u => u.side === 'right'), [replay.units])
@@ -104,6 +124,7 @@ export function BattleArena({
   return (
     <div data-testid="battle-arena" className="relative mx-auto flex w-full max-w-5xl flex-col items-center gap-4 rounded-3xl px-2 py-4">
       <ArenaBackdrop />
+      <DuoPills duos={duos} firingId={firingId} />
       {telegraph && (
         <div
           key={`tg-${frameKey}`}
@@ -131,7 +152,7 @@ export function BattleArena({
       </section>
 
       <PixiArena entry={entry} frameKey={frameKey} speed={speed} />
-      <Callout entry={entry} frameKey={frameKey} appliedControl={appliedControl} />
+      <Callout entry={entry} frameKey={frameKey} appliedControl={appliedControl} duoName={duoName} />
     </div>
   )
 }

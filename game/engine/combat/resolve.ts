@@ -12,6 +12,7 @@ export function resolveAction(
   allies: BattleUnit[] = [], bus?: EventBus,
 ): LogEntry {
   const flags: LogFlag[] = []
+  const duoIds: string[] = []
   let value: number | undefined
 
   // Protego: an incoming ENEMY spell (not a basic attack) on a warded target is negated.
@@ -26,7 +27,7 @@ export function resolveAction(
   if (spell.cooldown && spell.cooldown > 0) actor.cooldowns[spell.id] = spell.cooldown
 
   const dark = spell.keywords?.includes('magieOscure') ?? false
-  const ctx = { rng, turn, actor, target, flags, bus, allies, dark }
+  const ctx = { rng, turn, actor, target, flags, bus, allies, dark, duoIds }
   // Protego wards an ALLY (the carry), not the caster — the handler reports it so the
   // log/replay/VFX attribute the shield to whoever it actually protects.
   let entryTarget = target
@@ -42,5 +43,6 @@ export function resolveAction(
   return {
     turn, actorId: actor.wizard.id, actorSide: actor.side, action: spell.name,
     targetId: entryTarget.wizard.id, targetSide: entryTarget.side, type: spell.type, value, flags,
+    ...(duoIds[0] ? { duoId: duoIds[0] } : {}),
   }
 }

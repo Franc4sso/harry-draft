@@ -55,6 +55,11 @@ export function describeEntry(
   }
   if (entry.action === 'Veleno') return `${actor} subisce ${entry.value ?? 0} danni da veleno`
   if (entry.action === 'Fatica') return `Sfinimento — ${actor} perde ${entry.value} PV`
+  // MIASMA: `actor` è il nemico appena MORTO — non "lancia" nulla, è il suo veleno residuo
+  // che contagia un altro nemico vivo.
+  if (entry.action === 'Miasma') return `Il veleno di ${actor} si propaga a ${target ?? 'un nemico'}`
+  // UNTORE: una cura del giocatore sputa una dose di veleno su un nemico a caso.
+  if (entry.action === 'Untore') return `${actor} sputa veleno su ${target ?? 'un nemico'}`
 
   if (entry.flags.includes('heal')) return `${actor} lancia ${entry.action} e cura ${entry.value ?? 0} HP`
   if (entry.flags.includes('dodge')) return `${actor} lancia ${entry.action} ma ${target ?? 'il bersaglio'} schiva`

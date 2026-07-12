@@ -59,6 +59,26 @@ export interface Replay {
 }
 
 /**
+ * Primo scatto di ogni Duo in questa battaglia: `duoId` -> indice del PRIMO frame che lo marchia.
+ *
+ * Pura e derivata dai soli frame (non da un ref o da uno stato di riproduzione): riavvolgere,
+ * rigiocare o saltare avanti nel replay dà sempre lo stesso esito. Serve a DUE consumatori che
+ * devono per forza concordare, altrimenti il ritmo e l'annuncio si sfasano:
+ *  - `BattleArena`, per mostrare l'annuncio centrale col nome del Duo UNA sola volta per battaglia;
+ *  - `useBattleReplay` (`frameDelay`), per allungare la sosta SOLO su quel frame — gli scatti
+ *    successivi tornano al loro ramo naturale (dot/system, cioè più brevi), altrimenti una build
+ *    veleno con 10-15 tick amplificati aggiungerebbe una ventina di secondi di replay.
+ */
+export function firstDuoFireFrames(frames: ReplayFrame[]): Map<string, number> {
+  const m = new Map<string, number>()
+  frames.forEach((f, i) => {
+    const id = f.entry?.duoId
+    if (id && !m.has(id)) m.set(id, i)
+  })
+  return m
+}
+
+/**
  * Reconstructs an animatable HP timeline from a BattleResult.
  *
  * The engine pre-computes the whole fight as a log; this turns that log into a

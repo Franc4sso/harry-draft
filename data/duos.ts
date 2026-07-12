@@ -31,3 +31,19 @@ export const SIGNAL_COLOR: Record<DuoSignal, string> = {
   veleno: '#7ddc7d', esecuzione: '#ff8a7a', scudirigen: '#7db7ff', magieOscure: '#b98cff',
   taunt: '#3aa0f2', attaccante: '#ff5140', supporto: '#20d894', controllo: '#b355ff',
 }
+
+/** Come si accende ogni segnale. Le soglie sono ASIMMETRICHE e queste stringhe devono dire
+ *  il vero: la fonte è `signalActive` (game/engine/duos.ts:23-30) — Tank basta 1, gli altri
+ *  ruoli ne vogliono 2, i tag vogliono 2 maghi OPPURE una reliquia. `attaccante` è nella
+ *  mappa per completezza del tipo, ma nessun Duo spedito lo usa e la UI non lo mostra mai
+ *  (filtro: DUO_SIGNALS_IN_USE). */
+export const SIGNAL_HOWTO: Record<DuoSignal, string> = {
+  taunt: '1 Tank in squadra',
+  supporto: '2 Supporti in squadra',
+  controllo: '2 Controllori in squadra',
+  attaccante: '2 Attaccanti in squadra',
+  veleno: '2 maghi Veleno, oppure 1 reliquia veleno',
+  esecuzione: '2 maghi Esecuzione, oppure 1 reliquia esecuzione',
+  scudirigen: '2 maghi Scudo/Rigen, oppure 1 reliquia scudo',
+  magieOscure: '2 maghi Magie Oscure, oppure 1 reliquia magia oscura',
+}
