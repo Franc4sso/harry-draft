@@ -6,7 +6,7 @@ import { STATUS_BY_ID } from '@/data/statuses'
 import { absorbDamage, applyInlineEffect, applyStatus, canAttack, effectiveStats } from '../status'
 import { HARD_CONTROL_KINDS, isUnderHardControl, roleMult } from './roleCounter'
 
-export interface EffectCtx { rng: Rng; turn: number; actor: BattleUnit; target: BattleUnit; flags: LogFlag[]; bus?: EventBus; allies?: BattleUnit[]; dark?: boolean }
+export interface EffectCtx { rng: Rng; turn: number; actor: BattleUnit; target: BattleUnit; flags: LogFlag[]; bus?: EventBus; allies?: BattleUnit[]; dark?: boolean; duoIds?: string[] }
 export interface EffectResult { value?: number; dodged?: boolean; wardTarget?: BattleUnit }
 
 export function computeDamage(rng: Rng, actor: BattleUnit, target: BattleUnit, power: number, flags: LogFlag[]): number {
@@ -95,6 +95,11 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
         if (ce.instakill) ctx.target.hp = 0
         else ctx.target.hp = Math.max(0, ctx.target.hp - Math.round(ctx.target.maxHp * 0.25))
         coldExtra = hpBefore - ctx.target.hp
+        // Traccia: il colpo ha giustiziato grazie al Duo. Marchia la riga (osservativo).
+        if (coldExtra > 0) {
+          ctx.flags.push('duo')
+          ctx.duoIds?.push('esecuzione-a-freddo')
+        }
       }
     }
     // Report the HP actually removed (post-shield), NOT the gross hit: the log `value` must
