@@ -59,4 +59,21 @@ describe('traccia dei Duo nel log', () => {
     expect(res.log.some(e => e.duoId != null)).toBe(false)
     expect(res.log.some(e => e.flags.includes('duo'))).toBe(false)
   })
+
+  it('CANCRENA marchia il tick di veleno SOLO quando amplifica davvero', () => {
+    // Un nemico avvelenato: finché sta sopra il 40% di vita il tick è normale (nessun
+    // marchio); appena scende sotto soglia il tick raddoppia e la riga porta il duoId.
+    const left = [dw('vel', 'Attaccante', 'serpensortia', { atk: 12 })]
+    const right = [dw('foe', 'Attaccante', 'base_attack', { hp: 200, atk: 3, spd: 1 })]
+
+    const res = simulateBattle(left, right, createRng('duo-cancrena'), { leftDuos: duo('cancrena') })
+
+    const dots = res.log.filter(e => e.flags.includes('dot') && e.targetSide === 'right')
+    expect(dots.length).toBeGreaterThan(0)
+
+    const marked = dots.filter(e => e.duoId === 'cancrena')
+    expect(marked.length).toBeGreaterThan(0)      // sotto soglia: amplificato e marchiato
+    expect(marked.every(e => e.flags.includes('duo'))).toBe(true)
+    expect(dots.some(e => e.duoId == null)).toBe(true) // sopra soglia: tick normale, non marchiato
+  })
 })
