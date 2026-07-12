@@ -76,4 +76,17 @@ describe('traccia dei Duo nel log', () => {
     expect(marked.every(e => e.flags.includes('duo'))).toBe(true)
     expect(dots.some(e => e.duoId == null)).toBe(true) // sopra soglia: tick normale, non marchiato
   })
+
+  it('MIETITORE marchia la riga KO dell uccisione fatta da un mago del giocatore', () => {
+    const left = [dw('att', 'Attaccante', 'base_attack', { atk: 60 })]
+    const right = [dw('foe', 'Attaccante', 'base_attack', { hp: 30, atk: 2, spd: 1 })]
+
+    const res = simulateBattle(left, right, createRng('duo-reap'), { leftDuos: duo('mietitore') })
+
+    const ko = res.log.filter(e => e.action === 'KO' && e.targetSide === 'right')
+    expect(ko.length).toBeGreaterThan(0)
+    expect(ko[0]!.duoId).toBe('mietitore')
+    expect(ko[0]!.flags).toContain('duo')
+    expect(ko[0]!.flags).toContain('kill') // il flag esistente non va perso
+  })
 })

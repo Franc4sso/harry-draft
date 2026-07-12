@@ -293,9 +293,15 @@ export function simulateBattle(
       }
       sync(realTarget)
       if (!realTarget.alive && entry.flags.includes('heal') === false) {
+        // MIETITORE: la stessa condizione che più sotto chiama maybeReap (actor a sinistra,
+        // flag reaper, vittima nemica). Marchiata QUI perché la riga KO è l'istante in cui
+        // il carnefice incassa il raccolto.
+        const reaped = actor.side === 'left' && !!actor.reaper && realTarget.side === 'right'
         pushLog({
           turn, actorId: actor.wizard.id, actorSide: actor.side, action: 'KO',
-          targetId: realTarget.wizard.id, targetSide: realTarget.side, type: 'system', flags: ['kill'],
+          targetId: realTarget.wizard.id, targetSide: realTarget.side, type: 'system',
+          flags: reaped ? ['kill', 'duo'] : ['kill'],
+          ...(reaped ? { duoId: 'mietitore' } : {}),
         })
       }
       // onDeath / onAllyDeath: after sync, when any unit just died.
