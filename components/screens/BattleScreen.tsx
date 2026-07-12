@@ -3,6 +3,8 @@ import { useMemo, useState } from 'react'
 import { Play, Pause, SkipForward, FastForward, ChevronRight } from 'lucide-react'
 import type { ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard, LogEntry } from '@/types'
 import { buildReplay } from '@/game/engine/combat/replay'
+import { detectDuos } from '@/game/engine/duos'
+import { livingOf } from '@/game/engine/roster'
 import { useBattleReplay, REPLAY_SPEEDS } from '@/hooks/useBattleReplay'
 import { BALANCE } from '@/data/constants'
 import { Hourglass } from 'lucide-react'
@@ -48,6 +50,12 @@ export function BattleScreen({
     [result, playerTeam, enemy, playerSyn, enemySyn, playerRelics, rightRelics, rightMenace, rightDamageReduction, rightIgnoresTaunt],
   )
   const r = useBattleReplay(replay)
+  // Stessi ingressi del motore (resolvers/combat.ts:89 fa detectDuos(livingOf(ready), state.relics))
+  // così la lista in arena non può divergere da quella che ha davvero agito.
+  const activeDuos = useMemo(
+    () => detectDuos(livingOf(playerTeam), playerRelics ?? []),
+    [playerTeam, playerRelics],
+  )
   // Lets the player dismiss the end modal to review the settled board/log,
   // then reopen it (or confirm) via the floating "Rivedi esito" button.
   const [dismissed, setDismissed] = useState(false)
@@ -158,7 +166,7 @@ export function BattleScreen({
           <SynergyRibbon synergies={playerSyn} relics={playerRelics ?? []} align="left" title="Le tue sinergie" tone="ally" />
           <BattleArena
             replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle}
-            enemyLevel={enemyLevel} speed={r.speed}
+            enemyLevel={enemyLevel} speed={r.speed} duos={activeDuos}
             center={<ActionPanel entry={stickyEntry} units={replay.units} />}
           />
           <SynergyRibbon synergies={enemySyn} align="left" title="Sinergie nemiche" tone="enemy" />

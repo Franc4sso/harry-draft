@@ -18,6 +18,9 @@ export function frameDelay(entry: LogEntry | null, base: number): number {
   const f = entry.flags ?? []
   if (f.includes('kill')) return Math.round(base * 1.7)
   if (f.includes('crit')) return Math.round(base * 1.35)
+  // Un frame che porta un Duo è il momento raro della battaglia: dura di più (come un kill),
+  // altrimenti l'annuncio centrale sfarfalla via. Va PRIMA del ramo 'system', che dimezza.
+  if (entry.duoId) return Math.round(base * 1.7)
   if (entry.type === 'system' || f.includes('dot') || f.includes('wait') || f.includes('recoil')) return Math.round(base * 0.5)
   if (f.includes('dodge') || f.includes('block')) return Math.round(base * 0.85)
   return base

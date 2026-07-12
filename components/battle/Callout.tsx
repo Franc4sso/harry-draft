@@ -19,14 +19,21 @@ const CONTROL_CALLOUT: Record<string, { text: string; tone: string }> = {
 }
 
 /**
- * The big centered word for a frame. Priority: a killing blow, then a freshly
- * applied control (stun/freeze/silence/disarm — these carry no flag of their own,
- * so BattleArena detects them by diffing the target's statuses and passes the
- * kind in), then the flag-based events already on the entry.
+ * Il grande annuncio centrale del frame. Priorità: il DUO vince su tutto — è l'informazione
+ * rara, e il frame in cui scatta ESECUZIONE A FREDDO è anche un frame di esecuzione (crit+kill),
+ * quindi senza questa regola il giocatore leggerebbe "ESECUZIONE" e non saprebbe mai che è
+ * stata la combo. Poi: colpo mortale, controllo appena applicato, e infine i flag sulla entry.
+ *
+ * Resta PURA: non può sapere se è il primo scatto del Duo in questa battaglia. Il chiamante
+ * (BattleArena) lo decide e passa `duoName` SOLO al primo scatto; dal secondo in poi passa
+ * null e qui non cambia nulla rispetto a prima.
  */
-export function calloutFor(entry: LogEntry | null, appliedControl?: string | null): { text: string; tone: string } | null {
+export function calloutFor(
+  entry: LogEntry | null, appliedControl?: string | null, duoName?: string | null,
+): { text: string; tone: string } | null {
   if (!entry) return null
   const flags = entry.flags ?? []
+  if (duoName && entry.duoId) return { text: duoName.toUpperCase(), tone: '#d9b65f' }
   if (flags.includes('crit') && flags.includes('kill')) return { text: 'ESECUZIONE', tone: '#e05a4a' }
   if (appliedControl && CONTROL_CALLOUT[appliedControl]) return CONTROL_CALLOUT[appliedControl]!
   if (flags.includes('crit')) return { text: 'CRITICO', tone: '#f6e6a8' }
@@ -46,7 +53,7 @@ export function calloutFor(entry: LogEntry | null, appliedControl?: string | nul
  * `prefers-reduced-motion`: a brief static word instead of the scale/blur
  * flash-then-fade.
  */
-export function Callout({ entry, frameKey, appliedControl = null }: { entry: LogEntry | null; frameKey: number; appliedControl?: string | null }) {
+export function Callout({ entry, frameKey, appliedControl = null, duoName = null }: { entry: LogEntry | null; frameKey: number; appliedControl?: string | null; duoName?: string | null }) {
   const reduced = !!useReducedMotion()
   const lastFiredRef = useRef(0)
   const [callout, setCallout] = useState<{ text: string; tone: string; key: number } | null>(null)
@@ -55,9 +62,9 @@ export function Callout({ entry, frameKey, appliedControl = null }: { entry: Log
     if (frameKey === 0) return
     if (lastFiredRef.current === frameKey) return
     lastFiredRef.current = frameKey
-    const co = calloutFor(entry, appliedControl)
+    const co = calloutFor(entry, appliedControl, duoName)
     setCallout(co ? { ...co, key: frameKey } : null)
-  }, [frameKey, entry, appliedControl])
+  }, [frameKey, entry, appliedControl, duoName])
 
   useEffect(() => {
     if (!callout) return
