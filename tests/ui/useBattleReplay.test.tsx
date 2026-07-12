@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { renderHook, act } from '@testing-library/react'
-import { useBattleReplay, regenBatchEnd } from '@/hooks/useBattleReplay'
+import { useBattleReplay, regenBatchEnd, frameDelay } from '@/hooks/useBattleReplay'
 import { buildReplay } from '@/game/engine/combat/replay'
 import type { Replay, ReplayUnit, ReplayFrame } from '@/game/engine/combat/replay'
 import type { LogEntry } from '@/types'
@@ -36,6 +36,71 @@ describe('regenBatchEnd', () => {
     expect(regenBatchEnd(two, 0)).toBe(0)
   })
 })
+
+/**
+ * Il ritmo dei Duo. La sosta lunga è un premio per il momento RARO: il PRIMO scatto di un Duo,
+ * l'unico che si prende l'annuncio centrale col nome. Dal secondo in poi il frame torna al suo
+ * ramo naturale — altrimenti una build veleno, dove CANCRENA marchia 10-15 tick per battaglia,
+ * allungherebbe il replay di una ventina di secondi (ogni tick da 600ms a 2040ms).
+ */
+describe('frameDelay — il ritmo dei Duo', () => {
+  const dotDuo: LogEntry = {
+    turn: 1, actorId: 'vel', actorSide: 'left', action: 'Veleno', targetId: 'foe', targetSide: 'right',
+    type: 'Controllo', value: 12, flags: ['dot', 'duo'], duoId: 'cancrena',
+  } as LogEntry
+  const plainDot: LogEntry = { ...dotDuo, flags: ['dot'], duoId: undefined } as LogEntry
+
+  it('il PRIMO scatto si prende la sosta lunga (come un kill)', () => {
+    expect(frameDelay(dotDuo, 1000, true)).toBe(1700)
+  })
+
+  it('gli scatti SUCCESSIVI dello stesso Duo tornano al loro ramo naturale (dot = breve)', () => {
+    expect(frameDelay(dotDuo, 1000, false)).toBe(500)
+    // ...cioè esattamente quanto durerebbe lo stesso tick senza alcun Duo: il marchio non pesa.
+    expect(frameDelay(dotDuo, 1000, false)).toBe(frameDelay(plainDot, 1000))
+  })
+
+  it('un frame di SISTEMA marchiato da un Duo (Untore/Miasma) resta breve se non è il primo', () => {
+    const sys = { ...dotDuo, type: 'system', flags: ['duo'], duoId: 'untore', value: undefined } as unknown as LogEntry
+    expect(frameDelay(sys, 1000, true)).toBe(1700)
+    expect(frameDelay(sys, 1000, false)).toBe(500)
+  })
+})
+
+/** Due tick di CANCRENA di fila: solo il primo è "il primo scatto". Frame 3 tiene in vita il
+ *  nemico fino alla fine, così deathFrame non interferisce con l'avanzamento. */
+function makeDuoPacingReplay(): Replay {
+  const left = makeUnit('left:vel', 'left')
+  const right = makeUnit('right:foe', 'right')
+  const tick = (turn: number): LogEntry => ({
+    turn, actorId: 'vel', actorSide: 'left', action: 'Veleno', targetId: 'foe', targetSide: 'right',
+    type: 'Controllo', value: 10, flags: ['dot', 'duo'], duoId: 'cancrena',
+  } as LogEntry)
+  return {
+    units: [left, right], winner: 'left', mvpId: 'vel', turns: 3,
+    frames: [
+      { index: 0, entry: null, hp: { 'left:vel': 100, 'right:foe': 100 }, cooldowns: {}, statusEffects: {} },
+      { index: 1, entry: tick(1), hp: { 'left:vel': 100, 'right:foe': 90 }, cooldowns: {}, statusEffects: {} },
+      { index: 2, entry: tick(2), hp: { 'left:vel': 100, 'right:foe': 80 }, cooldowns: {}, statusEffects: {} },
+      { index: 3, entry: tick(3), hp: { 'left:vel': 100, 'right:foe': 70 }, cooldowns: {}, statusEffects: {} },
+    ],
+  }
+}
+
+/** Il colpo di grazia è ANCHE il primo scatto di ESECUZIONE A FREDDO: il modale non deve
+ *  aprirsi sull'annuncio ancora a schermo. */
+function makeDuoDeathReplay(): Replay {
+  const left = makeUnit('left:att', 'left')
+  const right = makeUnit('right:foe', 'right')
+  return {
+    units: [left, right], winner: 'left', mvpId: 'att', turns: 1,
+    frames: [
+      { index: 0, entry: null, hp: { 'left:att': 100, 'right:foe': 100 }, cooldowns: {}, statusEffects: {} },
+      { index: 1, entry: { turn: 1, actorId: 'att', actorSide: 'left', action: 'Colpo', targetId: 'foe', targetSide: 'right', type: 'Attacco', value: 40, flags: [] }, hp: { 'left:att': 100, 'right:foe': 60 }, cooldowns: {}, statusEffects: {} },
+      { index: 2, entry: { turn: 1, actorId: 'att', actorSide: 'left', action: 'Colpo', targetId: 'foe', targetSide: 'right', type: 'Attacco', value: 60, flags: ['crit', 'kill', 'duo'], duoId: 'esecuzione-a-freddo' } as LogEntry, hp: { 'left:att': 100, 'right:foe': 0 }, cooldowns: {}, statusEffects: {} },
+    ],
+  }
+}
 
 function makeReplay() {
   const l = team(['harry', 'ron', 'hermione', 'luna', 'neville'], 7)
@@ -197,6 +262,44 @@ describe('useBattleReplay', () => {
     expect(result.current.done).toBe(true)
     expect(result.current.modalReady).toBe(true)
     // Timer should NOT be needed — verify it stays true even without advancing time
+    expect(result.current.modalReady).toBe(true)
+  })
+
+  it('allunga SOLO il primo scatto di un Duo; il secondo tick scorre alla velocità del suo ramo', () => {
+    const replay = makeDuoPacingReplay()
+    const { result } = renderHook(() => useBattleReplay(replay, { autoPlay: true, stepMs: 1000 }))
+    // Frame 0 (nessuna entry) → base.
+    act(() => { vi.advanceTimersByTime(1000) })
+    expect(result.current.index).toBe(1)
+    // Frame 1 = PRIMO scatto di cancrena → sosta lunga (1.7x): a 1699ms non si è ancora mosso.
+    act(() => { vi.advanceTimersByTime(1699) })
+    expect(result.current.index).toBe(1)
+    act(() => { vi.advanceTimersByTime(1) })
+    expect(result.current.index).toBe(2)
+    // Frame 2 = SECONDO scatto dello stesso Duo → ramo dot (0.5x): 500ms bastano.
+    act(() => { vi.advanceTimersByTime(500) })
+    expect(result.current.index).toBe(3)
+  })
+
+  it('quando il colpo di grazia porta un Duo, il modale aspetta che l annuncio sia leggibile', () => {
+    const replay = makeDuoDeathReplay()
+    const { result } = renderHook(() => useBattleReplay(replay, { autoPlay: false }))
+    act(() => { result.current.step(); result.current.step() })
+    expect(result.current.index).toBe(2)
+    expect(result.current.deathFrame).toBe(2)
+    // A 600ms (il ritardo normale) il modale coprirebbe ancora l'annuncio (che vive 1300ms).
+    act(() => { vi.advanceTimersByTime(600) })
+    expect(result.current.modalReady).toBe(false)
+    act(() => { vi.advanceTimersByTime(900) })
+    expect(result.current.modalReady).toBe(true)
+  })
+
+  it('senza Duo sul frame di morte il ritardo del modale resta quello normale (600ms)', () => {
+    const replay = makeReplayWithTrailingWinnerFrames()
+    const { result } = renderHook(() => useBattleReplay(replay, { autoPlay: false }))
+    act(() => { result.current.step(); result.current.step() })
+    expect(result.current.index).toBe(2)
+    act(() => { vi.advanceTimersByTime(600) })
     expect(result.current.modalReady).toBe(true)
   })
 

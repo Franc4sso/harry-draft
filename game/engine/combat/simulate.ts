@@ -25,7 +25,7 @@ import { applyTenaciaAura, cleanseOneControl } from './roleCounter'
 import { stampDuoFields } from '../duoEffects/stamp'
 import { maybeSpreadPoison } from '../duoEffects/spreadOnDeath'
 import { maybeSpitPoison } from '../duoEffects/spitOnHeal'
-import { maybeReap } from '../duoEffects/reap'
+import { maybeReap, willReap } from '../duoEffects/reap'
 
 export function toBattleUnits(
   team: DraftedWizard[], side: Side, synergies: ActiveSynergy[], relics: ActiveRelic[] = [], menacePct = 0, damageReduction = 0,
@@ -313,8 +313,10 @@ export function simulateBattle(
       if (!realTarget.alive && entry.flags.includes('heal') === false) {
         // MIETITORE: la stessa condizione che più sotto chiama maybeReap (actor a sinistra,
         // flag reaper, vittima nemica). Marchiata QUI perché la riga KO è l'istante in cui
-        // il carnefice incassa il raccolto.
-        const reaped = actor.side === 'left' && !!actor.reaper && realTarget.side === 'right'
+        // il carnefice incassa il raccolto. `willReap` sbircia se lo stack atterrerà davvero
+        // (a tetto pieno applyStatus è un no-op): si marchia solo ciò che succede sul serio.
+        // maybeReap resta dov'è — anticiparlo cambierebbe lo snapshot di questo frame.
+        const reaped = actor.side === 'left' && !!actor.reaper && realTarget.side === 'right' && willReap(actor)
         pushLog({
           turn, actorId: actor.wizard.id, actorSide: actor.side, action: 'KO',
           targetId: realTarget.wizard.id, targetSide: realTarget.side, type: 'system',

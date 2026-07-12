@@ -50,8 +50,11 @@ export function BattleScreen({
     [result, playerTeam, enemy, playerSyn, enemySyn, playerRelics, rightRelics, rightMenace, rightDamageReduction, rightIgnoresTaunt],
   )
   const r = useBattleReplay(replay)
-  // Stessi ingressi del motore (resolvers/combat.ts:89 fa detectDuos(livingOf(ready), state.relics))
-  // così la lista in arena non può divergere da quella che ha davvero agito.
+  // Stessa lista di Duo che ha davvero agito nel motore. Il resolver (resolvers/combat.ts) fa
+  // detectDuos(ready, state.relics) su `battleReadyTeam(livingOf(state.team))` — i caduti sono già
+  // fuori. Qui invece `playerTeam` arriva da prepareCombat come `battleReadyTeam(run.team)`, che NON
+  // filtra i caduti: senza questo `livingOf` le pill mostrerebbero Duo che in battaglia non erano
+  // accesi. Il livingOf è quindi PORTANTE, non ridondante — non toglierlo.
   const activeDuos = useMemo(
     () => detectDuos(livingOf(playerTeam), playerRelics ?? []),
     [playerTeam, playerRelics],

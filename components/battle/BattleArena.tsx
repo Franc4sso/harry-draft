@@ -3,7 +3,7 @@ import type React from 'react'
 import { useMemo } from 'react'
 import type { LogEntry, ActiveEffect, ActiveDuo } from '@/types'
 import type { Replay, ReplayUnit } from '@/game/engine/combat/replay'
-import { unitKey } from '@/game/engine/combat/replay'
+import { firstDuoFireFrames, unitKey } from '@/game/engine/combat/replay'
 import { UnitBust } from './UnitBust'
 import { ArenaBackdrop } from './ArenaBackdrop'
 import { PixiArena } from './PixiArena'
@@ -43,7 +43,12 @@ export function BattleArena({
   /** Duo attivi del giocatore in questa battaglia (player-only). */
   duos?: ActiveDuo[]
 }) {
-  const actingKey = entry?.actorSide ? unitKey(entry.actorSide, entry.actorId) : null
+  // Una riga di sistema marchiata da un Duo non ha un vero "attore che agisce": MIASMA la attribuisce
+  // al CADAVERE che contagia (giusto nel log, ma in arena accenderebbe l'aura "sta agendo" su un morto),
+  // e le altre (KO del Mietitore, sputo dell'Untore) sono conseguenze passive, non azioni. Su questi
+  // frame l'evidenziazione dell'attore resta spenta: parlano la pill che lampeggia e l'annuncio.
+  const duoSystemFrame = !!entry?.duoId && entry.type === 'system'
+  const actingKey = entry?.actorSide && !duoSystemFrame ? unitKey(entry.actorSide, entry.actorId) : null
   const targetKey = entry?.targetSide && entry.targetId ? unitKey(entry.targetSide, entry.targetId) : null
   const float = floatFor(entry)
   const frame = replay.frames[frameKey]
@@ -73,16 +78,10 @@ export function BattleArena({
     return null
   }, [replay.frames, replay.units, frameKey])
 
-  // Primo scatto di ogni Duo in QUESTA battaglia: l'indice del primo frame che lo marchia.
-  // Derivato dai frame (non da un ref): riavvolgere o rigiocare il replay dà lo stesso esito.
-  const firstFireAt = useMemo(() => {
-    const m = new Map<string, number>()
-    replay.frames.forEach((f, i) => {
-      const id = f.entry?.duoId
-      if (id && !m.has(id)) m.set(id, i)
-    })
-    return m
-  }, [replay.frames])
+  // Primo scatto di ogni Duo in QUESTA battaglia: l'indice del primo frame che lo marchia. La stessa
+  // funzione pura la usa `useBattleReplay` per allungare SOLO quel frame — annuncio e ritmo devono
+  // concordare, quindi la mappa è una sola (game/engine/combat/replay.ts).
+  const firstFireAt = useMemo(() => firstDuoFireFrames(replay.frames), [replay.frames])
 
   const firingId = entry?.duoId ?? null
   // L'annuncio grosso col nome SOLO al primo scatto; dopo, la pill lampeggia e basta.

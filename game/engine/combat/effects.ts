@@ -96,6 +96,14 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
         else ctx.target.hp = Math.max(0, ctx.target.hp - Math.round(ctx.target.maxHp * 0.25))
         coldExtra = hpBefore - ctx.target.hp
         // Traccia: il colpo ha giustiziato grazie al Duo. Marchia la riga (osservativo).
+        // TRAPPOLA: `duoIds` è opzionale perché solo `resolveAction` lo passa (resolve.ts lo crea e
+        // ne travasa il primo elemento in `entry.duoId`). Il percorso dei rider `onHit`
+        // (simulate.ts, `collectReactive('onHit')`) invoca gli handler SENZA `duoIds`: lì il
+        // `?.push` finisce in un array inesistente. Oggi è innocuo — tutti i rider onHit sono
+        // `applyStatus`, nessuno è `damage`, quindi questo ramo non ci passa mai. Ma se nascesse
+        // un rider di danno, un cold-execute lì spingerebbe il flag 'duo' sulla riga e PERDEREBBE
+        // il duoId (niente annuncio, niente pill): in quel caso passa `duoIds` anche nel ctx di
+        // onHit e travasalo nella entry.
         if (coldExtra > 0) {
           ctx.flags.push('duo')
           ctx.duoIds?.push('esecuzione-a-freddo')

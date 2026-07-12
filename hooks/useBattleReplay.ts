@@ -1,7 +1,8 @@
 'use client'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import type { LogEntry } from '@/types'
 import type { Replay, ReplayFrame } from '@/game/engine/combat/replay'
+import { firstDuoFireFrames } from '@/game/engine/combat/replay'
 
 export const REPLAY_SPEEDS = [1, 2, 4] as const
 export type ReplaySpeed = (typeof REPLAY_SPEEDS)[number]
@@ -10,17 +11,29 @@ export type ReplaySpeed = (typeof REPLAY_SPEEDS)[number]
 // 500ms) so the victory modal never appears while an HP bar is still visibly draining.
 const POST_DEATH_DELAY_MS = 600
 
+/** Quando il colpo che decide la battaglia è ANCHE il primo scatto di un Duo, il modale di esito
+ *  coprirebbe l'annuncio centrale (che vive 1300ms) dopo appena 600ms. ESECUZIONE A FREDDO scatta
+ *  per definizione su un frame di uccisione, spesso quella finale: il Duo più vistoso sarebbe
+ *  quello più oscurato. Su quel solo caso il modale aspetta che l'annuncio sia leggibile. */
+const POST_DEATH_DUO_DELAY_MS = 1500
+
 /** Per-frame dwell time: linger on the big moments (kill/crit) and fast-forward the
  *  trivial ticks (DoT/regen/fatigue/system/wait) so the reveal has dramatic rhythm
- *  instead of a flat metronome. Multiplies the base step; `speed` still divides it. */
-export function frameDelay(entry: LogEntry | null, base: number): number {
+ *  instead of a flat metronome. Multiplies the base step; `speed` still divides it.
+ *
+ *  `firstDuoFire` = questo frame è il PRIMO scatto del suo Duo in questa battaglia (l'unico che
+ *  si prende l'annuncio centrale col nome). Solo quello merita la sosta lunga: dal secondo scatto
+ *  in poi il Duo si vede dalla pill che lampeggia, e il frame torna al suo ramo naturale — un tick
+ *  di veleno amplificato da CANCRENA resta un tick veloce, altrimenti una build veleno allungherebbe
+ *  il replay di una ventina di secondi. */
+export function frameDelay(entry: LogEntry | null, base: number, firstDuoFire = false): number {
   if (!entry) return base
   const f = entry.flags ?? []
   if (f.includes('kill')) return Math.round(base * 1.7)
   if (f.includes('crit')) return Math.round(base * 1.35)
-  // Un frame che porta un Duo è il momento raro della battaglia: dura di più (come un kill),
-  // altrimenti l'annuncio centrale sfarfalla via. Va PRIMA del ramo 'system', che dimezza.
-  if (entry.duoId) return Math.round(base * 1.7)
+  // Il primo scatto di un Duo è il momento raro della battaglia: dura come un kill, altrimenti
+  // l'annuncio centrale sfarfalla via. Va PRIMA del ramo 'system'/'dot', che dimezzano.
+  if (firstDuoFire && entry.duoId) return Math.round(base * 1.7)
   if (entry.type === 'system' || f.includes('dot') || f.includes('wait') || f.includes('recoil')) return Math.round(base * 0.5)
   if (f.includes('dodge') || f.includes('block')) return Math.round(base * 0.85)
   return base
@@ -119,22 +132,31 @@ export function useBattleReplay(
     return total - 1
   })()
 
+  // La stessa mappa che BattleArena usa per decidere l'annuncio centrale (funzione pura
+  // condivisa): ritmo e annuncio devono concordare sul PRIMO scatto di ogni Duo.
+  const firstDuoFire = useMemo(() => firstDuoFireFrames(replay.frames), [replay.frames])
+
   useEffect(() => {
     if (!playing || done) return
     // Dwell longer on the frame just revealed if it's a big moment, shorter if it's a
     // trivial tick — the current frame's entry drives how long it stays on screen.
-    const delay = frameDelay(replay.frames[index]?.entry ?? null, stepMs) / speed
+    const entry = replay.frames[index]?.entry ?? null
+    const first = !!entry?.duoId && firstDuoFire.get(entry.duoId) === index
+    const delay = frameDelay(entry, stepMs, first) / speed
     const t = setTimeout(() => setIndex(i => regenBatchEnd(replay.frames, Math.min(total - 1, i + 1))), delay)
     return () => clearTimeout(t)
-  }, [playing, done, index, speed, total, stepMs, replay])
+  }, [playing, done, index, speed, total, stepMs, replay, firstDuoFire])
 
   useEffect(() => { if (done) setPlaying(false) }, [done])
 
   useEffect(() => {
     if (index < deathFrame) { setModalReady(false); return }
-    const t = setTimeout(() => setModalReady(true), POST_DEATH_DELAY_MS)
+    // Se il colpo di grazia porta un Duo, l'annuncio centrale ha bisogno di essere letto prima
+    // che il modale ci si apra sopra. Il caso normale (nessun Duo) resta a 600ms.
+    const duoOnDeath = !!replay.frames[deathFrame]?.entry?.duoId
+    const t = setTimeout(() => setModalReady(true), duoOnDeath ? POST_DEATH_DUO_DELAY_MS : POST_DEATH_DELAY_MS)
     return () => clearTimeout(t)
-  }, [index, deathFrame])
+  }, [index, deathFrame, replay])
 
   const play = useCallback(() => setPlaying(true), [])
   const pause = useCallback(() => setPlaying(false), [])

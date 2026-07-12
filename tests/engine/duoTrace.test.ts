@@ -29,10 +29,9 @@ describe('traccia dei Duo nel log', () => {
     // il colpo sotto soglia deve giustiziare, e quella riga deve portare il duoId.
     // ctrl agisce per PRIMO (spd 30 > 10 > 1) e storna il bersaglio senza infliggere
     // danno (petrificus non ha `power`); il colpo di att che segue nello stesso turno
-    // lo trova già sotto controllo. atk/hp sono calibrati (vedi tests/engine/_debugDuo
-    // di lavoro, poi rimosso) cosi che il colpo pieno E quello critato lascino il
-    // bersaglio vivo ma sotto la soglia 0.5, cosi il ramo cold-execute scatta davvero
-    // invece di limitarsi a un KO normale.
+    // lo trova già sotto controllo. atk/hp sono calibrati cosi che il colpo pieno E quello
+    // critato lascino il bersaglio vivo ma sotto la soglia 0.5, cosi il ramo cold-execute
+    // scatta davvero invece di limitarsi a un KO normale.
     const left = [
       dw('ctrl', 'Controllo', 'petrificus', { spd: 30 }),
       dw('att', 'Attaccante', 'base_attack', { atk: 550, spd: 10 }),
@@ -105,6 +104,11 @@ describe('traccia dei Duo nel log', () => {
     expect(spread[0]!.flags).toContain('duo')
     expect(spread[0]!.type).toBe('system')
     expect(spread[0]!.value).toBeUndefined() // niente value: non si muovono HP (parità replay)
+    // Il contagio deve atterrare sull'EREDE (il nemico VIVO), non sul cadavere che lo emana:
+    // l'attore è il morto (è lui che contagia), il bersaglio no.
+    expect(spread[0]!.actorId).toBe('dying')   // il cadavere è la sorgente
+    expect(spread[0]!.targetId).toBe('heir')   // il veleno salta al nemico ancora vivo
+    expect(spread[0]!.targetSide).toBe('right')
   })
 
   it('UNTORE emette una riga quando una cura sputa veleno su un nemico', () => {
