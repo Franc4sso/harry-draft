@@ -277,6 +277,22 @@ export function simulateBattle(
           : (spell.type === 'Difesa' ? actor : target!)
       const entry = resolveAction(rng, turn, actor, realTarget, spell, allies, bus)
       pushLog(entry)
+      // MURO VIVENTE: se il colpo ha innescato un riflesso (il Tank col muro = realTarget aveva
+      // scudo che ha assorbito), emetti una riga dedicata puntata sull'ATTACCANTE così il replay
+      // (che ricostruisce gli HP da entry.value su targetId) resta sincronizzato senza modifiche.
+      const ref = entry._reflect
+      if (ref) {
+        delete entry._reflect   // transiente: non deve finire nel RunLog
+        pushLog({
+          turn, actorId: realTarget.wizard.id, actorSide: 'left', action: 'MuroVivente',
+          targetId: ref.unitId, targetSide: ref.side,
+          type: 'system', value: ref.amount, flags: ['duo'], duoId: 'muro-vivente',
+        })
+        // MVP: accredita il Tank col muro (come i tick veleno accreditano il poisoner, simulate.ts:381-383).
+        const k = `left:${realTarget.wizard.id}`
+        score[k] = (score[k] ?? 0) + ref.amount
+        sync(actor)   // `actor` è l'attaccante nemico che ha subito il riflesso
+      }
       // onHit: after an actor's spell CONNECTS against an ENEMY target. A dodged or
       // Protego-negated attack did not land, so its on-hit riders (poison/stun/weaken
       // added by traits/signatures) must NOT fire — "dodged but still poisoned" makes no

@@ -150,14 +150,22 @@ describe('traccia dei Duo nel log', () => {
     expect(spits[0]!.value).toBeUndefined()
   })
 
-  it('MURO VIVENTE non emette NESSUNA traccia — scelta di design, non dimenticanza', () => {
-    // Muro Vivente impedisce (le retrovie non sono bersagliabili): non esiste un istante
-    // da annunciare. Vive solo come pill persistente in arena. Vedi la spec, §4.
-    const left = [dw('tank', 'Tank', 'base_attack', { hp: 200 }), dw('att', 'Attaccante', 'base_attack')]
-    const right = [dw('foe', 'Attaccante', 'base_attack', { hp: 120 })]
+  it('MURO VIVENTE marchia la riga di riflesso quando lo scudo del Tank assorbe', () => {
+    // Rework a riflesso (vedi tests/engine/duoEffects/muroVivente.test.ts): quando il Tank col
+    // muro ha uno scudo attivo, l'assorbimento riflette parte del danno sull'attaccante e quella
+    // riga porta il duoId. Non è più un retarget silenzioso senza traccia.
+    const left = [dw('tank', 'Tank', 'fianto', { hp: 200 }), dw('att', 'Attaccante', 'base_attack')]
+    const right = [dw('foe', 'Attaccante', 'base_attack', { hp: 300, atk: 40 })]
 
-    const res = simulateBattle(left, right, createRng('duo-muro'), { leftDuos: duo('muro-vivente') })
+    let wall: any
+    let res: any
+    for (let i = 0; i < 20 && !wall; i++) {
+      res = simulateBattle(left, right, createRng(`duo-muro-${i}`), { leftDuos: duo('muro-vivente') })
+      wall = res.log.find((e: any) => e.duoId === 'muro-vivente')
+    }
 
-    expect(res.log.some(e => e.duoId === 'muro-vivente')).toBe(false)
+    expect(wall).toBeTruthy()
+    expect(wall.action).toBe('MuroVivente')
+    expect(wall.flags).toContain('duo')
   })
 })

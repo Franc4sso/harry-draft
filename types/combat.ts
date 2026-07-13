@@ -71,7 +71,7 @@ export interface BattleUnit extends DraftedWizard {
   controlResist?: boolean
   // --- Duo stamps (player-only; see game/engine/duoEffects/stamp.ts) ---
   poisonAmp?: { threshold: number; mult: number }   // CANCRENA (stamped on ENEMY units)
-  livingWall?: boolean                               // MURO VIVENTE (player Tanks)
+  livingWall?: { reflect: number }                   // MURO VIVENTE (player Tanks): riflette una frazione del danno assorbito dallo scudo
   coldExecute?: { threshold: number; instakill: boolean } // ESECUZIONE A FREDDO (player attackers)
   reaper?: boolean                                   // MIETITORE (player units)
 }
@@ -94,6 +94,10 @@ export interface LogEntry {
    *  nominare la combo nell'annuncio e per far lampeggiare la pill giusta. Puramente
    *  osservativo: non cambia nessun comportamento della simulazione. */
   duoId?: string
+  /** Transiente (NON persistito nel RunLog): il riflesso del Muro Vivente prodotto da questa
+   *  azione. `resolveAction` lo travasa da `ctx.reflect`; `simulate.ts` lo consuma per emettere
+   *  la riga `MuroVivente` e lo scarta prima di loggare. Mai serializzato. */
+  _reflect?: { unitId: string; side: Side; amount: number }
 }
 
 export interface UnitSnapshot { id: string; side: Side; hp: number; maxHp: number; alive: boolean }

@@ -60,6 +60,8 @@ export function describeEntry(
   if (entry.action === 'Miasma') return `Il veleno di ${actor} si propaga a ${target ?? 'un nemico'}`
   // UNTORE: una cura del giocatore sputa una dose di veleno su un nemico a caso.
   if (entry.action === 'Untore') return `${actor} sputa veleno su ${target ?? 'un nemico'}`
+  // MURO VIVENTE: il tank riflette parte del danno subito sull'attaccante nemico.
+  if (entry.action === 'MuroVivente') return `Il muro di ${actor} riflette ${entry.value ?? 0} su ${target ?? 'un nemico'}`
 
   if (entry.flags.includes('heal')) return `${actor} lancia ${entry.action} e cura ${entry.value ?? 0} HP`
   if (entry.flags.includes('dodge')) return `${actor} lancia ${entry.action} ma ${target ?? 'il bersaglio'} schiva`

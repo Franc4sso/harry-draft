@@ -2,7 +2,7 @@ import type { BattleUnit, LogEntry, LogFlag, Spell } from '@/types'
 import type { Rng } from '../rng'
 import type { EventBus } from './eventBus'
 import { consumeWard, effectiveStats, tickStatuses } from '../status'
-import { EFFECT_HANDLERS } from './effects'
+import { EFFECT_HANDLERS, type EffectCtx } from './effects'
 import { normalizeSpell } from './normalizeSpell'
 
 export { effectiveStats, tickStatuses }
@@ -27,7 +27,7 @@ export function resolveAction(
   if (spell.cooldown && spell.cooldown > 0) actor.cooldowns[spell.id] = spell.cooldown
 
   const dark = spell.keywords?.includes('magieOscure') ?? false
-  const ctx = { rng, turn, actor, target, flags, bus, allies, dark, duoIds }
+  const ctx: EffectCtx = { rng, turn, actor, target, flags, bus, allies, dark, duoIds }
   // Protego wards an ALLY (the carry), not the caster — the handler reports it so the
   // log/replay/VFX attribute the shield to whoever it actually protects.
   let entryTarget = target
@@ -44,5 +44,6 @@ export function resolveAction(
     turn, actorId: actor.wizard.id, actorSide: actor.side, action: spell.name,
     targetId: entryTarget.wizard.id, targetSide: entryTarget.side, type: spell.type, value, flags,
     ...(duoIds[0] ? { duoId: duoIds[0] } : {}),
+    ...(ctx.reflect ? { _reflect: ctx.reflect } : {}),
   }
 }

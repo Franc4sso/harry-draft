@@ -13,7 +13,7 @@ export const DUOS: Duo[] = [
   { id: 'untore', name: 'Untore', signals: ['veleno', 'supporto'],
     desc: 'Ogni volta che curi, sputi 1 dose di veleno su un nemico a caso.' },
   { id: 'muro-vivente', name: 'Muro Vivente', signals: ['scudirigen', 'taunt'],
-    desc: 'Finché il Tank che provoca ha uno scudo, le tue retrovie non possono essere colpite.' },
+    desc: 'Finché il tuo Tank col muro ha uno scudo, riflette parte del danno assorbito sull’attaccante.' },
   { id: 'esecuzione-a-freddo', name: 'Esecuzione a Freddo', signals: ['esecuzione', 'controllo'],
     desc: 'Un nemico stordito o congelato sotto il 50% di vita viene giustiziato all’istante.' },
   { id: 'mietitore', name: 'Mietitore', signals: ['esecuzione', 'magieOscure'],

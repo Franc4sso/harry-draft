@@ -16,7 +16,7 @@ describe('stampDuoFields', () => {
   it('MURO VIVENTE stamps livingWall on player Tanks only', () => {
     const L = [unit('left', 'Tank'), unit('left', 'Attaccante')], R = [unit('right', 'Tank')]
     stampDuoFields(L, R, [duo('muro-vivente')], 'normal')
-    expect(L[0]!.livingWall).toBe(true)
+    expect(L[0]!.livingWall).toEqual({ reflect: 0.4 })
     expect(L[1]!.livingWall).toBeUndefined()
     expect(R[0]!.livingWall).toBeUndefined()
   })

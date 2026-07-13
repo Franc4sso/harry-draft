@@ -1,88 +1,171 @@
 import { describe, it, expect } from 'vitest'
-import { selectTarget } from '@/game/engine/combat/targeting'
+import type { ActiveDuo, BattleUnit, DraftedWizard, Wizard } from '@/types'
 import { stampDuoFields } from '@/game/engine/duoEffects/stamp'
-import type { BattleUnit, Role, Side, ActiveDuo, ActiveEffect } from '@/types'
+import { DUO_BY_ID } from '@/data/duos'
+import { EFFECT_HANDLERS } from '@/game/engine/combat/effects'
+import { createRng, type Rng } from '@/game/engine/rng'
+import { simulateBattle } from '@/game/engine/combat/simulate'
+import { battleReadyTeam } from '@/game/engine/battlePrep'
+import { detectSynergies } from '@/game/engine/synergy'
+import { detectDuos } from '@/game/engine/duos'
+import { draftWizard } from '@/game/engine/statRoll'
+import { WIZARD_BY_ID } from '@/data/wizards'
 import { SPELL_BY_ID } from '@/data/spells'
 
-// Model on tests/engine/combat/targeting.test.ts's `u` helper.
-function u(id: string, role: Role, side: Side, over: Partial<BattleUnit> = {}): BattleUnit {
-  const stats = { hp: 120, atk: 30, def: 20, spd: 25 }
+function wiz(id: string, role: Wizard['role']): Wizard {
   return {
-    wizard: { id, name: id, house: 'Grifondoro', role, tier: 3,
-      gender: 'm' as const, ranges: { hp: [120,120], atk: [30,30], def: [20,20], spd: [25,25] }, spellPool: ['base_attack'] },
-    stats, maxHp: stats.hp, spell: SPELL_BY_ID['base_attack']!,
-    side, hp: stats.hp, cooldowns: {}, statusEffects: [], buffedStats: stats, alive: true,
-    ...over,
+    id, name: id, role, house: 'Grifondoro', tier: 3, gender: 'm',
+    ranges: { hp: [100, 100], atk: [50, 50], def: [10, 10], spd: [10, 10] }, spellPool: ['base_attack'],
   }
 }
+function unit(id: string, role: Wizard['role'], side: 'left' | 'right'): BattleUnit {
+  const w = wiz(id, role)
+  return {
+    wizard: w, spell: { id: 'base_attack', name: 'Attacco', type: 'Attacco' } as any,
+    stats: { hp: 100, atk: 50, def: 10, spd: 10 }, maxHp: 100,
+    buffedStats: { hp: 100, atk: 50, def: 10, spd: 10 }, hp: 100,
+    cooldowns: {}, statusEffects: [], alive: true, side,
+  } as BattleUnit
+}
+const muroDuo: ActiveDuo = { duo: DUO_BY_ID['muro-vivente']! }
 
-const duo = (id: string): ActiveDuo => ({ duo: { id, name: '', desc: '', signals: ['taunt', 'scudirigen'] } })
-
-// Mirrors the real shield ActiveEffect shape (game/engine/status.ts): kind+statusId 'shield', absorbLeft.
-const shield = (absorbLeft: number): ActiveEffect =>
-  ({ kind: 'shield', statusId: 'shield', remaining: 3, stacks: 1, absorbLeft })
-
-const stun: ActiveEffect = { kind: 'stun', remaining: 1, stacks: 1 }
-
-describe('MURO VIVENTE stamp', () => {
-  it('stamps livingWall on left Tanks only when the duo is active', () => {
-    const tank = u('tank', 'Tank', 'left')
-    const sup = u('sup', 'Supporto', 'left')
-    const enemyTank = u('etank', 'Tank', 'right')
-    stampDuoFields([tank, sup], [enemyTank], [duo('muro-vivente')], 'normal')
-    expect(tank.livingWall).toBe(true)
-    expect(sup.livingWall).toBeUndefined()
-    expect(enemyTank.livingWall).toBeUndefined()
+describe('Muro Vivente — stamp', () => {
+  it('stampa livingWall = { reflect } sui Tank del player', () => {
+    const tank = unit('tank', 'Tank', 'left')
+    const carry = unit('carry', 'Attaccante', 'left')
+    stampDuoFields([tank, carry], [], [muroDuo], 'normal')
+    expect(tank.livingWall).toEqual({ reflect: 0.4 })
+    expect(carry.livingWall).toBeUndefined()   // solo i Tank
   })
 
-  it('no muro-vivente duo -> no stamp', () => {
-    const tank = u('tank', 'Tank', 'left')
-    stampDuoFields([tank], [], [], 'normal')
-    expect(tank.livingWall).toBeUndefined()
+  it('non stampa nulla sui nemici', () => {
+    const enemyTank = unit('etank', 'Tank', 'right')
+    stampDuoFields([], [enemyTank], [muroDuo], 'normal')
+    expect(enemyTank.livingWall).toBeUndefined()
   })
 })
 
-describe('MURO VIVENTE retarget — shielded taunting Tank hard-blocks the backline', () => {
-  it('forces even a taunt-ignoring attacker onto the wall Tank over a squishy backliner', () => {
-    const tank = u('tank', 'Tank', 'left', { livingWall: true, statusEffects: [shield(50)] })
-    const squishy = u('squishy', 'Supporto', 'left')
-    // ignoresTaunt (Bellatrix-style) would normally dive past a taunting Tank straight to the
-    // backline Supporto — MURO VIVENTE must override that and force the wall anyway.
-    const actor = u('bellatrix', 'Attaccante', 'right', { ignoresTaunt: true })
-    const target = selectTarget(actor, [actor], [tank, squishy])
-    expect(target?.wizard.id).toBe('tank')
+// Costruisce uno scudo con absorbLeft = amount sull'unit, passando dal vero EFFECT_HANDLERS.shield
+// (stesso pattern di tests/engine/combat/shieldRefresh.test.ts e tests/engine/darkRecoil.test.ts) —
+// applyStatus si aspetta uno statusId stringa, non un EffectSpec, quindi lo scudo va creato così.
+function shielded(u: BattleUnit, amount: number) {
+  EFFECT_HANDLERS.shield(
+    { rng: createRng(`${u.side}:seed`), turn: 1, actor: u, target: u, flags: [] } as any,
+    { kind: 'shield', amount } as any,
+  )
+}
+
+describe('Muro Vivente — riflesso (handler)', () => {
+  function setup(reflect = 0.4, actorHp = 300) {
+    const tank = unit('tank', 'Tank', 'left'); tank.livingWall = { reflect }
+    const enemy = unit('enemy', 'Attaccante', 'right'); enemy.hp = actorHp; enemy.maxHp = 300
+    return { tank, enemy }
+  }
+
+  it('riflette il 40% del danno ASSORBITO sull\'attaccante', () => {
+    const { tank, enemy } = setup()
+    shielded(tank, 500)   // scudo capiente: assorbe tutto
+    const ctx: any = { rng: createRng('mv'), turn: 1, actor: enemy, target: tank, flags: [] }
+    // Lo scudo capiente assorbe l'intero colpo → tank.hp resta 100
+    EFFECT_HANDLERS.damage(ctx, { kind: 'damage', power: 1, canDodge: false } as any)
+    expect(tank.hp).toBe(100)
+    // ctx.reflect valorizzato, amount = round(dmg * 0.4), enemy.hp calato di quell'importo
+    expect(ctx.reflect).toBeTruthy()
+    expect(ctx.reflect.unitId).toBe('enemy')
+    expect(ctx.reflect.side).toBe('right')
+    expect(ctx.reflect.amount).toBeGreaterThan(0)
+    expect(enemy.hp).toBe(300 - ctx.reflect.amount)
   })
 
-  it('shield breaks (absorbLeft 0) -> wall drops, normal targeting resumes', () => {
-    const tank = u('tank', 'Tank', 'left', { livingWall: true, statusEffects: [shield(0)] })
-    const squishy = u('squishy', 'Supporto', 'left')
-    const actor = u('bellatrix', 'Attaccante', 'right', { ignoresTaunt: true })
-    const target = selectTarget(actor, [actor], [tank, squishy])
-    expect(target?.wizard.id).toBe('squishy')
+  it('NON riflette se lo scudo è a 0 (nessun assorbimento)', () => {
+    const { tank, enemy } = setup()
+    // niente scudo
+    const ctx: any = { rng: createRng('mv'), turn: 1, actor: enemy, target: tank, flags: [] }
+    EFFECT_HANDLERS.damage(ctx, { kind: 'damage', power: 1, canDodge: false } as any)
+    expect(ctx.reflect).toBeUndefined()
+    expect(enemy.hp).toBe(300)
   })
 
-  it('Tank hard-controlled (stunned) -> wall drops even with an active shield', () => {
-    const tank = u('tank', 'Tank', 'left', { livingWall: true, statusEffects: [shield(50), stun] })
-    const squishy = u('squishy', 'Supporto', 'left')
-    const actor = u('bellatrix', 'Attaccante', 'right', { ignoresTaunt: true })
-    const target = selectTarget(actor, [actor], [tank, squishy])
-    expect(target?.wizard.id).toBe('squishy')
+  it('riflette solo sulla parte ASSORBITA quando lo scudo è più piccolo del colpo', () => {
+    const { tank, enemy } = setup()
+    shielded(tank, 10)   // scudo piccolo: assorbe 10, il resto passa al Tank
+    const ctx: any = { rng: createRng('mv'), turn: 1, actor: enemy, target: tank, flags: [] }
+    EFFECT_HANDLERS.damage(ctx, { kind: 'damage', power: 1, canDodge: false } as any)
+    expect(ctx.reflect.amount).toBe(Math.round(10 * 0.4))   // = 4, solo l'assorbito
+    expect(tank.hp).toBeLessThan(100)   // l'eccesso ha ferito il Tank
   })
 
-  it('never returns undefined when a wall exists (single-target edge case)', () => {
-    const tank = u('tank', 'Tank', 'left', { livingWall: true, statusEffects: [shield(1)] })
-    const actor = u('ctrl', 'Controllo', 'right')
-    const target = selectTarget(actor, [actor], [tank])
-    expect(target).toBeDefined()
-    expect(target?.wizard.id).toBe('tank')
+  it('è NON letale: lascia l\'attaccante ad almeno 1 HP', () => {
+    const { tank, enemy } = setup(0.4, 3)   // enemy a 3 HP
+    shielded(tank, 500)
+    const ctx: any = { rng: createRng('mv'), turn: 1, actor: enemy, target: tank, flags: [] }
+    EFFECT_HANDLERS.damage(ctx, { kind: 'damage', power: 1, canDodge: false } as any)
+    expect(enemy.hp).toBe(1)   // il riflesso non può uccidere
   })
 
-  it('no friendly fire: a player actor never sees the wall (livingWall only ever set on left units)', () => {
-    const tank = u('tank', 'Tank', 'left', { livingWall: true, statusEffects: [shield(50)] })
-    const enemy = u('foe', 'Attaccante', 'right')
-    const actor = u('att', 'Attaccante', 'left')
-    // actor's `enemies` param is the right team here — none of which carry livingWall.
-    const target = selectTarget(actor, [actor, tank], [enemy])
-    expect(target?.wizard.id).toBe('foe')
+  it('un Tank SENZA muro non riflette', () => {
+    const tank = unit('tank', 'Tank', 'left')   // niente livingWall
+    const enemy = unit('enemy', 'Attaccante', 'right')
+    shielded(tank, 500)
+    const ctx: any = { rng: createRng('mv'), turn: 1, actor: enemy, target: tank, flags: [] }
+    EFFECT_HANDLERS.damage(ctx, { kind: 'damage', power: 1, canDodge: false } as any)
+    expect(ctx.reflect).toBeUndefined()
+    expect(enemy.hp).toBe(100)
+  })
+})
+
+// Builder pattern identico a tests/engine/duoStress.test.ts (draftedFrom + detectDuos +
+// battleReadyTeam + simulateBattle con leftDuos) — riusato qui per un mini end-to-end sul
+// sim, non inventato da zero.
+function draftedFrom(rng: Rng, id: string, spellId: string): DraftedWizard {
+  const w = WIZARD_BY_ID[id]
+  if (!w) throw new Error(`unknown wizard id: ${id}`)
+  const dw = draftWizard(rng, w)
+  const spell = SPELL_BY_ID[spellId]
+  if (!spell) throw new Error(`unknown spell id: ${spellId}`)
+  return { ...dw, level: 8, spell }
+}
+
+describe('Muro Vivente — riga di log nel sim', () => {
+  it('emette una riga MuroVivente puntata sull\'attaccante quando lo scudo assorbe', () => {
+    const rng = createRng('duo-team-muro-vivente-sim')
+    const team: DraftedWizard[] = [
+      draftedFrom(rng, 'mcgonagall', 'fianto'), // Tank + self-shield: il muro
+      draftedFrom(rng, 'tonks', 'petrificus'),
+      draftedFrom(rng, 'sprout', 'ferula'),
+      draftedFrom(rng, 'harry', 'reducto'),
+      draftedFrom(rng, 'dolohov', 'confringo'),
+    ]
+    const enemy: DraftedWizard[] = [
+      draftedFrom(rng, 'bellatrix', 'confringo'),
+      draftedFrom(rng, 'greyback', 'serpensortia'),
+      draftedFrom(rng, 'draco', 'serpensortia'),
+      draftedFrom(rng, 'snape', 'sectumsempra'),
+      draftedFrom(rng, 'lucius', 'confringo'),
+    ]
+    const left = battleReadyTeam(team)
+    const leftSyn = detectSynergies(left)
+    const leftDuos = detectDuos(team, [])
+    expect(leftDuos.map(d => d.duo.id)).toContain('muro-vivente')
+
+    let wall: any
+    let res: any
+    // L'iron taunt convoglia i colpi nemici sul Tank quasi sempre, ma non è garantito ogni
+    // seed: prova qualche seed finché la riga MuroVivente compare (gate = "compare la riga
+    // col valore giusto", non un seed specifico, per nota del brief).
+    for (let i = 0; i < 20 && !wall; i++) {
+      res = simulateBattle(left, battleReadyTeam(enemy), createRng(`muro-vivente-sim-${i}`), { leftSyn, leftDuos })
+      wall = res.log.find((e: any) => e.action === 'MuroVivente')
+    }
+
+    expect(wall).toBeTruthy()
+    expect(wall.type).toBe('system')
+    expect(wall.duoId).toBe('muro-vivente')
+    expect(wall.flags).toContain('duo')
+    expect(wall.actorSide).toBe('left')       // il Tank col muro
+    expect(wall.targetSide).toBe('right')     // l'attaccante nemico
+    expect(wall.value).toBeGreaterThan(0)
+    // nessuna riga loggata espone il campo transiente
+    expect(res.log.every((e: any) => e._reflect === undefined)).toBe(true)
   })
 })
