@@ -39,6 +39,15 @@ describe('describeEntry MIASMA/UNTORE narration', () => {
     expect(out.toLowerCase()).not.toContain('lancia')
     expect(out).toContain('Nemico')
   })
+
+  it('MURO VIVENTE: il tank riflette danno sull\'attaccante nemico', () => {
+    const entry = {
+      turn: 1, actorId: 'tank', actorSide: 'left', action: 'MuroVivente',
+      targetId: 'enemy', targetSide: 'right', type: 'system', value: 12, flags: ['duo'], duoId: 'muro-vivente',
+    } as any
+    const out = describeEntry(entry, { 'left:tank': 'Tank', 'right:enemy': 'Enemy' })
+    expect(out).toBe('Il muro di Tank riflette 12 su Enemy')
+  })
 })
 
 describe('BattleLog full scrollable log', () => {
