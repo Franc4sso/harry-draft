@@ -6,7 +6,10 @@ import { PROFILE_KEY, defaultProfile } from '@/lib/metaStore'
 beforeEach(() => localStorage.clear())
 
 describe('CollectionScreen — Duo codex section', () => {
-  it('reveals the effect only for a seen Duo; hides it (ingredients still shown) for an unseen one', async () => {
+  // CollectionScreen renders 60+ PortraitImage elements; in jsdom under load the initial render
+  // can exceed the 5s default before the first findByText resolves. Give it headroom (env-slow,
+  // not a logic issue) so the suite stays green on a busy machine.
+  it('reveals the effect only for a seen Duo; hides it (ingredients still shown) for an unseen one', { timeout: 20000 }, async () => {
     const profile = defaultProfile()
     profile.codex.duosSeen = ['cancrena']
     localStorage.setItem(PROFILE_KEY, JSON.stringify(profile))
