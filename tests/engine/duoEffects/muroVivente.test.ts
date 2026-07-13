@@ -1,9 +1,16 @@
 import { describe, it, expect } from 'vitest'
-import type { ActiveDuo, BattleUnit, Wizard } from '@/types'
+import type { ActiveDuo, BattleUnit, DraftedWizard, Wizard } from '@/types'
 import { stampDuoFields } from '@/game/engine/duoEffects/stamp'
 import { DUO_BY_ID } from '@/data/duos'
 import { EFFECT_HANDLERS } from '@/game/engine/combat/effects'
-import { createRng } from '@/game/engine/rng'
+import { createRng, type Rng } from '@/game/engine/rng'
+import { simulateBattle } from '@/game/engine/combat/simulate'
+import { battleReadyTeam } from '@/game/engine/battlePrep'
+import { detectSynergies } from '@/game/engine/synergy'
+import { detectDuos } from '@/game/engine/duos'
+import { draftWizard } from '@/game/engine/statRoll'
+import { WIZARD_BY_ID } from '@/data/wizards'
+import { SPELL_BY_ID } from '@/data/spells'
 
 function wiz(id: string, role: Wizard['role']): Wizard {
   return {
@@ -104,5 +111,61 @@ describe('Muro Vivente — riflesso (handler)', () => {
     EFFECT_HANDLERS.damage(ctx, { kind: 'damage', power: 1, canDodge: false } as any)
     expect(ctx.reflect).toBeUndefined()
     expect(enemy.hp).toBe(100)
+  })
+})
+
+// Builder pattern identico a tests/engine/duoStress.test.ts (draftedFrom + detectDuos +
+// battleReadyTeam + simulateBattle con leftDuos) — riusato qui per un mini end-to-end sul
+// sim, non inventato da zero.
+function draftedFrom(rng: Rng, id: string, spellId: string): DraftedWizard {
+  const w = WIZARD_BY_ID[id]
+  if (!w) throw new Error(`unknown wizard id: ${id}`)
+  const dw = draftWizard(rng, w)
+  const spell = SPELL_BY_ID[spellId]
+  if (!spell) throw new Error(`unknown spell id: ${spellId}`)
+  return { ...dw, level: 8, spell }
+}
+
+describe('Muro Vivente — riga di log nel sim', () => {
+  it('emette una riga MuroVivente puntata sull\'attaccante quando lo scudo assorbe', () => {
+    const rng = createRng('duo-team-muro-vivente-sim')
+    const team: DraftedWizard[] = [
+      draftedFrom(rng, 'mcgonagall', 'fianto'), // Tank + self-shield: il muro
+      draftedFrom(rng, 'tonks', 'petrificus'),
+      draftedFrom(rng, 'sprout', 'ferula'),
+      draftedFrom(rng, 'harry', 'reducto'),
+      draftedFrom(rng, 'dolohov', 'confringo'),
+    ]
+    const enemy: DraftedWizard[] = [
+      draftedFrom(rng, 'bellatrix', 'confringo'),
+      draftedFrom(rng, 'greyback', 'serpensortia'),
+      draftedFrom(rng, 'draco', 'serpensortia'),
+      draftedFrom(rng, 'snape', 'sectumsempra'),
+      draftedFrom(rng, 'lucius', 'confringo'),
+    ]
+    const left = battleReadyTeam(team)
+    const leftSyn = detectSynergies(left)
+    const leftDuos = detectDuos(team, [])
+    expect(leftDuos.map(d => d.duo.id)).toContain('muro-vivente')
+
+    let wall: any
+    let res: any
+    // L'iron taunt convoglia i colpi nemici sul Tank quasi sempre, ma non è garantito ogni
+    // seed: prova qualche seed finché la riga MuroVivente compare (gate = "compare la riga
+    // col valore giusto", non un seed specifico, per nota del brief).
+    for (let i = 0; i < 20 && !wall; i++) {
+      res = simulateBattle(left, battleReadyTeam(enemy), createRng(`muro-vivente-sim-${i}`), { leftSyn, leftDuos })
+      wall = res.log.find((e: any) => e.action === 'MuroVivente')
+    }
+
+    expect(wall).toBeTruthy()
+    expect(wall.type).toBe('system')
+    expect(wall.duoId).toBe('muro-vivente')
+    expect(wall.flags).toContain('duo')
+    expect(wall.actorSide).toBe('left')       // il Tank col muro
+    expect(wall.targetSide).toBe('right')     // l'attaccante nemico
+    expect(wall.value).toBeGreaterThan(0)
+    // nessuna riga loggata espone il campo transiente
+    expect(res.log.every((e: any) => e._reflect === undefined)).toBe(true)
   })
 })

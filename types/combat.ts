@@ -94,6 +94,10 @@ export interface LogEntry {
    *  nominare la combo nell'annuncio e per far lampeggiare la pill giusta. Puramente
    *  osservativo: non cambia nessun comportamento della simulazione. */
   duoId?: string
+  /** Transiente (NON persistito nel RunLog): il riflesso del Muro Vivente prodotto da questa
+   *  azione. `resolveAction` lo travasa da `ctx.reflect`; `simulate.ts` lo consuma per emettere
+   *  la riga `MuroVivente` e lo scarta prima di loggare. Mai serializzato. */
+  _reflect?: { unitId: string; side: Side; amount: number }
 }
 
 export interface UnitSnapshot { id: string; side: Side; hp: number; maxHp: number; alive: boolean }
