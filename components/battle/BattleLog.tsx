@@ -53,7 +53,14 @@ export function describeEntry(
       default:        return `${who} è stordito e salta il turno`
     }
   }
-  if (entry.action === 'Veleno') return `${actor} subisce ${entry.value ?? 0} danni da veleno`
+  // DoT tick (veleno/bruciatura): NON è un'azione del caster — il danno sale sul bersaglio già
+  // avvelenato/ustionato. Il soggetto della frase è chi SUBISCE (target), non chi ha lanciato
+  // (actor = il caster, che potrebbe anche essere morto). `dot` copre sia veleno sia bruciatura.
+  if (entry.flags.includes('dot')) {
+    const who = target ?? actor
+    const src = entry.action === 'Bruciatura' ? 'bruciatura' : 'veleno'
+    return `${who} subisce ${entry.value ?? 0} danni da ${src}`
+  }
   if (entry.action === 'Fatica') return `Sfinimento — ${actor} perde ${entry.value} PV`
   // MIASMA: `actor` è il nemico appena MORTO — non "lancia" nulla, è il suo veleno residuo
   // che contagia un altro nemico vivo.

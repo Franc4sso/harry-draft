@@ -112,7 +112,12 @@ export function PixiArena({
         y: ((r.top + r.height / 2 - a.top) / a.height) * 100,
       }
     }
-    const from = centerPct(entry.actorSide, entry.actorId)
+    // A DoT tick (veleno/ustione) is NOT an attack cast this turn — the damage rises on the
+    // already-poisoned victim, so it has no acting source. Anchoring the VFX to the caster made
+    // the poison "shoot" from the poisoner's card even after that mage had died. Treat dot ticks
+    // like self/heal effects: no `from`, the effect plays on the target only.
+    const isDotTick = entry.flags.includes('dot')
+    const from = isDotTick ? null : centerPct(entry.actorSide, entry.actorId)
     const to = centerPct(entry.targetSide, entry.targetId)
 
     const speed = speedRef.current

@@ -50,6 +50,27 @@ describe('describeEntry MIASMA/UNTORE narration', () => {
   })
 })
 
+describe('describeEntry DoT tick — chi SUBISCE, non il caster', () => {
+  it('veleno: il soggetto è il bersaglio (Fenrir), non chi l\'ha lanciato (Bellatrix, anche se morta)', () => {
+    // Il tick è attribuito al caster (actorId) per il credito MVP, ma la frase deve parlare del
+    // bersaglio: Bellatrix non "agisce" — è il suo veleno residuo su Fenrir a ticchettare.
+    const entry = {
+      turn: 3, actorId: 'bellatrix', actorSide: 'right', action: 'Veleno',
+      targetId: 'greyback', targetSide: 'right', type: 'Controllo', value: 7, flags: ['dot'],
+    } as any
+    const out = describeEntry(entry, { 'right:bellatrix': 'Bellatrix', 'right:greyback': 'Fenrir' })
+    expect(out).toBe('Fenrir subisce 7 danni da veleno')
+  })
+  it('bruciatura: usa la parola giusta', () => {
+    const entry = {
+      turn: 2, actorId: 'x', actorSide: 'left', action: 'Bruciatura',
+      targetId: 'foe', targetSide: 'right', type: 'Controllo', value: 8, flags: ['dot'],
+    } as any
+    const out = describeEntry(entry, { 'left:x': 'Mago', 'right:foe': 'Nemico' })
+    expect(out).toBe('Nemico subisce 8 danni da bruciatura')
+  })
+})
+
 describe('BattleLog full scrollable log', () => {
   function entries(n: number): LogEntry[] {
     return Array.from({ length: n }, (_, i) => ({
