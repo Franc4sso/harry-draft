@@ -94,6 +94,9 @@ export interface LogEntry {
    *  nominare la combo nell'annuncio e per far lampeggiare la pill giusta. Puramente
    *  osservativo: non cambia nessun comportamento della simulazione. */
   duoId?: string
+  /** Perché quest'azione ha scelto il suo bersaglio (solo azioni offensive). Osservativo: la UI
+   *  lo usa per la riga-causa. NON serializzato per l'anti-cheat (il combat log non lo è). */
+  reason?: TargetReason
   /** Transiente (NON persistito nel RunLog): il riflesso del Muro Vivente prodotto da questa
    *  azione. `resolveAction` lo travasa da `ctx.reflect`; `simulate.ts` lo consuma per emettere
    *  la riga `MuroVivente` e lo scarta prima di loggare. Mai serializzato. */

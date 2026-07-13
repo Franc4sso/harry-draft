@@ -54,6 +54,7 @@ exports[`onBattleStart applies effects effect-outer/unit-inner (rng order locked
       "flags": [
         "pen",
       ],
+      "reason": "dive",
       "targetId": "z",
       "targetSide": "right",
       "turn": 1,
@@ -67,6 +68,7 @@ exports[`onBattleStart applies effects effect-outer/unit-inner (rng order locked
       "flags": [
         "pen",
       ],
+      "reason": "dive",
       "targetId": "z",
       "targetSide": "right",
       "turn": 1,
@@ -80,6 +82,7 @@ exports[`onBattleStart applies effects effect-outer/unit-inner (rng order locked
       "flags": [
         "pen",
       ],
+      "reason": "dive",
       "targetId": "a",
       "targetSide": "left",
       "turn": 1,
@@ -93,6 +96,7 @@ exports[`onBattleStart applies effects effect-outer/unit-inner (rng order locked
       "flags": [
         "pen",
       ],
+      "reason": "dive",
       "targetId": "z",
       "targetSide": "right",
       "turn": 2,
@@ -107,6 +111,7 @@ exports[`onBattleStart applies effects effect-outer/unit-inner (rng order locked
         "pen",
         "crit",
       ],
+      "reason": "dive",
       "targetId": "z",
       "targetSide": "right",
       "turn": 2,
