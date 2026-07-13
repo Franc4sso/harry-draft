@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { explainTarget } from '@/game/engine/combat/targeting'
+import { explainTarget, selectTarget } from '@/game/engine/combat/targeting'
 import type { BattleUnit, Role } from '@/types'
 import { SPELL_BY_ID } from '@/data/spells'
 
@@ -59,5 +59,53 @@ describe('explainTarget — il motivo del bersaglio', () => {
     const alliesWounded = [supporto, hurt]
     const enemies = [u('e', 'Attaccante', 'right')]
     expect(explainTarget(supporto, alliesWounded, enemies, healSpell)).toBeNull()
+  })
+})
+
+describe('explainTarget ↔ selectTarget — guardia anti-divergenza', () => {
+  it('coerenza: se selectTarget colpisce il Tank provocante, il motivo è taunt', () => {
+    const attaccante = u('att', 'Attaccante', 'left')
+    const allies = [attaccante]
+    const enemiesWithTank = [u('squishy', 'Supporto', 'right', { atk: 40, spd: 40 }), u('wall', 'Tank', 'right')]
+    const tgt = selectTarget(attaccante, allies, enemiesWithTank, attackSpell)
+    expect(tgt?.wizard.role).toBe('Tank')
+    expect(explainTarget(attaccante, allies, enemiesWithTank, attackSpell)).toBe('taunt')
+  })
+
+  it('coerenza: Tank senza taunt colpisce il più debole → weakest', () => {
+    const tank = u('bruiser', 'Tank', 'left')
+    const allies = [tank]
+    const enemiesNoTank = [u('squishy', 'Supporto', 'right', { hp: 30, atk: 10, spd: 10 })]
+    const weak = enemiesNoTank.reduce((a, b) => (a.hp < b.hp ? a : b))
+    const tgt = selectTarget(tank, allies, enemiesNoTank, attackSpell)
+    expect(tgt?.wizard.id).toBe(weak.wizard.id)
+    expect(explainTarget(tank, allies, enemiesNoTank, attackSpell)).toBe('weakest')
+  })
+
+  it('coerenza: Attaccante senza taunt affonda il Supporto nemico (backline) → dive', () => {
+    const attaccante = u('att', 'Attaccante', 'left')
+    const allies = [attaccante]
+    const enemiesNoTank = [u('healer', 'Supporto', 'right', { hp: 10, atk: 10, spd: 10 }), u('scary', 'Attaccante', 'right', { atk: 40, spd: 40 })]
+    const tgt = selectTarget(attaccante, allies, enemiesNoTank, attackSpell)
+    expect(tgt?.wizard.id).toBe('healer')
+    expect(explainTarget(attaccante, allies, enemiesNoTank, attackSpell)).toBe('dive')
+  })
+
+  it('coerenza: Controllo senza taunt colpisce la backline → backline', () => {
+    const controllo = u('ctrl', 'Controllo', 'left')
+    const allies = [controllo]
+    const enemiesNoTank = [u('healer', 'Supporto', 'right'), u('foe', 'Attaccante', 'right')]
+    const tgt = selectTarget(controllo, allies, enemiesNoTank, controlSpell)
+    expect(tgt?.wizard.role).toBe('Supporto')
+    expect(explainTarget(controllo, allies, enemiesNoTank, controlSpell)).toBe('backline')
+  })
+
+  it("coerenza: Supporto con magia d'attacco colpisce la minaccia → threat", () => {
+    const supporto = u('sup', 'Supporto', 'left')
+    const allies = [supporto]
+    const enemiesNoTank = [u('foe', 'Attaccante', 'right')]
+    const tgt = selectTarget(supporto, allies, enemiesNoTank, attackSpell)
+    expect(tgt?.wizard.id).toBe('foe')
+    expect(explainTarget(supporto, allies, enemiesNoTank, attackSpell)).toBe('threat')
   })
 })
