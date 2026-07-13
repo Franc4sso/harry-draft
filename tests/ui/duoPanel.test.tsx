@@ -51,6 +51,27 @@ describe('DuoPanel', () => {
     expect(container.textContent).not.toContain('Attaccante')
   })
 
+  it('le gemme mostrano il conteggio have/need dei maghi che contribuiscono', () => {
+    // Cancrena (veleno+esecuzione): il team ha 2 maghi veleno (acceso → ✓) ma 0 esecuzione (0/2).
+    const { container } = render(<DuoPanel team={team} relics={[]} />)
+    const cancrena = container.querySelector('[data-duo="cancrena"]')!
+    const veleno = cancrena.querySelector('[data-signal="veleno"]')!
+    const esec = cancrena.querySelector('[data-signal="esecuzione"]')!
+    expect(veleno).toHaveTextContent('✓')       // 2/2 → acceso
+    expect(esec).toHaveTextContent('0/2')       // nessun mago esecuzione
+  })
+
+  it('una gemma accesa da una reliquia mostra "reliquia", non un conteggio maghi', () => {
+    // Team senza maghi veleno + una reliquia veleno → il segnale veleno è acceso dalla reliquia.
+    const noVenom = [
+      { wizard: { id: 'a', name: 'Tank', house: 'Grifondoro', role: 'Tank', tags: [] }, level: 1, stats: {}, maxHp: 100 },
+    ] as any
+    const venomRelic = [{ relic: { id: 'r', name: '', desc: '', rarity: 'comune', keywords: ['veleno'] } }] as any
+    const { container } = render(<DuoPanel team={noVenom} relics={venomRelic} />)
+    const veleno = container.querySelector('[data-duo="cancrena"] [data-signal="veleno"]')!
+    expect(veleno).toHaveTextContent(/reliquia/i)
+  })
+
   it('ignora i maghi CADUTI: un Duo il cui 2° contributore è morto non risulta attivo', () => {
     // Due Attaccanti portano entrambi veleno+esecuzione, il che accenderebbe Cancrena — ma uno
     // è K.O. (currentHp 0). Con un solo contributore vivo nessuno dei due segnali raggiunge la
