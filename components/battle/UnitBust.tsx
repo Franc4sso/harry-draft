@@ -174,7 +174,7 @@ function liveStats(base: StatTriple, effects: ActiveEffect[]): StatTriple {
  * floating damage/heal number. Reduced-motion → static final state.
  */
 export const UnitBust = memo(function UnitBust({
-  unit, hp, acting, targeted, mirrored, boss, compact, float, floatKey, effects = [], cooldown = 0, level,
+  unit, hp, acting, targeted, mirrored, boss, compact, float, floatKey, skipping = null, effects = [], cooldown = 0, level,
 }: {
   unit: ReplayUnit
   hp: number
@@ -187,6 +187,9 @@ export const UnitBust = memo(function UnitBust({
   compact?: boolean
   float?: FloatDescriptor | null
   floatKey?: number | string
+  /** Set ONLY on the bust that's skipping THIS frame (stunned/frozen) — flashes "SALTA".
+   *  null for every other bust, kept stable like `float`/`floatKey` for React.memo. */
+  skipping?: 'stun' | 'freeze' | null
   /** Real active status effects on this unit for the current frame. */
   effects?: ActiveEffect[]
   /** Turns remaining on this unit's primary spell (0 = ready). */
@@ -305,6 +308,21 @@ export const UnitBust = memo(function UnitBust({
           animate={{ opacity: 0 }}
           transition={{ duration: isCrit ? 0.5 : 0.32, ease: 'easeOut' }}
         />
+      )}
+
+      {skipping && (
+        <motion.div
+          key={`skip-${floatKey ?? 'x'}`}
+          data-skipping={skipping}
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-20 grid place-items-center"
+          initial={reduce ? { opacity: 1 } : { opacity: 0, scale: 1.4 }}
+          animate={{ opacity: [0, 1, 1, 0], scale: 1 }}
+          transition={{ duration: 0.5, times: [0, .2, .7, 1] }}
+        >
+          <span className={cn('font-display text-[13px] font-extrabold uppercase tracking-wide -rotate-3 rounded px-2 py-1 text-black',
+            skipping === 'freeze' ? 'bg-cyan-300' : 'bg-yellow-300')}>SALTA</span>
+        </motion.div>
       )}
 
       <div className="mt-1 flex items-center justify-center gap-1 leading-tight">
