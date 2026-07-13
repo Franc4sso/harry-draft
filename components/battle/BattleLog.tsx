@@ -53,6 +53,10 @@ export function describeEntry(
       default:        return `${who} è stordito e salta il turno`
     }
   }
+  // Fatica (sfinimento da stallo) porta il flag `dot` ma NON è veleno/bruciatura: è danno che il
+  // mago infligge a sé stesso quando la battaglia si trascina. Va PRIMA del ramo dot sotto, che
+  // altrimento la intercetterebbe e la chiamerebbe "danni da veleno".
+  if (entry.action === 'Fatica') return `Sfinimento — ${actor} perde ${entry.value} PV`
   // DoT tick (veleno/bruciatura): NON è un'azione del caster — il danno sale sul bersaglio già
   // avvelenato/ustionato. Il soggetto della frase è chi SUBISCE (target), non chi ha lanciato
   // (actor = il caster, che potrebbe anche essere morto). `dot` copre sia veleno sia bruciatura.
@@ -61,7 +65,6 @@ export function describeEntry(
     const src = entry.action === 'Bruciatura' ? 'bruciatura' : 'veleno'
     return `${who} subisce ${entry.value ?? 0} danni da ${src}`
   }
-  if (entry.action === 'Fatica') return `Sfinimento — ${actor} perde ${entry.value} PV`
   // MIASMA: `actor` è il nemico appena MORTO — non "lancia" nulla, è il suo veleno residuo
   // che contagia un altro nemico vivo.
   if (entry.action === 'Miasma') return `Il veleno di ${actor} si propaga a ${target ?? 'un nemico'}`
