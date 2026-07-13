@@ -73,9 +73,11 @@ export function WizardCardColumn({
       style={{
         // Object, not panel: gold double-bevel frame + house glow + deep drop.
         background: `linear-gradient(180deg, ${theme.color}1f 0%, #130f22 42%, #0c0917 100%)`,
+        // House-colored double-bevel frame (reads the affiliation at a glance). Selected keeps a
+        // bright warm ring so the chosen state stays distinct from every house color.
         boxShadow: selected
           ? `0 0 0 1px rgba(0,0,0,0.7), 0 0 0 2px #f6ecc4, 0 0 0 3px rgba(0,0,0,0.8), 0 22px 46px -14px rgba(0,0,0,0.85), 0 0 30px -4px ${theme.glow}88${shinyGlow}`
-          : `0 0 0 1px rgba(0,0,0,0.7), 0 0 0 2px #a9802f, 0 0 0 3px rgba(0,0,0,0.8), 0 22px 46px -14px rgba(0,0,0,0.85), 0 0 34px -6px ${theme.glow}44${shinyGlow}`,
+          : `0 0 0 1px rgba(0,0,0,0.7), 0 0 0 2px ${theme.color}, 0 0 0 3px rgba(0,0,0,0.8), 0 22px 46px -14px rgba(0,0,0,0.85), 0 0 34px -6px ${theme.glow}44${shinyGlow}`,
       }}
     >
       {duoPreview && duoPreview.completes.length > 0 && (() => {
@@ -94,11 +96,11 @@ export function WizardCardColumn({
         )
       })()}
 
-      {/* Engraved gold inner hairline + faint house aura at the crown. */}
+      {/* Engraved inner hairline in the house color + faint highlight at the crown. */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 z-20 rounded-2xl"
-        style={{ boxShadow: 'inset 0 0 0 1px rgba(217,182,95,0.28), inset 0 2px 0 rgba(255,255,255,0.05)' }}
+        style={{ boxShadow: `inset 0 0 0 1px ${theme.color}59, inset 0 2px 0 rgba(255,255,255,0.05)` }}
       />
 
       {/* HERO — full-bleed portrait + role-accent wash + gradient + vignette.
