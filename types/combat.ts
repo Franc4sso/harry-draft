@@ -100,6 +100,18 @@ export interface LogEntry {
   _reflect?: { unitId: string; side: Side; amount: number }
 }
 
+/** Perché un'azione ha scelto quel bersaglio — osservativo, per la leggibilità del combattimento.
+ *  Uno per famiglia di ramo di selectTarget. NON influenza la simulazione. */
+export type TargetReason = 'taunt' | 'dive' | 'backline' | 'weakest' | 'threat'
+
+export const TARGET_REASON_LABEL: Record<TargetReason, string> = {
+  taunt: 'provocato',
+  dive: 'affondo sul backline',
+  backline: 'scavalca alle retrovie',
+  weakest: 'il più debole',
+  threat: 'la minaccia maggiore',
+}
+
 export interface UnitSnapshot { id: string; side: Side; hp: number; maxHp: number; alive: boolean }
 
 /** Per-unit engine state captured at the instant a log entry is pushed. Deep-copied. */

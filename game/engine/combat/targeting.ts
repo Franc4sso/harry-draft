@@ -1,4 +1,4 @@
-import type { BattleUnit, Spell } from '@/types'
+import type { BattleUnit, Spell, TargetReason } from '@/types'
 import { BALANCE } from '@/data/constants'
 import { effectiveStats } from '../status'
 import { normalizeSpell } from './normalizeSpell'
@@ -108,14 +108,16 @@ function activeTauntTank(enemies: BattleUnit[], ignoresTaunt: boolean): boolean 
   return enemies.some(e => e.wizard.role === 'Tank' && e.alive && !isUnderHardControl(e))
 }
 
-export function selectTarget(
+// Shared derivation of the enemy pool / taunt state used by BOTH selectTarget and
+// explainTarget. Extracted so the two can never diverge on this logic (Task 1,
+// motivo del targeting): explainTarget must explain exactly what selectTarget did.
+function targetingContext(
   actor: BattleUnit,
   allies: BattleUnit[],
   enemies: BattleUnit[],
   spell?: Spell,
-): BattleUnit | undefined {
+): { enemyPool: BattleUnit[]; taunt: boolean; ign: boolean } {
   const liveEnemies = enemies.filter(e => e.alive)
-  const liveAllies = allies.filter(a => a.alive)
 
   // Control spells prefer enemies not already under that control; if everyone is
   // controlled, fall back to the full live pool (still attack, no wasted priority).
@@ -128,6 +130,18 @@ export function selectTarget(
 
   const ign = actor.ignoresTaunt ?? false
   const taunt = activeTauntTank(enemyPool, ign)
+
+  return { enemyPool, taunt, ign }
+}
+
+export function selectTarget(
+  actor: BattleUnit,
+  allies: BattleUnit[],
+  enemies: BattleUnit[],
+  spell?: Spell,
+): BattleUnit | undefined {
+  const liveAllies = allies.filter(a => a.alive)
+  const { enemyPool, taunt, ign } = targetingContext(actor, allies, enemies, spell)
 
   switch (actor.wizard.role) {
     case 'Supporto':
@@ -152,5 +166,32 @@ export function selectTarget(
     default:
       // If an enemy Tank is actively taunting, it wins (Tank beats Attaccante). Otherwise dive.
       return taunt ? highestThreat(enemyPool, ign) : diveTarget(enemyPool, ign)
+  }
+}
+
+// Perché selectTarget ha scelto quel bersaglio — mirror osservativo dei rami sopra,
+// costruito sulla STESSA targetingContext per non poter mai divergere. Ritorna null
+// per le azioni non-offensive (Supporto in cura/difesa: il target è un alleato).
+export function explainTarget(
+  actor: BattleUnit,
+  allies: BattleUnit[],
+  enemies: BattleUnit[],
+  spell?: Spell,
+): TargetReason | null {
+  const { taunt } = targetingContext(actor, allies, enemies, spell)
+  switch (actor.wizard.role) {
+    case 'Supporto':
+      if (spell && (spell.type === 'Attacco' || spell.type === 'Controllo')) {
+        if (taunt) return 'taunt'
+        return spell.type === 'Controllo' ? 'backline' : 'threat'
+      }
+      return null // cura/difesa: target = alleato, nessun motivo di bersaglio nemico
+    case 'Controllo':
+      return taunt ? 'taunt' : 'backline'
+    case 'Tank':
+      return taunt ? 'taunt' : 'weakest'
+    case 'Attaccante':
+    default:
+      return taunt ? 'taunt' : 'dive'
   }
 }
