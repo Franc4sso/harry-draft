@@ -6,7 +6,7 @@ import { STATUS_BY_ID } from '@/data/statuses'
 import { absorbDamage, applyInlineEffect, applyStatus, canAttack, effectiveStats } from '../status'
 import { HARD_CONTROL_KINDS, isUnderHardControl, roleMult } from './roleCounter'
 
-export interface EffectCtx { rng: Rng; turn: number; actor: BattleUnit; target: BattleUnit; flags: LogFlag[]; bus?: EventBus; allies?: BattleUnit[]; dark?: boolean; duoIds?: string[] }
+export interface EffectCtx { rng: Rng; turn: number; actor: BattleUnit; target: BattleUnit; flags: LogFlag[]; bus?: EventBus; allies?: BattleUnit[]; dark?: boolean; duoIds?: string[]; reflect?: { unitId: string; side: 'left' | 'right'; amount: number } }
 export interface EffectResult { value?: number; dodged?: boolean; wardTarget?: BattleUnit }
 
 export function computeDamage(rng: Rng, actor: BattleUnit, target: BattleUnit, power: number, flags: LogFlag[]): number {

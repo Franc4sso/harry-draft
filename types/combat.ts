@@ -71,7 +71,7 @@ export interface BattleUnit extends DraftedWizard {
   controlResist?: boolean
   // --- Duo stamps (player-only; see game/engine/duoEffects/stamp.ts) ---
   poisonAmp?: { threshold: number; mult: number }   // CANCRENA (stamped on ENEMY units)
-  livingWall?: boolean                               // MURO VIVENTE (player Tanks)
+  livingWall?: { reflect: number }                   // MURO VIVENTE (player Tanks): riflette una frazione del danno assorbito dallo scudo
   coldExecute?: { threshold: number; instakill: boolean } // ESECUZIONE A FREDDO (player attackers)
   reaper?: boolean                                   // MIETITORE (player units)
 }
