@@ -262,18 +262,6 @@ export const UnitBust = memo(function UnitBust({
               </span>
             </motion.div>
           )}
-          {control && (() => {
-            const Icon = STATUS_ICON[control.kind] ?? Flame
-            const cls = STATUS_CLASS[control.kind] ?? 'text-white'
-            return (
-              <span
-                data-control-glyph={control.kind}
-                className={cn('pointer-events-none absolute left-1/2 top-[-8px] z-10 grid h-[22px] w-[22px] -translate-x-1/2 place-items-center rounded-full border-[1.5px] bg-black/80', cls)}
-              >
-                <Icon size={11} aria-hidden />
-              </span>
-            )
-          })()}
           {control && (
             <div
               data-control-strip
@@ -285,6 +273,21 @@ export const UnitBust = memo(function UnitBust({
           )}
         </div>
       </RarityFrame>
+
+      {/* Control glyph — rendered OUTSIDE the portrait's overflow-hidden clip so the top of the
+          circle isn't sheared off. Sits above the card crown, like the role-badge. */}
+      {control && !dead && (() => {
+        const Icon = STATUS_ICON[control.kind] ?? Flame
+        const cls = STATUS_CLASS[control.kind] ?? 'text-white'
+        return (
+          <span
+            data-control-glyph={control.kind}
+            className={cn('pointer-events-none absolute left-1/2 top-1 z-20 grid h-[22px] w-[22px] -translate-x-1/2 place-items-center rounded-full border-[1.5px] bg-black/85 shadow-[0_3px_10px_rgba(0,0,0,.6)]', cls)}
+          >
+            <Icon size={11} aria-hidden />
+          </span>
+        )
+      })()}
 
       {targeted && !dead && (
         // Camera-focus reticle framing the CHOSEN target — a crisp "this is who's hit now"
