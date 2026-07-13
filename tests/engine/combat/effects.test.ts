@@ -64,8 +64,7 @@ describe('armor penetration', () => {
     const atkWiz = unit({ side: 'left' })            // role Attaccante (fixture default)
     const tankRole = unit({ side: 'left' })
     tankRole.wizard = { ...tankRole.wizard, role: 'Tank' }
-    // Role 'Controllo' is neutral to both attacker roles here (Tank preys on Attaccante,
-    // Attaccante preys on Supporto) — isolates armor pen from the role matchup bonus.
+    // Target di ruolo Controllo — nessun moltiplicatore di matchup coinvolto.
     const target = unit({ side: 'right', buffedStats: { hp: 120, atk: 80, def: 60, spd: 40 } })
     target.wizard = { ...target.wizard, role: 'Controllo' }
 
@@ -89,8 +88,7 @@ describe('armor penetration', () => {
     const atkWiz = unit({ side: 'left' })
     const noPenActor = unit({ side: 'left' })
     noPenActor.wizard = { ...noPenActor.wizard, role: 'Tank' }
-    // Role 'Controllo' is neutral to both attacker roles here — isolates armor pen from
-    // the role matchup bonus (see comment in the test above).
+    // Target di ruolo Controllo — nessun moltiplicatore di matchup coinvolto.
     const target = unit({ side: 'right', buffedStats: { hp: 120, atk: 80, def: 60, spd: 40 } })
     target.wizard = { ...target.wizard, role: 'Controllo' }
     const f1: LogFlag[] = []; const f2: LogFlag[] = []
@@ -109,10 +107,9 @@ describe('armor penetration', () => {
   })
 })
 
-// The old Controllo-only vs-Tank/vs-backline multiplier is gone — replaced by the general
-// role matchup matrix (roleMult / ROLE_PREY), which now applies to every attacker role and
-// is covered by tests/engine/combat/roleDamageMatrix.test.ts (e.g. Attaccante +25% vs its
-// prey Supporto). Controllo's asymmetric anti-Tank identity moved to its passive instead.
+// Il vecchio moltiplicatore Controllo-vs-Tank/backline è sparito, e con esso il ciclo generale
+// di counter di ruolo (roleMult / ROLE_PREY, rimosso dal motore): nessun ruolo infligge più
+// danno bonus per matchup. L'identità anti-Tank di Controllo resta nella sua passiva.
 
 // The old Controllo-vs-Tank debuff-DURATION halving (tested here previously) is gone too:
 // Controllo's stat debuffs now land full-duration on Tanks (armor-shred works as intended).
