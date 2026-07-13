@@ -100,13 +100,13 @@ describe('WizardCardColumn (poster layout, the LIVE draft card)', () => {
     expect(ribbon).toHaveTextContent('Cancrena')
   })
 
-  it('shows a green verso cue when duoPreview only advances', () => {
+  it('shows NO ribbon when duoPreview only advances (no "verso" noise)', () => {
     render(
       <WizardCardColumn
         drafted={velenoDrafted()}
         duoPreview={{ completes: [], advances: [{ id: 'muro-vivente', name: 'Muro Vivente', desc: '', signals: ['scudirigen', 'taunt'] }] }}
       />,
     )
-    expect(screen.getByTestId('duo-ribbon')).toHaveAttribute('data-kind', 'advances')
+    expect(screen.queryByTestId('duo-ribbon')).toBeNull()
   })
 })

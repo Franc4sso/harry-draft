@@ -71,14 +71,14 @@ export function WizardCardRow({
           : `0 10px 30px rgba(0,0,0,0.5), 0 0 16px ${theme.glow}30${shinyGlow}`,
       }}
     >
-      {duoPreview && (duoPreview.completes.length > 0 || duoPreview.advances.length > 0) && (() => {
-        const done = duoPreview.completes[0]; const near = duoPreview.advances[0]
-        const gold = '#d9b65f', green = '#3ecb6a'
+      {duoPreview && duoPreview.completes.length > 0 && (() => {
+        const done = duoPreview.completes[0]!
+        const gold = '#d9b65f'
         return (
-          <div data-testid="duo-ribbon" data-kind={done ? 'completes' : 'advances'}
+          <div data-testid="duo-ribbon" data-kind="completes"
             className="absolute right-2 top-2 z-20 rounded-full px-2 py-0.5 text-[10px] font-bold"
-            style={done ? { color: '#1a1305', background: gold } : { color: green, border: `1px solid ${green}66`, background: 'rgba(10,8,19,0.85)' }}>
-            {done ? `⚡ ${done.name}` : `→ ${near!.name}`}
+            style={{ color: '#1a1305', background: gold }}>
+            {`⚡ ${done.name}`}
           </div>
         )
       })()}

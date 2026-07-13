@@ -146,14 +146,12 @@ describe('RecruitScreen', () => {
     // unlit with only 1). Against an EMPTY team (both signals two-away), recruiting ernie moves
     // the 'muro-vivente' Duo (scudirigen + taunt) from two-away to one-away — an advance, not a
     // completion.
-    it('shows an advances ribbon on an offer candidate that moves a Duo two-away to one-away', () => {
+    it('shows NO ribbon on an offer candidate that only ADVANCES a Duo (no "verso" noise)', () => {
       const ernie = draftWizard(createRng(5), WIZARD_BY_ID['ernie']!)
       const onPick = vi.fn()
       render(<RecruitScreen offer={[ernie]} team={[]} teamMax={5} onPick={onPick} relics={[]} />)
       const tile = screen.getByTestId(`recruit-${ernie.wizard.id}`)
-      const ribbon = screen.getByTestId('duo-ribbon')
-      expect(tile.contains(ribbon)).toBe(true)
-      expect(ribbon).toHaveAttribute('data-kind', 'advances')
+      expect(tile.querySelector('[data-testid="duo-ribbon"]')).toBeNull()
     })
 
     it('does NOT pass a duoPreview to the replace-list rows (existing team members)', () => {

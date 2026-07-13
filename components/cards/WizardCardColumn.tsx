@@ -78,21 +78,18 @@ export function WizardCardColumn({
           : `0 0 0 1px rgba(0,0,0,0.7), 0 0 0 2px #a9802f, 0 0 0 3px rgba(0,0,0,0.8), 0 22px 46px -14px rgba(0,0,0,0.85), 0 0 34px -6px ${theme.glow}44${shinyGlow}`,
       }}
     >
-      {duoPreview && (duoPreview.completes.length > 0 || duoPreview.advances.length > 0) && (() => {
-        const done = duoPreview.completes[0]
-        const near = duoPreview.advances[0]
-        const gold = '#d9b65f', green = '#3ecb6a'
+      {duoPreview && duoPreview.completes.length > 0 && (() => {
+        const done = duoPreview.completes[0]!
+        const gold = '#d9b65f'
         const extra = duoPreview.completes.length > 1 ? ` ＋${duoPreview.completes.length - 1}` : ''
         return (
           <div
             data-testid="duo-ribbon"
-            data-kind={done ? 'completes' : 'advances'}
+            data-kind="completes"
             className="absolute inset-x-0 top-0 z-30 rounded-t-2xl px-3 py-1 text-center text-[11px] font-bold"
-            style={done
-              ? { color: '#1a1305', background: gold, boxShadow: `0 0 14px ${gold}88` }
-              : { color: green, background: 'rgba(10,8,19,0.85)', border: `1px solid ${green}66` }}
+            style={{ color: '#1a1305', background: gold, boxShadow: `0 0 14px ${gold}88` }}
           >
-            {done ? `⚡ Completa 「${done.name}」${extra}` : `→ verso 「${near!.name}」`}
+            {`⚡ Completa 「${done.name}」${extra}`}
           </div>
         )
       })()}
