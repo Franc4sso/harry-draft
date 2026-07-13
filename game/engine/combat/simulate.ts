@@ -19,7 +19,7 @@ import { canAct } from '../status'
 import { EFFECT_HANDLERS } from './effects'
 import { effectiveStats, resolveAction, tickStatuses } from './resolve'
 import { selectSpell } from './selectSpell'
-import { deadToRaise, mostWounded, selectTarget } from './targeting'
+import { deadToRaise, explainTarget, mostWounded, selectTarget } from './targeting'
 import { SPELL_BY_ID } from '@/data/spells'
 import { applyTenaciaAura, cleanseOneControl } from './roleCounter'
 import { stampDuoFields } from '../duoEffects/stamp'
@@ -277,6 +277,13 @@ export function simulateBattle(
           : (spell.type === 'Difesa' ? actor : target!)
       const entry = resolveAction(rng, turn, actor, realTarget, spell, allies, bus)
       pushLog(entry)
+      // MOTIVO DEL TARGETING (osservativo): solo per un'azione offensiva verso un nemico —
+      // cura/difesa/revive puntano a un alleato (realTarget sovrascritto) e non hanno un "perché
+      // di bersaglio nemico". explainTarget rispecchia i rami di selectTarget.
+      if (realTarget.side !== actor.side && !entry.flags.includes('heal')) {
+        const reason = explainTarget(actor, allies, enemies, spell)
+        if (reason) entry.reason = reason
+      }
       // MURO VIVENTE: se il colpo ha innescato un riflesso (il Tank col muro = realTarget aveva
       // scudo che ha assorbito), emetti una riga dedicata puntata sull'ATTACCANTE così il replay
       // (che ricostruisce gli HP da entry.value su targetId) resta sincronizzato senza modifiche.
