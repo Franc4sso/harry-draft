@@ -10,14 +10,16 @@ const unit = {
   spell: { id: 's', name: 'S', cooldown: 0 },
 } as unknown as ReplayUnit
 
-it('renders a freeze overlay when frozen', () => {
+it('renders a freeze glyph + strip when frozen', () => {
   const eff = { kind: 'freeze', statusId: 'freeze', remaining: 2 } as unknown as ActiveEffect
   const { container } = render(<UnitBust unit={unit} hp={100} effects={[eff]} />)
-  expect(container.querySelector('[data-control="freeze"]')).toBeTruthy()
+  expect(container.querySelector('[data-control-glyph="freeze"]')).toBeTruthy()
+  expect(container.querySelector('[data-control-strip]')).toBeTruthy()
 })
 
-it('renders no control overlay when only a buff is active', () => {
+it('renders no control glyph/strip when only a buff is active', () => {
   const eff = { kind: 'buff', statusId: 'atkUp', remaining: 2, stat: 'atk', amount: 20 } as unknown as ActiveEffect
   const { container } = render(<UnitBust unit={unit} hp={100} effects={[eff]} />)
-  expect(container.querySelector('[data-control]')).toBeNull()
+  expect(container.querySelector('[data-control-glyph]')).toBeNull()
+  expect(container.querySelector('[data-control-strip]')).toBeNull()
 })
