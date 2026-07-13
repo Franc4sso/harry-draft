@@ -268,7 +268,7 @@ Ordine ~cronologico, tutto committato+pushato:
 - **Mappa/UI**: barre PV nella sidebar; **hover elite** con roster nemico (ritratto·ruolo·magia·PV·"forte vs"); **sigillo boss = ritratto del villain** (non emoji); restyle albero (faro in cima, embers, sentiero); cerchi pieni; z-index hover.
 - **MAX 5 nemici** (hard cap strutturale, battaglia/elite/boss). Regola utente assoluta.
 - **Fix ordine attacchi**: la barra "Ordine" ora usa il tiebreak del motore (spd → wizard id → side).
-- **Sistema COUNTER dei ruoli (RPS)** — 🛡️Tank→⚔️Attaccante→✨Supporto→🌀Controllo→🛡️Tank. Matrice danni ×1.25 vs preda + passive di ruolo (Provocazione; Affondo = l'Attaccante si tuffa sul Supporto; Tenacia+Purificazione = il Supporto dimezza/pulisce i controlli; **Regola Globale: un Tank stordito perde la Provocazione** = così il Controllo lo batte e l'Affondo si apre). Bias magia↔ruolo in `pickSpell` + invariante di pool. `game/engine/combat/roleCounter.ts`. Spec: `docs/superpowers/specs/2026-07-05-role-counters-design.md`.
+- **Sistema COUNTER dei ruoli (RPS)** — 🛡️Tank→⚔️Attaccante→✨Supporto→🌀Controllo→🛡️Tank. Matrice danni ×1.25 vs preda ⚠️ **RIMOSSA il 2026-07-13** (ciclo mezzo-morto: il Supporto non attacca) + passive di ruolo (Provocazione; Affondo = l'Attaccante si tuffa sul Supporto; Tenacia+Purificazione = il Supporto dimezza/pulisce i controlli; **Regola Globale: un Tank stordito perde la Provocazione** = così il Controllo lo batte e l'Affondo si apre) — targeting/hard-control RESTANO validi, solo il moltiplicatore di danno è tolto. Bias magia↔ruolo in `pickSpell` + invariante di pool. `game/engine/combat/roleCounter.ts`. Spec: `docs/superpowers/specs/2026-07-05-role-counters-design.md` (SUPERATA, vedi `docs/superpowers/specs/2026-07-13-remove-role-counter-design.md`).
 - **Cap di livello RIMOSSO**: i maghi del giocatore salgono oltre il 10 (`gainLevels`/`levelFromExp`). `levelMax=10` resta solo per i NEMICI + boss finale.
 - **Nodo NEGOZIO (shop)**: 3 reliquie a scelta (prezzo per rarità) + Cura completa + Rimuovi-un-mago + Rimescola, pagati in Cioccorane. Multi-acquisto, stock deterministico stabile. `game/engine/resolvers/shop.ts`, `components/screens/ShopScreen.tsx`. Spec+piano: `docs/superpowers/*2026-07-05-shop-node*`.
 
@@ -277,7 +277,7 @@ Ordine ~cronologico, tutto committato+pushato:
 1. **PLAYTEST (priorità)** — il bot di bilanciamento NON capisce i counter né sceglie le magie come un umano, quindi il giudizio è tuo:
    - I **counter dei ruoli** (feeling del ciclo Tank/Att/Sup/Ctrl).
    - Il **negozio** (prezzi giusti? in `BALANCE.shop`).
-   - ⚠️ **Il Controllo ora fa MENO danno diretto** (il suo +25% è vs Tank, che però evita; ha perso il vecchio bonus). Voluto (la sua forza è disabilitare), ma se è troppo debole va buffato — lever: matrice/targeting in `roleCounter.ts`/`targeting.ts`.
+   - ⚠️ **Il Controllo ora fa MENO danno diretto** (il suo +25% era vs Tank, che però evita; ha perso il vecchio bonus) — **NOTA 2026-07-13: quel +25% vs Tank è stato RIMOSSO insieme a tutto il moltiplicatore di counter**, quindi questa riga descrive ormai solo il danno base del Controllo, non un residuo di counter. Voluto (la sua forza è disabilitare), ma se è troppo debole va buffato — lever: targeting in `roleCounter.ts`/`targeting.ts` (la matrice di danno non c'è più).
    - `campaignBalanceRestricted` (il vero proxy) ≈ **0.275** — difficoltà reale invariata. Le sweep a 0.0 sono il bot cieco-ai-counter, non un bug.
 2. **Nodo Campfire/riposo** (scelta cura-vs-potenziamento).
 3. **Nodi modificatore di battaglia**.
