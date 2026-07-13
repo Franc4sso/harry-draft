@@ -1,6 +1,6 @@
 import type { LogEntry } from '@/types'
 
-export type FloatTone = 'damage' | 'crit' | 'heal' | 'dodge'
+export type FloatTone = 'damage' | 'crit' | 'heal' | 'dodge' | 'dot'
 
 export interface FloatDescriptor {
   text: string
@@ -17,6 +17,9 @@ export function floatFor(entry: LogEntry | null): FloatDescriptor | null {
   if (entry.flags.includes('dodge')) return { text: 'Schiva', tone: 'dodge' }
   if (entry.flags.includes('heal')) {
     return entry.value && entry.value > 0 ? { text: `+${entry.value}`, tone: 'heal' } : null
+  }
+  if (entry.flags.includes('dot') && typeof entry.value === 'number' && entry.value > 0) {
+    return { text: `-${entry.value}`, tone: 'dot' }
   }
   if (typeof entry.value === 'number' && entry.value > 0) {
     return { text: `-${entry.value}`, tone: entry.flags.includes('crit') ? 'crit' : 'damage' }

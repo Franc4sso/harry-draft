@@ -48,12 +48,25 @@ export function BattleArena({
   // e le altre (KO del Mietitore, sputo dell'Untore) sono conseguenze passive, non azioni. Su questi
   // frame l'evidenziazione dell'attore resta spenta: parlano la pill che lampeggia e l'annuncio.
   const duoSystemFrame = !!entry?.duoId && entry.type === 'system'
-  const actingKey = entry?.actorSide && !duoSystemFrame ? unitKey(entry.actorSide, entry.actorId) : null
+  // A frame Stordito (type system, action 'Stordito') is a SKIPPED turn, not an action: the
+  // engine emits it on the dedicated frame that covers every control gating 'action' (stun,
+  // freeze, ...). The "sta agendo" aura must NOT light up here — it was misleading (the
+  // skipped unit looked like it was acting).
+  const skipFrame = entry?.type === 'system' && entry.action === 'Stordito'
+  const actingKey = entry?.actorSide && !duoSystemFrame && !skipFrame ? unitKey(entry.actorSide, entry.actorId) : null
   const targetKey = entry?.targetSide && entry.targetId ? unitKey(entry.targetSide, entry.targetId) : null
   const float = floatFor(entry)
   const frame = replay.frames[frameKey]
   const statusEffects = frame?.statusEffects ?? {}
   const cooldowns = frame?.cooldowns ?? {}
+
+  // The unit that's skipping this frame, and which control kind to flash (stun vs freeze) —
+  // read from its OWN statusEffects this frame (the log entry only carries the generic 'stun'
+  // flag, but the flash should say CONGELATO's kind too).
+  const skipKey = skipFrame && entry?.actorSide ? unitKey(entry.actorSide, entry.actorId) : null
+  const skipKind: 'stun' | 'freeze' | null = skipKey
+    ? (statusEffects[skipKey]?.some(e => e.kind === 'freeze') ? 'freeze' : 'stun')
+    : null
 
   // A control status (stun/freeze/silence/disarm) carries no flag of its own, so detect
   // one freshly applied to the target THIS frame by diffing against the previous frame —
@@ -113,6 +126,7 @@ export function BattleArena({
             // React.memo(UnitBust) can actually skip it — otherwise a per-tick frameKey
             // on all busts makes the memo a no-op during playback.
             floatKey={u.key === targetKey ? frameKey : undefined}
+            skipping={u.key === skipKey ? skipKind : null}
             effects={statusEffects[u.key] ?? EMPTY_EFFECTS}
             cooldown={cooldowns[u.key]?.[u.spell.id] ?? 0}
             level={u.side === 'right' ? enemyLevel : u.level}

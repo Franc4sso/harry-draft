@@ -20,6 +20,7 @@ const FLOAT_CLASS: Record<FloatTone, string> = {
   crit: 'text-amber-300 text-xl font-bold drop-shadow-[0_0_8px_rgba(252,211,77,0.6)]',
   heal: 'text-emerald-300',
   dodge: 'text-white/60 text-[11px] uppercase tracking-wider',
+  dot: 'text-green-300',
 }
 
 /** StatusKind → icon + color for the status row. */
@@ -174,7 +175,7 @@ function liveStats(base: StatTriple, effects: ActiveEffect[]): StatTriple {
  * floating damage/heal number. Reduced-motion → static final state.
  */
 export const UnitBust = memo(function UnitBust({
-  unit, hp, acting, targeted, mirrored, boss, compact, float, floatKey, effects = [], cooldown = 0, level,
+  unit, hp, acting, targeted, mirrored, boss, compact, float, floatKey, skipping = null, effects = [], cooldown = 0, level,
 }: {
   unit: ReplayUnit
   hp: number
@@ -187,6 +188,9 @@ export const UnitBust = memo(function UnitBust({
   compact?: boolean
   float?: FloatDescriptor | null
   floatKey?: number | string
+  /** Set ONLY on the bust that's skipping THIS frame (stunned/frozen) — flashes "SALTA".
+   *  null for every other bust, kept stable like `float`/`floatKey` for React.memo. */
+  skipping?: 'stun' | 'freeze' | null
   /** Real active status effects on this unit for the current frame. */
   effects?: ActiveEffect[]
   /** Turns remaining on this unit's primary spell (0 = ready). */
@@ -202,9 +206,12 @@ export const UnitBust = memo(function UnitBust({
   const aura = acting ? '0 0 22px rgba(124,252,155,0.55)' : targeted ? '0 0 22px rgba(255,107,107,0.6)' : bossAura
   const impact = targeted && !!float
   const isCrit = float?.tone === 'crit'
+  const isDot = float?.tone === 'dot'
   // Live effective stats for THIS frame (reflect active buffs/debuffs) — so the bars
   // match the damage the unit actually deals/takes now.
   const live = liveStats({ atk: unit.atk, def: unit.def, spd: unit.spd }, effects)
+  const control = !dead ? effects.find(e => CONTROL_OVERLAY[e.kind]) : undefined
+  const frost = control?.kind === 'freeze'
 
   return (
     <motion.div
@@ -231,8 +238,18 @@ export const UnitBust = memo(function UnitBust({
       style={{ boxShadow: aura, filter: dead ? 'grayscale(0.9) brightness(0.72)' : 'none', transition: 'filter 0.55s ease' }}
     >
       <RarityFrame tier={unit.tier}>
-        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl">
-          <PortraitImage id={unit.id} house={unit.house} alt={unit.name} variant="bust" />
+        <div className="relative aspect-[3/4] w-full overflow-hidden rounded-xl" data-frost={frost || undefined}>
+          <div style={{ filter: frost ? 'brightness(.82) saturate(.7) hue-rotate(-6deg)' : undefined }} className="h-full w-full">
+            <PortraitImage id={unit.id} house={unit.house} alt={unit.name} variant="bust" />
+          </div>
+          {frost && (
+            <div
+              aria-hidden
+              data-frost
+              className="pointer-events-none absolute inset-0 rounded-xl"
+              style={{ background: 'linear-gradient(120deg,rgba(165,243,252,.16),transparent 38%),linear-gradient(-120deg,rgba(165,243,252,.12),transparent 40%),radial-gradient(80% 60% at 50% 100%,rgba(103,232,249,.14),transparent)' }}
+            />
+          )}
           {dead && (
             <motion.div
               className="absolute inset-0 grid place-items-center bg-black/45"
@@ -245,8 +262,32 @@ export const UnitBust = memo(function UnitBust({
               </span>
             </motion.div>
           )}
+          {control && (
+            <div
+              data-control-strip
+              className={cn('pointer-events-none absolute inset-x-0 bottom-0 z-10 py-0.5 text-center text-[8.5px] font-extrabold uppercase tracking-wider', STATUS_CLASS[control.kind])}
+              style={{ background: 'linear-gradient(180deg,transparent,rgba(0,0,0,.82))' }}
+            >
+              {CONTROL_OVERLAY[control.kind]!.label} ·{control.remaining}t
+            </div>
+          )}
         </div>
       </RarityFrame>
+
+      {/* Control glyph — rendered OUTSIDE the portrait's overflow-hidden clip so the top of the
+          circle isn't sheared off. Sits above the card crown, like the role-badge. */}
+      {control && !dead && (() => {
+        const Icon = STATUS_ICON[control.kind] ?? Flame
+        const cls = STATUS_CLASS[control.kind] ?? 'text-white'
+        return (
+          <span
+            data-control-glyph={control.kind}
+            className={cn('pointer-events-none absolute left-1/2 top-1 z-20 grid h-[22px] w-[22px] -translate-x-1/2 place-items-center rounded-full border-[1.5px] bg-black/85 shadow-[0_3px_10px_rgba(0,0,0,.6)]', cls)}
+          >
+            <Icon size={11} aria-hidden />
+          </span>
+        )
+      })()}
 
       {targeted && !dead && (
         // Camera-focus reticle framing the CHOSEN target — a crisp "this is who's hit now"
@@ -262,33 +303,32 @@ export const UnitBust = memo(function UnitBust({
         </div>
       )}
 
-      {(() => {
-        if (dead) return null // a dead unit shows the "Morto" tombstone, not a control overlay
-        const ctrl = effects.find(e => CONTROL_OVERLAY[e.kind])
-        if (!ctrl) return null
-        const o = CONTROL_OVERLAY[ctrl.kind]!
-        return (
-          <div
-            data-control={ctrl.kind}
-            className={cn('pointer-events-none absolute inset-x-0 top-0 z-10 grid place-items-center rounded-xl aspect-[3/4]', o.cls)}
-          >
-            <span className="rounded bg-black/65 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white">
-              {o.label} ·{ctrl.remaining}t
-            </span>
-          </div>
-        )
-      })()}
-
       {impact && !reduce && (
         <motion.div
           key={`impact-${floatKey}`}
-          data-impact={isCrit ? 'crit' : 'hit'}
+          data-impact={isDot ? 'dot' : isCrit ? 'crit' : 'hit'}
           aria-hidden
-          className={cn('pointer-events-none absolute inset-x-0 top-0 z-20 rounded-xl aspect-[3/4]', isCrit ? 'bg-amber-300/40' : 'bg-rose-400/30')}
+          className={cn('pointer-events-none absolute inset-x-0 top-0 z-20 rounded-xl aspect-[3/4]',
+            isDot ? 'bg-green-400/30' : isCrit ? 'bg-amber-300/40' : 'bg-rose-400/30')}
           initial={{ opacity: 0.8 }}
           animate={{ opacity: 0 }}
           transition={{ duration: isCrit ? 0.5 : 0.32, ease: 'easeOut' }}
         />
+      )}
+
+      {skipping && (
+        <motion.div
+          key={`skip-${floatKey ?? 'x'}`}
+          data-skipping={skipping}
+          aria-hidden
+          className="pointer-events-none absolute inset-0 z-20 grid place-items-center"
+          initial={reduce ? { opacity: 1 } : { opacity: 0, scale: 1.4 }}
+          animate={{ opacity: [0, 1, 1, 0], scale: 1 }}
+          transition={{ duration: 0.5, times: [0, .2, .7, 1] }}
+        >
+          <span className={cn('font-display text-[13px] font-extrabold uppercase tracking-wide -rotate-3 rounded px-2 py-1 text-black',
+            skipping === 'freeze' ? 'bg-cyan-300' : 'bg-yellow-300')}>SALTA</span>
+        </motion.div>
       )}
 
       <div className="mt-1 flex items-center justify-center gap-1 leading-tight">
@@ -335,12 +375,14 @@ export const UnitBust = memo(function UnitBust({
         })()}
       </div>
 
-      {/* Only NON-stat statuses get a top pill (control/dot/shield/regen/ward). Stat
+      {/* Only NON-stat, NON-control statuses get a top pill (dot/shield/regen/ward). Stat
           buffs/debuffs are shown by the LIVE stat bars (green ▲ / red ▼) instead — pills
-          for them just stacked up (e.g. "def+25 ×3") and cluttered the corner. */}
-      {effects.some(e => e.kind !== 'buff' && e.kind !== 'debuff') && (
+          for them just stacked up (e.g. "def+25 ×3") and cluttered the corner. Control kinds
+          (stun/freeze/silence/disarm) now get the portrait glyph + strip above — showing them
+          here too would duplicate the same signal twice. */}
+      {effects.some(e => e.kind !== 'buff' && e.kind !== 'debuff' && !CONTROL_OVERLAY[e.kind]) && (
         <div className={cn('absolute top-1 flex flex-wrap gap-0.5', mirrored ? 'left-1' : 'right-1')}>
-          {effects.filter(e => e.kind !== 'buff' && e.kind !== 'debuff').map((e, i) => {
+          {effects.filter(e => e.kind !== 'buff' && e.kind !== 'debuff' && !CONTROL_OVERLAY[e.kind]).map((e, i) => {
             const Icon = STATUS_ICON[e.kind] ?? Flame
             return (
               <span

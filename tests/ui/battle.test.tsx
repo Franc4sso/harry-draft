@@ -210,7 +210,7 @@ describe('UnitBust', () => {
       // Per-turn damage: amount 6 × 2 doses = 12 (no statusId → falls back to amount).
       expect(dot.getAttribute('title')).toContain('12')
     })
-    it('renders one icon per active control/over-time effect', () => {
+    it('renders one pill per active non-control status, plus a glyph for the control effect', () => {
       render(
         <UnitBust
           unit={u}
@@ -223,7 +223,11 @@ describe('UnitBust', () => {
         />,
       )
       const root = screen.getByTestId('battle-unit')
-      expect(root.querySelectorAll('[data-status-kind]').length).toBe(3)
+      // stun is a control kind: it gets the portrait glyph, NOT a top pill (no duplication) —
+      // only dot + shield remain as pills.
+      expect(root.querySelectorAll('[data-status-kind]').length).toBe(2)
+      expect(root.querySelector('[data-status-kind="stun"]')).toBeNull()
+      expect(root.querySelector('[data-control-glyph="stun"]')).not.toBeNull()
     })
     it('does NOT render a pill for buff/debuff effects (the live stat bars show those)', () => {
       render(<UnitBust unit={u} hp={50} effects={[{ kind: 'buff', stat: 'atk', amount: 10, remaining: 2 }]} />)
@@ -232,12 +236,12 @@ describe('UnitBust', () => {
     })
   })
 
-  it('control overlay shows label and remaining turns as "<label> ·<n>t"', () => {
+  it('control strip shows label and remaining turns as "<label> ·<n>t"', () => {
     render(<UnitBust unit={u} hp={50} effects={[{ kind: 'stun', remaining: 2 }]} />)
-    const overlay = screen.getByTestId('battle-unit').querySelector('[data-control="stun"]') as HTMLElement
-    expect(overlay).not.toBeNull()
-    expect(overlay.textContent).toContain('Stordito')
-    expect(overlay.textContent).toMatch(/·2t/)
+    const strip = screen.getByTestId('battle-unit').querySelector('[data-control-strip]') as HTMLElement
+    expect(strip).not.toBeNull()
+    expect(strip.textContent).toContain('Stordito')
+    expect(strip.textContent).toMatch(/·2t/)
   })
 })
 
