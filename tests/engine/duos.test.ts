@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { signalActive, detectDuos, duoProgress } from '@/game/engine/duos'
+import { signalActive, detectDuos, duoProgress, signalCount } from '@/game/engine/duos'
 import type { DraftedWizard, ActiveRelic } from '@/types'
 
 // minimal drafted-wizard factory
@@ -7,6 +7,25 @@ const dw = (id: string, role: string, tags: string[] = []): DraftedWizard =>
   ({ wizard: { id, role, house: 'Grifondoro', tags } , level: 1 } as unknown as DraftedWizard)
 const relic = (r: Partial<ActiveRelic['relic']>): ActiveRelic =>
   ({ relic: { id: r.id ?? 'x', name: '', desc: '', rarity: 'comune', ...r } } as ActiveRelic)
+
+describe('signalCount', () => {
+  it('taunt needs 1 Tank', () => {
+    expect(signalCount('taunt', [dw('a', 'Tank')], [])).toEqual({ have: 1, need: 1, byRelic: false })
+    expect(signalCount('taunt', [dw('a', 'Attaccante')], [])).toEqual({ have: 0, need: 1, byRelic: false })
+  })
+  it('role signal needs 2 of that role', () => {
+    expect(signalCount('attaccante', [dw('a', 'Attaccante')], [])).toEqual({ have: 1, need: 2, byRelic: false })
+    expect(signalCount('supporto', [dw('a', 'Supporto'), dw('b', 'Supporto')], [])).toEqual({ have: 2, need: 2, byRelic: false })
+  })
+  it('tag signal counts tagged mages (need 2)', () => {
+    expect(signalCount('veleno', [dw('a', 'Attaccante', ['veleno'])], [])).toEqual({ have: 1, need: 2, byRelic: false })
+    expect(signalCount('veleno', [dw('a', 'Attaccante', ['veleno']), dw('b', 'Tank', ['veleno'])], [])).toEqual({ have: 2, need: 2, byRelic: false })
+  })
+  it('a relic lighting a tag signal reports byRelic (have=need)', () => {
+    expect(signalCount('veleno', [dw('a', 'Attaccante')], [relic({ keywords: ['veleno'] })])).toEqual({ have: 2, need: 2, byRelic: true })
+    expect(signalCount('esecuzione', [dw('a', 'Tank')], [relic({ grantsExecute: { threshold: .3, bonus: .4 } })])).toEqual({ have: 2, need: 2, byRelic: true })
+  })
+})
 
 describe('signalActive', () => {
   it('tag signal lights on >=2 tagged mages', () => {

@@ -1,4 +1,4 @@
-import type { ActiveDuo, ActiveRelic, DraftedWizard, Duo, DuoProgress, DuoSignal, Wizard } from '@/types'
+import type { ActiveDuo, ActiveRelic, DraftedWizard, Duo, DuoProgress, DuoSignal, SignalCount, Wizard } from '@/types'
 import { DUOS } from '@/data/duos'
 import { livingOf } from '@/game/engine/roster'
 
@@ -27,6 +27,26 @@ export function signalActive(sig: DuoSignal, team: DraftedWizard[], relics: Acti
   const tag = TAG_OF[sig]!
   const comp = team.filter(d => (d.wizard.tags ?? []).includes(tag)).length >= 2
   return comp || relics.some(({ relic }) => relicLightsTag(sig, relic))
+}
+
+/** Quanto è vicino un singolo segnale: quanti maghi contribuenti ha la squadra (`have`) vs quanti
+ *  ne servono (`need`), o se una reliquia lo accende da sola (`byRelic`). Alimenta il conteggio
+ *  "1/2" / "✓ reliquia" delle gemme nel pannello Duo del run. Le soglie rispecchiano signalActive:
+ *  taunt=1 Tank, ruolo=2 di quel ruolo, tag=2 maghi OPPURE 1 reliquia. */
+export function signalCount(sig: DuoSignal, team: DraftedWizard[], relics: ActiveRelic[]): SignalCount {
+  if (sig === 'taunt') {
+    return { have: team.filter(d => d.wizard.role === 'Tank').length, need: 1, byRelic: false }
+  }
+  const role = ROLE_OF[sig]
+  if (role) {
+    return { have: team.filter(d => d.wizard.role === role).length, need: 2, byRelic: false }
+  }
+  // tag: una reliquia lo accende da sola → byRelic (have=need, il conteggio maghi non conta più).
+  if (relics.some(({ relic }) => relicLightsTag(sig, relic))) {
+    return { have: 2, need: 2, byRelic: true }
+  }
+  const tag = TAG_OF[sig]!
+  return { have: team.filter(d => (d.wizard.tags ?? []).includes(tag)).length, need: 2, byRelic: false }
 }
 
 export function litSignals(team: DraftedWizard[], relics: ActiveRelic[]): Set<DuoSignal> {
