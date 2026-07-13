@@ -20,6 +20,7 @@ const FLOAT_CLASS: Record<FloatTone, string> = {
   crit: 'text-amber-300 text-xl font-bold drop-shadow-[0_0_8px_rgba(252,211,77,0.6)]',
   heal: 'text-emerald-300',
   dodge: 'text-white/60 text-[11px] uppercase tracking-wider',
+  dot: 'text-green-300',
 }
 
 /** StatusKind → icon + color for the status row. */
@@ -205,6 +206,7 @@ export const UnitBust = memo(function UnitBust({
   const aura = acting ? '0 0 22px rgba(124,252,155,0.55)' : targeted ? '0 0 22px rgba(255,107,107,0.6)' : bossAura
   const impact = targeted && !!float
   const isCrit = float?.tone === 'crit'
+  const isDot = float?.tone === 'dot'
   // Live effective stats for THIS frame (reflect active buffs/debuffs) — so the bars
   // match the damage the unit actually deals/takes now.
   const live = liveStats({ atk: unit.atk, def: unit.def, spd: unit.spd }, effects)
@@ -301,9 +303,10 @@ export const UnitBust = memo(function UnitBust({
       {impact && !reduce && (
         <motion.div
           key={`impact-${floatKey}`}
-          data-impact={isCrit ? 'crit' : 'hit'}
+          data-impact={isDot ? 'dot' : isCrit ? 'crit' : 'hit'}
           aria-hidden
-          className={cn('pointer-events-none absolute inset-x-0 top-0 z-20 rounded-xl aspect-[3/4]', isCrit ? 'bg-amber-300/40' : 'bg-rose-400/30')}
+          className={cn('pointer-events-none absolute inset-x-0 top-0 z-20 rounded-xl aspect-[3/4]',
+            isDot ? 'bg-green-400/30' : isCrit ? 'bg-amber-300/40' : 'bg-rose-400/30')}
           initial={{ opacity: 0.8 }}
           animate={{ opacity: 0 }}
           transition={{ duration: isCrit ? 0.5 : 0.32, ease: 'easeOut' }}
