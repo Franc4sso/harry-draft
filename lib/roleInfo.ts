@@ -1,5 +1,4 @@
 import type { Role } from '@/types'
-import { ROLE_PREY } from '@/game/engine/combat/roleCounter'
 
 /**
  * Player-facing description of what each role DOES in battle (its baseline
@@ -27,10 +26,4 @@ export const ROLE_VERB: Record<Role, string> = {
 /** Role accent color (poster cards / role gem). */
 export const ROLE_ACCENT: Record<Role, string> = {
   Tank: '#3aa0f2', Attaccante: '#ff5140', Supporto: '#20d894', Controllo: '#b355ff',
-}
-
-/** The role this one deals bonus damage to — the counter cycle from `roleCounter.ts`,
- *  re-exported here so UI code has a single place to import role-facing helpers from. */
-export function rolePreyOf(role: Role): Role {
-  return ROLE_PREY[role]
 }

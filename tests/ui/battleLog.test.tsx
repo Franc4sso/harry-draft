@@ -69,6 +69,17 @@ describe('describeEntry DoT tick — chi SUBISCE, non il caster', () => {
     const out = describeEntry(entry, { 'left:x': 'Mago', 'right:foe': 'Nemico' })
     expect(out).toBe('Nemico subisce 8 danni da bruciatura')
   })
+  it('la Fatica porta il flag dot ma NON è veleno — resta Sfinimento', () => {
+    // Regressione: il ramo dot (veleno/bruciatura) è entrato prima del ramo Fatica e la
+    // intercettava, chiamandola "danni da veleno". La Fatica è danno auto-inflitto da stallo.
+    const entry = {
+      turn: 20, actorId: 'harry', actorSide: 'left', action: 'Fatica',
+      targetId: 'harry', targetSide: 'left', type: 'system', value: 12, flags: ['dot'],
+    } as any
+    const out = describeEntry(entry, { 'left:harry': 'Harry' })
+    expect(out).toBe('Sfinimento — Harry perde 12 PV')
+    expect(out).not.toMatch(/veleno/)
+  })
 })
 
 describe('BattleLog full scrollable log', () => {

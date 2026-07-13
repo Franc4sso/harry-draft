@@ -1,5 +1,10 @@
 # Role Counters — Design Spec (2026-07-05)
 
+> **SUPERATA 2026-07-13**: il moltiplicatore di counter di ruolo (×1.25) è stato RIMOSSO —
+> vedi `docs/superpowers/specs/2026-07-13-remove-role-counter-design.md`. Il ciclo era metà-morto
+> (il Supporto non attacca). Il targeting di ruolo (affondo/backline/taunt) e l'hard-control
+> descritti qui restano validi; solo il moltiplicatore di danno è stato tolto.
+
 ## Goal
 
 Turn the four wizard roles (Attaccante, Tank, Supporto, Controllo) into a legible

@@ -99,11 +99,18 @@ describe('simulate', () => {
     // his cooldown-2 Rennervate can ever fire — turn 1 wipe on every one of 500 seeds tried.
     // Swapped to a single, less extreme attacker (ginny/reducto) so the reviver reliably
     // survives long enough to actually cast the revive once an ally falls.
+    //
+    // Role-counter removal (this slice, Task 1): dropping the x1.25 role-counter multiplier
+    // shifted every battle's exact damage, which moved WHERE in the seed space the narrow
+    // "falls + revived in time" window lands. It's now a rare event (~1 in 800 seeds, first
+    // hit at seed 1118 when probed up to 5000) rather than the previous 1-in-80 density, so
+    // the loop was widened from 80 to 2000 seeds to reliably clear it with margin. Each
+    // simulateBattle call is cheap, so scanning 2000 seeds costs well under a second.
     const reviverBase = WIZARDS.find(w => w.id === 'lupin')!
     const fragileBase = WIZARDS.find(w => w.role === 'Supporto' && w.id !== 'lupin')!
     const heavyBase = WIZARDS.find(w => w.id === 'ginny')!
     let sawRevive = false
-    for (let s = 1; s <= 80 && !sawRevive; s++) {
+    for (let s = 1; s <= 2000 && !sawRevive; s++) {
       const reviver = { ...draftWizard(createRng(s), reviverBase), spell: SPELL_BY_ID['rennervate']! }
       const fragile = draftWizard(createRng(s + 100), fragileBase)
       const right = [draftWizard(createRng(s + 200), heavyBase)]

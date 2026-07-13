@@ -572,7 +572,6 @@ defenseK: 0.5,
   },
   roles: {
     tauntBonus: 1000,       // additive threat that makes a live Tank the focus
-    matchupBonus: 0.25,                // ×1.25 damage vs the role you prey on
     tenaciaControlDurationMult: 0.5,   // Supporto aura: incoming hard-control duration ×this
     // Halved 0.4→0.2 (2026-07-02, role-identity pass): Attaccante's flat armor pen was
     // too dominant even against Tanks; halving keeps the identity (ignores some DEF)

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { Role } from '@/types'
-import { ROLE_INFO, roleTooltip, rolePreyOf, ROLE_VERB, ROLE_ACCENT } from '@/lib/roleInfo'
+import { ROLE_INFO, roleTooltip, ROLE_VERB, ROLE_ACCENT } from '@/lib/roleInfo'
 
 const ROLES: Role[] = ['Attaccante', 'Tank', 'Supporto', 'Controllo']
 
@@ -26,11 +26,6 @@ describe('roleInfo', () => {
     expect(roleTooltip('Attaccante')).toMatch(/difesa/i)
     expect(roleTooltip('Controllo')).toMatch(/retrovie|scavalca/i)
     expect(roleTooltip('Supporto')).toMatch(/cura/i)
-  })
-
-  it('rolePreyOf returns the countered role', () => {
-    expect(rolePreyOf('Attaccante')).toBe('Supporto')
-    expect(rolePreyOf('Controllo')).toBe('Tank')
   })
 
   it('every role has a verb and an accent hex', () => {
