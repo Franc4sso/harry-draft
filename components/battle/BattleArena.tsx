@@ -9,6 +9,7 @@ import { ArenaBackdrop } from './ArenaBackdrop'
 import { PixiArena } from './PixiArena'
 import { Callout } from './Callout'
 import { LiftFocus } from './LiftFocus'
+import { liftMomentFor } from './liftMoment'
 import { DuoPills } from './DuoPills'
 import { floatFor } from './damageFloat'
 import { DUO_BY_ID } from '@/data/duos'
@@ -106,6 +107,10 @@ export function BattleArena({
   const left = useMemo(() => replay.units.filter(u => u.side === 'left'), [replay.units])
   const right = useMemo(() => replay.units.filter(u => u.side === 'right'), [replay.units])
 
+  // A frame-lift (kill/crit/primo-scatto-duo) oscura TUTTE le originali forte — non solo le
+  // non-coinvolte — così l'overlay dei cloni (LiftFocus) resta l'unico elemento a fuoco.
+  const lifting = !!liftMomentFor(entry, frameKey, firstFireAt)
+
   const anyAction = !!actingKey
   // A lone enemy reads as a boss encounter → ominous treatment on that bust.
   const bossFight = right.length === 1
@@ -113,7 +118,7 @@ export function BattleArena({
     units.map(u => {
       const involved = u.key === actingKey || u.key === targetKey
       return (
-        <div key={u.key} className="relative transition-opacity duration-200" style={{ opacity: anyAction && !involved ? 0.45 : 1 }}>
+        <div key={u.key} className="relative transition-opacity duration-200" style={{ opacity: lifting ? 0.15 : anyAction && !involved ? 0.45 : 1 }}>
           <UnitBust
             unit={u}
             hp={hp[u.key] ?? 0}
