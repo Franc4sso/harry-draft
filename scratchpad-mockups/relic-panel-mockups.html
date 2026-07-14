@@ -1,0 +1,351 @@
+<title>Pannello Sinistro — Mockup Reliquie</title>
+<style>
+  :root {
+    --ground: #12101c;
+    --ground-2: #1a1628;
+    --panel: #1c1830;
+    --panel-2: #221d38;
+    --edge: #ffffff14;
+    --edge-strong: #ffffff26;
+    --ink: #f3e6c4;
+    --ink-dim: #f3e6c4a8;
+    --ink-faint: #f3e6c46b;
+    --gold: #f5c451;
+    /* rarity — the in-game semantic system, honored */
+    --r-comune: #9aa3ad;
+    --r-noncomune: #5fcf80;
+    --r-rara: #4da6ff;
+    --r-epica: #c98bff;
+  }
+  @media (prefers-color-scheme: light) {
+    :root { --ground:#efe9df; --ground-2:#e6dece; }
+  }
+  :root[data-theme="dark"] { --ground:#12101c; --ground-2:#1a1628; }
+  :root[data-theme="light"] { --ground:#efe9df; --ground-2:#e6dece; }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(120% 80% at 50% -10%, #2a2140 0%, var(--ground) 60%),
+      var(--ground);
+    color: var(--ink);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1400px; margin: 0 auto; padding: 40px 28px 96px; }
+
+  .page-head { margin-bottom: 8px; }
+  .kicker {
+    font-size: 11px; letter-spacing: .28em; text-transform: uppercase;
+    color: var(--gold); font-weight: 600; margin: 0 0 10px;
+  }
+  h1 {
+    font-family: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    font-weight: 600; font-size: clamp(26px, 4vw, 40px); margin: 0 0 6px;
+    text-wrap: balance; letter-spacing: -.01em;
+  }
+  .sub { color: var(--ink-dim); max-width: 62ch; margin: 0 0 6px; }
+  .problem {
+    margin: 22px 0 40px; padding: 14px 18px; border-radius: 12px;
+    border: 1px solid var(--edge); background: #ff6b6b0e;
+    color: var(--ink-dim); font-size: 14px; max-width: 78ch;
+  }
+  .problem b { color: var(--ink); }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(288px, 1fr));
+    gap: 34px 26px;
+    align-items: start;
+  }
+  .variant { min-width: 0; }
+  .v-head { margin-bottom: 12px; }
+  .v-num {
+    font-family: "Iowan Old Style", Palatino, Georgia, serif;
+    font-size: 12px; color: var(--gold); letter-spacing: .1em;
+  }
+  .v-name {
+    font-family: "Iowan Old Style", Palatino, Georgia, serif;
+    font-size: 19px; font-weight: 600; margin: 2px 0 4px;
+  }
+  .v-desc { font-size: 12.5px; color: var(--ink-faint); margin: 0; min-height: 34px; }
+
+  /* the real panel column — matches in-game w-72 (18rem) */
+  .col {
+    width: 100%; max-width: 288px;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .frame {
+    background: linear-gradient(180deg, var(--panel), var(--panel-2));
+    border: 1px solid var(--edge); border-radius: 14px;
+    padding: 12px;
+    box-shadow: 0 10px 30px -18px #000, inset 0 1px 0 #ffffff0d;
+  }
+  .frame-label {
+    font-family: "Iowan Old Style", Palatino, Georgia, serif;
+    font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--ink-faint); font-weight: 600; display: block;
+  }
+  .count-chip {
+    float: right; font-size: 10px; color: var(--ink-faint);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* mini team strip shared across variants */
+  .team-strip { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+  .mage {
+    display: flex; align-items: center; gap: 8px; font-size: 12px;
+  }
+  .pip { width: 8px; height: 8px; border-radius: 3px; flex: none; }
+  .mage .nm { color: var(--ink-dim); }
+
+  /* ===== CURRENT (baseline) ===== */
+  .pill-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .pill {
+    padding: 4px 10px; border-radius: 999px; font-size: 11.5px;
+    border: 1px solid; background: #ffffff0d;
+  }
+
+  /* ===== V1 stacked cards ===== */
+  .rc {
+    position: relative; border-radius: 11px; padding: 9px 11px 9px 14px;
+    border: 1px solid var(--edge); background: #ffffff08; margin-top: 8px;
+    overflow: hidden;
+  }
+  .rc::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: var(--acc);
+  }
+  .rc-name { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 7px; }
+  .rc-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--acc); flex: none; }
+  .rc-desc { font-size: 11.5px; color: var(--ink-dim); margin-top: 4px; line-height: 1.45; }
+
+  /* ===== V2 expandable list ===== */
+  .row2 {
+    border-bottom: 1px solid var(--edge); padding: 9px 4px;
+  }
+  .row2:last-child { border-bottom: none; }
+  .row2-top { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+  .gem { width: 12px; height: 12px; border-radius: 3px; transform: rotate(45deg); flex: none; box-shadow: 0 0 8px -1px var(--acc); background: var(--acc); }
+  .row2-name { font-size: 13px; font-weight: 600; flex: 1; }
+  .chev { color: var(--ink-faint); font-size: 11px; }
+  .row2-body { font-size: 11.5px; color: var(--ink-dim); margin: 6px 0 0 20px; line-height: 1.45; }
+  .row2.open .row2-body { display: block; }
+  .row2 .row2-body { display: block; } /* mock: show one open, one closed */
+  .row2.closed .row2-body { display: none; }
+
+  /* ===== V3 grouped by keyword/effect ===== */
+  .grp-label {
+    display: flex; align-items: center; gap: 7px;
+    font-size: 10px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--ink-faint); margin: 12px 0 6px; font-weight: 600;
+  }
+  .grp-label:first-child { margin-top: 6px; }
+  .grp-icon { font-size: 12px; }
+  .g-item {
+    display: flex; gap: 8px; align-items: baseline; font-size: 12px; padding: 3px 0;
+  }
+  .g-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--acc); flex: none; transform: translateY(4px); }
+  .g-name { font-weight: 600; }
+  .g-val { color: var(--gold); font-variant-numeric: tabular-nums; margin-left: auto; font-size: 11px; }
+
+  /* ===== V4 icon grid + detail ===== */
+  .icon-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 7px; margin-top: 8px; }
+  .slot {
+    aspect-ratio: 1; border-radius: 10px; border: 1px solid var(--acc);
+    background: radial-gradient(120% 120% at 50% 20%, color-mix(in srgb, var(--acc) 22%, transparent), #ffffff08);
+    display: grid; place-items: center; font-size: 16px; cursor: pointer;
+    box-shadow: inset 0 1px 0 #ffffff14;
+  }
+  .slot.sel { outline: 2px solid var(--acc); outline-offset: 1px; }
+  .detail {
+    margin-top: 10px; padding: 10px 12px; border-radius: 10px;
+    border: 1px solid var(--edge); background: #ffffff0a;
+  }
+  .detail-top { display: flex; align-items: center; gap: 8px; }
+  .detail-name { font-size: 13.5px; font-weight: 700; }
+  .rarity-tag { font-size: 9.5px; letter-spacing: .1em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--acc); color: var(--acc); }
+  .detail-desc { font-size: 11.5px; color: var(--ink-dim); margin-top: 6px; line-height: 1.5; }
+
+  .note { font-size: 12px; color: var(--ink-faint); margin-top: 14px; line-height: 1.5; }
+  .note b { color: var(--ink-dim); }
+
+  .legend { display: flex; gap: 16px; flex-wrap: wrap; margin: 6px 0 34px; font-size: 11.5px; color: var(--ink-dim); }
+  .legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+</style>
+
+<div class="wrap">
+  <div class="page-head">
+    <p class="kicker">Vista Mappa · Pannello Sinistro</p>
+    <h1>Cosa fanno le mie reliquie?</h1>
+    <p class="sub">Quattro modi di ridisegnare il pannello sinistro così che squadra, sinergie e reliquie si leggano a colpo d'occhio — senza passare col mouse. Ogni colonna è larga esattamente come in gioco (288&nbsp;px).</p>
+  </div>
+
+  <div class="problem">
+    <b>Problema attuale:</b> le reliquie sono pill col solo <i>nome</i>. La descrizione (cosa fanno davvero) è nascosta nel tooltip <code>title</code> — invisibile su touch, e comunque una alla volta. Il giocatore non sa cosa possiede.
+  </div>
+
+  <div class="legend">
+    Rarità:
+    <span><i style="background:#9aa3ad"></i>Comune</span>
+    <span><i style="background:#5fcf80"></i>Non comune</span>
+    <span><i style="background:#4da6ff"></i>Rara</span>
+    <span><i style="background:#c98bff"></i>Epica</span>
+  </div>
+
+  <div class="grid">
+
+    <!-- ================= BASELINE ================= -->
+    <div class="variant">
+      <div class="v-head">
+        <div class="v-num">Ora</div>
+        <div class="v-name">Baseline — pill nome</div>
+        <p class="v-desc">Com'è oggi. Solo nomi, descrizione nel hover.</p>
+      </div>
+      <div class="col">
+        <div class="frame">
+          <span class="frame-label">Reliquie</span>
+          <div class="pill-row">
+            <span class="pill" style="border-color:#4da6ff55;color:#4da6ff">Spada di Grifondoro</span>
+            <span class="pill" style="border-color:#9aa3ad55;color:#9aa3ad">Felix Felicis</span>
+            <span class="pill" style="border-color:#c98bff55;color:#c98bff">Boccino d'Oro</span>
+            <span class="pill" style="border-color:#5fcf8055;color:#5fcf80">Ampolla di Veleno</span>
+            <span class="pill" style="border-color:#4da6ff55;color:#4da6ff">Marchio Nero</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= V1 ================= -->
+    <div class="variant">
+      <div class="v-head">
+        <div class="v-num">01</div>
+        <div class="v-name">Card impilate</div>
+        <p class="v-desc">Ogni reliquia = una mini-card con nome + effetto sempre visibile, barra rarità a sinistra.</p>
+      </div>
+      <div class="col">
+        <div class="frame">
+          <span class="count-chip">5</span>
+          <span class="frame-label">Reliquie</span>
+          <div class="rc" style="--acc:#4da6ff">
+            <div class="rc-name"><span class="rc-dot"></span>Spada di Grifondoro</div>
+            <div class="rc-desc">+40% danni ai bersagli sotto il 30% di vita.</div>
+          </div>
+          <div class="rc" style="--acc:#c98bff">
+            <div class="rc-name"><span class="rc-dot"></span>Boccino d'Oro</div>
+            <div class="rc-desc">Ogni colpo ha il 25% di avvelenare il nemico.</div>
+          </div>
+          <div class="rc" style="--acc:#5fcf80">
+            <div class="rc-name"><span class="rc-dot"></span>Ampolla di Veleno</div>
+            <div class="rc-desc">Il danno da Veleno della squadra +50%.</div>
+          </div>
+          <div class="rc" style="--acc:#9aa3ad">
+            <div class="rc-name"><span class="rc-dot"></span>Felix Felicis</div>
+            <div class="rc-desc">+5% a tutte le statistiche.</div>
+          </div>
+        </div>
+      </div>
+      <p class="note"><b>Pro:</b> tutto leggibile subito, zero interazione. <b>Contro:</b> con 8+ reliquie il pannello diventa lungo (scroll).</p>
+    </div>
+
+    <!-- ================= V2 ================= -->
+    <div class="variant">
+      <div class="v-head">
+        <div class="v-num">02</div>
+        <div class="v-name">Lista espandibile</div>
+        <p class="v-desc">Riga compatta con gemma rarità; tocca/hover per aprire l'effetto. Compatta ma completa.</p>
+      </div>
+      <div class="col">
+        <div class="frame">
+          <span class="count-chip">5</span>
+          <span class="frame-label">Reliquie</span>
+          <div class="row2 open" style="--acc:#4da6ff">
+            <div class="row2-top"><span class="gem"></span><span class="row2-name">Spada di Grifondoro</span><span class="chev">▾</span></div>
+            <div class="row2-body">+40% danni ai bersagli sotto il 30% di vita.</div>
+          </div>
+          <div class="row2 closed" style="--acc:#c98bff">
+            <div class="row2-top"><span class="gem"></span><span class="row2-name">Boccino d'Oro</span><span class="chev">▸</span></div>
+            <div class="row2-body">Ogni colpo ha il 25% di avvelenare il nemico.</div>
+          </div>
+          <div class="row2 closed" style="--acc:#5fcf80">
+            <div class="row2-top"><span class="gem"></span><span class="row2-name">Ampolla di Veleno</span><span class="chev">▸</span></div>
+            <div class="row2-body">Il danno da Veleno della squadra +50%.</div>
+          </div>
+          <div class="row2 closed" style="--acc:#9aa3ad">
+            <div class="row2-top"><span class="gem"></span><span class="row2-name">Felix Felicis</span><span class="chev">▸</span></div>
+            <div class="row2-body">+5% a tutte le statistiche.</div>
+          </div>
+          <div class="row2 closed" style="--acc:#4da6ff">
+            <div class="row2-top"><span class="gem"></span><span class="row2-name">Marchio Nero</span><span class="chev">▸</span></div>
+            <div class="row2-body">Magie oscure +50% danni, contraccolpo 20%.</div>
+          </div>
+        </div>
+      </div>
+      <p class="note"><b>Pro:</b> resta compatto con molte reliquie. <b>Contro:</b> l'effetto è a un tap di distanza, non tutto in vista.</p>
+    </div>
+
+    <!-- ================= V3 ================= -->
+    <div class="variant">
+      <div class="v-head">
+        <div class="v-num">03</div>
+        <div class="v-name">Raggruppate per effetto</div>
+        <p class="v-desc">Reliquie ordinate per keyword (Veleno, Esecuzione…) così vedi le tue <i>build</i>, non solo l'inventario.</p>
+      </div>
+      <div class="col">
+        <div class="frame">
+          <span class="count-chip">5</span>
+          <span class="frame-label">Reliquie</span>
+
+          <div class="grp-label"><span class="grp-icon">☠️</span>Veleno</div>
+          <div class="g-item" style="--acc:#c98bff"><span class="g-dot"></span><span class="g-name">Boccino d'Oro</span><span class="g-val">25%</span></div>
+          <div class="g-item" style="--acc:#5fcf80"><span class="g-dot"></span><span class="g-name">Ampolla di Veleno</span><span class="g-val">+50%</span></div>
+
+          <div class="grp-label"><span class="grp-icon">🗡️</span>Esecuzione</div>
+          <div class="g-item" style="--acc:#4da6ff"><span class="g-dot"></span><span class="g-name">Spada di Grifondoro</span><span class="g-val">+40%</span></div>
+
+          <div class="grp-label"><span class="grp-icon">✨</span>Statistiche</div>
+          <div class="g-item" style="--acc:#9aa3ad"><span class="g-dot"></span><span class="g-name">Felix Felicis</span><span class="g-val">+5%</span></div>
+        </div>
+      </div>
+      <p class="note"><b>Pro:</b> comunica la <i>strategia</i>: "sto giocando veleno". Rinforza le sinergie. <b>Contro:</b> più codice (mappa keyword→gruppo); effetto abbreviato.</p>
+    </div>
+
+    <!-- ================= V4 ================= -->
+    <div class="variant">
+      <div class="v-head">
+        <div class="v-num">04</div>
+        <div class="v-name">Griglia icone + dettaglio</div>
+        <p class="v-desc">Reliquie come slot-icone (stile inventario RPG); il tap mostra il dettaglio completo sotto.</p>
+      </div>
+      <div class="col">
+        <div class="frame">
+          <span class="count-chip">5</span>
+          <span class="frame-label">Reliquie</span>
+          <div class="icon-grid">
+            <div class="slot sel" style="--acc:#4da6ff">⚔️</div>
+            <div class="slot" style="--acc:#c98bff">🏆</div>
+            <div class="slot" style="--acc:#5fcf80">🧪</div>
+            <div class="slot" style="--acc:#9aa3ad">🍀</div>
+            <div class="slot" style="--acc:#4da6ff">🖤</div>
+          </div>
+          <div class="detail">
+            <div class="detail-top">
+              <span class="detail-name">Spada di Grifondoro</span>
+              <span class="rarity-tag" style="--acc:#4da6ff">Rara</span>
+            </div>
+            <div class="detail-desc">I colpi della squadra infliggono +40% danni ai bersagli sotto il 30% di vita.</div>
+          </div>
+        </div>
+      </div>
+      <p class="note"><b>Pro:</b> denso, molte reliquie in poco spazio, sapore da inventario. <b>Contro:</b> serve un'icona per reliquia; l'effetto è uno alla volta.</p>
+    </div>
+
+  </div>
+
+  <p class="note" style="margin-top:40px; max-width:70ch;">
+    Tutte le varianti usano il sistema di rarità già in gioco (comune → epica) come colore semantico, e mantengono <b>TeamSynergyBar</b> sopra invariato. La differenza è solo <b>come si leggono le reliquie</b>. Dimmi quale direzione ti convince (o un mix) e la porto in codice reale.
+  </p>
+</div>

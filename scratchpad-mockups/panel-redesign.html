@@ -1,0 +1,123 @@
+<title>Pannello Sinistro — Compatto</title>
+<style>
+  :root{
+    --ground:#12101c; --panel:#1c1830; --panel-2:#221d38;
+    --edge:#ffffff14; --edge-strong:#ffffff2e;
+    --ink:#f3e6c4; --ink-dim:#f3e6c4a8; --ink-faint:#f3e6c46b; --gold:#f5c451;
+    --r-comune:#9aa3ad; --r-noncomune:#5fcf80; --r-rara:#4da6ff; --r-epica:#c98bff;
+    --hp-full:#7CFC9B;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:radial-gradient(120% 70% at 50% -10%, #2a2140 0%, var(--ground) 60%), var(--ground); color:var(--ink); font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif; line-height:1.5; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1000px; margin:0 auto; padding:38px 26px 90px;}
+  .kicker{font-size:11px; letter-spacing:.28em; text-transform:uppercase; color:var(--gold); font-weight:600; margin:0 0 10px;}
+  h1{font-family:"Iowan Old Style",Palatino,Georgia,serif; font-weight:600; font-size:clamp(24px,4vw,36px); margin:0 0 6px; letter-spacing:-.01em;}
+  .sub{color:var(--ink-dim); max-width:64ch; margin:0 0 28px;}
+
+  .cols{display:flex; gap:44px; align-items:flex-start; flex-wrap:wrap;}
+  .cap{font-family:"Iowan Old Style",Palatino,Georgia,serif; font-size:15px; color:var(--gold); margin:0 0 4px;}
+  .cap-sub{font-size:12px; color:var(--ink-faint); margin:0 0 12px;}
+
+  .panel-col{width:288px; flex:none;}
+  .box{background:var(--panel); border:1px solid var(--edge); border-radius:16px; padding:10px;}
+  .box + .box{margin-top:12px;}
+  .box-label{font-size:10px; letter-spacing:.18em; text-transform:uppercase; color:var(--ink-faint); font-weight:600; display:block; margin-bottom:8px;}
+  .box-label .n{float:right; color:var(--ink-faint); font-variant-numeric:tabular-nums;}
+
+  /* ===== compact member row ===== */
+  .mrow{display:flex; align-items:center; gap:9px; padding:6px 6px; border-radius:11px; border:1px solid var(--hc); background:color-mix(in srgb, var(--hc) 8%, transparent);}
+  .mrow + .mrow{margin-top:5px;}
+  .m-port{width:30px; height:30px; border-radius:8px; flex:none; background:var(--hc); display:grid; place-items:center; font-size:13px; color:#0008; font-weight:800; overflow:hidden;}
+  .m-mid{min-width:0; flex:1;}
+  .m-name{font-size:12.5px; font-weight:600; color:#fff; line-height:1.15; display:flex; align-items:center; gap:6px;}
+  .m-role{font-size:8.5px; letter-spacing:.05em; text-transform:uppercase; color:var(--rc); font-weight:700;}
+  .m-hp{margin-top:3px; display:flex; align-items:center; gap:5px;}
+  .m-hp .bar{height:4px; flex:1; border-radius:99px; background:#0007; overflow:hidden;}
+  .m-hp .fill{height:100%; border-radius:99px; background:var(--hp-full);}
+  .m-hp .val{font-size:9.5px; color:var(--ink-faint); font-variant-numeric:tabular-nums; flex:none;}
+  .m-lvl{font-size:9px; font-weight:700; color:var(--gold); background:#f5c4511a; border:1px solid #f5c45144; border-radius:6px; padding:1px 5px; flex:none;}
+  .m-spell{font-size:10px; color:var(--ink-faint); margin-top:2px; display:flex; align-items:center; gap:5px;}
+  .m-spell .chip{font-size:8px; text-transform:uppercase; letter-spacing:.04em; padding:1px 5px; border-radius:99px; border:1px solid var(--tc); color:var(--tc);}
+  .caret{color:var(--ink-faint); font-size:10px; flex:none;}
+
+  /* ===== relics: compact chip + refined tooltip ===== */
+  .relic-chips{display:flex; flex-wrap:wrap; gap:6px; position:relative;}
+  .rchip{position:relative; display:inline-flex; align-items:center; gap:6px; padding:4px 9px 4px 8px; border-radius:9px; font-size:11px; font-weight:500; border:1px solid var(--acc); background:color-mix(in srgb, var(--acc) 12%, transparent); color:#fff; cursor:default;}
+  .rchip .rgem{width:7px; height:7px; border-radius:2px; transform:rotate(45deg); background:var(--acc); flex:none;}
+
+  /* refined tooltip — cleaner: solid header band, tighter type, arrow */
+  .rtt{position:absolute; z-index:30; left:calc(100% + 12px); top:0; width:222px; border-radius:12px; overflow:hidden; border:1px solid var(--acc); background:#181327; box-shadow:0 20px 44px -14px #000, 0 0 0 1px #00000055;}
+  .rtt::after{content:""; position:absolute; right:100%; top:18px; border:7px solid transparent; border-right-color:var(--acc);}
+  .rtt-head{display:flex; align-items:center; gap:8px; padding:9px 11px; background:color-mix(in srgb, var(--acc) 18%, #181327);}
+  .rtt-head .g{width:10px; height:10px; border-radius:3px; transform:rotate(45deg); background:var(--acc); box-shadow:0 0 8px -1px var(--acc); flex:none;}
+  .rtt-name{font-size:12.5px; font-weight:700; color:#fff; flex:1; line-height:1.15;}
+  .rtt-rar{font-size:8px; letter-spacing:.12em; text-transform:uppercase; color:var(--acc); font-weight:800;}
+  .rtt-body{padding:9px 11px;}
+  .rtt-desc{font-size:11px; color:var(--ink-dim); line-height:1.5;}
+  .rtt-kw{margin-top:7px; display:flex; gap:5px; flex-wrap:wrap;}
+  .rtt-kw span{font-size:8px; letter-spacing:.05em; text-transform:uppercase; color:var(--acc); border:1px solid color-mix(in srgb, var(--acc) 40%, transparent); border-radius:99px; padding:2px 7px;}
+
+  .note{font-size:12px; color:var(--ink-faint); margin-top:14px; line-height:1.55; max-width:34ch;}
+  .note b{color:var(--ink-dim);}
+  .metric{display:inline-block; margin-top:8px; font-size:11px; color:var(--hp-full);}
+
+  .old-mrow{border:1px solid #ff6b6b33; border-radius:12px; background:#0003; padding:6px; margin-top:5px;}
+  .old-mrow:first-of-type{margin-top:0;}
+  .old-top{display:flex; align-items:center; gap:10px;}
+  .old-port{width:44px; height:44px; border-radius:10px; background:#333; flex:none;}
+  .old-name{font-size:14px; font-weight:600; flex:1;}
+</style>
+
+<div class="wrap">
+  <p class="kicker">Vista Mappa · Pannello Sinistro</p>
+  <h1>Maghi compatti + reliquie leggibili</h1>
+  <p class="sub">A sinistra com'è ora (card alte ~120px, reliquie sotto la piega). A destra: righe sottili ~44px, PV inline, incantesimo su una riga, e reliquie con un tooltip ridisegnato — banda-header piena, tipo più fitto, keyword nel colore rarità.</p>
+
+  <div class="cols">
+
+    <!-- OLD -->
+    <div class="panel-col">
+      <p class="cap" style="color:#ff8a8a">Ora</p>
+      <p class="cap-sub">~120px per mago · reliquie fuori vista</p>
+      <div class="box">
+        <span class="box-label">Squadra</span>
+        <div class="old-mrow"><div class="old-top"><div class="old-port"></div><div class="old-name">Albus Silente</div><span class="m-lvl">Lv.1</span></div><div class="m-hp" style="margin-top:8px"><span style="font-size:9px;color:#666">PV</span><div class="bar"><div class="fill" style="width:100%"></div></div><span class="val">117/117</span></div><div style="margin-top:8px;padding:5px;background:#0003;border-radius:8px;font-size:11px;color:#999">Petrificus Totalus</div></div>
+        <div class="old-mrow"><div class="old-top"><div class="old-port"></div><div class="old-name">Harry Potter</div><span class="m-lvl">Lv.1</span></div><div class="m-hp" style="margin-top:8px"><span style="font-size:9px;color:#666">PV</span><div class="bar"><div class="fill" style="width:100%"></div></div><span class="val">97/97</span></div><div style="margin-top:8px;padding:5px;background:#0003;border-radius:8px;font-size:11px;color:#999">Expelliarmus</div></div>
+        <div style="text-align:center;color:#ff6b6b88;font-size:11px;margin-top:10px">↓ altri 3 maghi ↓<br>↓ poi sinergie ↓<br>↓ reliquie quaggiù, invisibili ↓</div>
+      </div>
+    </div>
+
+    <!-- NEW -->
+    <div class="panel-col">
+      <p class="cap">Proposta</p>
+      <p class="cap-sub">~44px per mago · tutto in una schermata</p>
+      <div class="box">
+        <span class="box-label">Squadra <span class="n">5</span></span>
+        <div class="mrow" style="--hc:#e0833a;--rc:#c98bff;--tc:#c98bff"><div class="m-port">AS</div><div class="m-mid"><div class="m-name">Albus Silente <span class="m-role">Controllo</span></div><div class="m-hp"><div class="bar"><div class="fill" style="width:100%"></div></div><span class="val">117/117</span></div></div><span class="m-lvl">1</span><span class="caret">›</span></div>
+        <div class="mrow" style="--hc:#c0392b;--rc:#ff8b6b;--tc:#ff8b6b"><div class="m-port">HP</div><div class="m-mid"><div class="m-name">Harry Potter <span class="m-role">Attacco</span></div><div class="m-hp"><div class="bar"><div class="fill" style="width:100%"></div></div><span class="val">97/97</span></div></div><span class="m-lvl">1</span><span class="caret">›</span></div>
+        <div class="mrow" style="--hc:#c0392b;--rc:#c98bff;--tc:#c98bff"><div class="m-port">HG</div><div class="m-mid"><div class="m-name">Hermione Granger <span class="m-role">Controllo</span></div><div class="m-hp"><div class="bar"><div class="fill" style="width:100%"></div></div><span class="val">78/78</span></div></div><span class="m-lvl">1</span><span class="caret">›</span></div>
+        <div class="mrow" style="--hc:#c0392b;--rc:#7db7ff;--tc:#7db7ff"><div class="m-port">RW</div><div class="m-mid"><div class="m-name">Ron Weasley <span class="m-role">Difesa</span></div><div class="m-hp"><div class="bar"><div class="fill" style="width:100%"></div></div><span class="val">122/122</span></div></div><span class="m-lvl">1</span><span class="caret">›</span></div>
+        <div class="mrow" style="--hc:#27632a;--rc:#ff8b6b;--tc:#ff8b6b"><div class="m-port">SP</div><div class="m-mid"><div class="m-name">Severus Piton <span class="m-role">Attacco</span></div><div class="m-hp"><div class="bar"><div class="fill" style="width:100%"></div></div><span class="val">78/78</span></div></div><span class="m-lvl">1</span><span class="caret">›</span></div>
+      </div>
+
+      <div class="box">
+        <span class="box-label">Reliquie <span class="n">5</span></span>
+        <div class="relic-chips">
+          <span class="rchip" style="--acc:#4da6ff"><span class="rgem"></span>Spada di Grifondoro
+            <span class="rtt" style="--acc:#4da6ff">
+              <span class="rtt-head"><span class="g"></span><span class="rtt-name">Spada di Grifondoro</span><span class="rtt-rar">Rara</span></span>
+              <span class="rtt-body"><span class="rtt-desc">I colpi della squadra infliggono +40% danni ai bersagli sotto il 30% di vita.</span><span class="rtt-kw"><span>Esecuzione</span></span></span>
+            </span>
+          </span>
+          <span class="rchip" style="--acc:#9aa3ad"><span class="rgem"></span>Felix Felicis</span>
+          <span class="rchip" style="--acc:#c98bff"><span class="rgem"></span>Boccino d'Oro</span>
+          <span class="rchip" style="--acc:#5fcf80"><span class="rgem"></span>Ampolla di Veleno</span>
+          <span class="rchip" style="--acc:#4da6ff"><span class="rgem"></span>Marchio Nero</span>
+        </div>
+      </div>
+      <span class="metric">✓ maghi + reliquie in una schermata, senza scroll</span>
+      <p class="note"><b>Tap su una riga mago</b> → espande incantesimo + selettore pool (come ora, ma nascosto finché non serve). <b>Hover reliquia</b> → tooltip ridisegnato.</p>
+    </div>
+
+  </div>
+</div>
