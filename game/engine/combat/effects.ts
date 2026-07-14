@@ -3,7 +3,7 @@ import type { Rng } from '../rng'
 import type { EventBus } from './eventBus'
 import { BALANCE } from '@/data/constants'
 import { STATUS_BY_ID } from '@/data/statuses'
-import { absorbDamage, applyInlineEffect, applyStatus, canAttack, effectiveStats } from '../status'
+import { absorbDamage, applyHostileStatus, applyInlineEffect, applyStatus, canAttack, effectiveStats } from '../status'
 import { HARD_CONTROL_KINDS, isUnderHardControl } from './roleCounter'
 
 export interface EffectCtx { rng: Rng; turn: number; actor: BattleUnit; target: BattleUnit; flags: LogFlag[]; bus?: EventBus; allies?: BattleUnit[]; dark?: boolean; duoIds?: string[]; reflect?: { unitId: string; side: 'left' | 'right'; amount: number } }
@@ -53,6 +53,10 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
     const cun = ctx.actor.cunning
     if (cun && ctx.target.maxHp > 0 && ctx.target.hp / ctx.target.maxHp < cun.threshold) {
       dmg = Math.round(dmg * (1 + cun.bonus))
+    }
+    const fs = ctx.actor.firstStrike
+    if (fs && ctx.target.hp === ctx.target.maxHp) {
+      dmg = Math.round(dmg * (1 + fs.bonus))
     }
     // ESECUZIONE A FREDDO reads hard-control status here, BEFORE the freeze-shatter block
     // below can strip 'freeze' off the target on this very hit — otherwise a coldExecute
@@ -123,6 +127,12 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
         }
       }
     }
+    // CORVONERO ANALISI: every landed hit by a Trio-flavored actor applies one expose stack
+    // to the target. Placed here (after the dodge/friendly-fire guards, right before the
+    // final return) so it only fires on a hit that actually connected. Uses applyHostileStatus
+    // (not raw applyStatus) so it composes with Tassorosso Tenacia intentionally.
+    const an = ctx.actor.analysis
+    if (an) applyHostileStatus(ctx.actor, ctx.target, an.exposeId, { sourceId: sourceId(ctx.actor) })
     // Report the HP actually removed (post-shield), NOT the gross hit: the log `value` must
     // equal the real HP delta so buildReplay (which has no shield model) stays in sync.
     // Cold-execute removes HP beyond the hit's residual, so fold that extra into the value too.
@@ -193,7 +203,11 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
       const duration = resisted && base != null
         ? Math.max(1, Math.ceil(base * BALANCE.roles.tenaciaControlDurationMult))
         : eff.duration
-      applyStatus(unit, eff.statusId, { duration, sourceId: sourceId(ctx.actor), maxStacks })
+      if (eff.target === 'enemy') {
+        applyHostileStatus(ctx.actor, unit, eff.statusId, { duration, sourceId: sourceId(ctx.actor), maxStacks })
+      } else {
+        applyStatus(unit, eff.statusId, { duration, sourceId: sourceId(ctx.actor), maxStacks })
+      }
       if (def?.kind === 'stun' || def?.kind === 'freeze') ctx.flags.push('stun')
       if (def?.kind === 'dot') ctx.flags.push('dot')
     } else if (eff.effect) {

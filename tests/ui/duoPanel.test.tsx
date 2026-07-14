@@ -84,4 +84,25 @@ describe('DuoPanel', () => {
     const { container } = render(<DuoPanel team={withFallen} relics={[]} />)
     expect(container.querySelector('[data-duo="cancrena"][data-state="active"]')).toBeNull()
   })
+
+  it('mostra il Trio di Casata quando 3+ maghi condividono la casata E un Duo è attivo', () => {
+    // `team` sopra: 3 Grifondoro + Muro Vivente attivo → il Trio Grifondoro deve comparire.
+    const { container } = render(<DuoPanel team={team} relics={[]} />)
+    const panel = container.querySelector('[data-testid="trio-panel"]')
+    expect(panel).not.toBeNull()
+    const row = panel!.querySelector('[data-house="Grifondoro"]')
+    expect(row).not.toBeNull()
+    expect(row).toHaveTextContent('Slancio: cooldown delle tue spell −1')
+  })
+
+  it('NON mostra alcun Trio se 3+ condividono la casata ma NESSUN Duo è attivo', () => {
+    // 3 Grifondoro ma nessun ruolo/tag duplicato: nessun segnale Duo si accende.
+    const noDuo = [
+      { wizard: { id: 'x', name: 'X', house: 'Grifondoro', role: 'Attaccante', tags: [] }, level: 1, stats: {}, maxHp: 100 },
+      { wizard: { id: 'y', name: 'Y', house: 'Grifondoro', role: 'Controllo', tags: [] }, level: 1, stats: {}, maxHp: 100 },
+      { wizard: { id: 'z', name: 'Z', house: 'Grifondoro', role: 'Supporto', tags: [] }, level: 1, stats: {}, maxHp: 100 },
+    ] as any
+    const { container } = render(<DuoPanel team={noDuo} relics={[]} />)
+    expect(container.querySelector('[data-testid="trio-panel"]')).toBeNull()
+  })
 })

@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { detectSynergies } from '@/game/engine/synergy'
-import { houseEffects } from '@/game/engine/houseEffects'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
 import { WIZARD_BY_ID } from '@/data/wizards'
@@ -20,10 +19,6 @@ describe('rimozione sinergie role/house', () => {
     // dumbledore, harry, mcgonagall, sirius: tutti Grifondoro
     const t = team(['dumbledore', 'harry', 'mcgonagall', 'sirius'])
     expect(detectSynergies(t).some(a => a.synergy.kind === 'house')).toBe(false)
-  })
-  it('houseEffects è vuoto (nessun potere di casata)', () => {
-    const t = team(['dumbledore', 'harry', 'mcgonagall', 'sirius'])
-    expect(Object.keys(houseEffects(t, detectSynergies(t)))).toHaveLength(0)
   })
   it('le sinergie group/origin RESTANO', () => {
     // bellatrix, pansy, blaise: tutti tag 'veleno' -> Tossicità (origin)
