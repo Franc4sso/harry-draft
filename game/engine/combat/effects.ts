@@ -127,6 +127,12 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
         }
       }
     }
+    // CORVONERO ANALISI: every landed hit by a Trio-flavored actor applies one expose stack
+    // to the target. Placed here (after the dodge/friendly-fire guards, right before the
+    // final return) so it only fires on a hit that actually connected. Uses applyHostileStatus
+    // (not raw applyStatus) so it composes with Tassorosso Tenacia intentionally.
+    const an = ctx.actor.analysis
+    if (an) applyHostileStatus(ctx.actor, ctx.target, an.exposeId, { sourceId: sourceId(ctx.actor) })
     // Report the HP actually removed (post-shield), NOT the gross hit: the log `value` must
     // equal the real HP delta so buildReplay (which has no shield model) stays in sync.
     // Cold-execute removes HP beyond the hit's residual, so fold that extra into the value too.

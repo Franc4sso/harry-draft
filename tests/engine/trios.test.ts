@@ -155,4 +155,35 @@ describe('trioEffects', () => {
     expect(ward).toBeDefined()
     expect(ward!.remaining).toBe(STATUS_BY_ID['protego']!.defaultDuration)
   })
+
+  it('Corvonero analysis applies an expose stack on hit', () => {
+    const actor = unit('a', 'base_attack', { analysis: { exposeId: 'expose1' } })
+    const target = unit('b', 'base_attack', { side: 'right' })
+    resolveAction(createRng(1), 1, actor, target, SPELL_BY_ID['base_attack']!)
+    expect(target.statusEffects.some(e => e.statusId === 'expose1')).toBe(true)
+  })
+
+  it('an actor WITHOUT analysis applies no expose on hit', () => {
+    const actor = unit('a', 'base_attack')
+    const target = unit('b', 'base_attack', { side: 'right' })
+    resolveAction(createRng(1), 1, actor, target, SPELL_BY_ID['base_attack']!)
+    expect(target.statusEffects.some(e => e.statusId === 'expose1' || e.statusId === 'expose2')).toBe(false)
+  })
+
+  it('two hits from an analysis actor apply 2 expose stacks', () => {
+    const actor = unit('a', 'base_attack', { analysis: { exposeId: 'expose1' } })
+    const target = unit('b', 'base_attack', { side: 'right' })
+    resolveAction(createRng(1), 1, actor, target, SPELL_BY_ID['base_attack']!)
+    resolveAction(createRng(1), 2, actor, target, SPELL_BY_ID['base_attack']!)
+    const stacks = target.statusEffects.filter(e => e.statusId === 'expose1')
+    expect(stacks.length).toBe(2)
+  })
+
+  it('a dodged hit applies no expose', () => {
+    // Force a dodge: target spd far above actor spd maxes dodge chance (dodgeBase + gap*dodgeScale).
+    const actor = unit('a', 'base_attack', { analysis: { exposeId: 'expose1' }, buffedStats: { hp: 120, atk: 80, def: 30, spd: 1 } })
+    const target = unit('b', 'base_attack', { side: 'right', buffedStats: { hp: 120, atk: 80, def: 30, spd: 999 } })
+    resolveAction(createRng(1), 1, actor, target, SPELL_BY_ID['base_attack']!)
+    expect(target.statusEffects.some(e => e.statusId === 'expose1')).toBe(false)
+  })
 })
