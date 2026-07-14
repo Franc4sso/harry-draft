@@ -3,7 +3,9 @@ import { trioEffects } from '@/game/engine/trios'
 import { toBattleUnits } from '@/game/engine/combat/simulate'
 import { resolveAction } from '@/game/engine/combat/resolve'
 import { createRng } from '@/game/engine/rng'
+import { applyHostileStatus } from '@/game/engine/status'
 import { SPELL_BY_ID } from '@/data/spells'
+import { STATUS_BY_ID } from '@/data/statuses'
 import type { ActiveDuo, BattleUnit, DraftedWizard, Wizard } from '@/types'
 
 function dw(id: string, house: Wizard['house']): DraftedWizard {
@@ -113,5 +115,44 @@ describe('trioEffects', () => {
     const dmgPlain = 119 - woundedPlain.hp
 
     expect(dmgFS).toBe(dmgPlain)
+  })
+
+  it('applyHostileStatus adds actor.statusDurationBonus to the status duration', () => {
+    const actor = unit('a', 'base_attack', { statusDurationBonus: 1 })
+    const target = unit('b', 'base_attack', { side: 'right' })
+    applyHostileStatus(actor, target, 'stun') // stun defaultDuration = 1
+    expect(target.statusEffects.find(e => e.statusId === 'stun')!.remaining).toBe(2)
+
+    const plainActor = unit('c', 'base_attack')
+    const t2 = unit('d', 'base_attack', { side: 'right' })
+    applyHostileStatus(plainActor, t2, 'stun')
+    expect(t2.statusEffects.find(e => e.statusId === 'stun')!.remaining).toBe(1)
+  })
+
+  it('Tassorosso Tenacia extends a hostile control spell by +1 turn', () => {
+    const spellId = 'glacius'
+    const spell = SPELL_BY_ID[spellId]!
+    expect(spell.spec![0]).toMatchObject({ kind: 'applyStatus', target: 'enemy', statusId: 'freeze', duration: 1 })
+
+    const tenaciaActor = unit('a', spellId, { statusDurationBonus: 1 })
+    const targetA = unit('b', 'base_attack', { side: 'right' })
+    resolveAction(createRng(1), 1, tenaciaActor, targetA, spell)
+    const remainingWithTenacia = targetA.statusEffects.find(e => e.statusId === 'freeze')!.remaining
+
+    const plainActor = unit('c', spellId)
+    const targetB = unit('d', 'base_attack', { side: 'right' })
+    resolveAction(createRng(1), 1, plainActor, targetB, spell)
+    const remainingPlain = targetB.statusEffects.find(e => e.statusId === 'freeze')!.remaining
+
+    expect(remainingWithTenacia).toBe(remainingPlain + 1)
+  })
+
+  it('Tassorosso Tenacia does NOT extend an ally-targeted status (protego ward)', () => {
+    const tenaciaActor = unit('a', 'base_attack', { statusDurationBonus: 1 })
+    const ally = unit('b', 'base_attack', { side: 'left' })
+    resolveAction(createRng(1), 1, tenaciaActor, ally, SPELL_BY_ID['protego']!, [ally])
+    const ward = ally.statusEffects.find(e => e.statusId === 'protego')
+    expect(ward).toBeDefined()
+    expect(ward!.remaining).toBe(STATUS_BY_ID['protego']!.defaultDuration)
   })
 })

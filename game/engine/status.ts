@@ -71,6 +71,19 @@ export function applyStatus(
   })
 }
 
+/** Apply a HOSTILE status from `actor` to `target`, extending its duration by the actor's
+ *  Tassorosso Tenacia bonus (`statusDurationBonus`). Use this at every site where a unit
+ *  inflicts a debuff/DoT/control on an enemy so the Trio bonus lands uniformly. */
+export function applyHostileStatus(
+  actor: BattleUnit, target: BattleUnit, statusId: string,
+  opts: { duration?: number; sourceId?: string; maxStacks?: number } = {},
+): void {
+  const def = STATUS_BY_ID[statusId]
+  if (!def) return
+  const base = opts.duration ?? def.defaultDuration
+  applyStatus(target, statusId, { ...opts, duration: base + (actor.statusDurationBonus ?? 0) })
+}
+
 export function applyInlineEffect(
   unit: BattleUnit,
   eff: { kind: ActiveEffect['kind']; stat?: Stat; amount?: number; duration?: number },

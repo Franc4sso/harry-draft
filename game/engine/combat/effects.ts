@@ -3,7 +3,7 @@ import type { Rng } from '../rng'
 import type { EventBus } from './eventBus'
 import { BALANCE } from '@/data/constants'
 import { STATUS_BY_ID } from '@/data/statuses'
-import { absorbDamage, applyInlineEffect, applyStatus, canAttack, effectiveStats } from '../status'
+import { absorbDamage, applyHostileStatus, applyInlineEffect, applyStatus, canAttack, effectiveStats } from '../status'
 import { HARD_CONTROL_KINDS, isUnderHardControl } from './roleCounter'
 
 export interface EffectCtx { rng: Rng; turn: number; actor: BattleUnit; target: BattleUnit; flags: LogFlag[]; bus?: EventBus; allies?: BattleUnit[]; dark?: boolean; duoIds?: string[]; reflect?: { unitId: string; side: 'left' | 'right'; amount: number } }
@@ -197,7 +197,11 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
       const duration = resisted && base != null
         ? Math.max(1, Math.ceil(base * BALANCE.roles.tenaciaControlDurationMult))
         : eff.duration
-      applyStatus(unit, eff.statusId, { duration, sourceId: sourceId(ctx.actor), maxStacks })
+      if (eff.target === 'enemy') {
+        applyHostileStatus(ctx.actor, unit, eff.statusId, { duration, sourceId: sourceId(ctx.actor), maxStacks })
+      } else {
+        applyStatus(unit, eff.statusId, { duration, sourceId: sourceId(ctx.actor), maxStacks })
+      }
       if (def?.kind === 'stun' || def?.kind === 'freeze') ctx.flags.push('stun')
       if (def?.kind === 'dot') ctx.flags.push('dot')
     } else if (eff.effect) {
