@@ -55,4 +55,14 @@ describe('LiftFocus', () => {
     )
     expect(container.querySelector('[data-testid="lift-focus"]')).toBeNull()
   })
+
+  it('i cloni mostrano attaccante e bersaglio come UnitBust (per nome), senza crash quando i rect sono 0 (jsdom)', () => {
+    const { container, getAllByText } = render(
+      <LiftFocus entry={killEntry('weakest')} frameKey={3} units={units} firstDuo={new Map()} speed={1} />,
+    )
+    // il clone dell'attaccante e del bersaglio rendono i nomi/ritratti (UnitBust vero, non placeholder testuale)
+    const overlay = container.querySelector('[data-testid="lift-focus"]')!
+    expect(overlay.querySelectorAll('[data-testid="battle-unit"]').length).toBe(2)
+    expect(getAllByText(/Cho|Cedric/).length).toBeGreaterThanOrEqual(2)
+  })
 })

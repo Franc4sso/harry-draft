@@ -168,7 +168,7 @@ export function BattleArena({
 
       <PixiArena entry={entry} frameKey={frameKey} speed={speed} />
       <Callout entry={entry} frameKey={frameKey} appliedControl={appliedControl} duoName={duoName} />
-      <LiftFocus entry={entry} frameKey={frameKey} units={replay.units} firstDuo={firstFireAt} speed={speed} />
+      <LiftFocus entry={entry} frameKey={frameKey} units={replay.units} firstDuo={firstFireAt} speed={speed} hp={hp} />
     </div>
   )
 }
