@@ -10,7 +10,7 @@ import { teamExecute } from '../execute'
 import { teamShieldConvert } from '../shieldConvert'
 import { teamDarkMagic } from '../darkMagic'
 import { teamAlwaysHit } from '../alwaysHit'
-import { houseEffects } from '../houseEffects'
+import { trioEffects } from '../trios'
 import { registerTraitTriggers } from '../traits'
 import { registerSignatures } from '../signatures'
 import { registerSynergyTriggers } from '../synergyTriggers'
@@ -29,14 +29,14 @@ import { maybeReap, willReap } from '../duoEffects/reap'
 
 export function toBattleUnits(
   team: DraftedWizard[], side: Side, synergies: ActiveSynergy[], relics: ActiveRelic[] = [], menacePct = 0, damageReduction = 0,
-  ignoresTaunt = false,
+  ignoresTaunt = false, duos: ActiveDuo[] = [],
 ): BattleUnit[] {
   const velenoUncapped = synergies.some(s => s.synergy.id === 'tossicita')
   const execute = teamExecute(team, relics, synergies)
   const shieldConvert = teamShieldConvert(team, relics, synergies)
   const darkMap = teamDarkMagic(team, relics, synergies)
   const alwaysHitIds = teamAlwaysHit(team, relics)
-  const houseMap = houseEffects(team, synergies)
+  const trioMap = trioEffects(team, duos)
   return team.map(dw => {
     const synBuffed = applyBonuses(dw.stats, synergies)
     const relicBuffed = applyRelicBonuses(synBuffed, team, relics)
@@ -51,7 +51,7 @@ export function toBattleUnits(
     const base: BattleUnit = {
       ...dw, side, buffedStats: buffed, maxHp: buffed.hp,
       hp: Math.min(buffed.hp, Math.max(0, startHp)),
-      cooldowns: {}, statusEffects: [], alive: true, velenoUncapped, execute, shieldConvert, darkMagic: darkMap[dw.wizard.id], alwaysHit: alwaysHitIds.has(dw.wizard.id), ...houseMap[dw.wizard.id],
+      cooldowns: {}, statusEffects: [], alive: true, velenoUncapped, execute, shieldConvert, darkMagic: darkMap[dw.wizard.id], alwaysHit: alwaysHitIds.has(dw.wizard.id), ...trioMap[dw.wizard.id],
     }
     if (damageReduction > 0) {
       base.damageReduction = Math.max(base.damageReduction ?? 0, damageReduction)
@@ -84,7 +84,7 @@ export function simulateBattle(
   const rightSyn = opts.rightSyn ?? []
   const leftRelics = opts.leftRelics ?? []
   const rightRelics = opts.rightRelics ?? []
-  const L = toBattleUnits(left, 'left', leftSyn, leftRelics)
+  const L = toBattleUnits(left, 'left', leftSyn, leftRelics, 0, 0, false, opts.leftDuos ?? [])
   const R = toBattleUnits(right, 'right', rightSyn, rightRelics, opts.rightMenace ?? 0, opts.rightDamageReduction ?? 0, opts.rightIgnoresTaunt ?? false)
   stampDuoFields(L, R, opts.leftDuos ?? [], opts.kind ?? 'normal')
   // MIASMA: computed once per battle — cheaper than re-scanning leftDuos at every death site.

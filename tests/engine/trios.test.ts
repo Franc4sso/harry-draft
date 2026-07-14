@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { trioEffects } from '@/game/engine/trios'
+import { toBattleUnits } from '@/game/engine/combat/simulate'
 import type { ActiveDuo, DraftedWizard, Wizard } from '@/types'
 
 function dw(id: string, house: Wizard['house']): DraftedWizard {
@@ -38,5 +39,15 @@ describe('trioEffects', () => {
     const four = [...three, dw('d', 'Corvonero')]
     expect(trioEffects(three, [duo])['a']?.analysis?.exposeId).toBe('expose1')
     expect(trioEffects(four, [duo])['a']?.analysis?.exposeId).toBe('expose2')
+  })
+
+  it('stamps Trio on player units only, gated by duos', () => {
+    const team = [dw('a', 'Grifondoro'), dw('b', 'Grifondoro'), dw('c', 'Grifondoro')]
+    const withDuo = toBattleUnits(team, 'left', [], [], 0, 0, false, [duo])
+    expect(withDuo[0]!.cooldownReduction).toBe(1)
+    const noDuo = toBattleUnits(team, 'left', [], [], 0, 0, false, [])
+    expect(noDuo[0]!.cooldownReduction).toBeUndefined()
+    const enemy = toBattleUnits(team, 'right', [], [], 0, 0, false) // no duos passed for right
+    expect(enemy[0]!.cooldownReduction).toBeUndefined()
   })
 })
