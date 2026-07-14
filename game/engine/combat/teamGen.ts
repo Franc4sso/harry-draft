@@ -251,16 +251,16 @@ export function themedEnemyTeam(rng: Rng, opts: {
   const forceSynergy = kind === 'elite'
   const eligible = (t: Theme) => !forceSynergy || t.id.startsWith('tag:')
 
-  // Pick a realizable theme: try themes in turn until one whose in-window pool can cross its
-  // OWN activation floor (so the synergy promise is always fulfillable), then fall back to
-  // mixed if none can be realized (strength 0 or every pool too small at this budget).
-  // The activation floor for a forced (elite) pack is the CANDIDATE THEME's own threshold
-  // (`minCount`: veleno/deatheater=3, marauder=2, da=4), not a flat number — a theme is only
-  // accepted if the pack can actually draft enough members to cross ITS synergy tier AND the
-  // pack is large enough (`count`) to hold them. This is why some tiny elite packs can't realize
-  // a 4-member theme (`da`) and fall through to the next candidate. Non-forced packs keep the
-  // softer ≥2 "leaning" bar (they never promised an actual activation).
-  const floorFor = (t: Theme) => forceSynergy ? t.minCount : 2
+  // Pick a realizable theme: try themes in turn until one whose in-window pool can cross the
+  // acceptance floor, then fall back to mixed if none can be realized.
+  //   - ELITE (forceSynergy): the floor is the CANDIDATE THEME's OWN synergy threshold
+  //     (`minCount`: veleno/deatheater=3, marauder=2, da=4) so the promised synergy actually
+  //     activates — and it must also draft ≥minCount members. A theme too big for this pack
+  //     (`count`) falls through to the next candidate.
+  //   - NORMAL/BOSS (non-forced): keep the old softer bar — floor 0 in the target math (a
+  //     theme is just a lean, no activation promised), accepted only if it can place ≥2 members.
+  const wantFloor = (t: Theme) => forceSynergy ? t.minCount : 0     // floor inside the target math
+  const acceptMin = (t: Theme) => forceSynergy ? t.minCount : 2     // min members to accept the theme
   let realized: Theme | null = null
   if (strength > 0 || forceSynergy) {
     const triedIds: string[] = [...excludeThemes]
@@ -269,18 +269,17 @@ export function themedEnemyTeam(rng: Rng, opts: {
       const candidate = pickTheme(themeRng, triedIds)
       if (!candidate) break
       if (!eligible(candidate)) { triedIds.push(candidate.id); continue }
-      const floor = floorFor(candidate)
       const candidateThemed = window.filter(w => candidate.matches(w))
-      const candidateWant = Math.min(Math.max(floor, targetThemeMembers(strength, count)), candidateThemed.length, count)
-      if (candidateWant >= floor) { realized = candidate; break }
+      const candidateWant = Math.min(Math.max(wantFloor(candidate), targetThemeMembers(strength, count)), candidateThemed.length, count)
+      if (candidateWant >= acceptMin(candidate)) { realized = candidate; break }
       triedIds.push(candidate.id)
     }
   }
 
-  // Members of the window that realize the theme. Draft at least the theme's threshold so the
+  // Members of the window that realize the theme. Draft at least the theme's floor so an elite's
   // synergy actually activates (capped by available themed members and the pack size).
   const themed = realized ? window.filter(w => realized!.matches(w)) : []
-  const wantThemed = realized ? Math.min(Math.max(floorFor(realized), targetThemeMembers(strength, count)), themed.length, count) : 0
+  const wantThemed = realized ? Math.min(Math.max(wantFloor(realized), targetThemeMembers(strength, count)), themed.length, count) : 0
 
   const chosen: Wizard[] = []
   const used = new Set<string>()
