@@ -1,8 +1,9 @@
 'use client'
-import type { ActiveRelic, DraftedWizard, DuoProgress, DuoSignal, SignalCount } from '@/types'
-import { duoProgress, signalCount } from '@/game/engine/duos'
+import type { ActiveRelic, DraftedWizard, DuoProgress, DuoSignal, House, SignalCount } from '@/types'
+import { detectDuos, duoProgress, signalCount } from '@/game/engine/duos'
 import { livingOf } from '@/game/engine/roster'
 import { SIGNAL_COLOR, SIGNAL_HOWTO, SIGNAL_ICON, SIGNAL_LABEL } from '@/data/duos'
+import { trioText } from '@/game/engine/trioText'
 
 // Stesso linguaggio cromatico di SynergyTracker: oro = attivo, verde = a un passo.
 const GOLD = '#d9b65f'
@@ -40,6 +41,8 @@ function Gem({ signal, lit, count }: { signal: DuoSignal; lit: boolean; count: S
  * sempre cosa gli serve, senza clic. Ordinate: attive → a un passo → lontane. Puramente
  * presentazionale sopra `duoProgress` + `signalCount`.
  */
+const HOUSES: House[] = ['Grifondoro', 'Serpeverde', 'Corvonero', 'Tassorosso']
+
 export function DuoPanel({ team, relics }: { team: DraftedWizard[]; relics: ActiveRelic[] }) {
   // Solo i maghi VIVI scendono in campo, quindi un Duo si accende qui esattamente quando si
   // accenderà in battaglia (resolvers/combat.ts calcola leftDuos da livingOf(team)).
@@ -48,6 +51,15 @@ export function DuoPanel({ team, relics }: { team: DraftedWizard[]; relics: Acti
 
   const sorted = [...progress].sort((a, b) => ORDER[stateOf(a)] - ORDER[stateOf(b)])
   const activeCount = progress.filter(p => p.active).length
+
+  // Trio di casata: attivo per una casata quando ha ≥3 maghi vivi E ≥1 Duo è acceso (mirror di
+  // trioEffects in game/engine/trios.ts — qui deriviamo casata+grado dai conteggi perché
+  // TrioEffect è per-mago, non per-casata).
+  const duos = detectDuos(living, relics)
+  const activeTrios = duos.length === 0 ? [] : HOUSES
+    .map(house => ({ house, count: living.filter(d => d.wizard.house === house).length }))
+    .filter(({ count }) => count >= 3)
+    .map(({ house, count }) => ({ house, grade: (count >= 4 ? 1 : 0) as 0 | 1 }))
 
   return (
     <div className="flex flex-col gap-1.5 border-t border-white/10 pt-2.5" data-testid="duo-panel">
@@ -107,6 +119,25 @@ export function DuoPanel({ team, relics }: { team: DraftedWizard[]; relics: Acti
           )
         })}
       </ul>
+
+      {activeTrios.length > 0 && (
+        <div className="flex flex-col gap-1.5" data-testid="trio-panel">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Trio di Casata</span>
+          <ul className="flex flex-col gap-1.5">
+            {activeTrios.map(({ house, grade }) => (
+              <li
+                key={house}
+                data-house={house}
+                className="rounded-lg border px-2 py-1.5"
+                style={{ borderColor: `${GOLD}66`, background: `${GOLD}1f`, borderStyle: 'solid' }}
+              >
+                <p className="text-[13px] font-semibold leading-tight" style={{ color: '#f3e6c4' }}>{house}</p>
+                <p className="mt-1 text-[11px] leading-snug text-[#c9bfa0]">{trioText(house, grade)}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
     </div>
   )
 }
