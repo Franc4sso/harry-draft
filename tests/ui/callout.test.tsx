@@ -58,4 +58,8 @@ describe('Callout', () => {
     const { container } = render(<Callout entry={entry(['crit'])} frameKey={0} />)
     expect(container.querySelector('[data-testid="battle-callout"]')).toBeNull()
   })
+  it('suppressed durante un lift: nessuna parola (l\'overlay lift & focus la mostra già)', () => {
+    const { container } = render(<Callout entry={entry(['crit', 'kill'])} frameKey={1} suppressed />)
+    expect(container.querySelector('[data-testid="battle-callout"]')).toBeNull()
+  })
 })
