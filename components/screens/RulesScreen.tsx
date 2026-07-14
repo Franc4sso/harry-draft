@@ -48,10 +48,9 @@ const RARITY_BLURB: Record<RelicRarity, string> = {
   epica: 'Effetti potenti con trigger speciali.',
 }
 
-const SYNERGY_KIND_META: Array<{ kind: 'house' | 'role' | 'group'; label: string; blurb: string }> = [
-  { kind: 'house',  label: 'Casa',   blurb: '3+ maghi della stessa casa.' },
-  { kind: 'role',   label: 'Ruolo',  blurb: '3+ maghi dello stesso ruolo.' },
-  { kind: 'group',  label: 'Gruppo', blurb: 'Gruppi a tema (Golden Trio, Weasley…).' },
+const SYNERGY_KIND_META: Array<{ kind: 'group' | 'origin'; label: string; blurb: string }> = [
+  { kind: 'group',  label: 'Gruppo',  blurb: 'Gruppi a tema (Golden Trio, Weasley…).' },
+  { kind: 'origin', label: 'Origine', blurb: 'Affinità di tema (Tossicità, Bastione…).' },
 ]
 
 type Tab = 'gioco' | 'magie' | 'reliquie' | 'sinergie'
@@ -93,8 +92,8 @@ function SectionTitle({ label }: { label: string }) {
 }
 
 // ── Synergy compendium: group the flat SYNERGIES list into readable cards. ──
-// House/role synergies share a `family` and collapse into ONE card with its
-// 2/3/4 tiers; group/origin synergies are single-threshold cards on their own.
+// Synergies with a shared `family` collapse into ONE card with its 2/3/4
+// tiers; group/origin synergies are single-threshold cards on their own.
 type SynGroup = {
   key: string
   name: string          // family display name, count prefix stripped ("Grifondoro")
@@ -330,22 +329,8 @@ export function RulesScreen() {
       {tab === 'sinergie' && (
         <div className="w-full space-y-8">
           <p className="text-white/55 text-sm text-center max-w-xl mx-auto">
-            Combina case, ruoli e gruppi a tema per bonus potenti. Più maghi affini schieri, più forte è la sinergia.
+            Combina gruppi e origini a tema per bonus potenti. Più maghi affini schieri, più forte è la sinergia.
           </p>
-
-          <section>
-            <SectionTitle label="Case" />
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-              {buildSynGroups(['house']).map((g) => <SynergyCard key={g.key} g={g} />)}
-            </div>
-          </section>
-
-          <section>
-            <SectionTitle label="Ruoli" />
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-              {buildSynGroups(['role']).map((g) => <SynergyCard key={g.key} g={g} />)}
-            </div>
-          </section>
 
           <section>
             <SectionTitle label="Gruppi & Origini" />
