@@ -11,9 +11,10 @@ import { UnitBust } from './UnitBust'
 /** Cinematic resting spot for a clone, as % of the overlay box (left/top = center anchor). */
 type CloneSpot = { left: number; top: number; scale: number }
 
-// Attacker: left-ish, smaller, in shadow. Target: right-ish, larger, lit up.
-const ATTACKER_SPOT: CloneSpot = { left: 28, top: 50, scale: 1.1 }
-const TARGET_SPOT: CloneSpot = { left: 70, top: 50, scale: 1.4 }
+// Attacker: far left, smaller, in shadow. Target: right, larger, lit up. Wide split so the two
+// clones read as a clean duel and don't crowd the (dimmed) original rows behind them.
+const ATTACKER_SPOT: CloneSpot = { left: 24, top: 52, scale: 1.15 }
+const TARGET_SPOT: CloneSpot = { left: 72, top: 52, scale: 1.55 }
 
 /**
  * Lift & Focus: al frame-chiave (uccisione, critico, primo scatto di un Duo) monta un overlay
@@ -142,8 +143,12 @@ export function LiftFocus({
       aria-hidden
       className="pointer-events-none absolute inset-0 z-30 overflow-hidden"
     >
-      {/* backdrop scuro */}
-      <div className="absolute inset-0 bg-black/70" />
+      {/* backdrop: quasi opaco ai bordi (nasconde le righe originali già oscurate), con un pozzo di
+          luce al centro sulla coppia a fuoco. */}
+      <div
+        className="absolute inset-0"
+        style={{ background: 'radial-gradient(60% 55% at 50% 52%, rgba(6,4,12,0.62) 0%, rgba(4,3,9,0.9) 55%, rgba(3,2,7,0.96) 100%)' }}
+      />
       {/* clone attaccante: fedele (vero UnitBust), piccolo, in ombra — parte dalla riga e vola qui */}
       {attacker && (
         <div ref={attackerCloneRef} className="absolute" style={{ left: '50%', top: '50%' }}>
