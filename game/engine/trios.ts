@@ -1,6 +1,18 @@
 import type { ActiveDuo, DraftedWizard, House } from '@/types'
 import { livingOf } from '@/game/engine/roster'
 
+// BILANCIAMENTO (misurato 2026-07-14, fase 2). I Trio sono potenza SOLO del player, gated su
+// ≥1 Duo attivo + 3 maghi stessa casa. A/B su campaignBalanceRestricted (il gate REALE; l'harness
+// full campaignBalanceB è a 0.0000 da "UN MAGO UNA MAGIA", reference-only):
+//   pre-Trio (5c4a7f6): winRate 0.0833  →  post-Trio (tutti i 4 buff): winRate 0.0833  (INVARIATO).
+// I Trio NON muovono il bot: la policy near-optimal fissa lo starter a Grifondoro e recluta per
+// POTENZA, non per coerenza di casata → schiera 3-stessa-casa-mentre-un-Duo-è-attivo quasi mai, e
+// il gate Trio non scatta. I Trio sono potenza che un UMANO che costruisce team di casata sblocca,
+// invisibile a un bot power-greedy (stessa conclusione della fase 1: il bot non decide la
+// difficoltà, la decide il playtest umano). Nessun ritocco leva applicato (in banda, >0.07 floor).
+// Se il playtest umano risulta troppo facile → leva enemy count, NON reintrodurre i poteri casata.
+// Numeri iniziali sotto; se in futuro si tarano, ri-misurare campaignBalanceRestricted.
+
 export interface TrioEffect {
   firstStrike?: { bonus: number }              // Serpeverde
   analysis?: { exposeId: 'expose1' | 'expose2' } // Corvonero
@@ -8,7 +20,9 @@ export interface TrioEffect {
   cooldownReduction?: number                   // Grifondoro
 }
 
-// grade 0 = 3 members, grade 1 = 4+ members. Initial numbers — tune via campaignBalanceB.
+// grade 0 = 3 members, grade 1 = 4+ members. Numeri iniziali — tarare via campaignBalanceRestricted
+// (vedi la nota di bilanciamento sopra: i Trio non muovono il bot, la taratura serve solo se un
+// futuro playtest umano lo richiede).
 function effectFor(house: House, grade: 0 | 1): TrioEffect {
   switch (house) {
     case 'Serpeverde':  return { firstStrike: { bonus: grade === 1 ? 0.45 : 0.30 } }
