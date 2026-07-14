@@ -53,7 +53,7 @@ export function calloutFor(
  * `prefers-reduced-motion`: a brief static word instead of the scale/blur
  * flash-then-fade.
  */
-export function Callout({ entry, frameKey, appliedControl = null, duoName = null }: { entry: LogEntry | null; frameKey: number; appliedControl?: string | null; duoName?: string | null }) {
+export function Callout({ entry, frameKey, appliedControl = null, duoName = null, suppressed = false }: { entry: LogEntry | null; frameKey: number; appliedControl?: string | null; duoName?: string | null; suppressed?: boolean }) {
   const reduced = !!useReducedMotion()
   const lastFiredRef = useRef(0)
   const [callout, setCallout] = useState<{ text: string; tone: string; key: number } | null>(null)
@@ -62,9 +62,11 @@ export function Callout({ entry, frameKey, appliedControl = null, duoName = null
     if (frameKey === 0) return
     if (lastFiredRef.current === frameKey) return
     lastFiredRef.current = frameKey
-    const co = calloutFor(entry, appliedControl, duoName)
+    // Durante un lift & focus, l'annuncio grande lo fa già l'overlay (nome-evento sopra la coppia
+    // a fuoco): la parola del Callout duplicherebbe. Sopprimi per quel frame.
+    const co = suppressed ? null : calloutFor(entry, appliedControl, duoName)
     setCallout(co ? { ...co, key: frameKey } : null)
-  }, [frameKey, entry, appliedControl, duoName])
+  }, [frameKey, entry, appliedControl, duoName, suppressed])
 
   useEffect(() => {
     if (!callout) return
