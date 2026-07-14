@@ -83,4 +83,35 @@ describe('trioEffects', () => {
     resolveAction(createRng(1), 1, actor, target, spell)
     expect(actor.cooldowns[spellId]).toBe(1) // max(1, 1-1) clamps to 1, not 0
   })
+
+  it('Serpeverde firstStrike amplifies the hit on a full-HP enemy, not a wounded one', () => {
+    const mkTarget = (hp: number) => unit('b', 'base_attack', { side: 'right', hp, maxHp: 120 })
+    const actorFS = unit('a', 'base_attack', { firstStrike: { bonus: 0.30 } })
+
+    const full = mkTarget(120)
+    resolveAction(createRng(2), 1, actorFS, full, SPELL_BY_ID['base_attack']!)
+    const dmgFull = 120 - full.hp
+
+    const wounded = mkTarget(119) // not full → no firstStrike
+    resolveAction(createRng(2), 1, actorFS, wounded, SPELL_BY_ID['base_attack']!)
+    const dmgWounded = 119 - wounded.hp
+
+    expect(dmgFull).toBeGreaterThan(dmgWounded)
+  })
+
+  it('wounded target gets no firstStrike bonus (matches a no-firstStrike actor on same wounded target)', () => {
+    const mkTarget = (hp: number) => unit('b', 'base_attack', { side: 'right', hp, maxHp: 120 })
+    const actorFS = unit('a', 'base_attack', { firstStrike: { bonus: 0.30 } })
+    const actorPlain = unit('a', 'base_attack')
+
+    const woundedFS = mkTarget(119)
+    resolveAction(createRng(2), 1, actorFS, woundedFS, SPELL_BY_ID['base_attack']!)
+    const dmgFS = 119 - woundedFS.hp
+
+    const woundedPlain = mkTarget(119)
+    resolveAction(createRng(2), 1, actorPlain, woundedPlain, SPELL_BY_ID['base_attack']!)
+    const dmgPlain = 119 - woundedPlain.hp
+
+    expect(dmgFS).toBe(dmgPlain)
+  })
 })

@@ -54,6 +54,10 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
     if (cun && ctx.target.maxHp > 0 && ctx.target.hp / ctx.target.maxHp < cun.threshold) {
       dmg = Math.round(dmg * (1 + cun.bonus))
     }
+    const fs = ctx.actor.firstStrike
+    if (fs && ctx.target.hp === ctx.target.maxHp) {
+      dmg = Math.round(dmg * (1 + fs.bonus))
+    }
     // ESECUZIONE A FREDDO reads hard-control status here, BEFORE the freeze-shatter block
     // below can strip 'freeze' off the target on this very hit — otherwise a coldExecute
     // attacker's own hit would never see the target as frozen (shatter unconditionally
