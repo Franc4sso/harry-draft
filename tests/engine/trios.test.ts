@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { trioEffects } from '@/game/engine/trios'
+import { trioEffects, trioGates } from '@/game/engine/trios'
 import { toBattleUnits } from '@/game/engine/combat/simulate'
 import { resolveAction } from '@/game/engine/combat/resolve'
 import { createRng } from '@/game/engine/rng'
@@ -23,6 +23,23 @@ function unit(id: string, spellId: string, over: Partial<BattleUnit> = {}): Batt
   }
   return { ...dw2, side: 'left', hp: 120, cooldowns: {}, statusEffects: [], buffedStats: stats, alive: true, ...over }
 }
+
+describe('trioGates', () => {
+  it('no Duo active → []', () => {
+    const team = [dw('a', 'Serpeverde'), dw('b', 'Serpeverde'), dw('c', 'Serpeverde')]
+    expect(trioGates(team, [])).toEqual([])
+  })
+
+  it('3 same-house + Duo → [{house, grade:0}]', () => {
+    const team = [dw('a', 'Serpeverde'), dw('b', 'Serpeverde'), dw('c', 'Serpeverde')]
+    expect(trioGates(team, [duo])).toEqual([{ house: 'Serpeverde', grade: 0 }])
+  })
+
+  it('4 same-house + Duo → grade 1', () => {
+    const team = [dw('a', 'Serpeverde'), dw('b', 'Serpeverde'), dw('c', 'Serpeverde'), dw('d', 'Serpeverde')]
+    expect(trioGates(team, [duo])).toEqual([{ house: 'Serpeverde', grade: 1 }])
+  })
+})
 
 describe('trioEffects', () => {
   it('no Duo active → empty map even with 3 same-house', () => {

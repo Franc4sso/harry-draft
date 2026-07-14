@@ -1,7 +1,8 @@
 'use client'
-import type { ActiveRelic, DraftedWizard, DuoProgress, DuoSignal, House, SignalCount } from '@/types'
+import type { ActiveRelic, DraftedWizard, DuoProgress, DuoSignal, SignalCount } from '@/types'
 import { detectDuos, duoProgress, signalCount } from '@/game/engine/duos'
 import { livingOf } from '@/game/engine/roster'
+import { trioGates } from '@/game/engine/trios'
 import { SIGNAL_COLOR, SIGNAL_HOWTO, SIGNAL_ICON, SIGNAL_LABEL } from '@/data/duos'
 import { trioText } from '@/game/engine/trioText'
 
@@ -41,8 +42,6 @@ function Gem({ signal, lit, count }: { signal: DuoSignal; lit: boolean; count: S
  * sempre cosa gli serve, senza clic. Ordinate: attive → a un passo → lontane. Puramente
  * presentazionale sopra `duoProgress` + `signalCount`.
  */
-const HOUSES: House[] = ['Grifondoro', 'Serpeverde', 'Corvonero', 'Tassorosso']
-
 export function DuoPanel({ team, relics }: { team: DraftedWizard[]; relics: ActiveRelic[] }) {
   // Solo i maghi VIVI scendono in campo, quindi un Duo si accende qui esattamente quando si
   // accenderà in battaglia (resolvers/combat.ts calcola leftDuos da livingOf(team)).
@@ -52,14 +51,10 @@ export function DuoPanel({ team, relics }: { team: DraftedWizard[]; relics: Acti
   const sorted = [...progress].sort((a, b) => ORDER[stateOf(a)] - ORDER[stateOf(b)])
   const activeCount = progress.filter(p => p.active).length
 
-  // Trio di casata: attivo per una casata quando ha ≥3 maghi vivi E ≥1 Duo è acceso (mirror di
-  // trioEffects in game/engine/trios.ts — qui deriviamo casata+grado dai conteggi perché
-  // TrioEffect è per-mago, non per-casata).
+  // Trio di casata: stessa gate/grade logic di trioEffects in game/engine/trios.ts, condivisa
+  // via trioGates così le due non possono divergere.
   const duos = detectDuos(living, relics)
-  const activeTrios = duos.length === 0 ? [] : HOUSES
-    .map(house => ({ house, count: living.filter(d => d.wizard.house === house).length }))
-    .filter(({ count }) => count >= 3)
-    .map(({ house, count }) => ({ house, grade: (count >= 4 ? 1 : 0) as 0 | 1 }))
+  const activeTrios = trioGates(living, duos)
 
   return (
     <div className="flex flex-col gap-1.5 border-t border-white/10 pt-2.5" data-testid="duo-panel">
