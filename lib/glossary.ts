@@ -1,8 +1,6 @@
 import type { Spell, SpellType, SpellEffect, Stat } from '@/types/spell'
 import type { EffectSpec } from '@/types/status'
 import type { SynergyBonus, Synergy } from '@/types/synergy'
-import type { House } from '@/types/wizard'
-import { houseEffectText } from '@/game/engine/houseEffects'
 import { STATUS_BY_ID } from '@/data/statuses'
 
 export type IconName =
@@ -169,10 +167,5 @@ export function synergyBonusText(synergy: Synergy): string[] {
   }
   if (bonus.allPct) out.push(`+${Math.round(bonus.allPct * 100)}% a tutte le statistiche`)
   if (bonus.regen) out.push(`Rigenera ${bonus.regen}/turno`)
-  // House synergies carry their effect in houseEffects (empty stat bonus) — derive its text.
-  if (synergy.kind === 'house' && synergy.requires.house) {
-    const tier = (synergy.requires.count ?? 2) - 2
-    if (tier >= 0 && tier <= 2) out.push(houseEffectText(synergy.requires.house as House, tier as 0 | 1 | 2))
-  }
   return out
 }

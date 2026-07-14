@@ -242,23 +242,25 @@ export function themedEnemyTeam(rng: Rng, opts: {
   const themeRng = rng.fork(1)
 
   // Elite packs must ALWAYS field an active synergy (design rule: elite = a themed,
-  // coordinated squad). Force ≥2 themed members drawn from a HOUSE or ROLE theme —
-  // those activate at their 2-member tier, unlike tag themes (weasley/order/… need 3).
-  // Regular/boss packs keep the softer, strength-scaled theming.
-  //
-  // role:Supporto is excluded from elite eligibility (Task 3): it structurally conflicts
-  // with the ≤1-Supporto cap (USER DECISION 2026-07-07, capSupporto below) — a "2 Supporto"
-  // synergy can never be realized on a team that's also capped to ≤1 Supporto, so trying to
-  // force it would mean picking one hard rule over the other. Simplest resolution: it's
-  // just never offered as an elite theme, so both rules hold unconditionally.
+  // coordinated squad). Force ≥3 themed members drawn from a TAG theme (origin/group —
+  // veleno, deatheater, weasley, order, da, marauder…): post house/role-synergy removal
+  // (Task 2b, 2026-07-14), tag themes are the only ones left in THEMES, and they activate
+  // at a 3-member tier (most synergies' `requires.count` default; marauder=2, da=4 are the
+  // exceptions — see data/synergies.ts). Regular/boss packs keep the softer, strength-scaled
+  // theming.
   const forceSynergy = kind === 'elite'
-  const eligible = (t: Theme) =>
-    !forceSynergy || ((t.id.startsWith('house:') || t.id.startsWith('role:')) && t.id !== 'role:Supporto')
-  const minMembers = forceSynergy ? 2 : 0
+  const eligible = (t: Theme) => !forceSynergy || t.id.startsWith('tag:')
 
-  // Pick a realizable theme: try themes in turn until one has ≥2 members in the
-  // budget window (so the synergy promise is always fulfillable). Fall back to
-  // mixed if no theme can be realized (strength 0 or tiny pool at this budget).
+  // Pick a realizable theme: try themes in turn until one whose in-window pool can cross the
+  // acceptance floor, then fall back to mixed if none can be realized.
+  //   - ELITE (forceSynergy): the floor is the CANDIDATE THEME's OWN synergy threshold
+  //     (`minCount`: veleno/deatheater=3, marauder=2, da=4) so the promised synergy actually
+  //     activates — and it must also draft ≥minCount members. A theme too big for this pack
+  //     (`count`) falls through to the next candidate.
+  //   - NORMAL/BOSS (non-forced): keep the old softer bar — floor 0 in the target math (a
+  //     theme is just a lean, no activation promised), accepted only if it can place ≥2 members.
+  const wantFloor = (t: Theme) => forceSynergy ? t.minCount : 0     // floor inside the target math
+  const acceptMin = (t: Theme) => forceSynergy ? t.minCount : 2     // min members to accept the theme
   let realized: Theme | null = null
   if (strength > 0 || forceSynergy) {
     const triedIds: string[] = [...excludeThemes]
@@ -268,15 +270,16 @@ export function themedEnemyTeam(rng: Rng, opts: {
       if (!candidate) break
       if (!eligible(candidate)) { triedIds.push(candidate.id); continue }
       const candidateThemed = window.filter(w => candidate.matches(w))
-      const candidateWant = Math.min(Math.max(minMembers, targetThemeMembers(strength, count)), candidateThemed.length)
-      if (candidateWant >= 2) { realized = candidate; break }
+      const candidateWant = Math.min(Math.max(wantFloor(candidate), targetThemeMembers(strength, count)), candidateThemed.length, count)
+      if (candidateWant >= acceptMin(candidate)) { realized = candidate; break }
       triedIds.push(candidate.id)
     }
   }
 
-  // Members of the window that realize the theme.
+  // Members of the window that realize the theme. Draft at least the theme's floor so an elite's
+  // synergy actually activates (capped by available themed members and the pack size).
   const themed = realized ? window.filter(w => realized!.matches(w)) : []
-  const wantThemed = realized ? Math.min(Math.max(minMembers, targetThemeMembers(strength, count)), themed.length) : 0
+  const wantThemed = realized ? Math.min(Math.max(wantFloor(realized), targetThemeMembers(strength, count)), themed.length, count) : 0
 
   const chosen: Wizard[] = []
   const used = new Set<string>()

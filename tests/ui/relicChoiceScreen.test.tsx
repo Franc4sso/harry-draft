@@ -8,9 +8,9 @@ import type { DraftedWizard } from '@/types'
 
 const choices = RELICS.slice(0, 3)
 
-function makeGrifondoro(id: string): DraftedWizard {
+function makeDeatheater(id: string): DraftedWizard {
   return {
-    wizard: { id, name: id, house: 'Grifondoro', role: 'Attaccante' },
+    wizard: { id, name: id, house: 'Serpeverde', role: 'Attaccante', tags: ['deatheater'] },
     stats: { hp: 100, atk: 20, def: 10, spd: 10 },
     maxHp: 100,
     spell: { id: 'test', name: 'Test', type: 'Attacco', effects: [] } as any,
@@ -30,7 +30,7 @@ describe('RelicChoiceScreen', () => {
     expect(onChoose).toHaveBeenCalledWith(choices[1])
   })
   it('shows the squad and active synergies while choosing', () => {
-    const team = [makeGrifondoro('g1'), makeGrifondoro('g2'), makeGrifondoro('g3')]
+    const team = [makeDeatheater('g1'), makeDeatheater('g2'), makeDeatheater('g3')]
     const synergies = detectSynergies(team)
     render(<RelicChoiceScreen choices={choices} owned={[]} team={team} synergies={synergies} onChoose={() => {}} />)
     expect(screen.getByTestId('relic-squad')).toBeInTheDocument()

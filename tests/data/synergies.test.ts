@@ -4,12 +4,13 @@ import { BOSSES } from '@/data/bosses'
 import { WIZARD_BY_ID } from '@/data/wizards'
 
 describe('synergies data', () => {
-  it('has house, role and group synergies', () => {
+  it('has only group and origin synergies (house/role removed)', () => {
     const kinds = SYNERGIES.map(s => s.kind)
-    // 4 houses × 3 tiers (2/3/4) = 12 house entries; same for roles
-    expect(kinds.filter(k => k === 'house').length).toBe(12)
-    expect(kinds.filter(k => k === 'role').length).toBe(12)
+    expect(kinds.filter(k => k === 'house').length).toBe(0)
+    expect(kinds.filter(k => k === 'role').length).toBe(0)
     expect(kinds.filter(k => k === 'group').length).toBeGreaterThanOrEqual(5)
+    expect(kinds.filter(k => k === 'origin').length).toBeGreaterThanOrEqual(4)
+    expect(SYNERGIES.length).toBe(10)
   })
   it('group synergies reference existing wizards', () => {
     for (const s of SYNERGIES) {

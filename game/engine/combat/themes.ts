@@ -3,12 +3,18 @@ import type { Synergy, Wizard } from '@/types'
 import { SYNERGIES } from '@/data/synergies'
 import { WIZARDS } from '@/data/wizards'
 import { BALANCE } from '@/data/constants'
+import { synergyThreshold } from '../synergy'
 
 export interface Theme {
   id: string
   label: string
   matches: (w: Wizard) => boolean
   poolSize: number
+  /** The synergy's OWN activation threshold (requires.count, default 3 — see
+   *  synergyThreshold). Tag themes are not uniform: most need 3, marauder needs 2, da
+   *  needs 4. A forced-synergy pack must draft at least this many themed members or the
+   *  theme it picked will never actually activate (see teamGen.ts themedEnemyTeam). */
+  minCount: number
 }
 
 /** Build a predicate from a synergy's `requires` discriminant (house | role | tag).
@@ -30,7 +36,7 @@ function themeFromSynergy(syn: Synergy): Theme | null {
     return null
   }
   const poolSize = WIZARDS.filter(w => matches(w as Wizard)).length
-  return { id, label, matches, poolSize }
+  return { id, label, matches, poolSize, minCount: synergyThreshold(syn) }
 }
 
 /** Realizable themes: derived from synergy discriminants, deduped by id, pool >= 3.

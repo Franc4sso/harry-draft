@@ -58,17 +58,17 @@ describe('Compendio (RulesScreen)', () => {
   })
   it('renders synergy kind labels in glossary', () => {
     render(<RulesScreen />)
-    expect(screen.getAllByText('Casa').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Ruolo').length).toBeGreaterThan(0)
+    // Casa/Ruolo rimossi (sinergie di casata/ruolo eliminate) — restano Gruppo e Origine.
     expect(screen.getAllByText('Gruppo').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('Origine').length).toBeGreaterThan(0)
   })
   it('defaults to the Come si gioca tab and switches to Sinergie', async () => {
     render(<RulesScreen />)
     // default tab shows the gameplay sections
     expect(screen.getByText(/draft/i)).toBeInTheDocument()
-    // switching to Sinergie reveals the grouped synergy list (Case / Ruoli / Gruppi)
+    // switching to Sinergie reveals the grouped synergy list (Gruppi & Origini)
     await userEvent.click(screen.getByRole('button', { name: 'Sinergie' }))
-    expect(screen.getByText('Grifondoro')).toBeInTheDocument()
+    expect(screen.getByText('Gruppi & Origini')).toBeInTheDocument()
     expect(screen.getByText('Golden Trio')).toBeInTheDocument()
   })
 })
