@@ -66,9 +66,9 @@ describe('Compendio (RulesScreen)', () => {
     render(<RulesScreen />)
     // default tab shows the gameplay sections
     expect(screen.getByText(/draft/i)).toBeInTheDocument()
-    // switching to Sinergie reveals the grouped synergy list (Case / Ruoli / Gruppi)
+    // switching to Sinergie reveals the grouped synergy list (Gruppi & Origini)
     await userEvent.click(screen.getByRole('button', { name: 'Sinergie' }))
-    expect(screen.getByText('Grifondoro')).toBeInTheDocument()
+    expect(screen.getByText('Gruppi & Origini')).toBeInTheDocument()
     expect(screen.getByText('Golden Trio')).toBeInTheDocument()
   })
 })

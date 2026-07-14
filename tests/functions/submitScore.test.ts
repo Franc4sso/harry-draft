@@ -49,13 +49,12 @@ describe('submit-score processing', () => {
     expect(written.length).toBe(0)
   })
 
-  // A legitimately recorded run (SAME fixture as tests/engine/endlessReplay.test.ts's
-  // "a recorded valid run replays to valid:true and a scorable state" — driven by the real
-  // engine via startDraft('replay-fixture-1')/pickFrom -> confirmDraftPicks(..., {
-  // endless:true }) -> reachable/moveTo/resolveCurrent, known score 1610) must be ACCEPTED,
-  // and the score in the response/write must be the SERVER-computed one (1610) — a
-  // client-claimed score field doesn't even exist in the request shape, so there is
-  // nothing for a forged number to override.
+  // A legitimately recorded run (driven by the real engine via
+  // startDraft('replay-fixture-1')/pickFrom -> confirmDraftPicks(..., { endless:true }) ->
+  // reachable/moveTo/resolveCurrent, known score 1875) must be ACCEPTED, and the score in
+  // the response/write must be the SERVER-computed one (1875) — a client-claimed score
+  // field doesn't even exist in the request shape, so there is nothing for a forged number
+  // to override.
   it('accepts a legitimate recorded run and returns the SERVER-computed score, not any client number', async () => {
     written.length = 0
     const log: RunLog = {
@@ -93,10 +92,10 @@ describe('submit-score processing', () => {
     const res = await processSubmission({ challengeCode: encodeChallenge(log), nickname: 'Legit' })
     expect(res.status).toBe(200)
     const body = res.body as { rank: number; score: number; floor: number }
-    expect(body.score).toBe(1610)
+    expect(body.score).toBe(1875)
     expect(body.rank).toBe(1)
     expect(written.length).toBe(1)
     const persisted = JSON.parse(written[0]!)
-    expect(persisted[0]).toMatchObject({ nickname: 'Legit', score: 1610 })
+    expect(persisted[0]).toMatchObject({ nickname: 'Legit', score: 1875 })
   })
 })

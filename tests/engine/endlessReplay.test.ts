@@ -160,7 +160,7 @@ describe('replayRun', () => {
     }
     const out = replayRun(log)
     expect(out.valid).toBe(true)
-    expect(scoreForEndlessRun(out.state)).toBe(1610)
+    expect(scoreForEndlessRun(out.state)).toBe(1875)
   })
 
   it('rejects a log whose engine version does not match', () => {

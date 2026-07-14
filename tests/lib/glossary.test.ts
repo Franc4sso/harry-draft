@@ -75,24 +75,19 @@ describe('EFFECT_META control blurbs', () => {
 })
 
 describe('synergyBonusText', () => {
-  // attackers2: bonus { atk: 8 } — exercises flat-stat formatting
+  // deatheater: bonus { atk: 25 } — exercises flat-stat formatting
   it('formats flat stats', () => {
-    const s = SYNERGIES.find(x => x.id === 'attackers2')!
-    expect(synergyBonusText(s)).toEqual(['+8 ATK'])
+    const s = SYNERGIES.find(x => x.id === 'deatheater')!
+    expect(synergyBonusText(s)).toEqual(['+25 ATK'])
   })
   // goldenTrio: bonus { allPct: 0.15 } — exercises percent-of-all formatting
   it('formats allPct as a percent of all stats', () => {
     const s = SYNERGIES.find(x => x.id === 'goldenTrio')!
     expect(synergyBonusText(s)).toEqual(['+15% a tutte le statistiche'])
   })
-  // supports2: bonus { regen: 5 } — exercises regen formatting
-  it('formats regen', () => {
-    const s = SYNERGIES.find(x => x.id === 'supports2')!
-    expect(synergyBonusText(s)).toEqual(['Rigenera 5/turno'])
-  })
-  // gryffindor2: bonus {} but houseEffect gives Schivata +4% — exercises the house-effect path
-  it('derives house-effect text even when bonus is empty', () => {
-    const s = SYNERGIES.find(x => x.id === 'gryffindor2')!
-    expect(synergyBonusText(s)).toEqual(['Schivata +4%'])
+  // weasley: bonus { regen: 8, def: 10 } — exercises regen + flat-stat formatting together
+  it('formats regen alongside a flat stat', () => {
+    const s = SYNERGIES.find(x => x.id === 'weasley')!
+    expect(synergyBonusText(s)).toEqual(['+10 DIF', 'Rigenera 8/turno'])
   })
 })
