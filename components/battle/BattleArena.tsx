@@ -8,6 +8,7 @@ import { UnitBust } from './UnitBust'
 import { ArenaBackdrop } from './ArenaBackdrop'
 import { PixiArena } from './PixiArena'
 import { Callout } from './Callout'
+import { LiftFocus } from './LiftFocus'
 import { DuoPills } from './DuoPills'
 import { floatFor } from './damageFloat'
 import { DUO_BY_ID } from '@/data/duos'
@@ -167,6 +168,7 @@ export function BattleArena({
 
       <PixiArena entry={entry} frameKey={frameKey} speed={speed} />
       <Callout entry={entry} frameKey={frameKey} appliedControl={appliedControl} duoName={duoName} />
+      <LiftFocus entry={entry} frameKey={frameKey} units={replay.units} firstDuo={firstFireAt} speed={speed} />
     </div>
   )
 }
