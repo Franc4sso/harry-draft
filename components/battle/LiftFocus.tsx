@@ -27,12 +27,11 @@ const TARGET_SPOT: CloneSpot = { left: 72, top: 52, scale: 1.55 }
  * Fuori dai momenti chiave ritorna null: nessun nodo DOM, nessun costo.
  */
 export function LiftFocus({
-  entry, frameKey, units, firstDuo, speed, hp,
+  entry, frameKey, units, speed, hp,
 }: {
   entry: LogEntry | null
   frameKey: number
   units: ReplayUnit[]
-  firstDuo: Map<string, number>
   speed: number
   /** Live per-unit HP (same map BattleArena feeds the row busts). The clone is visual —
    *  an exact HP isn't load-bearing, but reusing the live map keeps it truthful for free. */
@@ -50,9 +49,9 @@ export function LiftFocus({
   useEffect(() => {
     if (frameKey === 0 || lastFiredRef.current === frameKey) return
     lastFiredRef.current = frameKey
-    const moment = liftMomentFor(entry, frameKey, firstDuo)
+    const moment = liftMomentFor(entry)
     setActive(moment && entry ? { moment, entry, key: frameKey } : null)
-  }, [frameKey, entry, firstDuo])
+  }, [frameKey, entry])
 
   useEffect(() => {
     if (!active) return
@@ -133,7 +132,7 @@ export function LiftFocus({
   const attacker = units.find(u => u.key === `${e.actorSide}:${e.actorId}`)
   const target = units.find(u => u.key === `${e.targetSide}:${e.targetId}`)
   const cause = e.reason ? TARGET_REASON_LABEL[e.reason] : null
-  const eventName = moment.kind === 'duo' ? moment.duoName : moment.kind === 'kill' ? 'Esecuzione' : 'Critico'
+  const eventName = moment.kind === 'kill' ? 'Esecuzione' : 'Critico'
 
   return (
     <div

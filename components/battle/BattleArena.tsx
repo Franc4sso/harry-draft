@@ -109,7 +109,7 @@ export function BattleArena({
 
   // A frame-lift (kill/crit/primo-scatto-duo) oscura TUTTE le originali forte — non solo le
   // non-coinvolte — così l'overlay dei cloni (LiftFocus) resta l'unico elemento a fuoco.
-  const lifting = !!liftMomentFor(entry, frameKey, firstFireAt)
+  const lifting = !!liftMomentFor(entry)
 
   const anyAction = !!actingKey
   // A lone enemy reads as a boss encounter → ominous treatment on that bust.
@@ -173,7 +173,7 @@ export function BattleArena({
 
       <PixiArena entry={entry} frameKey={frameKey} speed={speed} />
       <Callout entry={entry} frameKey={frameKey} appliedControl={appliedControl} duoName={duoName} suppressed={lifting} />
-      <LiftFocus entry={entry} frameKey={frameKey} units={replay.units} firstDuo={firstFireAt} speed={speed} hp={hp} />
+      <LiftFocus entry={entry} frameKey={frameKey} units={replay.units} speed={speed} hp={hp} />
     </div>
   )
 }

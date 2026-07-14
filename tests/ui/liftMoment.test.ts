@@ -5,28 +5,29 @@ const E = (flags: string[], extra: any = {}) =>
   ({ turn: 1, actorId: 'a', actorSide: 'left', targetId: 'b', targetSide: 'right', action: 'X', type: 'Attacco', flags, ...extra } as any)
 
 describe('liftMomentFor', () => {
-  const noDuo = new Map<string, number>()
   it('un colpo che uccide → kill', () => {
-    expect(liftMomentFor(E(['kill']), 3, noDuo)).toEqual({ kind: 'kill' })
+    expect(liftMomentFor(E(['kill']))).toEqual({ kind: 'kill' })
   })
   it('un crit → crit', () => {
-    expect(liftMomentFor(E(['crit']), 3, noDuo)).toEqual({ kind: 'crit' })
+    expect(liftMomentFor(E(['crit']))).toEqual({ kind: 'crit' })
   })
   it('kill batte crit (priorità)', () => {
-    expect(liftMomentFor(E(['crit', 'kill']), 3, noDuo)).toEqual({ kind: 'kill' })
+    expect(liftMomentFor(E(['crit', 'kill']))).toEqual({ kind: 'kill' })
   })
-  it('primo scatto di un Duo → duo con nome', () => {
-    const first = new Map([['cancrena', 5]])
-    expect(liftMomentFor(E(['duo'], { duoId: 'cancrena' }), 5, first)).toEqual({ kind: 'duo', duoName: expect.any(String) })
+  it('un Duo drammatico che uccide (Esecuzione/Mietitore) → kill via il flag kill', () => {
+    // I Duo d'attacco portano già `kill` → il lift scatta, ma come 'kill', non come 'duo'.
+    expect(liftMomentFor(E(['kill', 'duo'], { duoId: 'mietitore' }))).toEqual({ kind: 'kill' })
   })
-  it('scatto Duo NON-primo → null', () => {
-    const first = new Map([['cancrena', 5]])
-    expect(liftMomentFor(E(['duo'], { duoId: 'cancrena' }), 9, first)).toBeNull()
+  it('un Duo PASSIVO (tick veleno di Cancrena) → null: niente volo su effetti passivi', () => {
+    expect(liftMomentFor(E(['dot', 'duo'], { duoId: 'cancrena' }))).toBeNull()
+  })
+  it('un Duo passivo di sistema (Miasma/Untore/Muro) → null', () => {
+    expect(liftMomentFor(E(['duo'], { duoId: 'miasma' }))).toBeNull()
   })
   it('un colpo normale → null', () => {
-    expect(liftMomentFor(E([]), 3, noDuo)).toBeNull()
+    expect(liftMomentFor(E([]))).toBeNull()
   })
   it('entry null → null', () => {
-    expect(liftMomentFor(null, 3, noDuo)).toBeNull()
+    expect(liftMomentFor(null)).toBeNull()
   })
 })

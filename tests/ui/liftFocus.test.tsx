@@ -35,7 +35,7 @@ function normalEntry(): LogEntry {
 describe('LiftFocus', () => {
   it("su un colpo che uccide con reason, monta l'overlay + la riga-causa", () => {
     const { container } = render(
-      <LiftFocus entry={killEntry('weakest')} frameKey={3} units={units} firstDuo={new Map()} speed={1} />,
+      <LiftFocus entry={killEntry('weakest')} frameKey={3} units={units} speed={1} />,
     )
     expect(container.querySelector('[data-testid="lift-focus"]')).not.toBeNull()
     expect(container.querySelector('[data-testid="lift-cause"]')).toHaveTextContent(/più debole/i)
@@ -43,7 +43,7 @@ describe('LiftFocus', () => {
 
   it("su un colpo che uccide SENZA reason, monta l'overlay ma NESSUNA riga-causa", () => {
     const { container } = render(
-      <LiftFocus entry={killEntry(undefined)} frameKey={3} units={units} firstDuo={new Map()} speed={1} />,
+      <LiftFocus entry={killEntry(undefined)} frameKey={3} units={units} speed={1} />,
     )
     expect(container.querySelector('[data-testid="lift-focus"]')).not.toBeNull()
     expect(container.querySelector('[data-testid="lift-cause"]')).toBeNull()
@@ -51,14 +51,14 @@ describe('LiftFocus', () => {
 
   it('su un frame normale (no kill/crit/duo), NON monta nulla', () => {
     const { container } = render(
-      <LiftFocus entry={normalEntry()} frameKey={3} units={units} firstDuo={new Map()} speed={1} />,
+      <LiftFocus entry={normalEntry()} frameKey={3} units={units} speed={1} />,
     )
     expect(container.querySelector('[data-testid="lift-focus"]')).toBeNull()
   })
 
   it('i cloni mostrano attaccante e bersaglio come UnitBust (per nome), senza crash quando i rect sono 0 (jsdom)', () => {
     const { container, getAllByText } = render(
-      <LiftFocus entry={killEntry('weakest')} frameKey={3} units={units} firstDuo={new Map()} speed={1} />,
+      <LiftFocus entry={killEntry('weakest')} frameKey={3} units={units} speed={1} />,
     )
     // il clone dell'attaccante e del bersaglio rendono i nomi/ritratti (UnitBust vero, non placeholder testuale)
     const overlay = container.querySelector('[data-testid="lift-focus"]')!
