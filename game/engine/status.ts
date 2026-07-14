@@ -73,7 +73,13 @@ export function applyStatus(
 
 /** Apply a HOSTILE status from `actor` to `target`, extending its duration by the actor's
  *  Tassorosso Tenacia bonus (`statusDurationBonus`). Use this at every site where a unit
- *  inflicts a debuff/DoT/control on an enemy so the Trio bonus lands uniformly. */
+ *  inflicts a debuff/DoT/control on an enemy so the Trio bonus lands uniformly.
+ *  SCOPE (per fase 2): oggi è routato SOLO dal `status` handler in effects.ts (gated
+ *  `eff.target==='enemy'`). Il veleno propagato dai Duo (spreadOnDeath/spitOnHeal) usa ancora
+ *  `applyStatus` raw → Tenacia NON lo allunga; ma il veleno è permanente (remaining congelato),
+ *  quindi +1 sarebbe comunque muto. Se un futuro effetto hostile deve rispettare Tenacia,
+ *  routarlo qui. NB: sul controllo dimezzato dal Supporto (Tenacia avversaria) il +1 si somma
+ *  DOPO il dimezzamento (deterministico, offset parziale) — tenerne conto in un balance pass. */
 export function applyHostileStatus(
   actor: BattleUnit, target: BattleUnit, statusId: string,
   opts: { duration?: number; sourceId?: string; maxStacks?: number } = {},
