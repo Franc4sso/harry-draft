@@ -1,13 +1,26 @@
 import { describe, it, expect } from 'vitest'
 import { trioEffects } from '@/game/engine/trios'
 import { toBattleUnits } from '@/game/engine/combat/simulate'
-import type { ActiveDuo, DraftedWizard, Wizard } from '@/types'
+import { resolveAction } from '@/game/engine/combat/resolve'
+import { createRng } from '@/game/engine/rng'
+import { SPELL_BY_ID } from '@/data/spells'
+import type { ActiveDuo, BattleUnit, DraftedWizard, Wizard } from '@/types'
 
 function dw(id: string, house: Wizard['house']): DraftedWizard {
   const wizard = { id, name: id, house, role: 'Attaccante', tags: [] } as unknown as Wizard
   return { wizard, stats: { hp: 100, atk: 10, def: 10, spd: 10 }, maxHp: 100, spell: {} as any }
 }
 const duo: ActiveDuo = { duo: { id: 'cancrena' } as any }
+
+function unit(id: string, spellId: string, over: Partial<BattleUnit> = {}): BattleUnit {
+  const stats = { hp: 120, atk: 80, def: 30, spd: 40 }
+  const dw2: DraftedWizard = {
+    wizard: { id, name: id, house: 'Grifondoro', role: 'Attaccante', tier: 3,
+      gender: 'm' as const, ranges: { hp: [120, 120], atk: [80, 80], def: [30, 30], spd: [40, 40] }, spellPool: [spellId] },
+    stats, maxHp: 120, spell: SPELL_BY_ID[spellId]!,
+  }
+  return { ...dw2, side: 'left', hp: 120, cooldowns: {}, statusEffects: [], buffedStats: stats, alive: true, ...over }
+}
 
 describe('trioEffects', () => {
   it('no Duo active → empty map even with 3 same-house', () => {
@@ -49,5 +62,25 @@ describe('trioEffects', () => {
     expect(noDuo[0]!.cooldownReduction).toBeUndefined()
     const enemy = toBattleUnits(team, 'right', [], [], 0, 0, false) // no duos passed for right
     expect(enemy[0]!.cooldownReduction).toBeUndefined()
+  })
+
+  it('Grifondoro cooldownReduction lowers set cooldown (min 1)', () => {
+    const spellId = 'avada' // cooldown 2 in data/spells
+    const spell = SPELL_BY_ID[spellId]!
+    expect(spell.cooldown).toBe(2)
+    const actor = unit('a', spellId, { cooldownReduction: 1 })
+    const target = unit('b', 'base_attack', { side: 'right' })
+    resolveAction(createRng(1), 1, actor, target, spell)
+    expect(actor.cooldowns[spellId]).toBe(1) // max(1, 2-1)
+  })
+
+  it('Grifondoro cooldownReduction floors at 1, never 0', () => {
+    const spellId = 'sectumsempra' // cooldown 1 in data/spells
+    const spell = SPELL_BY_ID[spellId]!
+    expect(spell.cooldown).toBe(1)
+    const actor = unit('a', spellId, { cooldownReduction: 1 })
+    const target = unit('b', 'base_attack', { side: 'right' })
+    resolveAction(createRng(1), 1, actor, target, spell)
+    expect(actor.cooldowns[spellId]).toBe(1) // max(1, 1-1) clamps to 1, not 0
   })
 })

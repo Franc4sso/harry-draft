@@ -24,7 +24,9 @@ export function resolveAction(
     }
   }
 
-  if (spell.cooldown && spell.cooldown > 0) actor.cooldowns[spell.id] = spell.cooldown
+  if (spell.cooldown && spell.cooldown > 0) {
+    actor.cooldowns[spell.id] = Math.max(1, spell.cooldown - (actor.cooldownReduction ?? 0))
+  }
 
   const dark = spell.keywords?.includes('magieOscure') ?? false
   const ctx: EffectCtx = { rng, turn, actor, target, flags, bus, allies, dark, duoIds }
