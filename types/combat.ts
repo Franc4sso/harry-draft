@@ -65,6 +65,15 @@ export interface BattleUnit extends DraftedWizard {
   damageReduction?: number
   /** Serpeverde house (cunning): +`bonus` damage dealt to a target below `threshold` HP fraction. */
   cunning?: { threshold: number; bonus: number }
+  // --- House Trio stamps (player-only; see game/engine/trios.ts) ---
+  /** Serpeverde Opportunista: +`bonus` fraction to the first hit on a full-HP enemy. */
+  firstStrike?: { bonus: number }
+  /** Corvonero Analisi: on every hit this unit lands, apply `exposeId` (def debuff) to the target. */
+  analysis?: { exposeId: 'expose1' | 'expose2' }
+  /** Tassorosso Tenacia: hostile statuses this unit applies last +`statusDurationBonus` turns. */
+  statusDurationBonus?: number
+  /** Grifondoro Slancio: this unit's spell cooldowns are reduced by `cooldownReduction` (min 1). */
+  cooldownReduction?: number
   /** Bellatrix signature: this unit ignores the enemy Tank's taunt bonus in threat scoring (targets backline). */
   ignoresTaunt?: boolean
   /** Set each turn: true while this unit's side has a live Supporto (Tenacia aura). */
