@@ -43,8 +43,13 @@ spiegare: "3 stessa casa = Trio, 4 = Trio potenziato". Numeri per grado (valori 
 soggetti a taratura — vedi Bilanciamento):
 
 - Serpeverde Opportunista: +30% / +45% al primo colpo su bersaglio pieno.
-- Corvonero Analisi: applica `expose1` (−15% def) a 3 maghi; a 4 applica `expose2` (−25% def).
-  Riusa gli status graduati esistenti (`data/statuses.ts` expose1/2/3), zero nuovo status.
+- Corvonero Analisi: applica `expose1` (−15% def) a ENTRAMBI i gradi. Parte conservativo: la
+  formula danno è sottrattiva (`atk*power − def*defenseK`, effects.ts:18), quindi rimuovere `def`
+  vale per OGNI colpo di TUTTA la squadra sul bersaglio, e `expose` fa `stack:'stack'` → in 2-3 turni
+  si accumula a −45%/−60%. È un buff di focus-fire COLLETTIVO, non personale → potenzialmente il più
+  forte dei 4, non il più debole. La leva di taratura è ABBASSARE (meno stack/durata), non alzare.
+  Se in taratura risulta debole, allora salire a `expose2` a 4 maghi. Riusa gli status esistenti,
+  zero nuovo status.
 - Tassorosso Tenacia: +1 / +1 turno. Entrambi i gradi = +1 (nessun secondo effetto — YAGNI).
 - Grifondoro Slancio: cooldown −1 / −1, min 1. Entrambi i gradi = −1.
 
@@ -130,6 +135,12 @@ Procedura:
 4. **Regola**: se rientrare richiede più di un ritocco leva, fermarsi e riportare i numeri
    all'utente (decisione di difficoltà, non automatica). Vale anche il tuning inter-Trio: se un Trio
    domina gli altri, riportare lo spread come in fase 1 (le case erano entro ~0.15 l'una dall'altra).
+
+**Punto caldo da misurare — Corvonero × Tassorosso.** In un team con 3 Corvonero + un Tassorosso in
+gioco (o viceversa in run diversi), Tenacia allunga di +1 turno anche gli `expose` di Analisi → gli
+stack di Vulnerabilità non decadono e si sommano senza limite pratico (fino a `MAX_STAT_STACKS`).
+Questa è l'interazione a più alto rischio di sforo. Misurarla esplicitamente; se domina, il fix
+mirato è cap sugli stack di `expose` da Analisi o escludere Analisi da `statusDurationBonus`.
 5. Documentare il nuovo valore di `campaignBalanceB` e i numeri finali dei Trio nel codice.
 
 Pin utente da rispettare (memoria): `STARTER_PICKS=3`, `elites≥2`, `normalCount=1`,
