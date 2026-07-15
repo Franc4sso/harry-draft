@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { offerRelics } from '@/game/engine/relics'
 import { createRng } from '@/game/engine/rng'
-import { RELICS, JOKER_RELIC_IDS } from '@/data/relics'
+import { RELICS, JOKER_RELIC_IDS, SACRIFICE_RELIC_IDS } from '@/data/relics'
 import type { ActiveRelic } from '@/types'
 
 const owned = (ids: string[]): ActiveRelic[] =>
@@ -24,11 +24,11 @@ describe('offerRelics', () => {
     expect(a).toEqual(b)
   })
   it('returns all remaining when pool < 3', () => {
-    // Leave the last 2 NON-joker relics unowned (jokers are excluded from the
-    // pool entirely by offerRelics, so leaving jokers unowned would starve it).
-    const nonJokers = RELICS.filter(r => !JOKER_RELIC_IDS.includes(r.id))
+    // Leave the last 2 offerRelics-eligible relics unowned (jokers and sacrifices are excluded
+    // from the pool entirely by offerRelics, so leaving them unowned would starve it).
+    const available = RELICS.filter(r => !JOKER_RELIC_IDS.includes(r.id) && !SACRIFICE_RELIC_IDS.includes(r.id))
     const ownedIds = RELICS
-      .filter(r => JOKER_RELIC_IDS.includes(r.id) || nonJokers.slice(0, nonJokers.length - 2).includes(r))
+      .filter(r => JOKER_RELIC_IDS.includes(r.id) || SACRIFICE_RELIC_IDS.includes(r.id) || available.slice(0, available.length - 2).includes(r))
       .map(r => r.id)
     const offer = offerRelics(createRng('s').fork(3).fork(0), owned(ownedIds), 0)
     expect(offer).toHaveLength(2)

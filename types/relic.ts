@@ -76,6 +76,10 @@ export interface Relic {
   conditional?: RelicConditional
   /** Always-on malus (SynergyBonus with negative values). Risk/reward jokers. */
   drawback?: SynergyBonus
+  /** P5 — Reliquia del Sacrificio (solo Altare Oscuro): template del costo d'acquisizione.
+   *  La selezione concreta (quale mago/reliquia) è nella scelta altare-buy. Player-only:
+   *  esclusa da offerRelics/selectEnemyRelics (vedi SACRIFICE_SET in game/engine/relics.ts). */
+  sacrificeCost?: { kind: 'wizard' } | { kind: 'relic' } | { kind: 'maxHp'; amount: number }
 }
 
 export interface ActiveRelic {

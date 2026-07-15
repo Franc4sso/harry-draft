@@ -2,11 +2,12 @@ import type { ActiveRelic, ActiveSynergy, DraftedWizard, Keyword, RelicCondition
 import type { Relic } from '@/types'
 import type { Rng } from './rng'
 import type { EventBus } from './combat/eventBus'
-import { RELICS, JOKER_RELIC_IDS } from '@/data/relics'
+import { RELICS, JOKER_RELIC_IDS, SACRIFICE_RELIC_IDS } from '@/data/relics'
 import { BALANCE } from '@/data/constants'
 import { livingOf } from './roster'
 
 const JOKER_SET = new Set(JOKER_RELIC_IDS)
+const SACRIFICE_SET = new Set(SACRIFICE_RELIC_IDS)
 
 let relicRestriction: ReadonlySet<string> | null = null
 
@@ -180,7 +181,7 @@ function weightedPick(rng: Rng, pool: Relic[]): Relic {
  * returns more than the pool size. Used to arm elite/boss enemy teams.
  */
 export function selectEnemyRelics(rng: Rng, count: number): ActiveRelic[] {
-  const remaining = RELICS.filter(r => !JOKER_SET.has(r.id))
+  const remaining = RELICS.filter(r => !JOKER_SET.has(r.id) && !SACRIFICE_SET.has(r.id))
   const n = Math.min(count, remaining.length)
   const out: ActiveRelic[] = []
   for (let i = 0; i < n; i++) {
@@ -193,7 +194,7 @@ export function selectEnemyRelics(rng: Rng, count: number): ActiveRelic[] {
 
 export function offerRelics(rng: Rng, owned: ActiveRelic[], _stage: number): Relic[] {
   const ownedIds = new Set(owned.map(o => o.relic.id))
-  const available = restrictedRelicPool(RELICS).filter(r => !ownedIds.has(r.id) && !JOKER_SET.has(r.id))
+  const available = restrictedRelicPool(RELICS).filter(r => !ownedIds.has(r.id) && !JOKER_SET.has(r.id) && !SACRIFICE_SET.has(r.id))
   const count = Math.min(BALANCE.relics.offerCount, available.length)
   const chosen: Relic[] = []
   const remaining = [...available]
@@ -217,6 +218,22 @@ export function offerJokers(rng: Rng, owned: ActiveRelic[]): Relic[] {
   const ownedIds = new Set(owned.map(o => o.relic.id))
   const pool = RELICS.filter(r => JOKER_SET.has(r.id) && !ownedIds.has(r.id))
   const count = Math.min(BALANCE.relics.offerCount, pool.length)
+  const remaining = [...pool]
+  const chosen: Relic[] = []
+  for (let i = 0; i < count; i++) {
+    const idx = Math.floor(rng.next() * remaining.length)
+    chosen.push(remaining[idx]!)
+    remaining.splice(idx, 1)
+  }
+  return chosen
+}
+
+/** P5 — Offerta dell'Altare Oscuro: 2-3 Reliquie del Sacrificio non possedute, pick
+ *  uniforme (tutte epiche). Sempre disponibili (non gated dagli unlock). Deterministica. */
+export function offerSacrifices(rng: Rng, owned: ActiveRelic[]): Relic[] {
+  const ownedIds = new Set(owned.map(o => o.relic.id))
+  const pool = RELICS.filter(r => SACRIFICE_SET.has(r.id) && !ownedIds.has(r.id))
+  const count = Math.min(3, pool.length)
   const remaining = [...pool]
   const chosen: Relic[] = []
   for (let i = 0; i < count; i++) {

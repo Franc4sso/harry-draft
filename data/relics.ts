@@ -127,6 +127,32 @@ export const RELICS: Relic[] = [
     desc: '+50 attacco, ma -6 rigenerazione (ti logori).',
     bonus: { atk: 50 }, drawback: { regen: -6 },
   },
+  // --- P5: Reliquie del Sacrificio (SOLO Altare Oscuro; player-only; costo esplicito) ---
+  {
+    id: 'diario-riddle', name: 'Diario di Tom Riddle', rarity: 'epica',
+    desc: "Un'anima in cambio del potere: +15% a tutte le statistiche della squadra. COSTO: sacrifica un mago a tua scelta.",
+    bonus: { allPct: 0.15 }, sacrificeCost: { kind: 'wizard' },
+  },
+  {
+    id: 'mano-della-gloria', name: 'Mano della Gloria', rarity: 'epica',
+    desc: 'Illumina solo chi la impugna: +30 Attacco e +15 Velocità. COSTO: perdi una reliquia a tua scelta.',
+    bonus: { atk: 30, spd: 15 }, sacrificeCost: { kind: 'relic' },
+  },
+  {
+    id: 'specchio-erised', name: 'Specchio delle Emarb', rarity: 'epica',
+    desc: 'Mostra ciò che desideri, prende ciò che hai: +10% a tutte le statistiche e Rigenerazione +10. COSTO: perdi una reliquia a tua scelta.',
+    bonus: { allPct: 0.10, regen: 10 }, sacrificeCost: { kind: 'relic' },
+  },
+  {
+    id: 'calice-avvelenato', name: 'Calice Avvelenato', rarity: 'epica', keywords: ['veleno'],
+    desc: 'Bevi: il danno da Veleno della squadra è raddoppiato. COSTO: un mago a tua scelta perde 40 vita massima per sempre.',
+    keywordMult: { veleno: 1.0 }, sacrificeCost: { kind: 'maxHp', amount: 40 },
+  },
+  {
+    id: 'corona-spettrale', name: 'Corona Spettrale', rarity: 'epica', keywords: ['esecuzione'],
+    desc: 'Corona chi miete: i colpi infliggono +50% danni ai bersagli sotto il 40% di vita. COSTO: un mago a tua scelta perde 30 vita massima per sempre.',
+    grantsExecute: { threshold: 0.4, bonus: 0.5 }, sacrificeCost: { kind: 'maxHp', amount: 30 },
+  },
 ]
 
 export const RELIC_BY_ID: Record<string, Relic> = Object.fromEntries(
@@ -140,4 +166,7 @@ export const JOKER_RELIC_IDS: string[] = [
   'marcia-di-guerra', 'fortezza-vivente', 'vento-crescente', 'eredita-dei-caduti',
   'ultimo-baluardo', 'branco-ristretto', 'furia-morente', 'canto-del-cigno',
   'assalto-d-apertura', 'patto-vorace', 'sete-di-sangue',
+]
+export const SACRIFICE_RELIC_IDS: string[] = [
+  'diario-riddle', 'mano-della-gloria', 'specchio-erised', 'calice-avvelenato', 'corona-spettrale',
 ]
