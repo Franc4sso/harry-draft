@@ -89,7 +89,7 @@ const COL = 168, ROW = 148, NODE = 60, BOSS = 80
 const TOP_PAD = 44
 
 export function MapScreen({
-  map, currentNodeId, reachableIds, onChoose, area, areasTotal,
+  map, currentNodeId, reachableIds, onChoose, area, areasTotal, noRecruits,
 }: {
   map: RunNode[]
   currentNodeId: string
@@ -97,6 +97,10 @@ export function MapScreen({
   onChoose: (nodeId: string) => void
   area?: number
   areasTotal?: number
+  /** P5 — Voto Infrangibile (Patto): recruit nodes stay walkable (the resolver just
+   *  no-ops the pick, see recruitResolver), but they must LOOK dead — barred + a
+   *  reason — so the player doesn't wander in expecting a live recruit offer. */
+  noRecruits?: boolean
 }) {
   const reduce = useReducedMotion()
   const reachable = new Set(reachableIds)
@@ -224,10 +228,14 @@ export function MapScreen({
           const sz = isBoss ? BOSS : NODE
           const accent = ACCENT[n.type]
           const lit = isReachable || isCurrent
+          // P5 — Voto Infrangibile: a recruit node stays technically walkable (the resolver
+          // no-ops the pick), but must LOOK dead so the player doesn't expect a live offer.
+          const blocked = Boolean(noRecruits) && n.type === 'recruit'
           return (
             <button
               key={n.id}
               data-testid={`node-${n.id}`}
+              data-blocked={blocked || undefined}
               disabled={!isReachable}
               onClick={() => onChoose(n.id)}
               aria-label={LABEL[n.type]}
@@ -238,16 +246,17 @@ export function MapScreen({
                 // otherwise trap the card inside their stacking context.
                 'group absolute z-10 flex items-center justify-center rounded-full border-4 transition-all duration-200 hover:z-50 focus-visible:z-50',
                 isReachable ? 'cursor-pointer hover:scale-110 focus-visible:scale-110' : 'cursor-not-allowed',
-                isReachable && !isCurrent && 'anim-ambient map-breathe',
+                isReachable && !isCurrent && !blocked && 'anim-ambient map-breathe',
                 // Dim used/distant seals with brightness+saturation, NOT opacity — the fill
                 // stays fully opaque so the trails behind can never show through the circle.
                 n.resolved && 'saturate-[.5] brightness-[.62]',
                 !lit && !n.resolved && 'saturate-[.8] brightness-[.72]',
+                blocked && 'saturate-[.35] brightness-[.6]',
                 isCurrent && 'map-current',
               )}
               style={{
                 left: p.x - sz / 2, top: p.y - sz / 2, width: sz, height: sz,
-                borderColor: lit ? accent : 'rgba(255,255,255,0.18)',
+                borderColor: blocked ? '#e0464688' : lit ? accent : 'rgba(255,255,255,0.18)',
                 // Opaque solid base (#17122a) UNDER the decorative gradients so the seal reads
                 // as a filled coin, not a translucent ring.
                 background: `radial-gradient(circle at 50% 28%, rgba(255,255,255,0.14), transparent 46%), radial-gradient(circle at 50% 40%, ${accent}40, transparent 72%), #17122a`,
@@ -287,9 +296,27 @@ export function MapScreen({
                   {ICON[n.type]}
                 </span>
               )}
+              {blocked && (
+                // Barred glyph: a diagonal strike over the recruit icon so the seal reads
+                // "dead" at a glance, without fully disabling the node (it stays walkable
+                // so the player can reach RecruitScreen's blocked-reason message).
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-2 rounded-full"
+                  style={{ background: 'linear-gradient(45deg, transparent 46%, #e04646aa 49%, #e04646aa 51%, transparent 54%)' }}
+                />
+              )}
               <span className="pointer-events-none absolute top-full mt-1 whitespace-nowrap rounded-md border border-white/15 bg-[#15121f]/95 px-2 py-0.5 text-[10px] text-white/85 opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100">
                 {LABEL[n.type]}
               </span>
+              {blocked && (
+                <span
+                  data-testid={`node-${n.id}-reason`}
+                  className="pointer-events-none absolute top-full mt-6 w-40 whitespace-normal rounded-md border border-rose-400/40 bg-[#15121f]/95 px-2 py-1 text-center text-[9px] text-rose-200 opacity-0 shadow-lg transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+                >
+                  Il Voto Infrangibile è stato giurato — niente più reclute.
+                </span>
+              )}
               {n.preview?.bossName && (
                 // Boss name is the only always-on telegraph. Synergies are no longer shown
                 // here or in the hover card (user directive) — the hover roster is the whole

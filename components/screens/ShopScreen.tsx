@@ -55,6 +55,11 @@ function Slot({ slot, sold, wallet, team, onBuy }: {
           ))}
         </div>
       )}
+      {slot.kind === 'relic' && slot.relic?.grantsDarkMagic && pick && (
+        <p className="text-xs font-semibold text-rose-300">
+          ⚠ Diventerà Corrotto — per sempre, non curabile.
+        </p>
+      )}
       <button
         type="button"
         disabled={disabled}

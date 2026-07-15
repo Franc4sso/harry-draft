@@ -121,8 +121,17 @@ export function WizardCardColumn({
         <div className="absolute left-3 top-3">
           <RoleBadge role={wizard.role} />
         </div>
-        <div className="absolute right-3 top-3">
+        <div className="absolute right-3 top-3 flex flex-col items-end gap-1">
           <TierBadge tier={wizard.tier} />
+          {drafted.corrotto && (
+            <span
+              data-testid="corrotto-badge"
+              title="Corrotto — non curabile"
+              className="inline-flex items-center gap-1 rounded-full border border-purple-400/60 bg-purple-950/70 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-purple-200"
+            >
+              <span aria-hidden>☠</span> Corrotto — non curabile
+            </span>
+          )}
         </div>
 
         {/* Title block — monumental name over the portrait bottom. */}

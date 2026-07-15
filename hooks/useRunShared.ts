@@ -19,7 +19,7 @@ registerCoreResolvers()
 
 export type RunSharedView =
   | 'draft' | 'map' | 'battle' | 'victory'
-  | 'recruit' | 'relic' | 'infirmary' | 'event' | 'spellForge' | 'shop' | 'area-cleared' | 'win' | 'defeat'
+  | 'recruit' | 'relic' | 'infirmary' | 'event' | 'spellForge' | 'shop' | 'altare' | 'area-cleared' | 'win' | 'defeat'
 
 export interface EventChoiceView { id: string; label: string; enabled: boolean; reason?: string }
 export interface CurrentEventView { id: string; title: string; text: string; choices: EventChoiceView[] }
@@ -36,6 +36,7 @@ export const viewForPhase = (p: RunState['phase']): RunSharedView => {
     case 'event-node': return 'event'
     case 'spellForge-node': return 'spellForge'
     case 'shop-node': return 'shop'
+    case 'altare-node': return 'altare'
     case 'area-cleared': return 'area-cleared'
     case 'win': return 'win'
     case 'defeat': return 'defeat'
@@ -103,6 +104,8 @@ export interface RunSharedController {
   chooseRecruit: (wizardId: string, replaceId?: string) => void
   skipRecruit: () => void
   chooseRelic: (relicId: string, assignedTo?: string) => void
+  buyAltare: (relicId: string, costWizardId?: string, costRelicId?: string) => void
+  skipAltare: () => void
   ackInfirmary: () => void
   currentEvent: CurrentEventView | null
   chooseEventOption: (optionId: string) => void
@@ -200,6 +203,22 @@ export function useRunShared(opts: UseRunSharedOpts): RunSharedController {
     commit({ ...next, phase: 'map' }, 'map')
   }, [commit])
 
+  // Altare Oscuro (P5 — Economia del Sacrificio): buy pays its (concretized) sacrificeCost
+  // in the SAME resolve call (see altareResolver.resolve) — no separate wallet step like
+  // the shop, the cost IS the price. 'skip' walks away with the node still marked resolved
+  // (see markResolved in resolveCurrentImpl), mirroring skipRecruit.
+  const buyAltare = useCallback((relicId: string, costWizardId?: string, costRelicId?: string) => {
+    const next = resolveCurrent(
+      runRef.current, { kind: 'altare-buy', relicId, costWizardId, costRelicId }, createRng(runRef.current.seed),
+    )
+    commit({ ...next, phase: 'map' }, 'map')
+  }, [commit])
+
+  const skipAltare = useCallback(() => {
+    const next = resolveCurrent(runRef.current, { kind: 'skip' }, createRng(runRef.current.seed))
+    commit({ ...next, phase: 'map' }, 'map')
+  }, [commit])
+
   const ackInfirmary = useCallback(() => {
     const next = resolveCurrent(runRef.current, { kind: 'combat-ack' }, createRng(runRef.current.seed))
     commit({ ...next, phase: 'map' }, 'map')
@@ -249,7 +268,7 @@ export function useRunShared(opts: UseRunSharedOpts): RunSharedController {
   return {
     run, view, battle, lastFallen, runRef, commit, setBattle, setLastFallen,
     reachable, currentNode,
-    chooseNode, commitBattle, chooseRecruit, skipRecruit, chooseRelic, ackInfirmary,
+    chooseNode, commitBattle, chooseRecruit, skipRecruit, chooseRelic, buyAltare, skipAltare, ackInfirmary,
     currentEvent, chooseEventOption, chooseSpellUpgrade,
     newlyDiscoveredDuoIds,
   }
