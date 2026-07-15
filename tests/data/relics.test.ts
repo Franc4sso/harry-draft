@@ -17,7 +17,7 @@ describe('relics data', () => {
       expect(r.desc.length).toBeGreaterThan(0)
     }
   })
-  it('every relic has either a bonus, a trigger, a keywordMult, grantsExecute, grantsShieldConvert, grantsDarkMagic, grantsAlwaysHit, active, scaling, conditional, or drawback', () => {
+  it('every relic has either a bonus, a trigger, a keywordMult, grantsExecute, grantsShieldConvert, grantsDarkMagic, grantsAlwaysHit, active, scaling, conditional, drawback, or carrierBonus', () => {
     for (const r of RELICS) {
       const hasBonus = !!r.bonus
       const hasTrigger = !!(r.triggers?.length)
@@ -30,7 +30,8 @@ describe('relics data', () => {
       const hasScaling = !!r.scaling
       const hasConditional = !!r.conditional
       const hasDrawback = !!r.drawback
-      expect(hasBonus || hasTrigger || hasKeywordMult || hasGrantsExecute || hasGrantsShieldConvert || hasGrantsDarkMagic || hasGrantsAlwaysHit || hasActive || hasScaling || hasConditional || hasDrawback, `relic ${r.id} has nothing`).toBe(true)
+      const hasCarrierBonus = !!r.carrierBonus
+      expect(hasBonus || hasTrigger || hasKeywordMult || hasGrantsExecute || hasGrantsShieldConvert || hasGrantsDarkMagic || hasGrantsAlwaysHit || hasActive || hasScaling || hasConditional || hasDrawback || hasCarrierBonus, `relic ${r.id} has nothing`).toBe(true)
     }
   })
   it('limits trigger relics to at most 8 (Task 10 adds ricordatutto onBattleStart shield)', () => {

@@ -111,18 +111,23 @@ export function registerRelicTriggers(
   }
 }
 
-export function applyRelicBonuses(stats: Stats, team: DraftedWizard[], relics: ActiveRelic[]): Stats {
+export function applyRelicBonuses(stats: Stats, team: DraftedWizard[], relics: ActiveRelic[], wizardId?: string): Stats {
   let { hp, atk, def, spd } = stats
   let pct = 0
   let scaledHp = 0
   let scaledAtk = 0
   let scaledDef = 0
   let scaledSpd = 0
-  for (const { relic, runCounter } of relics) {
+  for (const ar of relics) {
+    const { relic, runCounter } = ar
     scaledHp += scalingStatBonus(relic, runCounter, 'maxHp')
     scaledAtk += scalingStatBonus(relic, runCounter, 'attack')
     scaledDef += scalingStatBonus(relic, runCounter, 'defense')
     scaledSpd += scalingStatBonus(relic, runCounter, 'speed')
+    const cb = relic.carrierBonus
+    if (cb && wizardId && ar.assignedTo === wizardId) {
+      hp += cb.hp ?? 0; atk += cb.atk ?? 0; def += cb.def ?? 0; spd += cb.spd ?? 0; pct += cb.allPct ?? 0
+    }
     if (!relic.bonus) continue
     if (!relicMatchesCondition(team, relic.condition)) continue
     const b = relic.bonus

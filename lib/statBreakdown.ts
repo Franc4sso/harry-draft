@@ -21,6 +21,6 @@ export function statBreakdown(
   const base = dw.stats
   const afterLevel = leveledStats(dw)
   const afterSynergy = applyBonuses(afterLevel, synergies)
-  const total = applyRelicBonuses(afterSynergy, team, relics)
+  const total = applyRelicBonuses(afterSynergy, team, relics, dw.wizard.id)
   return { base, afterLevel, afterSynergy, total }
 }

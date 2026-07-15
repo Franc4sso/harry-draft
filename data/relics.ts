@@ -135,8 +135,8 @@ export const RELICS: Relic[] = [
   },
   {
     id: 'mano-della-gloria', name: 'Mano della Gloria', rarity: 'epica',
-    desc: 'Illumina solo chi la impugna: +30 Attacco e +15 Velocità. COSTO: perdi una reliquia a tua scelta.',
-    bonus: { atk: 30, spd: 15 }, sacrificeCost: { kind: 'relic' },
+    desc: 'Assegna a un mago: solo chi la impugna è illuminato — +60 Attacco e +30 Velocità. COSTO: perdi una reliquia a tua scelta.',
+    assignable: true, carrierBonus: { atk: 60, spd: 30 }, sacrificeCost: { kind: 'relic' },
   },
   {
     id: 'specchio-erised', name: 'Specchio delle Emarb', rarity: 'epica',

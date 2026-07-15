@@ -4,13 +4,17 @@ import { offerRelics, offerJokers, offerSacrifices, selectEnemyRelics } from '@/
 import { createRng } from '@/game/engine/rng'
 
 describe('Reliquie del Sacrificio — pool', () => {
-  it('le 5 reliquie esistono, epiche, con sacrificeCost e non assignable', () => {
+  it('le 5 reliquie esistono, epiche, con sacrificeCost; solo mano-della-gloria e\' assignable', () => {
     expect(SACRIFICE_RELIC_IDS).toHaveLength(5)
     for (const id of SACRIFICE_RELIC_IDS) {
       const r = RELIC_BY_ID[id]!
       expect(r.rarity).toBe('epica')
       expect(r.sacrificeCost).toBeDefined()
-      expect(r.assignable).toBeUndefined()
+      if (id === 'mano-della-gloria') {
+        expect(r.assignable).toBe(true)
+      } else {
+        expect(r.assignable).toBeUndefined()
+      }
       expect(JOKER_RELIC_IDS).not.toContain(id)
     }
   })
