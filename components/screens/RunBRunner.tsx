@@ -21,11 +21,13 @@ import { SpellForgeScreen } from './SpellForgeScreen'
 import { InfirmaryScreen } from './InfirmaryScreen'
 import { AreaClearedScreen } from './AreaClearedScreen'
 import { ShopScreen } from './ShopScreen'
+import { AltareScreen } from './AltareScreen'
 import { TeamSynergyBar } from '@/components/run/TeamSynergyBar'
 import { DuoToast } from '@/components/run/DuoToast'
 import { RelicBar } from '@/components/relics/RelicBar'
 import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
 import { shopOffer } from '@/game/engine/resolvers/shop'
+import { altareOffer } from '@/game/engine/resolvers/altare'
 import { createRng } from '@/game/engine/rng'
 import { runSummary } from '@/lib/runSummary'
 import { displayName } from '@/lib/displayName'
@@ -55,6 +57,11 @@ export interface RunnerController {
   chooseRecruit: (wizardId: string, replaceId?: string) => void
   skipRecruit: () => void
   chooseRelic: (relicId: string, assignedTo?: string) => void
+  /** Altare Oscuro (P5): campaign-only, mirrors buyShopItem/leaveShop's optionality —
+   *  endless never generates 'altare' nodes (Task 6), so EndlessController doesn't
+   *  implement these. */
+  buyAltare?: (relicId: string, costWizardId?: string, costRelicId?: string) => void
+  skipAltare?: () => void
   ackInfirmary: () => void
   currentEvent: CurrentEventView | null
   chooseEventOption: (optionId: string) => void
@@ -136,6 +143,7 @@ export function RunBRunner({
             onChoose={c.chooseNode}
             area={area}
             areasTotal={c.areasTotal}
+            noRecruits={c.run.runModifiers?.noRecruits}
           />,
         )
 
@@ -198,6 +206,7 @@ export function RunBRunner({
             relics={c.run.relics}
             onPick={c.chooseRecruit}
             onSkip={c.skipRecruit}
+            noRecruits={c.run.runModifiers?.noRecruits}
           />,
         )
 
@@ -210,6 +219,22 @@ export function RunBRunner({
             onPick={(relicId, assignedTo) => c.chooseRelic(relicId, assignedTo)}
           />,
         )
+
+      case 'altare':
+        // Campaign-only: altare nodes never generate in endless (Task 6 — mirrors shop's
+        // exclusion), so buyAltare/skipAltare are optional on RunnerController and this view
+        // is unreachable in endless.
+        return c.buyAltare && c.skipAltare
+          ? withTeamSidebar(
+              <AltareScreen
+                offers={altareOffer(c.run, c.currentNode!, createRng(c.run.seed))}
+                team={c.run.team}
+                owned={c.run.relics}
+                onBuy={(relicId, choice) => c.buyAltare!(relicId, choice.costWizardId, choice.costRelicId)}
+                onSkip={c.skipAltare}
+              />,
+            )
+          : null
 
       case 'event':
         return withTeamSidebar(

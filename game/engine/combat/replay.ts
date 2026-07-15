@@ -30,6 +30,9 @@ export interface ReplayUnit {
   level?: number
   /** The wizard's primary (equipped) spell — what the cooldown row displays. */
   spell: { id: string; name: string; cooldown: number }
+  /** P5 Corruzione: permanent, non-curable mark (see DraftedWizard.corrotto). Carried
+   *  through so the battle UI can show the same badge as the roster/draft card. */
+  corrotto?: true
 }
 
 export interface ReplayFrame {
@@ -124,6 +127,7 @@ export function buildReplay(
     baseSpd: u.stats.spd,
     level: u.level ?? 1,
     spell: { id: u.spell.id, name: u.spell.name, cooldown: u.spell.cooldown ?? 0 },
+    corrotto: u.corrotto,
   }))
   const maxHp: Record<string, number> = {}
   for (const u of units) maxHp[u.key] = u.maxHp

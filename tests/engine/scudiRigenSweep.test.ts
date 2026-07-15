@@ -56,6 +56,10 @@ registerCoreResolvers()
 const SCUDI_RELICS = new Set(['egida-tassorosso', 'cuore-del-tasso'])
 const isScudiRigen = (dw: DraftedWizard) => (dw.wizard.tags ?? []).includes('scudirigen')
 
+// Note: this priority list never targets 'altare' — the walker falls through to opts[0]
+// only after recruit/elite/battle/relic/boss all miss, so an 'altare' node is provably
+// unreachable by this harness today (see velenoSweep.test.ts, measured 0 hits/120 seeds).
+// If pickNode is ever restructured to prefer earlier/fallback nodes, revisit this.
 function pickNode(s: RunState): RunNode {
   const opts = reachable(s)
   if (s.team.length < 3) { const r = opts.find(n => n.type === 'recruit'); if (r) return r }

@@ -39,6 +39,8 @@ export interface RunBController {
   chooseRecruit: (wizardId: string, replaceId?: string) => void
   skipRecruit: () => void
   chooseRelic: (relicId: string, assignedTo?: string) => void
+  buyAltare: (relicId: string, costWizardId?: string, costRelicId?: string) => void
+  skipAltare: () => void
   ackInfirmary: () => void
   currentEvent: CurrentEventView | null
   chooseEventOption: (optionId: string) => void
@@ -141,7 +143,8 @@ export function useRunB(seed: string): RunBController {
     run, view, battle, reachable: shared.reachable, currentNode: shared.currentNode,
     area: run.area ?? 0, areasTotal: BALANCE.map.areas, lastFallen, newlyDiscoveredDuoIds, runReward,
     completeDraft, chooseNode: shared.chooseNode, commitBattle: shared.commitBattle, acknowledgeVictory,
-    chooseRecruit: shared.chooseRecruit, skipRecruit: shared.skipRecruit, chooseRelic: shared.chooseRelic, ackInfirmary: shared.ackInfirmary,
+    chooseRecruit: shared.chooseRecruit, skipRecruit: shared.skipRecruit, chooseRelic: shared.chooseRelic,
+    buyAltare: shared.buyAltare, skipAltare: shared.skipAltare, ackInfirmary: shared.ackInfirmary,
     currentEvent: shared.currentEvent, chooseEventOption: shared.chooseEventOption, chooseSpellUpgrade: shared.chooseSpellUpgrade,
     useConsumableRelic: useConsumableRelicCb,
     cioccorane: profileRef.current.cioccorane,

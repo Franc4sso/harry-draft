@@ -132,6 +132,11 @@ export function RelicNodeScreen({
               </button>
             ))}
           </div>
+          {pickedRelic?.grantsDarkMagic && carrier && (
+            <p className="mt-3 text-center text-xs font-semibold text-rose-300">
+              ⚠ Diventerà Corrotto — per sempre, non curabile.
+            </p>
+          )}
         </div>
       )}
 

@@ -26,4 +26,22 @@ describe('RelicNodeScreen Marchio assignment', () => {
     fireEvent.click(screen.getByRole('button', { name: /prendi/i }))
     expect(onPick).toHaveBeenCalledWith('giratempo', undefined)
   })
+
+  it('assigning a grantsDarkMagic relic shows the corruption warning BEFORE confirming', () => {
+    const onPick = vi.fn()
+    render(<RelicNodeScreen offer={[marchio]} owned={[]} team={team} onPick={onPick} />)
+    fireEvent.click(screen.getByTestId('relic-marchio-nero'))
+    fireEvent.click(screen.getByTestId('assign-carrier-voldemort'))
+    expect(screen.getByText(/Diventerà Corrotto/i)).toBeInTheDocument()
+    expect(screen.getByText(/per sempre, non curabile/i)).toBeInTheDocument()
+  })
+
+  it('a normal assignable relic (no grantsDarkMagic) does NOT show the corruption warning', () => {
+    const nonCorrupting: Relic = { id: 'giratempo-portatile', name: 'Giratempo Portatile', desc: 'x', rarity: 'rara', assignable: true }
+    const onPick = vi.fn()
+    render(<RelicNodeScreen offer={[nonCorrupting]} owned={[]} team={team} onPick={onPick} />)
+    fireEvent.click(screen.getByTestId('relic-giratempo-portatile'))
+    fireEvent.click(screen.getByTestId('assign-carrier-voldemort'))
+    expect(screen.queryByText(/Diventerà Corrotto/i)).toBeNull()
+  })
 })

@@ -1,4 +1,5 @@
-import type { Role } from '@/types'
+import type { Role, RunModifiers } from '@/types'
+import type { SacrificeCost } from '@/game/engine/sacrifice'
 
 export type EventEffect =
   | { kind: 'healTeam'; pct: number }
@@ -9,6 +10,9 @@ export type EventEffect =
   | { kind: 'grantRelic'; pool: 'ruleBreaking' }
   | { kind: 'cioccorane'; amount: number }
   | { kind: 'gamble'; chance: number; win: EventEffect[]; lose: EventEffect[] }
+  | { kind: 'sacrificeCost'; cost: SacrificeCost }
+  | { kind: 'setRunModifier'; modifier: keyof RunModifiers }
+  | { kind: 'buffTeamPct'; pct: number }
 
 export type EventRequirement =
   | { minCioccorane: number }
@@ -83,6 +87,28 @@ export const EVENTS: GameEvent[] = [
     choices: [
       { id: 'risk', label: 'Rischia (50%: reliquia rompi-regole · 50%: -20% vita alla squadra)', effects: [{ kind: 'gamble', chance: 0.5, win: [{ kind: 'grantRelic', pool: 'ruleBreaking' }], lose: [{ kind: 'damageTeam', pct: 0.2 }] }], resultText: "L'ombra ride mentre la moneta cade…" },
       { id: 'walk', label: 'Allontanati', effects: [], resultText: 'Non tutti i giochi vanno giocati.' },
+    ],
+  },
+  {
+    id: 'voto_infrangibile',
+    title: 'Il Voto Infrangibile',
+    text: 'Una promessa sigillata nella magia più antica: la squadra che hai è la squadra che avrai. Per sempre.',
+    choices: [
+      { id: 'giura', label: 'Giura (+20% a tutte le statistiche · MAI più reclute, per sempre)',
+        effects: [{ kind: 'buffTeamPct', pct: 0.20 }, { kind: 'setRunModifier', modifier: 'noRecruits' }],
+        resultText: 'Il filo dorato vi lega i polsi. Siete già completi — o non lo sarete mai.' },
+      { id: 'rifiuta', label: 'Rifiuta', effects: [], resultText: 'Il filo si dissolve. La porta resta aperta.' },
+    ],
+  },
+  {
+    id: 'patto_della_fame',
+    title: 'Il Patto della Fame',
+    text: 'La fame divora la carne e nutre il potere. Un morso oggi, la forza per sempre.',
+    choices: [
+      { id: 'firma', label: 'Firma (+10% a tutte le statistiche · tutti perdono subito il 30% della vita)',
+        effects: [{ kind: 'buffTeamPct', pct: 0.10 }, { kind: 'damageTeam', pct: 0.30 }],
+        resultText: 'Il morso arriva. Poi, la forza.' },
+      { id: 'rifiuta', label: 'Rifiuta', effects: [], resultText: 'La fame resta fuori dalla porta. Per ora.' },
     ],
   },
 ]

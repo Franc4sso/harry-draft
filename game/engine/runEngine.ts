@@ -14,6 +14,7 @@ import { infirmaryResolver } from './resolvers/infirmary'
 import { eventResolver } from './resolvers/event'
 import { spellForgeResolver } from './resolvers/spellForge'
 import { shopResolver } from './resolvers/shop'
+import { altareResolver } from './resolvers/altare'
 import { registerResolver, resolverFor } from './resolvers'
 import type { ResolverChoice } from './resolvers/types'
 import { BALANCE } from '@/data/constants'
@@ -41,6 +42,7 @@ export function registerCoreResolvers(): void {
   registerResolver(eventResolver)                  // id 'event'
   registerResolver(spellForgeResolver)             // id 'spellForge'
   registerResolver(shopResolver)                   // id 'shop'
+  registerResolver(altareResolver)                 // id 'altare'
   registered = true
 }
 
@@ -118,7 +120,8 @@ export function reachable(state: RunState): RunNode[] {
 
 const phaseForNode = (t: RunNode['type']): RunState['phase'] =>
   t === 'recruit' ? 'recruit-node' : t === 'relic' ? 'relic-node' : t === 'infirmary' ? 'infirmary-node' :
-  t === 'event' ? 'event-node' : t === 'spellForge' ? 'spellForge-node' : t === 'shop' ? 'shop-node' : 'battle'
+  t === 'event' ? 'event-node' : t === 'spellForge' ? 'spellForge-node' : t === 'shop' ? 'shop-node' :
+  t === 'altare' ? 'altare-node' : 'battle'
 
 export function moveTo(state: RunState, nodeId: string): RunState {
   const cur = state.map?.find(n => n.id === state.currentNodeId)

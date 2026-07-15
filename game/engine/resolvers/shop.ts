@@ -4,6 +4,7 @@ import { parseAreaNodeId } from '../map'
 import { offerRelics } from '../relics'
 import { detectSynergies } from '../synergy'
 import { livingOf } from '../roster'
+import { corruptOnAssign } from '../sacrifice'
 import { BALANCE } from '@/data/constants'
 import type { NodeResolver } from './types'
 
@@ -51,9 +52,10 @@ export const shopResolver: NodeResolver = {
     if (slot.kind === 'relic') {
       if (!slot.relic) return state // malformed relic slot: no-op, never fall through to removeWizard
       const active = { relic: slot.relic, stageObtained: state.stage, ...(choice.carrierId ? { assignedTo: choice.carrierId } : {}) }
-      next = { ...next, relics: [...next.relics, active] }
+      const team = choice.carrierId ? corruptOnAssign(next.team, slot.relic, choice.carrierId) : next.team
+      next = { ...next, team, relics: [...next.relics, active] }
     } else if (slot.kind === 'heal') {
-      const healed = next.team.map(dw => ({ ...dw, currentHp: dw.maxHp }))
+      const healed = next.team.map(dw => (dw.corrotto ? dw : { ...dw, currentHp: dw.maxHp }))
       next = { ...next, team: healed, activeSynergies: detectSynergies(livingOf(healed)) }
     } else { // removeWizard
       if (!choice.targetWizardId || next.team.length <= 1) return state // never drop below 1

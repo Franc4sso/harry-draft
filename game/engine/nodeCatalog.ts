@@ -24,6 +24,7 @@ export const NODE_CATALOG: Record<RunNodeType, NodeKind> = {
   library:    { type: 'library',    label: 'Biblioteca',    emoji: '📚', theme: 'Biblioteca',       isCombat: false, resolverId: 'library',    generatedInPhase: 3 },
   potions:    { type: 'potions',    label: 'Aula Pozioni',  emoji: '🧪', theme: 'Sotterranei',      isCombat: false, resolverId: 'potions',    generatedInPhase: 3 },
   forest:     { type: 'forest',     label: 'Foresta',       emoji: '🌲', theme: 'Foresta Proibita', isCombat: false, resolverId: 'forest',     generatedInPhase: 3 },
+  altare:     { type: 'altare',     label: 'Altare Oscuro', emoji: '🕯️', theme: 'Altare Oscuro',    isCombat: false, resolverId: 'altare',     generatedInPhase: 2 },
 }
 
 export function nodeKind(type: RunNodeType): NodeKind {

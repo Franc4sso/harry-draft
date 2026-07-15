@@ -73,7 +73,7 @@ function ActivationRail({ candidate, activating }: { candidate: DraftedWizard | 
 }
 
 export function RecruitScreen({
-  offer, team, teamMax, relics, onPick, onSkip,
+  offer, team, teamMax, relics, onPick, onSkip, noRecruits,
 }: {
   offer: DraftedWizard[]
   team: DraftedWizard[]
@@ -82,6 +82,10 @@ export function RecruitScreen({
   onPick: (wizardId: string, replaceId?: string) => void
   /** Leave the node without recruiting (decline the offer / keep the squad as-is). */
   onSkip?: () => void
+  /** P5 — Voto Infrangibile (Patto): the run has permanently sworn off recruiting.
+   *  The node stays visitable (so this message is reachable) but the pick is inert
+   *  (recruitResolver silently no-ops on `noRecruits`, see game/engine/resolvers/recruit.ts). */
+  noRecruits?: boolean
 }) {
   const full = team.length >= teamMax
   const weakestId = full
@@ -107,11 +111,17 @@ export function RecruitScreen({
     <main className="flex-1 w-full">
       <header className="px-4 pt-5">
         <Insegna kicker="Nuovo alleato" title="Reclutamento" />
-        <p className="mt-2 text-center text-sm text-white/60">
-          {full
-            ? 'Squadra al completo: scegli chi reclutare e quale mago sostituire.'
-            : 'Scegli un mago da aggiungere alla squadra.'}
-        </p>
+        {noRecruits ? (
+          <p data-testid="recruit-blocked-reason" className="mt-2 text-center text-sm font-semibold text-rose-300">
+            Il Voto Infrangibile è stato giurato — non puoi più reclutare.
+          </p>
+        ) : (
+          <p className="mt-2 text-center text-sm text-white/60">
+            {full
+              ? 'Squadra al completo: scegli chi reclutare e quale mago sostituire.'
+              : 'Scegli un mago da aggiungere alla squadra.'}
+          </p>
+        )}
       </header>
 
       <div className="mx-auto grid max-w-5xl grid-cols-1 items-start gap-6 p-4 md:grid-cols-[1fr_280px]">
@@ -219,8 +229,8 @@ export function RecruitScreen({
       <div className="flex flex-wrap items-center justify-center gap-3 px-4 pb-6">
         <Button
           variant="primary"
-          disabled={!pick}
-          onClick={() => pick && onPick(pick, full ? replaceId : undefined)}
+          disabled={!pick || noRecruits}
+          onClick={() => pick && !noRecruits && onPick(pick, full ? replaceId : undefined)}
         >
           {pick && full && replacedName ? `Recluta · sostituisci ${replacedName}` : 'Recluta'}
         </Button>

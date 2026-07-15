@@ -5,7 +5,7 @@ export type RunPhase =
   | 'menu' | 'draft' | 'team' | 'battle'
   | 'victory' | 'defeat' | 'win'
   // Fase 1 redesign (Plan B):
-  | 'house' | 'starter' | 'map' | 'recruit-node' | 'relic-node' | 'infirmary-node' | 'event-node' | 'spellForge-node' | 'shop-node' | 'area-cleared'
+  | 'house' | 'starter' | 'map' | 'recruit-node' | 'relic-node' | 'infirmary-node' | 'event-node' | 'spellForge-node' | 'shop-node' | 'area-cleared' | 'altare-node'
 
 export type RunNodeType =
   // Fase 1 — generati e risolti
@@ -13,6 +13,7 @@ export type RunNodeType =
   // Fasi 2-3 — catalogati ora, generati dopo
   | 'shop' | 'event' | 'commonRoom'
   | 'library' | 'potions' | 'forest'
+  | 'altare'
 
 export interface NodeBattle {
   /** The drafted enemy team (stat-rolls already fixed). */
@@ -62,7 +63,7 @@ export interface RunNode {
 export interface RunEvent {
   area: number
   nodeId: string
-  kind: 'recruit' | 'relic' | 'elite' | 'boss' | 'levelMilestone' | 'infirmary' | 'event' | 'spellForge' | 'shop'
+  kind: 'recruit' | 'relic' | 'elite' | 'boss' | 'levelMilestone' | 'infirmary' | 'event' | 'spellForge' | 'shop' | 'altare'
   summary: string
 }
 
@@ -70,6 +71,14 @@ export interface RunEvent {
 export interface PendingLevelUp {
   wizardId: string
   atLevel: number
+}
+
+/** Modificatori permanenti di run firmati con un Patto (P5). Campi discreti, tutti opzionali.
+ *  Invariante: ogni campo è un sentinel `true`-only (presente = attivo, assente = inattivo).
+ *  Mai `false` — `canPay('runModifier')` e il case `setRunModifier` assumono questa forma. */
+export interface RunModifiers {
+  /** Voto Infrangibile: nessuna recluta per il resto della run (resolver + eventi addWizard no-op). */
+  noRecruits?: true
 }
 
 export interface RunState {
@@ -89,4 +98,5 @@ export interface RunState {
   log?: RunEvent[]
   pendingLevelUps?: PendingLevelUp[]
   endless?: boolean
+  runModifiers?: RunModifiers
 }

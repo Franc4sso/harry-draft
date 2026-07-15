@@ -6,6 +6,7 @@ import { detectSynergies } from '../synergy'
 import { livingOf } from '../roster'
 import { parseAreaNodeId } from '../map'
 import { enemyLevelFor } from '../combat/threat'
+import { corruptOnAssign } from '../sacrifice'
 import { BALANCE } from '@/data/constants'
 import type { NodeResolver, ResolverChoice } from './types'
 
@@ -28,6 +29,7 @@ export const recruitResolver: NodeResolver = {
   enter: (state, node, rng) => ({ offers: { wizardIds: recruitOffer(state, node, rng).map(d => d.wizard.id) }, isCombat: false }),
   resolve: (state, node, choice, rng) => {
     if (choice.kind !== 'recruit-pick') return state
+    if (state.runModifiers?.noRecruits) return state // Voto Infrangibile (P5): mai più reclute
     const offer = recruitOffer(state, node, rng)
     const picked = offer.find(d => d.wizard.id === choice.wizardId)
     if (!picked) return state
@@ -53,6 +55,7 @@ export const relicResolver: NodeResolver = {
     const ev: RunEvent = { area: state.area ?? 0, nodeId: node.id, kind: 'relic',
       summary: `Ottieni la reliquia ${relic.name ?? relic.id}` }
     const active = { relic, stageObtained: state.stage, ...(choice.assignedTo ? { assignedTo: choice.assignedTo } : {}) }
-    return { ...state, relics: [...state.relics, active], log: [...(state.log ?? []), ev] }
+    const team = choice.assignedTo ? corruptOnAssign(state.team, relic, choice.assignedTo) : state.team
+    return { ...state, team, relics: [...state.relics, active], log: [...(state.log ?? []), ev] }
   },
 }

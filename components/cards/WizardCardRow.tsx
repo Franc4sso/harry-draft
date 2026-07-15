@@ -101,6 +101,15 @@ export function WizardCardRow({
           <TierBadge tier={wizard.tier} />
           {showLevel && <Chip label={`Lv. ${drafted.level ?? 1}`} color="#F0D98A" />}
         </div>
+        {drafted.corrotto && (
+          <span
+            data-testid="corrotto-badge"
+            title="Corrotto — non curabile"
+            className="absolute right-2 top-2 inline-flex items-center gap-1 rounded-full border border-purple-400/60 bg-purple-950/70 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-purple-200"
+          >
+            <span aria-hidden>☠</span> Corrotto — non curabile
+          </span>
+        )}
         <Tooltip
           className="absolute bottom-2 left-2"
           triggerClassName="grid h-6 w-6 place-items-center rounded-full border border-white/25 bg-black/55 backdrop-blur-sm"

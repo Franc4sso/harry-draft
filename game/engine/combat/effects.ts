@@ -142,6 +142,7 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
     if (eff.kind !== 'heal') return {}
     if (ctx.target.side !== ctx.actor.side) return { value: 0 } // never heal the enemy (mirror of no-friendly-fire)
     if (!ctx.target.alive) return { value: 0 } // never heal/revive a dead unit
+    if (ctx.target.corrotto) return { value: 0 } // Corrotto (P5): non curabile
     let amount = eff.amount
     if (ctx.bus) {
       // modifyHealing is gated on the HEALED unit's side (ctx.target), not the caster's.
