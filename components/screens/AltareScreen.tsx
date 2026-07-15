@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { Flame } from 'lucide-react'
 import type { ActiveRelic, DraftedWizard, Relic } from '@/types'
 import { canPay, type SacrificeCost } from '@/game/engine/sacrifice'
+import { isDead } from '@/game/engine/roster'
 import { Button } from '@/components/ui/Button'
 import { Frame } from '@/components/ui/Frame'
 import { Insegna } from '@/components/ui/Insegna'
@@ -142,7 +143,7 @@ export function AltareScreen({
             {pickedRelic.sacrificeCost?.kind === 'wizard' ? 'Sacrifica…' : 'Chi perde vita massima…'}
           </p>
           <div className="flex flex-wrap justify-center gap-2">
-            {team.map(dw => {
+            {(pickedRelic.sacrificeCost?.kind === 'maxHp' ? team.filter(dw => !isDead(dw)) : team).map(dw => {
               const affordable = pickedRelic.sacrificeCost?.kind === 'wizard'
                 ? canPay(pseudoState, { kind: 'wizard', wizardId: dw.wizard.id })
                 : canPay(pseudoState, { kind: 'maxHp', wizardId: dw.wizard.id, amount: (pickedRelic.sacrificeCost as { amount: number }).amount })

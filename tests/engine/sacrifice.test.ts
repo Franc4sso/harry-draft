@@ -64,6 +64,17 @@ describe('applySacrificeCost', () => {
     expect(cut.stats.hp).toBe(dw.stats.hp - 20)
     expect(cut.currentHp ?? cut.maxHp).toBeLessThanOrEqual(cut.maxHp)
   })
+  it('maxHp: un mago già morto (currentHp 0) resta morto, non rianima a 1', () => {
+    const s = stateWith(2)
+    const dw = s.team[0]!
+    const dead = { ...dw, currentHp: 0 }
+    const s2 = { ...s, team: [dead, ...s.team.slice(1)] }
+    const out = applySacrificeCost(s2, { kind: 'maxHp', wizardId: dw.wizard.id, amount: 20 })
+    const cut = out.team.find(d => d.wizard.id === dw.wizard.id)!
+    expect(cut.currentHp).toBe(0)
+    expect(cut.maxHp).toBe(dw.maxHp - 20)
+    expect(cut.stats.hp).toBe(dw.stats.hp - 20)
+  })
   it('runModifier: setta il flag', () => {
     const out = applySacrificeCost(stateWith(2), { kind: 'runModifier', modifier: 'noRecruits' })
     expect(out.runModifiers?.noRecruits).toBe(true)

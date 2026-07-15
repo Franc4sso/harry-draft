@@ -56,7 +56,8 @@ export function applySacrificeCost(state: RunState, cost: SacrificeCost): RunSta
         const maxHp = d.maxHp - cost.amount
         const stats = { ...d.stats, hp: d.stats.hp - cost.amount }
         const cur = d.currentHp ?? d.maxHp
-        return { ...d, stats, maxHp, currentHp: Math.max(1, Math.min(cur, maxHp)) }
+        // mai rianimare: un morto (currentHp<=0) resta morto — il floor 1 vale solo per i vivi
+        return { ...d, stats, maxHp, currentHp: cur <= 0 ? cur : Math.max(1, Math.min(cur, maxHp)) }
       })
       return { ...state, team }
     }
