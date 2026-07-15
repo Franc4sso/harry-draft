@@ -11,7 +11,7 @@ import type { RunReward } from '@/hooks/useRunB'
  *  Two distinct moods: win is warm gold and quick; defeat is cold,
  *  desaturated and deliberately slower. */
 export function ResultScreen({
-  outcome, seed, stageReached, enemyCount, onRestart, reward, onCollection,
+  outcome, seed, stageReached, enemyCount, onRestart, reward, onCollection, onMenu,
 }: {
   outcome: 'win' | 'defeat'
   seed: string
@@ -25,6 +25,9 @@ export function ResultScreen({
   reward?: RunReward | null
   /** Opens the collection/hub screen. Omitted callers get no second button (Task 9 wires it). */
   onCollection?: () => void
+  /** Returns to the main menu (route '/'). Omitted callers get no menu button — so the
+   *  run-end screen is never a dead end when wired. */
+  onMenu?: () => void
 }) {
   const won = outcome === 'win'
   const reduce = useReducedMotion()
@@ -160,6 +163,9 @@ export function ResultScreen({
         <Button onClick={onRestart}>Nuova run</Button>
         {onCollection && (
           <Button variant="ghost" onClick={onCollection}>Collezione</Button>
+        )}
+        {onMenu && (
+          <Button variant="ghost" onClick={onMenu}>Menu principale</Button>
         )}
       </motion.div>
     </main>

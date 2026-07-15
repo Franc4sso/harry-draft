@@ -295,6 +295,7 @@ export function RunBRunner({
             onRestart={c.restart}
             reward={c.runReward}
             onCollection={() => router.push('/collection')}
+            onMenu={() => router.push('/')}
           />
         ) : (
           <AreaClearedScreen
@@ -318,6 +319,7 @@ export function RunBRunner({
             onRestart={c.restart}
             reward={c.runReward}
             onCollection={() => router.push('/collection')}
+            onMenu={() => router.push('/')}
           />
         ) : null
 

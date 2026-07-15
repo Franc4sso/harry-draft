@@ -32,3 +32,21 @@ describe('ResultScreen copy seed', () => {
     expect(writeText).toHaveBeenCalledWith('abc123')
   })
 })
+
+describe('ResultScreen main-menu exit', () => {
+  it('offers a "Menu principale" button that calls onMenu (defeat is not a dead end)', () => {
+    const onMenu = vi.fn()
+    render(
+      <ResultScreen outcome="defeat" seed="s" stageReached={2} enemyCount={5}
+        onRestart={() => {}} onCollection={() => {}} onMenu={onMenu} />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: /menu principale/i }))
+    expect(onMenu).toHaveBeenCalledTimes(1)
+  })
+  it('omits the menu button when no onMenu handler is wired', () => {
+    render(
+      <ResultScreen outcome="defeat" seed="s" stageReached={2} enemyCount={5} onRestart={() => {}} />,
+    )
+    expect(screen.queryByRole('button', { name: /menu principale/i })).not.toBeInTheDocument()
+  })
+})
