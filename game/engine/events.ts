@@ -7,6 +7,7 @@ import { createDraftPool } from './draft'
 import { draftWizard } from './statRoll'
 import { powerOf } from './combat/teamGen'
 import { RELIC_BY_ID, RULE_BREAKING_RELIC_IDS } from '@/data/relics'
+import { applySacrificeCost } from './sacrifice'
 
 export interface EventEffectResult {
   state: RunState
@@ -85,6 +86,7 @@ export function applyEventEffects(state: RunState, effects: EventEffect[], rng: 
         break
       }
       case 'addWizard': {
+        if (s.runModifiers?.noRecruits) { log.push('addWizard blocked (noRecruits)'); break }
         const excludeIds = new Set(s.team.map(dw => dw.wizard.id))
         const pool = createDraftPool().filter(w => !excludeIds.has(w.id))
         if (pool.length === 0) break
@@ -121,6 +123,30 @@ export function applyEventEffects(state: RunState, effects: EventEffect[], rng: 
         s = sub.state
         cioccoraneDelta += sub.cioccoraneDelta
         log.push(`gamble chance=${effect.chance} -> ${won ? 'win' : 'lose'}`, ...sub.log)
+        break
+      }
+      case 'sacrificeCost': {
+        const paid = applySacrificeCost(s, effect.cost)
+        if (paid === s) { log.push(`sacrificeCost UNPAYABLE ${effect.cost.kind}`); break }
+        s = paid
+        log.push(`sacrificeCost ${effect.cost.kind}`)
+        break
+      }
+      case 'setRunModifier': {
+        s = { ...s, runModifiers: { ...s.runModifiers, [effect.modifier]: true } }
+        log.push(`setRunModifier ${effect.modifier}`)
+        break
+      }
+      case 'buffTeamPct': {
+        const m = 1 + effect.pct
+        const team = s.team.map(dw => ({
+          ...dw,
+          stats: { hp: Math.round(dw.stats.hp * m), atk: Math.round(dw.stats.atk * m),
+                   def: Math.round(dw.stats.def * m), spd: Math.round(dw.stats.spd * m) },
+          maxHp: Math.round(dw.maxHp * m),
+        }))
+        s = { ...s, team }
+        log.push(`buffTeamPct ${effect.pct}`)
         break
       }
     }

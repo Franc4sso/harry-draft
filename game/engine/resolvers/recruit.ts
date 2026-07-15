@@ -29,6 +29,7 @@ export const recruitResolver: NodeResolver = {
   enter: (state, node, rng) => ({ offers: { wizardIds: recruitOffer(state, node, rng).map(d => d.wizard.id) }, isCombat: false }),
   resolve: (state, node, choice, rng) => {
     if (choice.kind !== 'recruit-pick') return state
+    if (state.runModifiers?.noRecruits) return state // Voto Infrangibile (P5): mai più reclute
     const offer = recruitOffer(state, node, rng)
     const picked = offer.find(d => d.wizard.id === choice.wizardId)
     if (!picked) return state

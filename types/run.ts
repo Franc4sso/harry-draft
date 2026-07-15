@@ -73,7 +73,9 @@ export interface PendingLevelUp {
   atLevel: number
 }
 
-/** Modificatori permanenti di run firmati con un Patto (P5). Campi discreti, tutti opzionali. */
+/** Modificatori permanenti di run firmati con un Patto (P5). Campi discreti, tutti opzionali.
+ *  Invariante: ogni campo è un sentinel `true`-only (presente = attivo, assente = inattivo).
+ *  Mai `false` — `canPay('runModifier')` e il case `setRunModifier` assumono questa forma. */
 export interface RunModifiers {
   /** Voto Infrangibile: nessuna recluta per il resto della run (resolver + eventi addWizard no-op). */
   noRecruits?: true
