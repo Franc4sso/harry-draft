@@ -33,6 +33,21 @@ describe('normalizeSpell', () => {
       { kind: 'applyStatus', target: 'self', statusId: 'defUp' },
     ])
   })
+  it('attack with dot (incendio) → damage then applyStatus(enemy, burn) carrying per-spell tickAmount', () => {
+    // The legacy inline {kind:'dot',amount} now funnels into statusId 'burn' so all fire DoTs
+    // merge into ONE accumulating status (one flame icon) while keeping their own per-tick damage.
+    expect(normalizeSpell(SPELL_BY_ID['incendio']!)).toEqual([
+      { kind: 'damage', power: 1.2, canCrit: true, canDodge: true },
+      { kind: 'applyStatus', target: 'enemy', statusId: 'burn', tickAmount: 8, duration: 2 },
+    ])
+  })
+  it('dot funnels to burn but non-dot inline effects (crucio debuff) stay inline', () => {
+    expect(normalizeSpell(SPELL_BY_ID['crucio']!)).toEqual([
+      { kind: 'damage', power: 0.8, canCrit: true, canDodge: true },
+      { kind: 'applyStatus', target: 'enemy', statusId: 'burn', tickAmount: 10, duration: 2 },
+      { kind: 'applyStatus', target: 'enemy', effect: { kind: 'debuff', stat: 'atk', amount: 10, duration: 2 } },
+    ])
+  })
   it('spell.spec is returned verbatim', () => {
     const spec = [{ kind: 'shield', amount: 60, duration: 3 }] as const
     const fake = { id: 'x', name: 'X', desc: '', type: 'Difesa' as const, hitChance: 1, spec: [...spec] }

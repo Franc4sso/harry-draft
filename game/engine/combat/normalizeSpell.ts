@@ -23,10 +23,17 @@ export function normalizeSpell(spell: Spell): EffectSpec[] {
   const power = spell.power ?? 0
   if (power > 0) out.push({ kind: 'damage', power, canCrit: true, canDodge: true })
   for (const e of spell.effects ?? []) {
-    out.push({
-      kind: 'applyStatus', target: 'enemy',
-      effect: { kind: e.kind, stat: e.stat, amount: e.amount, duration: e.duration },
-    })
+    // Fire DoTs funnel into statusId 'burn' (accumulating, one flame icon) carrying their own
+    // per-tick damage via tickAmount — instead of each cast pushing a separate un-mergeable
+    // inline dot. Non-dot inline effects (crucio's atk debuff) stay inline.
+    if (e.kind === 'dot') {
+      out.push({ kind: 'applyStatus', target: 'enemy', statusId: 'burn', tickAmount: e.amount, duration: e.duration })
+    } else {
+      out.push({
+        kind: 'applyStatus', target: 'enemy',
+        effect: { kind: e.kind, stat: e.stat, amount: e.amount, duration: e.duration },
+      })
+    }
   }
   return out
 }

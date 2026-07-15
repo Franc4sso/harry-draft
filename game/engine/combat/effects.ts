@@ -205,9 +205,9 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
         ? Math.max(1, Math.ceil(base * BALANCE.roles.tenaciaControlDurationMult))
         : eff.duration
       if (eff.target === 'enemy') {
-        applyHostileStatus(ctx.actor, unit, eff.statusId, { duration, sourceId: sourceId(ctx.actor), maxStacks })
+        applyHostileStatus(ctx.actor, unit, eff.statusId, { duration, sourceId: sourceId(ctx.actor), maxStacks, tickAmount: eff.tickAmount })
       } else {
-        applyStatus(unit, eff.statusId, { duration, sourceId: sourceId(ctx.actor), maxStacks })
+        applyStatus(unit, eff.statusId, { duration, sourceId: sourceId(ctx.actor), maxStacks, tickAmount: eff.tickAmount })
       }
       if (def?.kind === 'stun' || def?.kind === 'freeze') ctx.flags.push('stun')
       if (def?.kind === 'dot') ctx.flags.push('dot')

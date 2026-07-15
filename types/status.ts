@@ -54,5 +54,8 @@ export type EffectSpec =
   | {
       kind: 'applyStatus'; target: EffectTarget; chance?: number
       statusId?: string; effect?: EffectInline; duration?: number
+      /** Per-instance DoT tick override (fire spells funnel into statusId 'burn' but keep
+       *  their own per-tick damage instead of the def's flat tickDamage). */
+      tickAmount?: number
     }
   | { kind: 'protego'; count?: number }

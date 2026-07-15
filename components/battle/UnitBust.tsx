@@ -78,8 +78,9 @@ function describeEffect(e: ActiveEffect): string {
   const stat = e.stat ? STAT_LABEL[e.stat] ?? e.stat : ''
   switch (e.kind) {
     case 'dot': {
+      const name = (e.statusId ? STATUS_BY_ID[e.statusId]?.name : undefined) ?? 'Veleno'
       const doses = ` ×${e.stacks ?? 1}`
-      return `Veleno${doses}: -${dotTickDamage(e)} HP/turno`
+      return `${name}${doses}: -${dotTickDamage(e)} HP/turno`
     }
     case 'regen':
       return `Rigenerazione: +${e.amount ?? 0} HP/turno, ${turns}`
@@ -135,7 +136,9 @@ function effectCount(e: ActiveEffect): number {
  *  produced "-0 HP/turno". Mirrors the engine's flat term in tickStatuses (game/engine/status.ts). */
 function dotTickDamage(e: ActiveEffect): number {
   const def = e.statusId ? STATUS_BY_ID[e.statusId] : undefined
-  const base = def?.tickDamage ?? e.amount ?? 0
+  // A per-instance `amount` (burn's per-spell tickAmount, or a legacy inline dot) overrides the
+  // def's flat tickDamage — mirror the engine's baseTick precedence in tickStatuses.
+  const base = e.amount ?? def?.tickDamage ?? 0
   return base * (e.stacks ?? 1)
 }
 

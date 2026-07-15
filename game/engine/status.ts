@@ -46,7 +46,8 @@ export function effectiveStats(unit: BattleUnit): Stats {
 }
 
 export function applyStatus(
-  unit: BattleUnit, statusId: string, opts: { duration?: number; sourceId?: string; maxStacks?: number } = {},
+  unit: BattleUnit, statusId: string,
+  opts: { duration?: number; sourceId?: string; maxStacks?: number; tickAmount?: number } = {},
 ): void {
   const def = STATUS_BY_ID[statusId]
   if (!def) return
@@ -61,13 +62,17 @@ export function applyStatus(
       const cap = opts.maxStacks ?? def.maxStacks ?? Infinity
       cur.stacks = Math.min(cap, (cur.stacks ?? 1) + 1)
       cur.remaining = remaining
+      // A re-ignite may carry a higher per-tick amount (e.g. incendio then fiendfyre): keep the
+      // strongest so the burn's damage never drops when refreshed by a weaker spell.
+      if (opts.tickAmount != null) cur.amount = Math.max(cur.amount ?? 0, opts.tickAmount)
       return
     }
     if (def.stack === 'stack' && def.maxStacks != null && existing.length >= def.maxStacks) return
   }
   unit.statusEffects.push({
     kind: def.kind, statusId, remaining, stacks: 1, sourceId: opts.sourceId,
-    stat: def.statMod?.stat, amount: def.statMod?.amount, absorbLeft: def.absorb,
+    // tickAmount overrides the def's flat tickDamage for DoTs that carry per-spell damage (burn).
+    stat: def.statMod?.stat, amount: opts.tickAmount ?? def.statMod?.amount, absorbLeft: def.absorb,
   })
 }
 
@@ -82,7 +87,7 @@ export function applyStatus(
  *  DOPO il dimezzamento (deterministico, offset parziale) — tenerne conto in un balance pass. */
 export function applyHostileStatus(
   actor: BattleUnit, target: BattleUnit, statusId: string,
-  opts: { duration?: number; sourceId?: string; maxStacks?: number } = {},
+  opts: { duration?: number; sourceId?: string; maxStacks?: number; tickAmount?: number } = {},
 ): void {
   const def = STATUS_BY_ID[statusId]
   if (!def) return
@@ -113,7 +118,9 @@ export function tickStatuses(turn: number, unit: BattleUnit, opts: { velenoMult?
   const logs: LogEntry[] = []
   for (const e of unit.statusEffects) {
     const def = e.statusId ? STATUS_BY_ID[e.statusId] : undefined
-    const baseTick = def?.tickDamage ?? (e.kind === 'dot' ? e.amount : undefined)
+    // For DoTs, a per-instance `amount` (burn's per-spell tickAmount, or a legacy inline dot)
+    // overrides the def's flat tickDamage; other statuses fall back to the def value.
+    const baseTick = e.kind === 'dot' ? (e.amount ?? def?.tickDamage) : def?.tickDamage
     const tickHeal = def?.tickHeal
     if (baseTick != null) {
       const stacks = e.stacks ?? 1

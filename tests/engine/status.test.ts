@@ -39,24 +39,47 @@ describe('status core', () => {
     const slows = u.statusEffects.filter(e => e.statusId === 'slow')
     expect(slows).toHaveLength(2) // cumulative, not refreshed
   })
-  it('burn does NOT stack — one instance whose duration EXTENDS on re-apply', () => {
-    // Burn is a single fire that lasts longer the more you re-ignite it; it never adds
-    // separate stacking instances (damage/turn stays flat). stack: 'extend'.
+  it('burn ACCUMULATES into one instance — stacks grow, duration refreshes (like veleno)', () => {
+    // Burn is now a single accumulating DoT: re-igniting bumps the stack count (up to the cap)
+    // rather than pushing separate instances — so the portrait shows ONE flame icon, not N.
+    // stack: 'accumulate'.
     const u = unit()
     applyStatus(u, 'burn', { duration: 2 })
     applyStatus(u, 'burn', { duration: 2 })
     applyStatus(u, 'burn', { duration: 2 })
     const burns = u.statusEffects.filter(e => e.statusId === 'burn')
     expect(burns).toHaveLength(1)          // one instance, never multiple
-    expect(burns[0]!.remaining).toBe(6)    // 2 + 2 + 2 — duration extended, not stacked
+    expect(burns[0]!.stacks).toBe(3)       // 3 re-applies = 3 doses
+    expect(burns[0]!.remaining).toBe(2)    // refreshed, not extended
   })
-  it('tickStatuses applies burn tickDamage and regen tickHeal', () => {
-    const u = unit({ hp: 50 })
-    applyStatus(u, 'burn', { duration: 2 })
+  it('burn caps at 8 stacks', () => {
+    const u = unit()
+    for (let i = 0; i < 12; i++) applyStatus(u, 'burn', { duration: 2 })
+    expect(u.statusEffects.find(e => e.statusId === 'burn')?.stacks).toBe(8)
+  })
+  it('tickStatuses scales burn damage by stacks and regen tickHeal', () => {
+    const u = unit({ hp: 90 })
+    applyStatus(u, 'burn', { duration: 2 }) // stacks 1
+    applyStatus(u, 'burn', { duration: 2 }) // stacks 2
     applyStatus(u, 'regen', { duration: 2 })
     const logs = tickStatuses(1, u)
-    expect(u.hp).toBe(50 - 8 + 12)
+    expect(u.hp).toBe(90 - 8 * 2 + 12) // burn tickDamage 8 × 2 stacks, then +12 regen
     expect(logs.length).toBe(2) // one burn (dot) log + one regen (heal) log
+  })
+  it('burn carries a per-spell tickAmount overriding the def tickDamage', () => {
+    // Spell DoTs (fiendfyre dmg 12 vs incendio dmg 8) must keep their own per-tick damage even
+    // though they now all funnel through statusId 'burn'. applyStatus takes a tickAmount override.
+    const u = unit({ hp: 90 })
+    applyStatus(u, 'burn', { duration: 2, tickAmount: 12 })
+    tickStatuses(1, u)
+    expect(u.hp).toBe(90 - 12) // uses the override, not the def's 8
+  })
+  it('burn tickAmount override scales by stacks too', () => {
+    const u = unit({ hp: 90 })
+    applyStatus(u, 'burn', { duration: 2, tickAmount: 12 }) // stacks 1
+    applyStatus(u, 'burn', { duration: 2, tickAmount: 12 }) // stacks 2
+    tickStatuses(1, u)
+    expect(u.hp).toBe(90 - 12 * 2)
   })
   it('legacy inline dot still ticks (back-compat)', () => {
     const u = unit({ statusEffects: [{ kind: 'dot', amount: 10, remaining: 2 }] })
