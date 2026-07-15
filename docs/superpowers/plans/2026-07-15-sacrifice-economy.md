@@ -745,11 +745,9 @@ In `assignAreaCategories`, DOPO il blocco "3. Guarantee >=1 relic" e PRIMA del b
 ```ts
   // 3b. P5 — Altare Oscuro: ~30% delle aree ne piazza ESATTAMENTE UNO su uno slot libero
   //     (raro e casuale — scelta utente 2026-07-15: mai garantito, sempre evitabile perché
-  //     ogni floor medio è largo 3). Escluso in endless (il controller endless non ha un
-  //     handler altare — stesso motivo dell'esclusione shop/spellForge). Il roll consuma
-  //     rng SEMPRE (anche in endless) così campagna ed endless restano stream-compatibili?
-  //     NO: endless passa da rami già divergenti (pickFiller azzera pesi) — salta il roll
-  //     interamente per non spostare i draw della campagna esistente... vedi nota sotto.
+  //     ogni floor medio è largo 3). Escluso in endless: il controller endless non ha un
+  //     handler altare (stesso motivo dell'esclusione shop/spellForge) e il corto-circuito
+  //     `!endless` NON consuma il roll → gli stream rng endless restano identici a prima.
   if (!endless && rng.next() < ALTARE_CHANCE) {
     const pool = free()
     if (pool.length > 0) {
