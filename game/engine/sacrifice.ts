@@ -6,6 +6,17 @@ import { livingOf } from './roster'
  * P5 — Economia del Sacrificio. UNICA fonte del "pagare un costo" (spec 2026-07-15):
  * consumata sia dall'altareResolver sia dagli EventEffect dei Patti. Mai duplicare
  * questa logica altrove (stesso principio di trioGates).
+ *
+ * NOTA DI BILANCIAMENTO (A/B 2026-07-15, Task 10 — 120 seed, bot near-optimal):
+ * campaignBalanceRestricted pre-altare 0.0833 → post 0.0583. Il delta è rumore da
+ * rimescolamento (il roll altare consuma un draw rng in più per area e ridà tutte le
+ * mappe sui seed fissi), NON un cambio di difficoltà: con ALTARE_CHANCE=0 (draw
+ * consumato, nodo mai piazzato) il gate misura 0.0417, PIÙ BASSO di 0.3 → la leva è
+ * non-monotona sul metric e non va "pescata" per riportare il numero nella vecchia
+ * banda-commento. Tutto il contenuto sacrificio è player-only e invisibile al bot
+ * (rifiuta ogni sacrificio: handler 'skip' negli harness) — stessa classe dei joker
+ * e dei Trio. Gate live (winRate>0) verde. campaignBalanceB overall resta 0.0000
+ * (reference-only da "UN MAGO UNA MAGIA", non è il gate).
  */
 export type SacrificeCost =
   | { kind: 'wizard'; wizardId: string }

@@ -429,6 +429,13 @@ function runOne(seed: string, battleTurns?: number[], preferVeleno = false): 'wi
       s = resolveCurrent(s, { kind: 'event-choice', optionId }, createRng(seed))
       s = { ...s, phase: 'map' }; continue
     }
+    // Altare-node (2026-07-15, P5 Task 10): bot declines every sacrifice — walk in,
+    // 'skip', walk out. Mirrors campaignBalanceRestricted's handler; see that file's
+    // comment for the harness-gap story (unhandled altare = instant defeat artifact).
+    if (s.phase === 'altare-node') {
+      s = resolveCurrent(s, { kind: 'skip' }, createRng(seed))
+      s = { ...s, phase: 'map' }; continue
+    }
     break
   }
   return 'defeat'

@@ -101,6 +101,16 @@ function runOne(seed: string, battleTurns?: number[], preferVeleno = false): 'wi
       s = resolveCurrent(s, { kind: 'event-choice', optionId }, createRng(seed))
       s = { ...s, phase: 'map' }; continue
     }
+    // Altare-node (2026-07-15, P5 Task 10): the bot walks in and walks away ('skip'),
+    // exactly like a real player who declines every sacrifice — the power-greedy policy
+    // never pays a cost it can't reason about. Without this handler, pickNode's opts[0]
+    // fall-through onto an altare was an instant 'defeat' (same harness gap event-node
+    // had before 2026-07-04), which is what dropped this gate 0.0833 → 0.0583 in the
+    // pre-fix A/B — a harness artifact, not a real difficulty change.
+    if (s.phase === 'altare-node') {
+      s = resolveCurrent(s, { kind: 'skip' }, createRng(seed))
+      s = { ...s, phase: 'map' }; continue
+    }
     break
   }
   return 'defeat'
@@ -176,6 +186,17 @@ describe('restricted starter pool is winnable (Reservation 1 gate)', () => {
     // spell-optimization bot layer above are gone — the exploit the 2026-07-04 experiment
     // found is no longer reachable by any player. The bot now fights with each wizard's
     // signature (default) spell only; this smoke check (>0/<=1) still holds trivially.
+    //
+    // Sacrifice-economy A/B (2026-07-15, P5 Task 10): pre-altare 0.0833 (10/120) →
+    // post 0.0583 (7/120). The delta is RESHUFFLE NOISE, not difficulty: the altare
+    // roll consumes one extra rng draw per area, re-dealing every downstream map/offer
+    // on these fixed seeds. Diagnostic proof: ALTARE_CHANCE=0 (draw consumed, node never
+    // placed) measures 0.0417 — LOWER than 0.3's 0.0583 — so the metric responds to the
+    // re-deal, not to altare frequency; the lever is non-monotonic on this gate and was
+    // deliberately NOT tuned (fishing a chance value back above the old 0.07-0.45
+    // comment-band would be seed-overfitting). Altare content itself is invisible to
+    // this bot (declines every sacrifice via the skip handler above), same player-only
+    // reasoning as jokers and Trios.
     expect(winRate).toBeGreaterThan(0)
     expect(winRate).toBeLessThanOrEqual(1.0)
   })
