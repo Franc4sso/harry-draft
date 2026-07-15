@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { TeamSynergyBar } from '@/components/run/TeamSynergyBar'
 
 const team = [
@@ -66,5 +67,28 @@ describe('TeamSynergyBar', () => {
     const memberRow = document.querySelector('[data-house]') as HTMLElement
     expect(memberRow).not.toBeNull()
     expect(within(memberRow).queryByRole('button')).not.toBeInTheDocument()
+  })
+
+  it('vertical: Sinergie e Combo vivono in tab — default Combo, il click cambia pannello', async () => {
+    const user = userEvent.setup()
+    render(<TeamSynergyBar team={team} synergies={synergies} orientation="vertical" />)
+
+    // Default: tab Combo selezionato, pannello Duo visibile, lista sinergie nascosta.
+    expect(screen.getByTestId('sidebar-tab-combo')).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByTestId('duo-panel')).toBeInTheDocument()
+    expect(screen.queryByText(/Coraggio/)).not.toBeInTheDocument()
+
+    // Click su Sinergie: la lista appare, il pannello Duo sparisce.
+    await user.click(screen.getByTestId('sidebar-tab-sinergie'))
+    expect(screen.getByText(/Coraggio/)).toBeInTheDocument()
+    expect(screen.queryByTestId('duo-panel')).not.toBeInTheDocument()
+  })
+
+  it('vertical: la squadra resta sempre visibile, qualunque tab sia aperto', async () => {
+    const user = userEvent.setup()
+    render(<TeamSynergyBar team={team} synergies={synergies} orientation="vertical" />)
+    expect(screen.getByText('Harry')).toBeInTheDocument()
+    await user.click(screen.getByTestId('sidebar-tab-sinergie'))
+    expect(screen.getByText('Harry')).toBeInTheDocument()
   })
 })

@@ -42,6 +42,14 @@ describe('RecruitScreen', () => {
     expect(onSkip).toHaveBeenCalled()
   }, 15000)
 
+  it('mostra il tracker delle Combo Duo nel rail, come nel draft', () => {
+    const onPick = vi.fn()
+    const { container } = render(<RecruitScreen offer={offer} team={team} teamMax={5} onPick={onPick} relics={[]} />)
+    expect(screen.getByTestId('draft-duo-tracker')).toBeInTheDocument()
+    // Tutte e 6 le combo compaiono in forma compatta.
+    expect(container.querySelectorAll('[data-testid="draft-duo-tracker"] [data-duo]').length).toBe(6)
+  })
+
   it('renders candidates as horizontal (landscape) cards, like the draft', () => {
     const onPick = vi.fn()
     render(<RecruitScreen offer={offer} team={team} teamMax={5} onPick={onPick} relics={[]} />)
@@ -121,7 +129,7 @@ describe('RecruitScreen', () => {
     })
   })
 
-  describe('duo preview ribbon', () => {
+  describe('duo preview nel tracker (il ribbon sulla card è stato eliminato)', () => {
     // pansy + theodore are both 'veleno'-tagged (2 ⇒ the veleno signal is already lit by the
     // team alone); draco is 'esecuzione'-tagged (only 1 ⇒ esecuzione is NOT yet lit — one away).
     // Recruiting marcus (also 'esecuzione'-tagged) brings esecuzione to 2 ⇒ lit, completing the
@@ -132,36 +140,28 @@ describe('RecruitScreen', () => {
     const marcus = draftWizard(createRng(4), WIZARD_BY_ID['marcus']!)
     const duoTeam = [pansy, theodore, draco]
 
-    it('shows a completes ribbon on an offer candidate that completes a Duo with the team', () => {
+    it('selezionando la recluta che completa un Duo, il tracker marca la combo "si attiva"', async () => {
       const onPick = vi.fn()
-      render(<RecruitScreen offer={[marcus]} team={duoTeam} teamMax={5} onPick={onPick} relics={[]} />)
-      const tile = screen.getByTestId(`recruit-${marcus.wizard.id}`)
-      const ribbon = screen.getByTestId('duo-ribbon')
-      expect(tile.contains(ribbon)).toBe(true)
-      expect(ribbon).toHaveAttribute('data-kind', 'completes')
-      expect(ribbon).toHaveTextContent('Cancrena')
-    })
+      const { container } = render(<RecruitScreen offer={[marcus]} team={duoTeam} teamMax={5} onPick={onPick} relics={[]} />)
+      // Nessun ribbon sulla card, mai.
+      expect(screen.queryByTestId('duo-ribbon')).toBeNull()
+      await userEvent.click(screen.getByTestId(`recruit-${marcus.wizard.id}`))
+      expect(container.querySelector('[data-duo="cancrena"][data-completes]')).not.toBeNull()
+    }, 15000)
 
     // ernie is a Tank (lights 'taunt' with just 1) AND 'scudirigen'-tagged (needs 2, so it stays
     // unlit with only 1). Against an EMPTY team (both signals two-away), recruiting ernie moves
     // the 'muro-vivente' Duo (scudirigen + taunt) from two-away to one-away — an advance, not a
     // completion.
-    it('shows NO ribbon on an offer candidate that only ADVANCES a Duo (no "verso" noise)', () => {
+    it('una recluta che solo AVANZA un Duo è marcata "avanza", non "si attiva"', async () => {
       const ernie = draftWizard(createRng(5), WIZARD_BY_ID['ernie']!)
       const onPick = vi.fn()
-      render(<RecruitScreen offer={[ernie]} team={[]} teamMax={5} onPick={onPick} relics={[]} />)
-      const tile = screen.getByTestId(`recruit-${ernie.wizard.id}`)
-      expect(tile.querySelector('[data-testid="duo-ribbon"]')).toBeNull()
-    })
-
-    it('does NOT pass a duoPreview to the replace-list rows (existing team members)', () => {
-      const onPick = vi.fn()
-      render(<RecruitScreen offer={[marcus]} team={duoTeam} teamMax={duoTeam.length} onPick={onPick} relics={[]} />)
-      for (const t of duoTeam) {
-        const row = screen.getByTestId(`replace-${t.wizard.id}`)
-        expect(row.querySelector('[data-testid="duo-ribbon"]')).toBeNull()
-      }
-    })
+      const { container } = render(<RecruitScreen offer={[ernie]} team={[]} teamMax={5} onPick={onPick} relics={[]} />)
+      await userEvent.click(screen.getByTestId(`recruit-${ernie.wizard.id}`))
+      const row = container.querySelector('[data-duo="muro-vivente"]')!
+      expect(row.hasAttribute('data-advances')).toBe(true)
+      expect(row.hasAttribute('data-completes')).toBe(false)
+    }, 15000)
 
     // Honesty on a FULL team: recruiting SWAPS OUT the weakest member, so the preview must run
     // against team-minus-replaced, not the raw team. Here theodore (a 2nd veleno holder) is
@@ -170,16 +170,16 @@ describe('RecruitScreen', () => {
     // PURE ADDITION, light esecuzione (draco+marcus=2) alongside veleno(2) ⇒ falsely "complete"
     // cancrena. But the swap removes theodore ⇒ veleno drops to 1 ⇒ cancrena does NOT activate,
     // so no completes ribbon must be shown.
-    it('does NOT falsely show a completes ribbon when the swapped-out member holds the Duo signal', () => {
+    it('does NOT falsely mark "si attiva" when the swapped-out member holds the Duo signal', async () => {
       const onPick = vi.fn()
       // Force theodore to be the weakest (default replace target) with rock-bottom stats.
       const weakTheodore = { ...theodore, stats: { hp: 1, atk: 1, def: 1, spd: 1 } }
       const fullTeam = [pansy, weakTheodore, draco]
-      render(<RecruitScreen offer={[marcus]} team={fullTeam} teamMax={fullTeam.length} onPick={onPick} relics={[]} />)
-      const tile = screen.getByTestId(`recruit-${marcus.wizard.id}`)
-      const ribbon = tile.querySelector('[data-testid="duo-ribbon"]')
-      // No completes ribbon for cancrena — the swap removed the 2nd veleno holder.
-      if (ribbon) expect(ribbon.getAttribute('data-kind')).not.toBe('completes')
-    })
+      const { container } = render(<RecruitScreen offer={[marcus]} team={fullTeam} teamMax={fullTeam.length} onPick={onPick} relics={[]} />)
+      await userEvent.click(screen.getByTestId(`recruit-${marcus.wizard.id}`))
+      // Il tracker valuta contro baseTeam (senza theodore): cancrena NON si attiva —
+      // il 2° portatore di veleno è proprio il mago che esce.
+      expect(container.querySelector('[data-duo="cancrena"][data-completes]')).toBeNull()
+    }, 15000)
   })
 })

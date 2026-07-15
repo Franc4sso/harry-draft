@@ -77,13 +77,8 @@ describe('WizardCardRow Duo affordance', () => {
     expect(screen.getByTestId('duo-signal-marks')).toBeInTheDocument()
   })
 
-  it('shows a completes ribbon when duoPreview completes', () => {
-    render(
-      <WizardCardRow
-        drafted={velenoDrafted()}
-        duoPreview={{ completes: [{ id: 'cancrena', name: 'Cancrena', desc: '', signals: ['veleno', 'esecuzione'] }], advances: [] }}
-      />,
-    )
-    expect(screen.getByTestId('duo-ribbon')).toHaveAttribute('data-kind', 'completes')
+  it('non mostra MAI il ribbon Duo: la preview vive nel DuoTracker del rail', () => {
+    render(<WizardCardRow drafted={velenoDrafted()} />)
+    expect(screen.queryByTestId('duo-ribbon')).toBeNull()
   })
 })

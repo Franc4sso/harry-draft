@@ -11,7 +11,7 @@ import { Parchment } from '@/components/ui/Parchment'
 import { Stagger, StaggerItem } from '@/components/ui/motion'
 import { powerOf } from '@/game/engine/combat/teamGen'
 import { previewSynergies, type SynergyPreview } from '@/game/engine/synergy'
-import { previewDuos } from '@/game/engine/duos'
+import { DuoTracker } from '@/components/draft/DuoTracker'
 import { synergyBonusText } from '@/lib/glossary'
 import { displayName } from '@/lib/displayName'
 import { isDead } from '@/game/engine/roster'
@@ -137,11 +137,6 @@ export function RecruitScreen({
           onPointerLeave={() => setConsidered(null)}
         >
           {offer.map(d => {
-            // Preview against baseTeam (team minus the member being swapped out when full),
-            // NOT the raw team — otherwise a full-squad recruit falsely claims "Completa" for a
-            // Duo whose 2nd signal-holder is the very member being replaced. Mirrors the synergy
-            // rail's own baseTeam logic so the ribbon stays consistent with it as replaceId changes.
-            const duoPreview = previewDuos(baseTeam, relics, d)
             return (
               <StaggerItem
                 key={d.wizard.id}
@@ -160,7 +155,7 @@ export function RecruitScreen({
                 }}
                 className="cursor-pointer rounded-2xl"
               >
-                <WizardCardColumn drafted={d} selected={pick === d.wizard.id} duoPreview={duoPreview} />
+                <WizardCardColumn drafted={d} selected={pick === d.wizard.id} />
               </StaggerItem>
             )
           })}
@@ -218,10 +213,19 @@ export function RecruitScreen({
           )}
         </div>
 
-        {/* Synergy rail (right column) — same sticky aside position as the draft. */}
+        {/* Synergy rail (right column) — same sticky aside position as the draft.
+            Below the activations, the SAME Duo tracker of the draft, valutato contro
+            baseTeam (squadra meno il sostituito) + reliquie: dice quali combo la recluta
+            considerata accende o avvicina. */}
         <aside>
-          <div className="sticky top-28">
+          <div className="sticky top-28 flex max-h-[calc(100dvh-8rem)] flex-col gap-4 overflow-y-auto [scrollbar-gutter:stable]">
             <ActivationRail candidate={focus} activating={activating} />
+            <Frame variant="panel" innerClassName="relative p-3">
+              <Parchment className="absolute inset-0" />
+              <div className="relative">
+                <DuoTracker picks={baseTeam} considered={focus} relics={relics} />
+              </div>
+            </Frame>
           </div>
         </aside>
       </div>

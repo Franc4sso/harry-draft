@@ -1,7 +1,9 @@
 'use client'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import type { DraftedWizard, ActiveSynergy, ActiveRelic, Synergy, House, Role } from '@/types'
 import { DuoPanel } from '@/components/run/DuoPanel'
+import { detectDuos } from '@/game/engine/duos'
+import { livingOf } from '@/game/engine/roster'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { Chip } from '@/components/ui/Chip'
 import { RoleIcon } from '@/components/cards/RoleIcon'
@@ -160,6 +162,80 @@ function MemberRow({ m }: { m: DraftedWizard }) {
   )
 }
 
+type SidebarTab = 'sinergie' | 'combo'
+
+/** Sidebar verticale (mappa/recruit/reliquia): squadra sempre visibile in alto — è lo stato
+ *  che il giocatore legge di continuo — mentre Sinergie e Combo Duo vivono in due TAB sotto,
+ *  così nessuna delle due liste fa muro. Default sul tab Combo: è quello che guida le scelte
+ *  (chi reclutare, quale reliquia prendere); le sinergie attive restano leggibili dal badge. */
+function VerticalBar({ team, synergies, relics }: {
+  team: DraftedWizard[]
+  synergies: ActiveSynergy[]
+  relics: ActiveRelic[]
+}) {
+  const [tab, setTab] = useState<SidebarTab>('combo')
+  const activeDuos = detectDuos(livingOf(team), relics).length
+
+  const tabBtn = (id: SidebarTab, label: string, count: number) => {
+    const on = tab === id
+    return (
+      <button
+        type="button"
+        data-testid={`sidebar-tab-${id}`}
+        aria-selected={on}
+        role="tab"
+        onClick={() => setTab(id)}
+        className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition-colors"
+        style={on
+          ? { color: '#f3e6c4', background: 'rgba(202,162,74,0.16)', boxShadow: 'inset 0 0 0 1px rgba(202,162,74,0.5)' }
+          : { color: 'rgba(255,255,255,0.45)' }}
+      >
+        {label}
+        {count > 0 && (
+          <span
+            className="rounded-full px-1.5 text-[9px] font-bold tabular-nums"
+            style={{ color: '#e8dcb6', background: on ? 'rgba(0,0,0,0.35)' : 'rgba(202,162,74,0.2)' }}
+          >
+            {count}
+          </span>
+        )}
+      </button>
+    )
+  }
+
+  return (
+    <div
+      data-testid="team-synergy-bar"
+      className="flex w-full flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3"
+    >
+      <div className="flex flex-col gap-2">
+        {team.map((m) => <MemberRow key={m.wizard.id} m={m} />)}
+      </div>
+
+      <div className="flex flex-col gap-2 border-t border-white/10 pt-2.5">
+        <div role="tablist" className="flex gap-1 rounded-xl border border-white/10 bg-black/25 p-1">
+          {tabBtn('combo', 'Combo', activeDuos)}
+          {tabBtn('sinergie', 'Sinergie', synergies.length)}
+        </div>
+
+        {tab === 'sinergie' && (
+          synergies.length > 0 ? (
+            <ul className="flex flex-col gap-1.5">
+              {synergies.map((s) => <SynergyRow key={s.synergy.id} s={s} />)}
+            </ul>
+          ) : (
+            <p className="rounded-lg border border-dashed border-white/10 px-2 py-2 text-[11px] leading-snug text-white/40">
+              Nessuna sinergia attiva. Recluta maghi della stessa Casa o dello stesso ruolo per accendere i bonus.
+            </p>
+          )
+        )}
+
+        {tab === 'combo' && <DuoPanel team={team} relics={relics} frameless />}
+      </div>
+    </div>
+  )
+}
+
 /**
  * The current team + active synergies, kept in view across the run screens. Purely
  * presentational — reads the drafted team and the synergies the engine already
@@ -180,36 +256,7 @@ export function TeamSynergyBar({
   orientation?: 'horizontal' | 'vertical'
 }) {
   if (orientation === 'vertical') {
-    return (
-      <div
-        data-testid="team-synergy-bar"
-        className="flex w-full flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3"
-      >
-        <div className="flex flex-col gap-2">
-          {team.map((m) => <MemberRow key={m.wizard.id} m={m} />)}
-        </div>
-
-        <div className="flex flex-col gap-1.5 border-t border-white/10 pt-2.5">
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Sinergie attive</span>
-            {synergies.length > 0 && (
-              <span className="rounded-full bg-[#caa24a]/20 px-1.5 text-[10px] font-semibold text-[#e8dcb6]">{synergies.length}</span>
-            )}
-          </div>
-          {synergies.length > 0 ? (
-            <ul className="flex flex-col gap-1.5">
-              {synergies.map((s) => <SynergyRow key={s.synergy.id} s={s} />)}
-            </ul>
-          ) : (
-            <p className="rounded-lg border border-dashed border-white/10 px-2 py-2 text-[11px] leading-snug text-white/40">
-              Nessuna sinergia attiva. Recluta maghi della stessa Casa o dello stesso ruolo per accendere i bonus.
-            </p>
-          )}
-        </div>
-
-        <DuoPanel team={team} relics={relics} />
-      </div>
-    )
+    return <VerticalBar team={team} synergies={synergies} relics={relics} />
   }
 
   return (

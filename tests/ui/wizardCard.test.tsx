@@ -88,25 +88,8 @@ describe('WizardCardColumn (poster layout, the LIVE draft card)', () => {
     expect(screen.getByTestId('duo-signal-marks')).toBeInTheDocument()
   })
 
-  it('shows a gold Completa ribbon when duoPreview completes a Duo', () => {
-    render(
-      <WizardCardColumn
-        drafted={velenoDrafted()}
-        duoPreview={{ completes: [{ id: 'cancrena', name: 'Cancrena', desc: '', signals: ['veleno', 'esecuzione'] }], advances: [] }}
-      />,
-    )
-    const ribbon = screen.getByTestId('duo-ribbon')
-    expect(ribbon).toHaveAttribute('data-kind', 'completes')
-    expect(ribbon).toHaveTextContent('Cancrena')
-  })
-
-  it('shows NO ribbon when duoPreview only advances (no "verso" noise)', () => {
-    render(
-      <WizardCardColumn
-        drafted={velenoDrafted()}
-        duoPreview={{ completes: [], advances: [{ id: 'muro-vivente', name: 'Muro Vivente', desc: '', signals: ['scudirigen', 'taunt'] }] }}
-      />,
-    )
+  it('non mostra MAI il ribbon Duo sopra la card: la preview vive nel DuoTracker del rail', () => {
+    render(<WizardCardColumn drafted={velenoDrafted()} />)
     expect(screen.queryByTestId('duo-ribbon')).toBeNull()
   })
 })

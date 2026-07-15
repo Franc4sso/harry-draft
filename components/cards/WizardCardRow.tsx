@@ -10,7 +10,6 @@ import { Chip } from '@/components/ui/Chip'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { affiliationChips } from '@/lib/affiliationChips'
 import { DuoSignalMarks } from './DuoSignalMarks'
-import type { DuoPreview } from '@/game/engine/duos'
 import { spellTypeChip, spellEffectChips, spellEffectDetails, formatSpellStats } from '@/lib/glossary'
 import { roleTooltip } from '@/lib/roleInfo'
 import { Tooltip } from '@/components/ui/Tooltip'
@@ -24,7 +23,7 @@ import { displayName } from '@/lib/displayName'
  * escape the card bounds instead of being cut off by `overflow-hidden`.
  */
 export function WizardCardRow({
-  drafted, selected, onClick, className, hotSynergyIds, testId, showLevel, duoPreview,
+  drafted, selected, onClick, className, hotSynergyIds, testId, showLevel,
 }: {
   drafted: DraftedWizard
   selected?: boolean
@@ -35,7 +34,6 @@ export function WizardCardRow({
   /** Show the `Lv. N` chip. Off in the draft/recruit offer (all level 1); on for
    *  the real roster (team panel, level-up, recruit swap list). */
   showLevel?: boolean
-  duoPreview?: DuoPreview
 }) {
   const { wizard, stats, spell } = drafted
   const clickable = Boolean(onClick)
@@ -71,18 +69,6 @@ export function WizardCardRow({
           : `0 10px 30px rgba(0,0,0,0.5), 0 0 16px ${theme.glow}30${shinyGlow}`,
       }}
     >
-      {duoPreview && duoPreview.completes.length > 0 && (() => {
-        const done = duoPreview.completes[0]!
-        const gold = '#d9b65f'
-        return (
-          <div data-testid="duo-ribbon" data-kind="completes"
-            className="absolute right-2 top-2 z-20 rounded-full px-2 py-0.5 text-[10px] font-bold"
-            style={{ color: '#1a1305', background: gold }}>
-            {`⚡ ${done.name}`}
-          </div>
-        )
-      })()}
-
       {/* Background layer (house gradient + hover sheen), clipped to the rounded
           corners. Kept separate so the card root itself is NOT overflow-hidden. */}
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl">

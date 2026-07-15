@@ -7,7 +7,6 @@ import { RoleBadge } from './RoleBadge'
 import { AbilityPlate } from './AbilityPlate'
 import { DuoSignalMarks } from './DuoSignalMarks'
 import { CARD_STAT_MAX } from './cardStats'
-import type { DuoPreview } from '@/game/engine/duos'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { spellEffectChips, spellEffectDetails, formatSpellStats } from '@/lib/glossary'
 import { ROLE_ACCENT } from '@/lib/roleInfo'
@@ -32,7 +31,7 @@ const STAT_CELLS: Array<{ key: keyof typeof CARD_STAT_MAX; label: string; color:
 ]
 
 export function WizardCardColumn({
-  drafted, selected, onClick, className, hotSynergyIds, testId, duoPreview,
+  drafted, selected, onClick, className, hotSynergyIds, testId,
 }: {
   drafted: DraftedWizard
   selected?: boolean
@@ -40,7 +39,6 @@ export function WizardCardColumn({
   className?: string
   hotSynergyIds?: ReadonlySet<string>
   testId?: string
-  duoPreview?: DuoPreview
 }) {
   const { wizard, stats, spell } = drafted
   const clickable = Boolean(onClick)
@@ -80,22 +78,6 @@ export function WizardCardColumn({
           : `0 0 0 1px rgba(0,0,0,0.7), 0 0 0 2px ${theme.color}, 0 0 0 3px rgba(0,0,0,0.8), 0 22px 46px -14px rgba(0,0,0,0.85), 0 0 34px -6px ${theme.glow}44${shinyGlow}`,
       }}
     >
-      {duoPreview && duoPreview.completes.length > 0 && (() => {
-        const done = duoPreview.completes[0]!
-        const gold = '#d9b65f'
-        const extra = duoPreview.completes.length > 1 ? ` ＋${duoPreview.completes.length - 1}` : ''
-        return (
-          <div
-            data-testid="duo-ribbon"
-            data-kind="completes"
-            className="absolute inset-x-0 top-0 z-30 rounded-t-2xl px-3 py-1 text-center text-[11px] font-bold"
-            style={{ color: '#1a1305', background: gold, boxShadow: `0 0 14px ${gold}88` }}
-          >
-            {`⚡ Completa 「${done.name}」${extra}`}
-          </div>
-        )
-      })()}
-
       {/* Engraved inner hairline in the house color + faint highlight at the crown. */}
       <div
         aria-hidden

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { DuoPanel } from '@/components/run/DuoPanel'
 import { DUOS } from '@/data/duos'
 
@@ -83,6 +84,20 @@ describe('DuoPanel', () => {
     ] as any
     const { container } = render(<DuoPanel team={withFallen} relics={[]} />)
     expect(container.querySelector('[data-duo="cancrena"][data-state="active"]')).toBeNull()
+  })
+
+  it('un Duo LONTANO è compatto (niente desc/howto) e si espande su tap', async () => {
+    const user = userEvent.setup()
+    const { container } = render(<DuoPanel team={team} relics={[]} />)
+    // Mietitore (esecuzione+magieOscure) è lontano: desc e howto nascosti finché non espandi.
+    const row = container.querySelector('[data-duo="mietitore"]')!
+    expect(row).toHaveAttribute('data-state', 'locked')
+    expect(row).not.toHaveTextContent(/carnefice/i)
+    expect(screen.queryByTestId('howto-mietitore')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /Espandi Mietitore/i }))
+    expect(row).toHaveTextContent(/carnefice/i)
+    expect(screen.getByTestId('howto-mietitore')).toBeInTheDocument()
   })
 
   it('mostra il Trio di Casata quando 3+ maghi condividono la casata E un Duo è attivo', () => {
