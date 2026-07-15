@@ -83,21 +83,23 @@ export function AltareScreen({
   offers: Relic[]
   team: DraftedWizard[]
   owned: ActiveRelic[]
-  onBuy: (relicId: string, choice: { costWizardId?: string; costRelicId?: string }) => void
+  onBuy: (relicId: string, choice: { costWizardId?: string; costRelicId?: string; carrierId?: string }) => void
   onSkip: () => void
 }) {
   const [pick, setPick] = useState<string | null>(null)
   const [costWizardId, setCostWizardId] = useState<string | null>(null)
   const [costRelicId, setCostRelicId] = useState<string | null>(null)
+  const [carrierId, setCarrierId] = useState<string | null>(null)
 
   const pseudoState = { team, relics: owned } as Parameters<typeof canPay>[0]
   const pickedRelic = offers.find(r => r.id === pick)
   const costKind = pickedRelic?.sacrificeCost?.kind
   const needsWizardPick = costKind === 'wizard' || costKind === 'maxHp'
   const needsRelicPick = costKind === 'relic'
+  const needsCarrierPick = Boolean(pickedRelic?.assignable)
 
   const selectOffer = (relicId: string) => {
-    setPick(relicId); setCostWizardId(null); setCostRelicId(null)
+    setPick(relicId); setCostWizardId(null); setCostRelicId(null); setCarrierId(null)
   }
 
   const concreteCost: SacrificeCost | null = !pickedRelic?.sacrificeCost
@@ -110,11 +112,17 @@ export function AltareScreen({
           ? { kind: 'maxHp', wizardId: costWizardId, amount: pickedRelic.sacrificeCost.amount }
           : null
 
-  const canConfirm = Boolean(pickedRelic && concreteCost && canPay(pseudoState, concreteCost))
+  const canConfirm = Boolean(
+    pickedRelic && concreteCost && canPay(pseudoState, concreteCost) && (!needsCarrierPick || carrierId),
+  )
 
   const confirm = () => {
     if (!pickedRelic || !canConfirm) return
-    onBuy(pickedRelic.id, { costWizardId: costWizardId ?? undefined, costRelicId: costRelicId ?? undefined })
+    onBuy(pickedRelic.id, {
+      costWizardId: costWizardId ?? undefined,
+      costRelicId: costRelicId ?? undefined,
+      carrierId: carrierId ?? undefined,
+    })
   }
 
   return (
@@ -136,6 +144,31 @@ export function AltareScreen({
           </StaggerItem>
         ))}
       </Stagger>
+
+      {pickedRelic && needsCarrierPick && (
+        <div className="w-full max-w-3xl">
+          <p className="mb-2 text-center text-[10px] uppercase tracking-[0.25em] text-white/45">
+            A chi la assegni?
+          </p>
+          <div className="flex flex-wrap justify-center gap-2">
+            {team.map(dw => (
+              <button
+                key={dw.wizard.id}
+                data-testid={`altare-carrier-${dw.wizard.id}`}
+                onClick={() => setCarrierId(dw.wizard.id)}
+                aria-pressed={carrierId === dw.wizard.id}
+                className="rounded-lg border px-3 py-2 text-sm transition-colors"
+                style={{
+                  borderColor: carrierId === dw.wizard.id ? '#f0727288' : 'rgba(255,255,255,0.18)',
+                  background: carrierId === dw.wizard.id ? 'rgba(240,114,114,0.15)' : 'transparent',
+                }}
+              >
+                {displayName(dw)}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {pickedRelic && needsWizardPick && (
         <div className="w-full max-w-3xl">

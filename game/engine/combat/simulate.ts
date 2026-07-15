@@ -39,7 +39,7 @@ export function toBattleUnits(
   const trioMap = trioEffects(team, duos)
   return team.map(dw => {
     const synBuffed = applyBonuses(dw.stats, synergies)
-    const relicBuffed = applyRelicBonuses(synBuffed, team, relics)
+    const relicBuffed = applyRelicBonuses(synBuffed, team, relics, dw.wizard.id)
     const m = Math.max(0, 1 + menacePct)
     const buffed = menacePct === 0 ? relicBuffed : {
       hp: Math.round(relicBuffed.hp * m),

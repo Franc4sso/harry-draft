@@ -2,7 +2,7 @@ import type { Relic, RunEvent, RunNode, RunState } from '@/types'
 import type { Rng } from '../rng'
 import { parseAreaNodeId } from '../map'
 import { offerSacrifices } from '../relics'
-import { canPay, applySacrificeCost, type SacrificeCost } from '../sacrifice'
+import { canPay, applySacrificeCost, corruptOnAssign, type SacrificeCost } from '../sacrifice'
 import type { NodeResolver } from './types'
 
 /** Deterministica per (seed, node id) — salt 5000 (recruit 1000 / relic 2000 / event 3000 / shop 4000). */
@@ -31,12 +31,16 @@ export const altareResolver: NodeResolver = {
     if (choice.kind !== 'altare-buy') return state
     const relic = altareOffer(state, node, rng).find(r => r.id === choice.relicId)
     if (!relic) return state
+    if (relic.assignable && !choice.carrierId) return state // never a silent unassigned buy
+    if (choice.carrierId && !state.team.some(d => d.wizard.id === choice.carrierId)) return state
     const cost = concreteCost(relic, choice)
     if (!cost || !canPay(state, cost)) return state
     const paid = applySacrificeCost(state, cost)
     if (paid === state) return state
+    const team = choice.carrierId ? corruptOnAssign(paid.team, relic, choice.carrierId) : paid.team
+    const active = { relic, stageObtained: paid.stage, ...(choice.carrierId ? { assignedTo: choice.carrierId } : {}) }
     const ev: RunEvent = { area: state.area ?? 0, nodeId: node.id, kind: 'altare',
       summary: `All'Altare Oscuro ottieni ${relic.name}, pagando il suo prezzo` }
-    return { ...paid, relics: [...paid.relics, { relic, stageObtained: paid.stage }], log: [...(paid.log ?? []), ev] }
+    return { ...paid, team, relics: [...paid.relics, active], log: [...(paid.log ?? []), ev] }
   },
 }

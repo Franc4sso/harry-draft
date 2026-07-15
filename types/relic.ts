@@ -80,6 +80,11 @@ export interface Relic {
    *  La selezione concreta (quale mago/reliquia) è nella scelta altare-buy. Player-only:
    *  esclusa da offerRelics/selectEnemyRelics (vedi SACRIFICE_SET in game/engine/relics.ts). */
   sacrificeCost?: { kind: 'wizard' } | { kind: 'relic' } | { kind: 'maxHp'; amount: number }
+  /** P5 follow-up — bonus stat applicato SOLO al carrier assegnato (richiede
+   *  `assignable: true` + ActiveRelic.assignedTo). A differenza di `bonus` (squadra
+   *  intera), passa da applyRelicBonuses solo quando il wizardId processato coincide
+   *  con assignedTo. Inerte sui nemici (selectEnemyRelics non setta mai assignedTo). */
+  carrierBonus?: SynergyBonus
 }
 
 export interface ActiveRelic {

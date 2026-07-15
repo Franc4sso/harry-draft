@@ -46,14 +46,16 @@ describe('AltareScreen', () => {
     expect(onBuy).toHaveBeenCalledWith(wizardCost.id, { costWizardId: team[0]!.wizard.id })
   })
 
-  it('costo relic: mostra un picker reliquia e chiama onBuy con costRelicId', () => {
+  it('costo relic: mostra un picker reliquia e chiama onBuy con costRelicId (+ carrierId, mano-della-gloria e\' assignable)', () => {
     const onBuy = vi.fn()
     const owned = [{ relic: { id: 'owned-1', name: 'Amuleto', desc: '', rarity: 'comune' as const }, stageObtained: 0 }]
-    render(<AltareScreen offers={[relicCost]} team={makeTeam()} owned={owned} onBuy={onBuy} onSkip={vi.fn()} />)
+    const team = makeTeam()
+    render(<AltareScreen offers={[relicCost]} team={team} owned={owned} onBuy={onBuy} onSkip={vi.fn()} />)
     fireEvent.click(screen.getByTestId(`altare-offer-${relicCost.id}`))
     fireEvent.click(screen.getByTestId('altare-pick-relic-owned-1'))
+    fireEvent.click(screen.getByTestId(`altare-carrier-${team[0]!.wizard.id}`))
     fireEvent.click(screen.getByTestId(`altare-confirm-${relicCost.id}`))
-    expect(onBuy).toHaveBeenCalledWith(relicCost.id, { costRelicId: 'owned-1' })
+    expect(onBuy).toHaveBeenCalledWith(relicCost.id, { costRelicId: 'owned-1', carrierId: team[0]!.wizard.id })
   })
 
   it('costo maxHp: mostra un picker mago e chiama onBuy con costWizardId', () => {
@@ -78,5 +80,23 @@ describe('AltareScreen', () => {
     render(<AltareScreen offers={[wizardCost]} team={soloTeam} owned={[]} onBuy={vi.fn()} onSkip={vi.fn()} />)
     const offer = screen.getByTestId(`altare-offer-${wizardCost.id}`)
     expect(offer.getAttribute('aria-disabled')).toBe('true')
+  })
+
+  it('reliquia assignable (mano-della-gloria): mostra il picker carrier e la conferma e\' bloccata senza scelta', () => {
+    const onBuy = vi.fn()
+    const owned = [{ relic: { id: 'owned-1', name: 'Amuleto', desc: '', rarity: 'comune' as const }, stageObtained: 0 }]
+    const team = makeTeam()
+    render(<AltareScreen offers={[relicCost]} team={team} owned={owned} onBuy={onBuy} onSkip={vi.fn()} />)
+    fireEvent.click(screen.getByTestId(`altare-offer-${relicCost.id}`))
+    // carrier picker present
+    expect(screen.getByTestId(`altare-carrier-${team[0]!.wizard.id}`)).not.toBeNull()
+    expect(screen.getByTestId(`altare-carrier-${team[1]!.wizard.id}`)).not.toBeNull()
+    // cost relic pick alone is not enough to enable confirm
+    fireEvent.click(screen.getByTestId('altare-pick-relic-owned-1'))
+    expect(screen.getByTestId(`altare-confirm-${relicCost.id}`).hasAttribute('disabled')).toBe(true)
+    // picking a carrier enables confirm and carrierId flows through onBuy
+    fireEvent.click(screen.getByTestId(`altare-carrier-${team[0]!.wizard.id}`))
+    fireEvent.click(screen.getByTestId(`altare-confirm-${relicCost.id}`))
+    expect(onBuy).toHaveBeenCalledWith(relicCost.id, { costRelicId: 'owned-1', carrierId: team[0]!.wizard.id })
   })
 })

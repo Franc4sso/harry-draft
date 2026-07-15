@@ -104,7 +104,7 @@ export interface RunSharedController {
   chooseRecruit: (wizardId: string, replaceId?: string) => void
   skipRecruit: () => void
   chooseRelic: (relicId: string, assignedTo?: string) => void
-  buyAltare: (relicId: string, costWizardId?: string, costRelicId?: string) => void
+  buyAltare: (relicId: string, costWizardId?: string, costRelicId?: string, carrierId?: string) => void
   skipAltare: () => void
   ackInfirmary: () => void
   currentEvent: CurrentEventView | null
@@ -207,9 +207,9 @@ export function useRunShared(opts: UseRunSharedOpts): RunSharedController {
   // in the SAME resolve call (see altareResolver.resolve) — no separate wallet step like
   // the shop, the cost IS the price. 'skip' walks away with the node still marked resolved
   // (see markResolved in resolveCurrentImpl), mirroring skipRecruit.
-  const buyAltare = useCallback((relicId: string, costWizardId?: string, costRelicId?: string) => {
+  const buyAltare = useCallback((relicId: string, costWizardId?: string, costRelicId?: string, carrierId?: string) => {
     const next = resolveCurrent(
-      runRef.current, { kind: 'altare-buy', relicId, costWizardId, costRelicId }, createRng(runRef.current.seed),
+      runRef.current, { kind: 'altare-buy', relicId, costWizardId, costRelicId, carrierId }, createRng(runRef.current.seed),
     )
     commit({ ...next, phase: 'map' }, 'map')
   }, [commit])

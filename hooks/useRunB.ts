@@ -39,7 +39,7 @@ export interface RunBController {
   chooseRecruit: (wizardId: string, replaceId?: string) => void
   skipRecruit: () => void
   chooseRelic: (relicId: string, assignedTo?: string) => void
-  buyAltare: (relicId: string, costWizardId?: string, costRelicId?: string) => void
+  buyAltare: (relicId: string, costWizardId?: string, costRelicId?: string, carrierId?: string) => void
   skipAltare: () => void
   ackInfirmary: () => void
   currentEvent: CurrentEventView | null

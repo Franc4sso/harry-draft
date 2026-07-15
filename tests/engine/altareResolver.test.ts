@@ -51,10 +51,37 @@ describe('altareResolver', () => {
   it('buy con costo relic: reliquia scelta rimossa, sacrificio aggiunta', () => {
     const { state: base } = findSeedOffering('mano-della-gloria', 2)
     const s0 = { ...base, relics: [{ relic: RELIC_BY_ID['giratempo']!, stageObtained: 0 }] }
+    const carrierId = s0.team[0]!.wizard.id
     const out = altareResolver.resolve(s0, node(s0),
-      { kind: 'altare-buy', relicId: 'mano-della-gloria', costRelicId: 'giratempo' }, createRng(s0.seed))
+      { kind: 'altare-buy', relicId: 'mano-della-gloria', costRelicId: 'giratempo', carrierId }, createRng(s0.seed))
     expect(out.relics.map(a => a.relic.id)).not.toContain('giratempo')
     expect(out.relics.map(a => a.relic.id)).toContain('mano-della-gloria')
+  })
+
+  it('buy assignable (mano-della-gloria) con carrierId valido → assignedTo settato', () => {
+    const { state: base } = findSeedOffering('mano-della-gloria', 2)
+    const s0 = { ...base, relics: [{ relic: RELIC_BY_ID['giratempo']!, stageObtained: 0 }] }
+    const carrierId = s0.team[1]!.wizard.id
+    const out = altareResolver.resolve(s0, node(s0),
+      { kind: 'altare-buy', relicId: 'mano-della-gloria', costRelicId: 'giratempo', carrierId }, createRng(s0.seed))
+    const active = out.relics.find(a => a.relic.id === 'mano-della-gloria')
+    expect(active?.assignedTo).toBe(carrierId)
+  })
+
+  it('buy assignable senza carrierId → no-op reference-equal', () => {
+    const { state: base } = findSeedOffering('mano-della-gloria', 2)
+    const s0 = { ...base, relics: [{ relic: RELIC_BY_ID['giratempo']!, stageObtained: 0 }] }
+    const out = altareResolver.resolve(s0, node(s0),
+      { kind: 'altare-buy', relicId: 'mano-della-gloria', costRelicId: 'giratempo' }, createRng(s0.seed))
+    expect(out).toBe(s0)
+  })
+
+  it('buy assignable con carrierId non nel team → no-op reference-equal', () => {
+    const { state: base } = findSeedOffering('mano-della-gloria', 2)
+    const s0 = { ...base, relics: [{ relic: RELIC_BY_ID['giratempo']!, stageObtained: 0 }] }
+    const out = altareResolver.resolve(s0, node(s0),
+      { kind: 'altare-buy', relicId: 'mano-della-gloria', costRelicId: 'giratempo', carrierId: 'non-esiste' }, createRng(s0.seed))
+    expect(out).toBe(s0)
   })
 
   it('buy con costo maxHp: stats.hp e maxHp tagliati sul bersaglio', () => {
