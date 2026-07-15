@@ -1,4 +1,4 @@
-import type { RunModifiers, RunState } from '@/types'
+import type { DraftedWizard, Relic, RunModifiers, RunState } from '@/types'
 import { detectSynergies } from './synergy'
 import { livingOf } from './roster'
 
@@ -52,4 +52,14 @@ export function applySacrificeCost(state: RunState, cost: SacrificeCost): RunSta
     case 'runModifier':
       return { ...state, runModifiers: { ...state.runModifiers, [cost.modifier]: true } }
   }
+}
+
+/** P5 Corruzione: l'ATTO di assegnare una reliquia grantsDarkMagic marchia il carrier per
+ *  sempre. Solo qui — il bonus dark da synergy 'oscurita' NON corrompe (nessuna scelta di
+ *  equipaggiamento = nessun costo). Identità (reference-equal) se non applicabile. */
+export function corruptOnAssign(team: DraftedWizard[], relic: Relic, wizardId: string): DraftedWizard[] {
+  if (!relic.grantsDarkMagic) return team
+  const target = team.find(d => d.wizard.id === wizardId)
+  if (!target || target.corrotto) return team
+  return team.map(d => (d.wizard.id === wizardId ? { ...d, corrotto: true as const } : d))
 }
