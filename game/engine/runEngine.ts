@@ -14,6 +14,7 @@ import { infirmaryResolver } from './resolvers/infirmary'
 import { eventResolver } from './resolvers/event'
 import { spellForgeResolver } from './resolvers/spellForge'
 import { shopResolver } from './resolvers/shop'
+import { altareResolver } from './resolvers/altare'
 import { registerResolver, resolverFor } from './resolvers'
 import type { ResolverChoice } from './resolvers/types'
 import { BALANCE } from '@/data/constants'
@@ -41,6 +42,7 @@ export function registerCoreResolvers(): void {
   registerResolver(eventResolver)                  // id 'event'
   registerResolver(spellForgeResolver)             // id 'spellForge'
   registerResolver(shopResolver)                   // id 'shop'
+  registerResolver(altareResolver)                 // id 'altare'
   registered = true
 }
 
