@@ -30,8 +30,13 @@ Il Corrotto non riceve cure di alcun tipo:
 - regen in battaglia — **entrambi** i siti (tick status in `status.ts` E team regen in
   `simulate.ts`; nota memoria "two regen paths": gate speculare obbligatorio in tutti e due);
 - magie di cura (il targeting delle cure salta i Corrotti: non sprecare heal su bersagli immuni);
-- nodi cura fuori battaglia;
+- nodi cura fuori battaglia (Infermeria, shop-heal);
 - effetto evento `healTeam` (il Corrotto è escluso dal heal, gli altri curano normalmente).
+
+ECCEZIONI DELIBERATE (decise in fase piano, 2026-07-15): il recovery di fine area
+(`clearAreaAndAdvance`) ripristina TUTTI, Corrotti inclusi — è l'invariante del death-system
+("bleed HP cappato a una singola area") su cui poggia il bilanciamento del boss finale, non va
+toccato. E il revive (Lacrime di Fenice) funziona anche sui Corrotti: resurrezione ≠ cura.
 
 I danni da recoil diventano quindi definitivi sul carrier: chiude la scappatoia
 "Marchio sul carrier con tanti HP" (memoria: la leva era il recoil, ora il costo è strutturale).
@@ -87,21 +92,22 @@ Nuovi `EventEffect`:
 - `{ kind: 'sacrificeCost', cost: SacrificeCost }` — riusa il backbone (stesso applicatore).
 - `{ kind: 'setRunModifier', modifier }` — scorciatoia diretta per i patti puri.
 
-`RunState.runModifiers?: { noRecruits?: boolean; teamStatPct?: number }` — campi discreti
-(YAGNI: niente bag generico finché non servono più di questi due).
+`RunState.runModifiers?: { noRecruits?: true }` — campi discreti (YAGNI: niente bag generico).
+Il buff dei patti NON è un modificatore runtime: `buffTeamPct` moltiplica le stats
+permanentemente alla firma ("baked") — la squadra è congelata da `noRecruits`, quindi è
+equivalente e non tocca il combat path (deciso in fase piano, 2026-07-15).
 
-### Contenuto v1: 2–3 patti
+### Contenuto v1: 2 patti nuovi
 - **Voto Infrangibile** — "+20% a tutte le stat della squadra attuale; non potrai mai più
-  reclutare." (`teamStatPct: 0.20` + `noRecruits: true`).
+  reclutare." (`buffTeamPct: 0.20` + `setRunModifier: noRecruits`).
   - Gate `noRecruits`: early-return in `recruitResolver.resolve`, caso `addWizard` in
     `applyEventEffects`, e i nodi recruit sulla mappa mostrano lo stato disattivato.
-  - `teamStatPct` applicato in composizione battle units (vale anche per reclute-mai:
-    la squadra è congelata per definizione).
-- 1–2 patti aggiuntivi definiti in fase piano (stesso schema: potere chiaro, costo chiaro).
+- **Patto della Fame** — "+10% a tutte le stat; tutti perdono subito il 30% della vita."
+  (`buffTeamPct: 0.10` + `damageTeam: 0.30` esistente).
 
-Gli eventi patto esistenti (`patto`, `coppa_maledetta`, `ombra`) migrano sul backbone
-`sacrificeCost` dove il loro effetto coincide (rimozione mago per reliquia); nessun cambio
-di comportamento percepito.
+Gli eventi patto esistenti (`patto`, `coppa_maledetta`, `ombra`) NON migrano (deciso in fase
+piano): funzionano già via `removeWizard`/`gamble`, migrare sarebbe churn a comportamento
+identico. Restano i patti "tematici" del catalogo.
 
 ## 4. Architettura
 
