@@ -340,6 +340,17 @@ export const UnitBust = memo(function UnitBust({
           Lv. {shownLevel}
         </span>
       </div>
+      {unit.corrotto && (
+        <div className="mt-0.5 flex justify-center">
+          <span
+            data-testid="corrotto-badge"
+            title="Corrotto — non curabile"
+            className="inline-flex items-center gap-0.5 truncate rounded-full border border-purple-400/60 bg-purple-950/70 px-1 text-[8.5px] font-bold uppercase tracking-wide text-purple-200"
+          >
+            <span aria-hidden>☠</span> Corrotto — non curabile
+          </span>
+        </div>
+      )}
       <div className="mt-0.5"><HpBar hp={hp} maxHp={unit.maxHp} /></div>
 
       {!compact && (
