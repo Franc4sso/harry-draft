@@ -72,6 +72,12 @@ export interface PendingLevelUp {
   atLevel: number
 }
 
+/** Modificatori permanenti di run firmati con un Patto (P5). Campi discreti, tutti opzionali. */
+export interface RunModifiers {
+  /** Voto Infrangibile: nessuna recluta per il resto della run (resolver + eventi addWizard no-op). */
+  noRecruits?: true
+}
+
 export interface RunState {
   seed: string
   phase: RunPhase
@@ -89,4 +95,5 @@ export interface RunState {
   log?: RunEvent[]
   pendingLevelUps?: PendingLevelUp[]
   endless?: boolean
+  runModifiers?: RunModifiers
 }
