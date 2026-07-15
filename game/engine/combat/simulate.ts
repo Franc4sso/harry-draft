@@ -273,7 +273,7 @@ export function simulateBattle(
       const realTarget = fallen
         ? fallen
         : healIntent
-          ? (mostWounded(allies.filter(a => a.alive)) ?? actor)
+          ? (mostWounded(allies.filter(a => a.alive && !a.corrotto)) ?? actor)
           : (spell.type === 'Difesa' ? actor : target!)
       const entry = resolveAction(rng, turn, actor, realTarget, spell, allies, bus)
       pushLog(entry)
@@ -423,7 +423,7 @@ export function simulateBattle(
         // already-resolved death and does not recurse into any further deaths it might cause.
         if (miasma && u.side === 'right') logSpread(u, turn, maybeSpreadPoison(u, R, rng))
       }
-      if (u.alive && regen[u.side] > 0) {
+      if (u.alive && regen[u.side] > 0 && !u.corrotto) {
         const before = u.hp
         u.hp = Math.min(u.maxHp, u.hp + regen[u.side])
         const healed = u.hp - before

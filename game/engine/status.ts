@@ -139,7 +139,8 @@ export function tickStatuses(turn: number, unit: BattleUnit, opts: { velenoMult?
         // Duo sia attivo — il nemico deve essere sotto soglia).
         ...(cancrena ? { duoId: 'cancrena' } : {}) })
     }
-    if (tickHeal && unit.hp > 0) {
+    if (tickHeal && unit.hp > 0 && !unit.corrotto) {
+      // Corrotto (P5): mai curato — gate speculare a simulate.ts team-regen.
       // Never regen-heal a dead unit. Gate on LIVE hp, not `unit.alive`: within this same tick
       // pass a preceding DoT (veleno/burn) may have already dropped hp <= 0, but `unit.alive` is
       // only synced by the caller AFTER tickStatuses returns — so a stale-`alive` check let a unit
