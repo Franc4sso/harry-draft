@@ -50,6 +50,7 @@ export function applyEventEffects(state: RunState, effects: EventEffect[], rng: 
       case 'healTeam': {
         if (s.team.length === 0) break
         const team = s.team.map(dw => {
+          if (dw.corrotto) return dw
           const healed = Math.min(dw.maxHp, currentHp(dw) + Math.round(dw.maxHp * effect.pct))
           return { ...dw, currentHp: healed }
         })

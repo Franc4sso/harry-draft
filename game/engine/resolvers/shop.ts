@@ -55,7 +55,7 @@ export const shopResolver: NodeResolver = {
       const team = choice.carrierId ? corruptOnAssign(next.team, slot.relic, choice.carrierId) : next.team
       next = { ...next, team, relics: [...next.relics, active] }
     } else if (slot.kind === 'heal') {
-      const healed = next.team.map(dw => ({ ...dw, currentHp: dw.maxHp }))
+      const healed = next.team.map(dw => (dw.corrotto ? dw : { ...dw, currentHp: dw.maxHp }))
       next = { ...next, team: healed, activeSynergies: detectSynergies(livingOf(healed)) }
     } else { // removeWizard
       if (!choice.targetWizardId || next.team.length <= 1) return state // never drop below 1
