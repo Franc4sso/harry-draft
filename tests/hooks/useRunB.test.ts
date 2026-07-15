@@ -46,8 +46,13 @@ describe('useRunB FSM', () => {
   })
 
   it('resuming during a combat phase rebuilds the battle snapshot (no null crash)', () => {
-    const first = renderHook(() => useRunB('seed-c'))
-    act(() => first.result.current.completeDraft(twoPicks('seed-c')))
+    // seed-d (not seed-c): after the Altare Oscuro map node landed (~30%/area roll,
+    // Task 6, sacrifice-economy branch), 'seed-c' no longer has a battle/elite one hop
+    // from the entry node (floor 1 = [recruit, altare, relic]) — an expected rng-stream
+    // shift from the new roll, not a guarantee violation. seed-d's floor 1 always
+    // includes a battle node, so it stays a reliable pick for this reload/rebuild check.
+    const first = renderHook(() => useRunB('seed-d'))
+    act(() => first.result.current.completeDraft(twoPicks('seed-d')))
     const fight = first.result.current.reachable.find(n => n.type === 'battle' || n.type === 'elite')
     expect(fight).toBeTruthy()
     act(() => first.result.current.chooseNode(fight!.id))
@@ -56,7 +61,7 @@ describe('useRunB FSM', () => {
     // Simulate a page reload / HMR remount: a brand-new hook reads the saved run,
     // which is persisted in the 'battle' phase. The battle snapshot is ephemeral
     // (not persisted) so it must be rebuilt, or the battle/victory view null-crashes.
-    const reloaded = renderHook(() => useRunB('seed-c'))
+    const reloaded = renderHook(() => useRunB('seed-d'))
     expect(reloaded.result.current.view).toBe('battle')
     expect(reloaded.result.current.battle).not.toBeNull()
     expect(reloaded.result.current.battle!.enemy.length).toBeGreaterThan(0)
@@ -64,7 +69,7 @@ describe('useRunB FSM', () => {
     // And again after committing into the victory phase.
     act(() => first.result.current.commitBattle())
     if (first.result.current.view === 'victory') {
-      const reloaded2 = renderHook(() => useRunB('seed-c'))
+      const reloaded2 = renderHook(() => useRunB('seed-d'))
       expect(reloaded2.result.current.view).toBe('victory')
       expect(reloaded2.result.current.battle).not.toBeNull()
     }

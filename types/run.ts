@@ -5,7 +5,7 @@ export type RunPhase =
   | 'menu' | 'draft' | 'team' | 'battle'
   | 'victory' | 'defeat' | 'win'
   // Fase 1 redesign (Plan B):
-  | 'house' | 'starter' | 'map' | 'recruit-node' | 'relic-node' | 'infirmary-node' | 'event-node' | 'spellForge-node' | 'shop-node' | 'area-cleared'
+  | 'house' | 'starter' | 'map' | 'recruit-node' | 'relic-node' | 'infirmary-node' | 'event-node' | 'spellForge-node' | 'shop-node' | 'area-cleared' | 'altare-node'
 
 export type RunNodeType =
   // Fase 1 — generati e risolti
@@ -13,6 +13,7 @@ export type RunNodeType =
   // Fasi 2-3 — catalogati ora, generati dopo
   | 'shop' | 'event' | 'commonRoom'
   | 'library' | 'potions' | 'forest'
+  | 'altare'
 
 export interface NodeBattle {
   /** The drafted enemy team (stat-rolls already fixed). */
@@ -62,7 +63,7 @@ export interface RunNode {
 export interface RunEvent {
   area: number
   nodeId: string
-  kind: 'recruit' | 'relic' | 'elite' | 'boss' | 'levelMilestone' | 'infirmary' | 'event' | 'spellForge' | 'shop'
+  kind: 'recruit' | 'relic' | 'elite' | 'boss' | 'levelMilestone' | 'infirmary' | 'event' | 'spellForge' | 'shop' | 'altare'
   summary: string
 }
 

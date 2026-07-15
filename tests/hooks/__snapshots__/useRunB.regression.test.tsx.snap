@@ -5,8 +5,7 @@ exports[`useRunB campaign behavior (regression guard for extraction) > produces 
   "draft",
   "map",
   "relic",
-  "battle",
-  "defeat",
+  "relic",
   "battle",
   "defeat",
 ]

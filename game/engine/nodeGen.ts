@@ -9,6 +9,8 @@ export interface AreaBias {
 
 type Filler = 'battle' | 'recruit' | 'relic' | 'event' | 'spellForge' | 'shop'
 
+const ALTARE_CHANCE = 0.3
+
 /** Flat list of (floor, idx) coordinates for the middle floors only. */
 interface Slot { floor: number; idx: number }
 
@@ -76,6 +78,20 @@ export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias,
     const s = rng.pick(pool)
     setCat(cats, s.floor, s.idx, 'relic')
     used.add(key(s.floor, s.idx))
+  }
+
+  // 3b. P5 — Altare Oscuro: ~30% delle aree ne piazza ESATTAMENTE UNO su uno slot libero
+  //     (raro e casuale — scelta utente 2026-07-15: mai garantito, sempre evitabile perché
+  //     ogni floor medio è largo 3). Escluso in endless: il controller endless non ha un
+  //     handler altare (stesso motivo dell'esclusione shop/spellForge) e il corto-circuito
+  //     `!endless` NON consuma il roll → gli stream rng endless restano identici a prima.
+  if (!endless && rng.next() < ALTARE_CHANCE) {
+    const pool = free()
+    if (pool.length > 0) {
+      const s = rng.pick(pool)
+      setCat(cats, s.floor, s.idx, 'altare')
+      used.add(key(s.floor, s.idx))
+    }
   }
 
   // 4. Fill the rest with weighted fillers (recruit-biased when team incomplete),

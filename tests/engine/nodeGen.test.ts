@@ -60,7 +60,7 @@ describe('assignAreaCategories', () => {
     expect(a).toEqual(b)
   })
   it('only emits Fase-1 categories', () => {
-    const allowed = new Set(['battle', 'elite', 'boss', 'recruit', 'relic', 'infirmary'])
+    const allowed = new Set(['battle', 'elite', 'boss', 'recruit', 'relic', 'infirmary', 'altare', 'event', 'shop', 'spellForge'])
     const cats = flat(assignAreaCategories(createRng(4), widths(), bias))
     expect(cats.every(c => allowed.has(c))).toBe(true)
   })
