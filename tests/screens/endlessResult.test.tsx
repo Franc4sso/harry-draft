@@ -27,4 +27,10 @@ describe('EndlessResult', () => {
     render(<EndlessResult score={2100} floor={21} challengeCode="abc" />)
     expect(screen.getByRole('button', { name: /invia|submit/i })).toBeInTheDocument()
   })
+
+  it('offers a way back to the main menu (not a dead end)', () => {
+    render(<EndlessResult score={2100} floor={21} challengeCode="abc" />)
+    const menu = screen.getByRole('link', { name: /menu principale/i })
+    expect(menu).toHaveAttribute('href', '/')
+  })
 })

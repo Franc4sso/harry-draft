@@ -1,4 +1,5 @@
 'use client'
+import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import { Skull, Copy, Check } from 'lucide-react'
@@ -190,6 +191,19 @@ export function EndlessResult({
             {copied ? 'Copiato!' : 'Copia codice'}
           </button>
         </Frame>
+      </motion.div>
+
+      <motion.div
+        initial={reduce ? false : { opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, delay: 0.9, ease: EASE_CINEMATIC }}
+      >
+        <Link
+          href="/"
+          className="text-white/70 hover:text-white text-sm uppercase tracking-wider font-display"
+        >
+          ← Menu principale
+        </Link>
       </motion.div>
     </main>
   )
