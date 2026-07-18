@@ -76,6 +76,20 @@ describe('maybeSpreadPoison — primitive (unit tests)', () => {
     expect(velenoStacks(recipient)).toBe(8) // capped, not 11
   })
 
+  it('recipient already AT the cap (8): nothing moves, returns null (nothing to log)', () => {
+    // The `toAdd <= 0` branch: the drawn recipient is already saturated, so no stack is
+    // added and the caller gets null (no spread callout). Distinct from the additive-cap
+    // test above, where the recipient sat below the cap and DID gain stacks (toAdd > 0).
+    const dead = unit('right', 'e1', { alive: false, hp: 0 })
+    for (let i = 0; i < 5; i++) applyStatus(dead, 'veleno') // 5 stacks
+    const recipient = unit('right', 'e2')
+    for (let i = 0; i < 8; i++) applyStatus(recipient, 'veleno') // already at cap (8)
+    const rng = createRng('seed')
+    const moved = maybeSpreadPoison(dead, [dead, recipient], rng)
+    expect(moved).toBeNull()
+    expect(velenoStacks(recipient)).toBe(8) // unchanged, not 13
+  })
+
   it('determinism: same seed -> same recipient across two independent runs', () => {
     const mk = () => {
       const dead = unit('right', 'e1', { alive: false, hp: 0 })
