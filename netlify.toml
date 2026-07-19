@@ -2,5 +2,10 @@
   command = "npm run build"
   publish = ".next"
 
+# Pin Node so a future change to Netlify's default build image can't break the build
+# out from under us (matches the local toolchain: Node 22).
+[build.environment]
+  NODE_VERSION = "22"
+
 [functions]
   node_bundler = "esbuild"
