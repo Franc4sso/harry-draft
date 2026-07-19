@@ -3,16 +3,18 @@ import { TUTORIAL_STEPS, type TutorialStep, type TutorialStepId } from '@/compon
 
 describe('TUTORIAL_STEPS', () => {
   it('has the 4 steps in order', () => {
-    expect(TUTORIAL_STEPS.map(s => s.id)).toEqual(['draft', 'ruoli', 'autobattle', 'duo'])
+    expect(TUTORIAL_STEPS.map(s => s.id)).toEqual(['draft', 'ruoli', 'duo', 'autobattle'])
   })
-  it('draft & ruoli gate on the draft phase; autobattle on battle; duo on an active duo', () => {
+  it('draft & ruoli gate on the draft phase; duo on the map once a duo is active; autobattle on battle', () => {
     const byId = Object.fromEntries(TUTORIAL_STEPS.map(s => [s.id, s])) as Record<TutorialStepId, TutorialStep>
     expect(byId.draft.when({ phase: 'draft', hasActiveDuo: false })).toBe(true)
     expect(byId.ruoli.when({ phase: 'draft', hasActiveDuo: false })).toBe(true)
     expect(byId.autobattle.when({ phase: 'battle', hasActiveDuo: false })).toBe(true)
     expect(byId.autobattle.when({ phase: 'draft', hasActiveDuo: false })).toBe(false)
-    expect(byId.duo.when({ phase: 'battle', hasActiveDuo: true })).toBe(true)
-    expect(byId.duo.when({ phase: 'draft', hasActiveDuo: false })).toBe(false)
+    // duo-panel is not mounted in battle, so the step must never fire there
+    expect(byId.duo.when({ phase: 'other', hasActiveDuo: true })).toBe(true)
+    expect(byId.duo.when({ phase: 'battle', hasActiveDuo: true })).toBe(false)
+    expect(byId.duo.when({ phase: 'other', hasActiveDuo: false })).toBe(false)
   })
   it('every step has a non-empty anchor, title and body', () => {
     for (const s of TUTORIAL_STEPS) {

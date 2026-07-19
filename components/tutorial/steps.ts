@@ -32,19 +32,19 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     when: (c) => c.phase === 'draft',
   },
   {
+    id: 'duo',
+    anchor: 'duo-panel',
+    placement: 'left',
+    title: 'Hai formato un Duo!',
+    body: 'Due maghi compatibili accendono una combo automatica. Guardala nel pannello: si scatenerà in battaglia.',
+    when: (c) => c.hasActiveDuo && c.phase !== 'battle',
+  },
+  {
     id: 'autobattle',
     anchor: 'battle-arena',
     placement: 'top',
     title: 'Prepari, poi guardi',
     body: 'Non controlli i colpi: la squadra combatte da sola in base a come l\'hai formata. Il tuo lavoro è la preparazione.',
     when: (c) => c.phase === 'battle',
-  },
-  {
-    id: 'duo',
-    anchor: 'duo-panel',
-    placement: 'left',
-    title: 'Hai formato un Duo!',
-    body: 'Due maghi compatibili accendono una combo automatica. Guardala nel pannello: si scatenerà in battaglia.',
-    when: (c) => c.hasActiveDuo,
   },
 ]

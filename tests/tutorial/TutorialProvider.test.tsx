@@ -26,7 +26,16 @@ describe('TutorialProvider', () => {
   it('a step waits (null) until its phase gate holds', () => {
     const { rerender } = render(<TutorialProvider active ctx={ctx()}><Probe /></TutorialProvider>)
     fireEvent.click(screen.getByText('adv')) // -> ruoli
-    fireEvent.click(screen.getByText('adv')) // -> autobattle, but phase is draft
+    fireEvent.click(screen.getByText('adv')) // -> duo (index 2), but no active duo yet
+    expect(screen.getByTestId('step').textContent).toBe('none')
+    // the duo step becomes visible once the guided trio is active, and on the
+    // map (phase: 'other') where duo-panel is mounted — not in battle
+    rerender(<TutorialProvider active ctx={ctx({ phase: 'other', hasActiveDuo: true })}><Probe /></TutorialProvider>)
+    expect(screen.getByTestId('step').textContent).toBe('duo')
+    // back to no active duo: duo step waits again, step doesn't advance itself
+    rerender(<TutorialProvider active ctx={ctx()}><Probe /></TutorialProvider>)
+    expect(screen.getByTestId('step').textContent).toBe('none')
+    fireEvent.click(screen.getByText('adv')) // -> autobattle (index 3), but phase is draft
     expect(screen.getByTestId('step').textContent).toBe('none')
     rerender(<TutorialProvider active ctx={ctx({ phase: 'battle' })}><Probe /></TutorialProvider>)
     expect(screen.getByTestId('step').textContent).toBe('autobattle')
