@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { DraftedWizard } from '@/types'
 import { useDraft } from '@/hooks/useDraft'
 import { STARTER_PICKS } from '@/game/engine/runEngine'
@@ -12,14 +12,48 @@ import { Insegna } from '@/components/ui/Insegna'
 import { Frame } from '@/components/ui/Frame'
 import { Parchment } from '@/components/ui/Parchment'
 
+/** Fixed-offer draft: a single non-regenerating screen over a pre-built curated
+ *  list (tutorial mode's `tutorialStarterOffer`) instead of the RNG-driven,
+ *  multi-screen `draftSession`. Picking removes the chosen candidate from view;
+ *  the rest stay put (no reroll) — the trio occupying the offer's first three
+ *  slots (see `game/engine/tutorialOffer.ts`) are therefore always `draft-pick-0..2`
+ *  on first paint, matching the tutorial's coach-mark anchors. */
+function useFixedDraft(offer: DraftedWizard[]): {
+  current: DraftedWizard[]
+  picks: DraftedWizard[]
+  pick: (candidateIndex: number) => void
+} {
+  const [picks, setPicks] = useState<DraftedWizard[]>([])
+  const [remaining, setRemaining] = useState<DraftedWizard[]>(offer)
+
+  const pick = useCallback((candidateIndex: number) => {
+    setRemaining((r) => {
+      const chosen = r[candidateIndex]
+      if (!chosen) return r
+      setPicks((p) => [...p, chosen])
+      return r.filter((_, i) => i !== candidateIndex)
+    })
+  }, [])
+
+  return { current: remaining, picks, pick }
+}
+
 export function DraftScreen({
-  seed, target = STARTER_PICKS, onComplete,
+  seed, target = STARTER_PICKS, onComplete, fixedOffer,
 }: {
   seed: string
   target?: number
   onComplete: (team: DraftedWizard[]) => void
+  /** Tutorial mode's curated offer — when set, replaces the normal seeded
+   *  multi-screen draft with a single fixed screen over this exact list. */
+  fixedOffer?: DraftedWizard[]
 }) {
-  const { current, picks, pick } = useDraft(seed, target)
+  // Rules-of-hooks: both drafting strategies are always driven (never conditional),
+  // and `fixedOffer` is a per-mount constant (RunBRunner never toggles tutorial mode
+  // on a live instance) — the branch below just picks which result to use.
+  const normalDraft = useDraft(seed, target) // eslint-disable-line react-hooks/rules-of-hooks
+  const fixedDraft = useFixedDraft(fixedOffer ?? []) // eslint-disable-line react-hooks/rules-of-hooks
+  const { current, picks, pick } = fixedOffer ? fixedDraft : normalDraft
   const [considered, setConsidered] = useState<DraftedWizard | null>(null)
   const fired = useRef(false)
   // The shared draft session "completes" only after the full team size; this

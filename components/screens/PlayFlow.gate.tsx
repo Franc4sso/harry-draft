@@ -2,11 +2,13 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { normalizeSeed } from '@/lib/seed'
+import { TUTORIAL_SEED } from '@/game/engine/tutorialOffer'
 import { PlayFlow } from './PlayFlow'
 
 export function PlaySeedGate() {
   const params = useSearchParams()
-  const seed = normalizeSeed(params.get('seed'))
+  const tutorial = params.get('tutorial') === '1'
+  const seed = tutorial ? TUTORIAL_SEED : normalizeSeed(params.get('seed'))
 
   // The run lives in localStorage, so PlayFlow's state differs between the
   // server (no storage → fresh draft) and the client (restored mid-run). Render
@@ -18,5 +20,5 @@ export function PlaySeedGate() {
     return <main className="flex-1 flex items-center justify-center text-white/50">Caricamento…</main>
   }
 
-  return <PlayFlow seed={seed} />
+  return <PlayFlow seed={seed} tutorial={tutorial} />
 }

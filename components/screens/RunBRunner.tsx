@@ -1,5 +1,5 @@
 'use client'
-import type { ReactNode } from 'react'
+import { useMemo, type ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import type { DraftedWizard, RunNode, RunState } from '@/types'
@@ -9,6 +9,12 @@ import { useRunB, type RunBController } from '@/hooks/useRunB'
 import type { EndlessController } from '@/hooks/useEndless'
 import type { ActiveBattleB } from '@/hooks/useRunB.combat'
 import type { RunSharedView, CurrentEventView } from '@/hooks/useRunShared'
+import { tutorialStarterOffer } from '@/game/engine/tutorialOffer'
+import { detectDuos } from '@/game/engine/duos'
+import { livingOf } from '@/game/engine/roster'
+import { TutorialProvider } from '@/components/tutorial/TutorialProvider'
+import { TutorialOverlay } from '@/components/tutorial/TutorialOverlay'
+import type { TutorialCtx } from '@/components/tutorial/steps'
 import { DraftScreen } from './DraftScreen'
 import { MapScreen } from './MapScreen'
 import { BattleScreen } from './BattleScreen'
@@ -82,13 +88,18 @@ export interface RunnerController {
 }
 
 export function RunBRunner({
-  seed, controller, onExit: _onExit,
+  seed, controller, onExit: _onExit, tutorial = false,
 }: {
   seed: string
   /** Injected run controller — defaults to useRunB(seed) (campaign, unchanged). Pass
    *  useEndless(seed) to drive this SAME view tree in endless mode with zero rebuild. */
   controller?: RunnerController
   onExit?: () => void
+  /** Tutorial mode (`?tutorial=1`, see PlayFlow.gate.tsx): the starter draft offer is
+   *  the curated `tutorialStarterOffer` instead of the normal seeded multi-screen
+   *  draft, and coach-marks (TutorialProvider/TutorialOverlay) mount over the run.
+   *  Purely additive UI — never touches engine state or determinism. */
+  tutorial?: boolean
 }) {
   // Rules-of-hooks note: `seed` never changes identity across a component's lifetime
   // (it comes from the URL/route param that mounted this screen), and `controller`'s
@@ -102,6 +113,23 @@ export function RunBRunner({
   const router = useRouter()
   const reduce = useReducedMotion()
   const animKey = `${c.view}-${c.run.currentNodeId ?? area}`
+
+  // Tutorial mode: curated starter offer (guarantees a Duo-forming pair among the
+  // first picks — see game/engine/tutorialOffer.ts) + coach-mark ctx. The trio is a
+  // fixed Tassorosso cast independent of house (tutorialOffer.ts), so 'Tassorosso' is
+  // just a deterministic argument to `tutorialStarterOffer`, not a player choice —
+  // this codebase's live draft has no house-pick step (2026-07-10 draft-parity refactor).
+  const tutorialOffer = useMemo(
+    () => (tutorial ? tutorialStarterOffer('Tassorosso') : undefined),
+    [tutorial],
+  )
+  const tutorialPhase: TutorialCtx['phase'] =
+    c.view === 'draft' ? 'draft' : c.view === 'battle' ? 'battle' : 'other'
+  const hasActiveDuo = useMemo(
+    () => detectDuos(livingOf(c.run.team), c.run.relics).length > 0,
+    [c.run.team, c.run.relics],
+  )
+  const tutorialCtx: TutorialCtx = { phase: tutorialPhase, hasActiveDuo }
 
   // Between-battle phases (map / recruit / relic) show the roster + owned relics as a
   // larger LEFT sidebar beside the screen content, so the player can read their wizards
@@ -136,7 +164,9 @@ export function RunBRunner({
         // BEFORE RunBRunner ever mounts (see hooks/useEndless.ts — the recorded/replayed
         // starterOffer+chooseStarters flow is a different UI than DraftScreen's free
         // 2-of-N pick). Guard defensively rather than crash if ever reached without it.
-        return c.completeDraft ? <DraftScreen seed={c.run.seed} onComplete={c.completeDraft} /> : null
+        return c.completeDraft
+          ? <DraftScreen seed={c.run.seed} onComplete={c.completeDraft} fixedOffer={tutorialOffer} />
+          : null
 
       case 'map':
         return withTeamSidebar(
@@ -347,17 +377,20 @@ export function RunBRunner({
   }
 
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={animKey}
-        variants={reduce ? undefined : screenVariants}
-        initial={reduce ? { opacity: 0 } : 'initial'}
-        animate={reduce ? { opacity: 1 } : 'animate'}
-        exit={reduce ? { opacity: 0 } : 'exit'}
-        className="flex-1 flex flex-col"
-      >
-        {renderView()}
-      </motion.div>
-    </AnimatePresence>
+    <TutorialProvider active={tutorial} ctx={tutorialCtx}>
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={animKey}
+          variants={reduce ? undefined : screenVariants}
+          initial={reduce ? { opacity: 0 } : 'initial'}
+          animate={reduce ? { opacity: 1 } : 'animate'}
+          exit={reduce ? { opacity: 0 } : 'exit'}
+          className="flex-1 flex flex-col"
+        >
+          {renderView()}
+        </motion.div>
+      </AnimatePresence>
+      <TutorialOverlay />
+    </TutorialProvider>
   )
 }
