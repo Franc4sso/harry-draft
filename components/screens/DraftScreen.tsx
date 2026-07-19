@@ -23,19 +23,27 @@ function useFixedDraft(offer: DraftedWizard[]): {
   picks: DraftedWizard[]
   pick: (candidateIndex: number) => void
 } {
-  const [picks, setPicks] = useState<DraftedWizard[]>([])
-  const [remaining, setRemaining] = useState<DraftedWizard[]>(offer)
+  // picks + remaining live in one state object so `pick` is a SINGLE pure updater.
+  // Splitting them and calling setPicks inside the setRemaining updater made the
+  // updater impure: React StrictMode (on by default in `next dev`) double-invokes
+  // updaters, so the chosen wizard got appended to picks twice — the tutorial team
+  // came out with a duplicated wizard (and "same key" errors in battle).
+  const [state, setState] = useState<{ picks: DraftedWizard[]; remaining: DraftedWizard[] }>(
+    () => ({ picks: [], remaining: offer }),
+  )
 
   const pick = useCallback((candidateIndex: number) => {
-    setRemaining((r) => {
-      const chosen = r[candidateIndex]
-      if (!chosen) return r
-      setPicks((p) => [...p, chosen])
-      return r.filter((_, i) => i !== candidateIndex)
+    setState((s) => {
+      const chosen = s.remaining[candidateIndex]
+      if (!chosen) return s
+      return {
+        picks: [...s.picks, chosen],
+        remaining: s.remaining.filter((_, i) => i !== candidateIndex),
+      }
     })
   }, [])
 
-  return { current: remaining, picks, pick }
+  return { current: state.remaining, picks: state.picks, pick }
 }
 
 export function DraftScreen({
