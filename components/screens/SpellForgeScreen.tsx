@@ -10,32 +10,65 @@ import { houseTheme } from '@/lib/theme'
 import { displayName } from '@/lib/displayName'
 import { spellTypeChip } from '@/lib/glossary'
 import { Chip } from '@/components/ui/Chip'
-import { baseSpellOf, spellMultiplier, SPELL_LEVEL_MAX } from '@/game/engine/spellForge'
+import type { Spell } from '@/types'
+import { baseSpellOf, scaledSpell, SPELL_LEVEL_MAX } from '@/game/engine/spellForge'
+import { STATUS_BY_ID } from '@/data/statuses'
 
 const ACCENT = '#5ad1e0'
 const round2 = (n: number) => Math.round(n * 100) / 100
 
-/** The concrete stat that "Aumento Magia" raises for a wizard's equipped spell, formatted
- *  as current → next so the player sees exactly what one level buys — attack Potenza, Cura,
- *  or the magnitude of a control/DoT Effetto (never a vague "efficacia"). Returns null only
- *  for the rare spell whose sole stat is a control duration (nothing numeric to scale). */
-function boostLine(dw: DraftedWizard): { label: string; from: number; to: number } | null {
+/** The single headline number a player reads off a (possibly scaled) spell — the one stat
+ *  "Aumento Magia" moves. Covers every spell shape: attack Potenza, Cura, Scudo, revive %,
+ *  statusId buff/veleno magnitude, and control/ward Durata. Never a vague "efficacia". */
+function spellHeadline(s: Spell): { label: string; value: number; suffix?: string } | null {
+  if (s.power !== undefined && s.power > 0) return { label: 'Potenza', value: round2(s.power) }
+  if (s.heal !== undefined && s.heal > 0) return { label: 'Cura', value: Math.round(s.heal) }
+  if (s.revive !== undefined) return { label: 'Rianima', value: Math.round(s.revive * 100), suffix: '%' }
+  for (const e of s.spec ?? []) {
+    if (e.kind === 'damage') return { label: 'Potenza', value: round2(e.power) }
+    if (e.kind === 'shield') return { label: 'Scudo', value: Math.round(e.amount) }
+    if (e.kind === 'heal') return { label: 'Cura', value: Math.round(e.amount) }
+    if (e.kind === 'protego') {
+      if (e.count != null) return { label: 'Cariche', value: e.count }
+      return { label: 'Durata', value: e.duration ?? STATUS_BY_ID['protego']!.defaultDuration, suffix: ' turni' }
+    }
+    if (e.kind === 'applyStatus') {
+      if (e.statusId) {
+        const def = STATUS_BY_ID[e.statusId]
+        const mm = e.magMult ?? 1
+        if (def?.statMod) return { label: 'Effetto', value: Math.abs(Math.round(def.statMod.amount * mm)) }
+        if (def?.tickDamage != null) return { label: 'Veleno', value: Math.round(def.tickDamage * mm) }
+        if (def?.family === 'control') return { label: 'Durata', value: e.duration ?? def.defaultDuration, suffix: ' turni' }
+        if (def?.absorb != null) return { label: 'Scudo', value: Math.round(def.absorb * mm) }
+      } else if (e.effect?.amount !== undefined) {
+        return { label: 'Effetto', value: Math.abs(Math.round(e.effect.amount)) }
+      } else if (e.effect?.kind === 'stun' && e.effect.duration !== undefined) {
+        return { label: 'Durata', value: e.effect.duration, suffix: ' turni' }
+      }
+    }
+  }
+  const amt = s.effects?.map(e => e.amount).find((a): a is number => a !== undefined)
+  if (amt !== undefined) return { label: 'Effetto', value: Math.abs(Math.round(amt)) }
+  const stun = s.effects?.find(e => e.kind === 'stun' && e.duration !== undefined)
+  if (stun) return { label: 'Durata', value: stun.duration!, suffix: ' turni' }
+  return null
+}
+
+/** What one (or the next meaningful) level of "Aumento Magia" buys, as current → next. Some
+ *  levers move continuously (power/heal/magnitude), others only at breakpoints (control
+ *  durations, ward charges) — so if the immediate next level is flat, scan ahead to the
+ *  level that actually lands the gain and label it (`atLevel`). */
+function boostLine(dw: DraftedWizard): { label: string; from: number; to: number; suffix?: string; atLevel?: number } | null {
   const base = baseSpellOf(dw.spell)
   const cur = dw.spellLevel ?? 1
-  const next = Math.min(SPELL_LEVEL_MAX, cur + 1)
-  const mCur = spellMultiplier(cur)
-  const mNext = spellMultiplier(next)
-  if (base.power !== undefined && base.power > 0) {
-    return { label: 'Potenza', from: round2(base.power * mCur), to: round2(base.power * mNext) }
-  }
-  if (base.heal !== undefined && base.heal > 0) {
-    return { label: 'Cura', from: Math.round(base.heal * mCur), to: Math.round(base.heal * mNext) }
-  }
-  // Control / defense kit: scale the magnitude of its strongest inline effect (DoT damage,
-  // debuff/buff amount). Absolute value so a debuff reads as a growing number.
-  const amt = base.effects?.map(e => e.amount).find((a): a is number => a !== undefined)
-  if (amt !== undefined) {
-    return { label: 'Effetto', from: Math.abs(Math.round(amt * mCur)), to: Math.abs(Math.round(amt * mNext)) }
+  if (cur >= SPELL_LEVEL_MAX) return null
+  const here = spellHeadline(scaledSpell(base, cur))
+  if (!here) return null
+  for (let lvl = cur + 1; lvl <= SPELL_LEVEL_MAX; lvl++) {
+    const there = spellHeadline(scaledSpell(base, lvl))
+    if (there && there.value !== here.value) {
+      return { label: here.label, from: here.value, to: there.value, suffix: here.suffix, atLevel: lvl > cur + 1 ? lvl : undefined }
+    }
   }
   return null
 }
@@ -80,9 +113,10 @@ function ForgeCard({ dw, selected, onSelect }: { dw: DraftedWizard; selected: bo
         <p className="mt-1 text-xs text-white/45">Maestria al culmine.</p>
       ) : boost ? (
         <p className="mt-1 text-sm text-white/70">
-          {boost.label} <span className="text-white/40">{boost.from}</span>
+          {boost.label} <span className="text-white/40">{boost.from}{boost.suffix}</span>
           <span className="mx-1" style={{ color: ACCENT }}>→</span>
-          <span className="font-semibold" style={{ color: ACCENT }}>{boost.to}</span>
+          <span className="font-semibold" style={{ color: ACCENT }}>{boost.to}{boost.suffix}</span>
+          {boost.atLevel && <span className="ml-1 text-white/40">a Lv {boost.atLevel}</span>}
         </p>
       ) : (
         <p className="mt-1 text-sm text-white/50">Nessun bonus diretto — la maestria vale se cambi incantesimo</p>

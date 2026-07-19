@@ -33,6 +33,29 @@ describe('SpellForgeScreen', () => {
     expect(onUpgrade).toHaveBeenCalledWith('Harry')
   })
 
+  it('shows a concrete boost for spells whose power is NOT plain damage/heal', () => {
+    // Regression: shields, statusId buffs, pure control, ward and revive used to render
+    // "Nessun bonus diretto" — the exact "no buff" the player reported. Each must now show
+    // a real boost line.
+    const onUpgrade = vi.fn()
+    const team = [
+      dw('Alba', 'aegis'),      // shield magnitude
+      dw('Bruno', 'salvio'),    // statusId spdUp buff
+      dw('Ciro', 'imperio'),    // pure control (duration breakpoint)
+      dw('Dora', 'rennervate'), // revive fraction
+    ]
+    render(<SpellForgeScreen team={team} onUpgrade={onUpgrade} />)
+
+    for (const id of ['Alba', 'Bruno', 'Ciro', 'Dora']) {
+      const card = within(screen.getByTestId(`forge-${id}`))
+      expect(card.queryByText(/Nessun bonus diretto/)).toBeNull()
+    }
+    expect(within(screen.getByTestId('forge-Alba')).getByText(/Scudo/)).toBeInTheDocument()
+    expect(within(screen.getByTestId('forge-Dora')).getByText(/Rianima/)).toBeInTheDocument()
+    // Control gains at a breakpoint, so its preview points to the level where it lands.
+    expect(within(screen.getByTestId('forge-Ciro')).getByText(/Durata/)).toBeInTheDocument()
+  })
+
   it('disables a maxed wizard and still lets the player leave', () => {
     const onUpgrade = vi.fn()
     const team = [dw('Cap', 'expelliarmus', { spellLevel: SPELL_LEVEL_MAX })]

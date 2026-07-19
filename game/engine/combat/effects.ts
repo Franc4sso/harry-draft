@@ -205,9 +205,9 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
         ? Math.max(1, Math.ceil(base * BALANCE.roles.tenaciaControlDurationMult))
         : eff.duration
       if (eff.target === 'enemy') {
-        applyHostileStatus(ctx.actor, unit, eff.statusId, { duration, sourceId: sourceId(ctx.actor), maxStacks, tickAmount: eff.tickAmount })
+        applyHostileStatus(ctx.actor, unit, eff.statusId, { duration, sourceId: sourceId(ctx.actor), maxStacks, tickAmount: eff.tickAmount, magMult: eff.magMult })
       } else {
-        applyStatus(unit, eff.statusId, { duration, sourceId: sourceId(ctx.actor), maxStacks, tickAmount: eff.tickAmount })
+        applyStatus(unit, eff.statusId, { duration, sourceId: sourceId(ctx.actor), maxStacks, tickAmount: eff.tickAmount, magMult: eff.magMult })
       }
       if (def?.kind === 'stun' || def?.kind === 'freeze') ctx.flags.push('stun')
       if (def?.kind === 'dot') ctx.flags.push('dot')
@@ -231,7 +231,7 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
     // count wards that many top-ranked allies (plain Protego = 1).
     const count = eff.count == null || eff.count <= 0 ? ranked.length : eff.count
     for (const u of ranked.slice(0, count)) {
-      applyStatus(u, 'protego', { sourceId: `${ctx.actor.side}:${ctx.actor.wizard.id}` })
+      applyStatus(u, 'protego', { sourceId: `${ctx.actor.side}:${ctx.actor.wizard.id}`, duration: eff.duration })
     }
     ctx.flags.push('block')
     // Report the primary warded ally so the log/replay attribute Protego to whom it

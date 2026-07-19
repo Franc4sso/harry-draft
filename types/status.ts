@@ -55,7 +55,12 @@ export type EffectSpec =
       kind: 'applyStatus'; target: EffectTarget; chance?: number
       statusId?: string; effect?: EffectInline; duration?: number
       /** Per-instance DoT tick override (fire spells funnel into statusId 'burn' but keep
-       *  their own per-tick damage instead of the def's flat tickDamage). */
+       *  their own per-tick damage instead of the def's flat tickDamage). Composes with
+       *  magMult: the applied tick is round(tickAmount * magMult). */
       tickAmount?: number
+      /** Spell-mastery magnitude multiplier (Aumento Magia). Scales the applied status's
+       *  real magnitude — statMod amount, DoT tick, shield absorb — which live in the
+       *  StatusDef and are otherwise read live. Absent/1 = base. Player-only. */
+      magMult?: number
     }
-  | { kind: 'protego'; count?: number }
+  | { kind: 'protego'; count?: number; duration?: number }

@@ -16,7 +16,10 @@ function statModOf(e: ActiveEffect): { stat: Stat; delta: number; pct: boolean }
     const def = STATUS_BY_ID[e.statusId]
     if (def?.statMod) {
       const sign = def.kind === 'debuff' ? -1 : 1
-      return { stat: def.statMod.stat, delta: sign * def.statMod.amount, pct: def.statMod.pct ?? false }
+      // Prefer the per-instance amount (spell-mastery scaled) over the StatusDef base.
+      // For unscaled applications applyStatus stores the base amount, so this is identical.
+      const amount = e.amount ?? def.statMod.amount
+      return { stat: def.statMod.stat, delta: sign * amount, pct: def.statMod.pct ?? false }
     }
     return null
   }
@@ -47,11 +50,21 @@ export function effectiveStats(unit: BattleUnit): Stats {
 
 export function applyStatus(
   unit: BattleUnit, statusId: string,
-  opts: { duration?: number; sourceId?: string; maxStacks?: number; tickAmount?: number } = {},
+  opts: { duration?: number; sourceId?: string; maxStacks?: number; tickAmount?: number; magMult?: number } = {},
 ): void {
   const def = STATUS_BY_ID[statusId]
   if (!def) return
   const remaining = opts.duration ?? def.defaultDuration
+  // Aumento Magia scaling: the caller's spell-mastery multiplier scales the applied
+  // magnitude (statMod / DoT tick / shield absorb), which otherwise lives read-live in
+  // the StatusDef. mm=1 (default) leaves every stored value byte-identical to before.
+  const mm = opts.magMult ?? 1
+  // The DoT per-tick override: an explicit per-spell tick (burn) or, absent that, the def's
+  // flat tick scaled by mastery (veleno). Composes both: round(tickAmount * mm). Stored in
+  // the effect's `amount` (the field DoTs read in tickStatuses).
+  const scaledTick = opts.tickAmount != null
+    ? Math.round(opts.tickAmount * mm)
+    : (mm !== 1 && def.tickDamage != null ? Math.round(def.tickDamage * mm) : undefined)
   const existing = unit.statusEffects.filter(e => e.statusId === statusId)
   if (existing.length > 0) {
     if (def.stack === 'ignore') return
@@ -64,15 +77,18 @@ export function applyStatus(
       cur.remaining = remaining
       // A re-ignite may carry a higher per-tick amount (e.g. incendio then fiendfyre): keep the
       // strongest so the burn's damage never drops when refreshed by a weaker spell.
-      if (opts.tickAmount != null) cur.amount = Math.max(cur.amount ?? 0, opts.tickAmount)
+      if (scaledTick != null) cur.amount = Math.max(cur.amount ?? 0, scaledTick)
       return
     }
     if (def.stack === 'stack' && def.maxStacks != null && existing.length >= def.maxStacks) return
   }
   unit.statusEffects.push({
     kind: def.kind, statusId, remaining, stacks: 1, sourceId: opts.sourceId,
-    // tickAmount overrides the def's flat tickDamage for DoTs that carry per-spell damage (burn).
-    stat: def.statMod?.stat, amount: opts.tickAmount ?? def.statMod?.amount, absorbLeft: def.absorb,
+    // `amount` holds EITHER the DoT per-tick (burn's per-spell tick, or veleno scaled by
+    // mastery) OR a stat buff/debuff magnitude — a status is one or the other, never both.
+    stat: def.statMod?.stat,
+    amount: scaledTick ?? (def.statMod ? Math.round(def.statMod.amount * mm) : undefined),
+    absorbLeft: def.absorb != null ? Math.round(def.absorb * mm) : undefined,
   })
 }
 
@@ -87,7 +103,7 @@ export function applyStatus(
  *  DOPO il dimezzamento (deterministico, offset parziale) — tenerne conto in un balance pass. */
 export function applyHostileStatus(
   actor: BattleUnit, target: BattleUnit, statusId: string,
-  opts: { duration?: number; sourceId?: string; maxStacks?: number; tickAmount?: number } = {},
+  opts: { duration?: number; sourceId?: string; maxStacks?: number; tickAmount?: number; magMult?: number } = {},
 ): void {
   const def = STATUS_BY_ID[statusId]
   if (!def) return
@@ -118,7 +134,7 @@ export function tickStatuses(turn: number, unit: BattleUnit, opts: { velenoMult?
   const logs: LogEntry[] = []
   for (const e of unit.statusEffects) {
     const def = e.statusId ? STATUS_BY_ID[e.statusId] : undefined
-    // For DoTs, a per-instance `amount` (burn's per-spell tickAmount, or a legacy inline dot)
+    // For DoTs, a per-instance `amount` (burn's per-spell tick, or veleno scaled by mastery)
     // overrides the def's flat tickDamage; other statuses fall back to the def value.
     const baseTick = e.kind === 'dot' ? (e.amount ?? def?.tickDamage) : def?.tickDamage
     const tickHeal = def?.tickHeal
