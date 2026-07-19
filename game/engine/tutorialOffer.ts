@@ -22,18 +22,6 @@ export const tutorialGuidedPickIds: string[] = ['ernie', 'cedric', 'sprout']
 // consumer of TUTORIAL_SEED's rng stream.
 const GUIDED_ROLL_CHANNEL = 97531
 
-/** Deterministically resolve a specific wizard id to a DraftedWizard by scanning a fixed set
- *  of seeds' starter offers for the given house. Pure (no rng/time): iterates fixed seed
- *  strings in order. Only succeeds if `id` belongs to `house` (starterOffer filters by
- *  house), which is why `buildGuidedDrafted` below exists as a house-independent fallback. */
-function findDraftedById(id: string, house: House): DraftedWizard | undefined {
-  for (let i = 0; i < 50; i++) {
-    const hit = starterOffer(`tutorial-${i}`, house).find(d => d.wizard.id === id)
-    if (hit) return hit
-  }
-  return undefined
-}
-
 /** Build a real DraftedWizard for a fixed guided-pick wizard id, the same way
  *  `game/engine/statRoll.ts#draftWizard` does (fixed midpoint stats + one deterministic
  *  spell/shiny roll) — but independent of the player's chosen house, since the guided trio
@@ -58,7 +46,7 @@ export function tutorialStarterOffer(house: string): DraftedWizard[] {
   const byId = new Map(base.map(d => [d.wizard.id, d]))
   for (const id of tutorialGuidedPickIds) {
     if (!byId.has(id)) {
-      const found = findDraftedById(id, h) ?? buildGuidedDrafted(id)
+      const found = buildGuidedDrafted(id)
       byId.set(id, found)
     }
   }
