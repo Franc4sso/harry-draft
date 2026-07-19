@@ -116,6 +116,8 @@ export function DraftScreen({
           <Frame variant="panel" className="sticky top-28 max-h-[calc(100dvh-8rem)] overflow-y-auto [scrollbar-gutter:stable]" innerClassName="relative p-3">
             <Parchment className="absolute inset-0" />
             <div className="relative">
+              {/* Combo Duo in evidenza (guidano la build, scattano in battaglia); le
+                  Costellazioni d'archetipo — bonus passivi — restano sotto, subordinate. */}
               <DuoTracker picks={picks} considered={considered} />
               <ArchetypeTracker picks={picks} considered={considered} className="mt-4" />
             </div>
