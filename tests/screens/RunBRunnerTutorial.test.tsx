@@ -25,4 +25,12 @@ describe('RunBRunner tutorial mode', () => {
     render(<RunBRunner seed="normal-seed" />)
     expect(screen.queryByTestId('tutorial-coachmark')).toBeNull()
   })
+  it('restricts the tutorial draft to exactly the 3 guided-trio candidates (Duo guaranteed)', () => {
+    // Critical gap: fixedOffer used to be the full 11-wizard tutorialStarterOffer, so the
+    // player could pick 3 wizards that are NOT the guided trio and never form the Duo.
+    // The draft must show exactly the 3 guided-trio cards — picking all 3 = the Duo.
+    render(<RunBRunner seed={TUTORIAL_SEED} tutorial />)
+    const cards = screen.getAllByTestId(/^draft-pick-\d+$/)
+    expect(cards).toHaveLength(3)
+  })
 })

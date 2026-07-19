@@ -53,7 +53,7 @@ export function DraftScreen({
   // on a live instance) — the branch below just picks which result to use.
   const normalDraft = useDraft(seed, target) // eslint-disable-line react-hooks/rules-of-hooks
   const fixedDraft = useFixedDraft(fixedOffer ?? []) // eslint-disable-line react-hooks/rules-of-hooks
-  const { current, picks, pick } = fixedOffer ? fixedDraft : normalDraft
+  const { current, picks, pick } = fixedOffer !== undefined ? fixedDraft : normalDraft
   const [considered, setConsidered] = useState<DraftedWizard | null>(null)
   const fired = useRef(false)
   // The shared draft session "completes" only after the full team size; this

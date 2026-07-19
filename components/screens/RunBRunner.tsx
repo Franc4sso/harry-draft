@@ -9,7 +9,7 @@ import { useRunB, type RunBController } from '@/hooks/useRunB'
 import type { EndlessController } from '@/hooks/useEndless'
 import type { ActiveBattleB } from '@/hooks/useRunB.combat'
 import type { RunSharedView, CurrentEventView } from '@/hooks/useRunShared'
-import { tutorialStarterOffer } from '@/game/engine/tutorialOffer'
+import { tutorialStarterOffer, tutorialGuidedPickIds } from '@/game/engine/tutorialOffer'
 import { detectDuos } from '@/game/engine/duos'
 import { livingOf } from '@/game/engine/roster'
 import { TutorialProvider } from '@/components/tutorial/TutorialProvider'
@@ -114,15 +114,21 @@ export function RunBRunner({
   const reduce = useReducedMotion()
   const animKey = `${c.view}-${c.run.currentNodeId ?? area}`
 
-  // Tutorial mode: curated starter offer (guarantees a Duo-forming pair among the
-  // first picks — see game/engine/tutorialOffer.ts) + coach-mark ctx. The trio is a
-  // fixed Tassorosso cast independent of house (tutorialOffer.ts), so 'Tassorosso' is
-  // just a deterministic argument to `tutorialStarterOffer`, not a player choice —
-  // this codebase's live draft has no house-pick step (2026-07-10 draft-parity refactor).
-  const tutorialOffer = useMemo(
-    () => (tutorial ? tutorialStarterOffer('Tassorosso') : undefined),
-    [tutorial],
-  )
+  // Tutorial mode: curated starter offer, RESTRICTED to exactly the guided trio
+  // (game/engine/tutorialOffer.ts's tutorialGuidedPickIds) — not the full house offer.
+  // This structurally guarantees the Duo: with only 3 candidates shown and STARTER_PICKS
+  // = 3, picking a full team IS picking the trio, so detectDuos can never come up empty
+  // (see game/engine/duos.ts). The trio is a fixed Tassorosso cast independent of house
+  // (tutorialOffer.ts), so 'Tassorosso' is just a deterministic argument to
+  // `tutorialStarterOffer`, not a player choice — this codebase's live draft has no
+  // house-pick step (2026-07-10 draft-parity refactor).
+  const tutorialOffer = useMemo(() => {
+    if (!tutorial) return undefined
+    const full = tutorialStarterOffer('Tassorosso')
+    return tutorialGuidedPickIds
+      .map(id => full.find(d => d.wizard.id === id))
+      .filter((d): d is DraftedWizard => !!d)
+  }, [tutorial])
   const tutorialPhase: TutorialCtx['phase'] =
     c.view === 'draft' ? 'draft' : c.view === 'battle' ? 'battle' : 'other'
   const hasActiveDuo = useMemo(
