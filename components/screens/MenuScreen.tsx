@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, useReducedMotion } from 'framer-motion'
 import { loadRun, clearRun } from '@/lib/runStore'
+import { loadProfile, saveProfile, markTutorialNudgeSeen } from '@/lib/metaStore'
 
 // A defined Hogwarts-at-night skyline. Kept as one path so the silhouette + its
 // warm rim light share the exact same mask.
@@ -85,16 +86,28 @@ export function MenuScreen() {
   const router = useRouter()
   const reduce = useReducedMotion()
   const [hasSavedRun, setHasSavedRun] = useState(false)
+  const [nudge, setNudge] = useState(false)
 
   useEffect(() => {
     setHasSavedRun(loadRun() !== null)
+    setNudge(!(loadProfile().tutorialNudgeSeen))
   }, [])
 
+  const dismissNudge = () => {
+    saveProfile(markTutorialNudgeSeen(loadProfile()))
+    setNudge(false)
+  }
+
   const play = () => {
+    dismissNudge()
     clearRun()
     router.push('/play')
   }
   const continua = () => router.push('/play')
+  const tutorial = () => {
+    dismissNudge()
+    router.push('/play?tutorial=1')
+  }
 
   return (
     <main className="relative flex-1 flex flex-col items-center justify-center gap-7 overflow-hidden p-8 text-center">
@@ -237,6 +250,20 @@ export function MenuScreen() {
         </div>
 
         <div className="mt-1 flex items-center gap-5">
+          <button
+            type="button"
+            onClick={tutorial}
+            data-testid="tutorial-cta"
+            className="relative font-display text-xs uppercase tracking-wider text-white/45 transition-colors hover:text-gold"
+          >
+            Tutorial
+            {nudge && (
+              <span data-testid="tutorial-nudge" className="ml-2 rounded-full bg-gold/20 px-2 py-0.5 text-[10px] font-bold text-gold">
+                ✨ Nuovo? Inizia qui
+              </span>
+            )}
+          </button>
+          <span aria-hidden className="text-white/15">✦</span>
           <Link href="/rules" className="font-display text-xs uppercase tracking-wider text-white/45 transition-colors hover:text-gold">Compendio</Link>
           <span aria-hidden className="text-white/15">✦</span>
           <Link href="/collection" className="font-display text-xs uppercase tracking-wider text-white/45 transition-colors hover:text-gold">Collezione</Link>
