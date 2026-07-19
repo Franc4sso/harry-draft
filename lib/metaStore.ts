@@ -23,6 +23,7 @@ export interface MetaProfile {
   milestones: Record<string, boolean>
   stats: MetaStats
   codex: MetaCodex
+  tutorialNudgeSeen?: boolean
 }
 
 export const PROFILE_KEY = 'harry:profile:v1'
@@ -100,4 +101,8 @@ export function markSeen(
 ): MetaProfile {
   const key = ({ wizard: 'wizardsSeen', relic: 'relicsSeen', synergy: 'synergiesSeen', boss: 'bossesSeen', duo: 'duosSeen' } as const)[kind]
   return { ...p, codex: { ...p.codex, [key]: addUnique(p.codex[key], id) } }
+}
+
+export function markTutorialNudgeSeen(p: MetaProfile): MetaProfile {
+  return { ...p, tutorialNudgeSeen: true }
 }
