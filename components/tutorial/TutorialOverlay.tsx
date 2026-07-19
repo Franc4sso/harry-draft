@@ -35,7 +35,7 @@ export function TutorialOverlay() {
         data-testid="tutorial-coachmark"
         className="pointer-events-auto max-w-xs rounded-xl border border-gold/50 bg-[#141024] p-4 text-left shadow-xl"
         style={cardStyle}
-        initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }}
       >
         <p className="font-display text-sm font-semibold text-[#f3e6c4]">{visibleStep.title}</p>
         <p className="mt-1 text-xs leading-snug text-white/70">{visibleStep.body}</p>
