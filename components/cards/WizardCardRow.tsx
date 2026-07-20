@@ -8,7 +8,6 @@ import { CARD_STAT_MAX } from './cardStats'
 import { StatCell, STAT_CELLS } from './statCells'
 import { Chip } from '@/components/ui/Chip'
 import { PortraitImage } from '@/components/ui/PortraitImage'
-import { affiliationChips } from '@/lib/affiliationChips'
 import { DuoSignalMarks } from './DuoSignalMarks'
 import { spellTypeChip, spellEffectChips, spellEffectDetails, formatSpellStats } from '@/lib/glossary'
 import { roleTooltip } from '@/lib/roleInfo'
@@ -23,13 +22,12 @@ import { displayName } from '@/lib/displayName'
  * escape the card bounds instead of being cut off by `overflow-hidden`.
  */
 export function WizardCardRow({
-  drafted, selected, onClick, className, hotSynergyIds, testId, showLevel,
+  drafted, selected, onClick, className, testId, showLevel,
 }: {
   drafted: DraftedWizard
   selected?: boolean
   onClick?: () => void
   className?: string
-  hotSynergyIds?: ReadonlySet<string>
   testId?: string
   /** Show the `Lv. N` chip. Off in the draft/recruit offer (all level 1); on for
    *  the real roster (team panel, level-up, recruit swap list). */
@@ -42,7 +40,6 @@ export function WizardCardRow({
   const effectChips = spellEffectChips(spell)
   const effectDetails = spellEffectDetails(spell)
   const spellStats = formatSpellStats(spell)
-  const specialChips = affiliationChips(wizard).filter((c) => c.kind === 'special')
   const shinyTrait = drafted.shiny ? TRAIT_BY_ID[drafted.shiny.traitId] : undefined
   const shinyGlow = drafted.shiny ? ', 0 0 22px rgba(255,200,80,0.55), inset 0 0 0 2px rgba(255,210,90,0.7)' : ''
   const signature = SIGNATURE_BY_ID[wizard.id]
@@ -107,35 +104,12 @@ export function WizardCardRow({
 
       {/* CONTENT */}
       <div className="relative z-10 flex min-w-0 flex-1 flex-col gap-1.5 p-3">
-        {/* Name + synergy chips (gold, round) */}
+        {/* Name + Combo Duo signal marks */}
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <h3 className="font-display text-[17px] leading-none">
             {displayName(drafted)}
             {drafted.shiny && <span aria-hidden className="ml-1 text-amber-300">✨</span>}
           </h3>
-          {specialChips.length > 0 && (
-            <div data-testid="affiliation-strip" className="flex flex-wrap items-center gap-1">
-              {specialChips.map((c) => {
-                const hot = c.synergyId ? hotSynergyIds?.has(c.synergyId) ?? false : false
-                return (
-                  <span
-                    key={c.id}
-                    data-synergy={c.synergyId}
-                    data-hot={hot ? '' : undefined}
-                    className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold"
-                    style={
-                      hot
-                        ? { color: '#f3e6c4', borderColor: '#caa24a', background: 'rgba(120,90,40,0.65)', boxShadow: '0 0 8px rgba(202,162,74,0.6)' }
-                        : { color: '#ead9b0', borderColor: 'rgba(176,141,87,0.55)', background: 'rgba(176,141,87,0.14)' }
-                    }
-                  >
-                    <span aria-hidden style={{ color: '#caa24a' }}>◆</span>
-                    {c.label}
-                  </span>
-                )
-              })}
-            </div>
-          )}
           <DuoSignalMarks wizard={wizard} compact />
         </div>
 

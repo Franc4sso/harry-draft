@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { WizardCardRow } from '@/components/cards/WizardCardRow'
 import { draftWizard } from '@/game/engine/statRoll'
@@ -34,13 +34,6 @@ describe('WizardCardRow', () => {
     const d = harry()
     render(<WizardCardRow drafted={d} />)
     expect(screen.getByLabelText(d.wizard.role)).toBeInTheDocument()
-  })
-
-  it('shows the special-synergy strip and marks a hot chip', () => {
-    render(<WizardCardRow drafted={harry()} hotSynergyIds={new Set(['goldenTrio'])} />)
-    const strip = screen.getByTestId('affiliation-strip')
-    expect(within(strip).getByText(/Golden Trio/i)).toBeInTheDocument()
-    expect(strip.querySelector('[data-synergy="goldenTrio"][data-hot]')).not.toBeNull()
   })
 
   it('shows a trait chip when the wizard is shiny', () => {
