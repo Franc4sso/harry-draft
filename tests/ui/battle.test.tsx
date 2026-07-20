@@ -288,21 +288,6 @@ describe('BattleScreen', () => {
     expect(screen.getByTestId('battle-arena')).toBeInTheDocument()
   })
 
-  it('shows the active-synergy ribbons for both teams in battle', () => {
-    const l = left(), r = right()
-    const result = simulateBattle(l, r, createRng(42), {
-      leftSyn: detectSynergies(l), rightSyn: detectSynergies(r),
-    })
-    render(
-      <BattleScreen
-        result={result} playerTeam={l} playerSyn={detectSynergies(l)}
-        enemy={r} enemySyn={detectSynergies(r)} title="Sfida 1 di 5" onFinish={() => {}}
-      />,
-    )
-    // Both teams (Gryffindor-heavy left, Slytherin-heavy right) have at least one active synergy here.
-    expect(screen.getAllByTestId('synergy-ribbon').length).toBeGreaterThanOrEqual(1)
-  })
-
   it('header has no action counter', () => {
     const l = left(), r = right()
     const result = simulateBattle(l, r, createRng(42), {
@@ -318,22 +303,6 @@ describe('BattleScreen', () => {
     // (StatusLegend text like "nessuna azione" is intentionally excluded from this check.)
     const header = screen.getByRole('heading', { level: 1 }).closest('div')!
     expect(header.textContent).not.toMatch(/\bazione\b/i)
-  })
-
-  it('shows separate labeled mine/enemy synergy ribbons', () => {
-    const l = left(), r = right()
-    const result = simulateBattle(l, r, createRng(42), {
-      leftSyn: detectSynergies(l), rightSyn: detectSynergies(r),
-    })
-    render(
-      <BattleScreen
-        result={result} playerTeam={l} playerSyn={detectSynergies(l)}
-        enemy={r} enemySyn={detectSynergies(r)} title="Sfida 1 di 5" onFinish={() => {}}
-      />,
-    )
-    // Both ribbons render twice (desktop + below-lg); getAllByText asserts presence.
-    expect(screen.getAllByText(/Le tue sinergie/i).length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText(/Sinergie nemiche/i).length).toBeGreaterThanOrEqual(1)
   })
 
   function renderBattleScreen() {

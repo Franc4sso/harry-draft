@@ -15,7 +15,6 @@ import { BattleLog } from '@/components/battle/BattleLog'
 import { StatusLegend } from '@/components/battle/StatusLegend'
 import { BattleRecap } from '@/components/battle/BattleRecap'
 import { Button } from '@/components/ui/Button'
-import { SynergyRibbon } from '@/components/battle/SynergyRibbon'
 import { lastRealEntryAt } from '@/lib/initiative'
 import { BattleEndModal } from '@/components/battle/BattleEndModal'
 import { recapTotals } from '@/lib/battleRecap'
@@ -166,13 +165,11 @@ export function BattleScreen({
         </div>
 
         <div className="flex flex-col items-center gap-3 min-w-0">
-          <SynergyRibbon synergies={playerSyn} relics={playerRelics ?? []} align="left" title="Le tue sinergie" tone="ally" />
           <BattleArena
             replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle}
             enemyLevel={enemyLevel} speed={r.speed} duos={activeDuos}
             center={<ActionPanel entry={stickyEntry} units={replay.units} />}
           />
-          <SynergyRibbon synergies={enemySyn} align="left" title="Sinergie nemiche" tone="enemy" />
         </div>
 
         <div className="hidden lg:flex lg:flex-col gap-3">
