@@ -31,13 +31,12 @@ const STAT_CELLS: Array<{ key: keyof typeof CARD_STAT_MAX; label: string; color:
 ]
 
 export function WizardCardColumn({
-  drafted, selected, onClick, className, hotSynergyIds, testId,
+  drafted, selected, onClick, className, testId,
 }: {
   drafted: DraftedWizard
   selected?: boolean
   onClick?: () => void
   className?: string
-  hotSynergyIds?: ReadonlySet<string>
   testId?: string
 }) {
   const { wizard, stats, spell } = drafted

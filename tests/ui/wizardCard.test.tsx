@@ -44,11 +44,8 @@ describe('WizardCardColumn (poster layout, the LIVE draft card)', () => {
   })
 
   it('never shows the synergy nudge — it was removed (meant nothing to the player)', () => {
-    // The "Aggiunge 2 Tassorosso" nudge was removed per user feedback. hotSynergyIds is still
-    // an accepted prop (callers pass it) but the card renders no nudge for it.
-    const { rerender } = render(<WizardCardColumn drafted={draftedTank()} />)
-    expect(screen.queryByTestId('synergy-nudge')).toBeNull()
-    rerender(<WizardCardColumn drafted={draftedTank()} hotSynergyIds={new Set(['gryffindor'])} />)
+    // The "Aggiunge 2 Tassorosso" nudge was removed per user feedback.
+    render(<WizardCardColumn drafted={draftedTank()} />)
     expect(screen.queryByTestId('synergy-nudge')).toBeNull()
   })
 
