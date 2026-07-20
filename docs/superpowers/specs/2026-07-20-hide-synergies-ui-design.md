@@ -75,6 +75,13 @@ accettato.
 - `components/screens/compendium/SynergyGraph.tsx`: se dopo la rimozione nessuno importa più
   `KIND_COLOR`/`SynergyGraph`, il file è orfano → rimosso. Verificare gli importatori prima.
 
+### 6. Card riga reclutamento — `components/cards/WizardCardRow.tsx` (trovata in review finale)
+Superficie mancata nella mappatura iniziale, emersa dalla review whole-branch. Le righe
+della lista "sostituisci chi" (reclutamento a squadra piena) mostravano una pastiglia oro
+per ogni sinergia gruppo/origine del mago (`affiliationChips` filtrati su `kind === 'special'`:
+Golden Trio, Mangiamorte, Tossicità…). Rimosse: restano i chip Casa/Ruolo (identità del mago,
+non sinergie) e i `DuoSignalMarks`. La prop morta `hotSynergyIds` è stata rimossa.
+
 ## File probabilmente eliminabili (dopo verifica orfani)
 - `components/battle/SynergyRibbon.tsx`
 - `components/draft/SynergyTracker.tsx`
