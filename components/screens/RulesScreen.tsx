@@ -6,16 +6,13 @@ import { Insegna } from '@/components/ui/Insegna'
 import { GlowPanel } from '@/components/ui/GlowPanel'
 import { Chip } from '@/components/ui/Chip'
 import { RoleIcon } from '@/components/cards/RoleIcon'
-import { KIND_COLOR } from '@/components/screens/compendium/SynergyGraph'
 import { SPELLS } from '@/data/spells'
 import { RELICS } from '@/data/relics'
-import { SYNERGIES } from '@/data/synergies'
 import { RELIC_RARITY_COLOR } from '@/lib/relicRarity'
 import { ROLE_INFO } from '@/lib/roleInfo'
 import {
-  SPELL_TYPE_META, EFFECT_META, formatSpellStats, spellEffectChips, synergyBonusText,
+  SPELL_TYPE_META, EFFECT_META, formatSpellStats, spellEffectChips,
 } from '@/lib/glossary'
-import type { Synergy } from '@/types'
 import { cn } from '@/lib/cn'
 import type { SpellType } from '@/types/spell'
 import type { RelicRarity } from '@/types/relic'
@@ -48,17 +45,11 @@ const RARITY_BLURB: Record<RelicRarity, string> = {
   epica: 'Effetti potenti con trigger speciali.',
 }
 
-const SYNERGY_KIND_META: Array<{ kind: 'group' | 'origin'; label: string; blurb: string }> = [
-  { kind: 'group',  label: 'Gruppo',  blurb: 'Gruppi a tema (Golden Trio, Weasley…).' },
-  { kind: 'origin', label: 'Origine', blurb: 'Affinità di tema (Tossicità, Bastione…).' },
-]
-
-type Tab = 'gioco' | 'magie' | 'reliquie' | 'sinergie'
+type Tab = 'gioco' | 'magie' | 'reliquie'
 const TABS: Array<{ id: Tab; label: string }> = [
   { id: 'gioco', label: 'Come si gioca' },
   { id: 'magie', label: 'Magie' },
   { id: 'reliquie', label: 'Reliquie' },
-  { id: 'sinergie', label: 'Sinergie' },
 ]
 
 /** One glossary entry: chip, then its blurb on the same line (wraps under on overflow). */
@@ -91,68 +82,6 @@ function SectionTitle({ label }: { label: string }) {
   )
 }
 
-// ── Synergy compendium: group the flat SYNERGIES list into readable cards. ──
-// Synergies with a shared `family` collapse into ONE card with its 2/3/4
-// tiers; group/origin synergies are single-threshold cards on their own.
-type SynGroup = {
-  key: string
-  name: string          // family display name, count prefix stripped ("Grifondoro")
-  kind: Synergy['kind']
-  tiers: Array<{ threshold: number; bonus: string }>
-}
-
-// Bonuses that synergyBonusText can't render (e.g. keywordMult) get a hand-written
-// description here so no card shows a bare "—".
-const SYNERGY_BONUS_FALLBACK: Record<string, string> = {
-  tossicita: 'Il veleno infligge il 50% di danno in più',
-}
-
-function buildSynGroups(kinds: Array<Synergy['kind']>): SynGroup[] {
-  const byFamily = new Map<string, SynGroup>()
-  const out: SynGroup[] = []
-  for (const s of SYNERGIES) {
-    if (!kinds.includes(s.kind)) continue
-    const threshold = s.requires.count ?? (s.requires.ids?.length ?? 2)
-    const bonus = synergyBonusText(s).join(' · ') || SYNERGY_BONUS_FALLBACK[s.id] || '—'
-    const name = s.name.replace(/^\d+\s+/, '')
-    if (s.family) {
-      let g = byFamily.get(s.family)
-      if (!g) { g = { key: s.family, name, kind: s.kind, tiers: [] }; byFamily.set(s.family, g); out.push(g) }
-      g.tiers.push({ threshold, bonus })
-    } else {
-      out.push({ key: s.id, name: s.name, kind: s.kind, tiers: [{ threshold, bonus }] })
-    }
-  }
-  for (const g of out) g.tiers.sort((a, b) => a.threshold - b.threshold)
-  return out
-}
-
-/** One synergy card: name + kind dot, then a row per tier (threshold gem + bonus). */
-function SynergyCard({ g }: { g: SynGroup }) {
-  const color = KIND_COLOR[g.kind]
-  return (
-    <Frame variant="panel" innerClassName="p-4">
-      <div className="mb-2.5 flex items-center gap-2">
-        <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: color, boxShadow: `0 0 8px ${color}` }} />
-        <span className="font-display text-[13.5px] font-semibold text-[#f6ecc4]">{g.name}</span>
-      </div>
-      <ul className="space-y-1.5">
-        {g.tiers.map((t) => (
-          <li key={t.threshold} className="flex items-center gap-2.5">
-            <span
-              className="grid h-6 w-6 shrink-0 place-items-center rounded-md text-[11px] font-extrabold tabular-nums"
-              style={{ color: '#0c0a16', background: `linear-gradient(135deg, ${color}, ${color}99)` }}
-            >
-              {t.threshold}
-            </span>
-            <span className="text-[12.5px] leading-snug text-white/70">{t.bonus}</span>
-          </li>
-        ))}
-      </ul>
-    </Frame>
-  )
-}
-
 export function RulesScreen() {
   const [tab, setTab] = useState<Tab>('gioco')
 
@@ -161,7 +90,7 @@ export function RulesScreen() {
       <header className="text-center mt-2 sm:mt-6">
         <Insegna kicker="Il grimorio del gioco" title="Compendio" />
         <p className="mt-2 text-white/60 text-sm max-w-xl mx-auto">
-          Tutto ciò che serve sapere: come si gioca, cosa fanno le magie, le reliquie e le sinergie.
+          Tutto ciò che serve sapere: come si gioca, cosa fanno le magie e le reliquie.
         </p>
       </header>
 
@@ -243,11 +172,6 @@ export function RulesScreen() {
                   <GlossaryRow key={r} chip={<Chip label={r} color={RELIC_RARITY_COLOR[r]} className="capitalize" />} blurb={RARITY_BLURB[r]} />
                 ))}
               </GlossaryCard>
-              <GlossaryCard title="Tipi sinergia">
-                {SYNERGY_KIND_META.map(({ kind, label, blurb }) => (
-                  <GlossaryRow key={kind} chip={<Chip label={label} color={KIND_COLOR[kind]} />} blurb={blurb} />
-                ))}
-              </GlossaryCard>
               {/* Effetti is the longest list — give it the full width and split its rows
                   into two columns so the grid stays balanced instead of one tall card. */}
               <GlossaryCard title="Effetti di stato" wide>
@@ -323,22 +247,6 @@ export function RulesScreen() {
             )
           })}
         </section>
-      )}
-
-      {/* Sinergie — grouped, readable cards (replaces the unreadable circular graph). */}
-      {tab === 'sinergie' && (
-        <div className="w-full space-y-8">
-          <p className="text-white/55 text-sm text-center max-w-xl mx-auto">
-            Combina gruppi e origini a tema per bonus potenti. Più maghi affini schieri, più forte è la sinergia.
-          </p>
-
-          <section>
-            <SectionTitle label="Gruppi & Origini" />
-            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-              {buildSynGroups(['group', 'origin']).map((g) => <SynergyCard key={g.key} g={g} />)}
-            </div>
-          </section>
-        </div>
       )}
 
       <Link href="/" className="text-white/70 hover:text-white text-sm uppercase tracking-wider font-display">← Indietro al menu</Link>

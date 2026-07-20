@@ -2,7 +2,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { motion, useReducedMotion } from 'framer-motion'
-import { Lock, Skull, Sparkles, Users, Gem, Zap, ArrowLeft } from 'lucide-react'
+import { Lock, Skull, Users, Gem, Zap, ArrowLeft } from 'lucide-react'
 import { Frame } from '@/components/ui/Frame'
 import { Insegna } from '@/components/ui/Insegna'
 import { Parchment } from '@/components/ui/Parchment'
@@ -17,7 +17,6 @@ import { cn } from '@/lib/cn'
 import { WIZARDS } from '@/data/wizards'
 import { RELICS } from '@/data/relics'
 import { BOSSES_BY_AREA } from '@/data/bosses'
-import { SYNERGIES } from '@/data/synergies'
 import { DUOS, SIGNAL_LABEL } from '@/data/duos'
 import {
   STARTER_WIZARDS, STARTER_RELICS, MILESTONES, wizardUnlockCost, relicUnlockCost,
@@ -26,7 +25,7 @@ import {
   loadProfile, saveProfile, spendCioccorane, unlockWizard, unlockRelic,
 } from '@/lib/metaStore'
 import type { MetaProfile } from '@/lib/metaStore'
-import type { Wizard, Tier, Synergy, Duo } from '@/types'
+import type { Wizard, Tier, Duo } from '@/types'
 import type { Relic, RelicRarity } from '@/types/relic'
 import type { BossDef } from '@/data/bosses'
 
@@ -42,44 +41,6 @@ const RARITY_ORDER: RelicRarity[] = ['comune', 'non-comune', 'rara', 'epica']
 const ALL_BOSSES: { boss: BossDef; area: number }[] = BOSSES_BY_AREA.flatMap(
   (bosses, area) => bosses.map((boss) => ({ boss, area })),
 )
-
-/** The 10 "named" (thematic) synergies — excludes the mechanical house-count/role-count ones,
- *  which aren't meant to be collected/discovered. Order matches data/synergies.ts. */
-const NAMED_SYNERGY_IDS = [
-  'goldenTrio', 'weasley', 'order', 'deatheater', 'tossicita',
-  'spietatezza', 'bastione', 'oscurita', 'marauder', 'da',
-] as const
-const NAMED_SYNERGY_ID_SET: ReadonlySet<string> = new Set(NAMED_SYNERGY_IDS)
-const NAMED_SYNERGIES: Synergy[] = SYNERGIES.filter((s) => NAMED_SYNERGY_ID_SET.has(s.id))
-
-const TAG_LABEL: Record<string, string> = {
-  weasley: 'Weasley',
-  order: 'Ordine della Fenice',
-  deatheater: 'Mangiamorte',
-  veleno: 'Veleno',
-  esecuzione: 'Esecuzione',
-  scudirigen: 'Scudo Rigenerante',
-  magieOscure: 'Magie Oscure',
-  marauder: 'Malandrini',
-  da: 'Esercito di Silente',
-}
-
-/** Renders a synergy's unlock condition as a short discovery hint, e.g. "3 Mangiamorte"
- *  or "Harry Potter + Ron Weasley + Hermione Granger". */
-function synergyHint(synergy: Synergy): string {
-  const { requires } = synergy
-  if (requires.ids) {
-    return requires.ids
-      .map((id) => WIZARDS.find((w) => w.id === id)?.name ?? id)
-      .join(' + ')
-  }
-  if (requires.tag && requires.count) {
-    return `${requires.count} ${TAG_LABEL[requires.tag] ?? requires.tag}`
-  }
-  if (requires.house && requires.count) return `${requires.count} ${requires.house}`
-  if (requires.role && requires.count) return `${requires.count} ${requires.role}`
-  return ''
-}
 
 function statusFor(id: string, unlocked: Set<string>, seen: Set<string>): Status {
   if (unlocked.has(id)) return 'unlocked'
@@ -336,28 +297,9 @@ function BossTile({ boss, area, status }: { boss: BossDef; area: number; status:
   )
 }
 
-function SynergyTile({ synergy, status, hint }: { synergy: Synergy; status: DiscoveryStatus; hint: string }) {
-  const hidden = status === 'hidden'
-  return (
-    <div
-      className={cn(
-        'relative flex flex-col gap-1 overflow-hidden rounded-xl border p-3 text-left transition-transform duration-200',
-        hidden ? 'border-gold/15' : 'border-gold/45 bg-gradient-to-b from-gold/12 to-transparent hover:-translate-y-0.5',
-      )}
-    >
-      {hidden && <div className="absolute inset-0"><CardBack /></div>}
-      <p className={cn('relative flex items-center gap-1.5 font-display text-[13px] font-semibold', hidden ? 'text-white/45' : 'text-[#f3e6c4]')}>
-        {!hidden && <Zap size={12} className="text-gold/80" />}
-        {hidden ? '???' : synergy.name}
-      </p>
-      {hint && <p className="relative text-[10px] leading-snug text-white/40">{hint}</p>}
-    </div>
-  )
-}
-
 /** Duo entries are a recipe book (Hades model, spec §7): name + the two ingredient
- *  signals ALWAYS show (so the player can chase them), unlike SynergyTile which hides
- *  everything behind "???" until seen. Only the effect text is gated on discovery. */
+ *  signals ALWAYS show (so the player can chase them), unlike a hidden-until-seen tile
+ *  that hides everything behind "???". Only the effect text is gated on discovery. */
 function DuoTile({ duo, seen }: { duo: Duo; seen: boolean }) {
   return (
     <div
@@ -407,7 +349,6 @@ export function CollectionScreen() {
   )
   const seenRelics = useMemo(() => new Set(profile?.codex.relicsSeen ?? []), [profile])
   const seenBosses = useMemo(() => new Set(profile?.codex.bossesSeen ?? []), [profile])
-  const seenSynergies = useMemo(() => new Set(profile?.codex.synergiesSeen ?? []), [profile])
   const seenDuos = useMemo(() => new Set(profile?.codex.duosSeen ?? []), [profile])
 
   const buy = (kind: Kind, id: string, cost: number) => {
@@ -433,10 +374,9 @@ export function CollectionScreen() {
   const wizFound = WIZARDS.filter((w) => statusFor(w.id, unlockedWizards, seenWizards) !== 'hidden').length
   const relFound = RELICS.filter((r) => statusFor(r.id, unlockedRelics, seenRelics) !== 'hidden').length
   const bossFound = ALL_BOSSES.filter(({ boss }) => seenBosses.has(boss.name)).length
-  const synFound = NAMED_SYNERGIES.filter((s) => seenSynergies.has(s.id)).length
   const duoFound = DUOS.filter((d) => seenDuos.has(d.id)).length
-  const totalFound = wizFound + relFound + bossFound + synFound + duoFound
-  const grandTotal = WIZARDS.length + RELICS.length + ALL_BOSSES.length + NAMED_SYNERGIES.length + DUOS.length
+  const totalFound = wizFound + relFound + bossFound + duoFound
+  const grandTotal = WIZARDS.length + RELICS.length + ALL_BOSSES.length + DUOS.length
 
   return (
     <main className="relative flex-1">
@@ -552,23 +492,6 @@ export function CollectionScreen() {
               <div className="grid grid-cols-3 gap-2.5 sm:grid-cols-6">
                 {ALL_BOSSES.map(({ boss, area }) => (
                   <BossTile key={boss.id} boss={boss} area={area} status={seenBosses.has(boss.name) ? 'seen' : 'hidden'} />
-                ))}
-              </div>
-            </section>
-          </StaggerItem>
-
-          {/* Sinergie */}
-          <StaggerItem>
-            <section className="w-full">
-              <SectionHeader icon={<Sparkles size={17} />} title="Sinergie" found={synFound} total={NAMED_SYNERGIES.length} accent="#C9A24B" />
-              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-5">
-                {NAMED_SYNERGIES.map((synergy) => (
-                  <SynergyTile
-                    key={synergy.id}
-                    synergy={synergy}
-                    status={seenSynergies.has(synergy.id) ? 'seen' : 'hidden'}
-                    hint={synergyHint(synergy)}
-                  />
                 ))}
               </div>
             </section>

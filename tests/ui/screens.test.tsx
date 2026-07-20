@@ -42,34 +42,23 @@ describe('Compendio (RulesScreen)', () => {
       expect(screen.getAllByText(s.name).length).toBeGreaterThan(0)
     }
   }, 15000)
-  it('renders all 4 glossary categories', () => {
+  it('renders all glossary categories', () => {
     render(<RulesScreen />)
     // existing categories
     expect(screen.getByText('Tipi di magia')).toBeInTheDocument()
     expect(screen.getByText('Effetti di stato')).toBeInTheDocument()
     // new categories
     expect(screen.getByText('Rarità reliquie')).toBeInTheDocument()
-    expect(screen.getByText('Tipi sinergia')).toBeInTheDocument()
   })
   it('renders rarity blurbs in glossary', () => {
     render(<RulesScreen />)
     expect(screen.getByText('Bonus base, sempre utile.')).toBeInTheDocument()
     expect(screen.getByText('Effetti potenti con trigger speciali.')).toBeInTheDocument()
   })
-  it('renders synergy kind labels in glossary', () => {
-    render(<RulesScreen />)
-    // Casa/Ruolo rimossi (sinergie di casata/ruolo eliminate) — restano Gruppo e Origine.
-    expect(screen.getAllByText('Gruppo').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Origine').length).toBeGreaterThan(0)
-  })
-  it('defaults to the Come si gioca tab and switches to Sinergie', async () => {
+  it('defaults to the Come si gioca tab', () => {
     render(<RulesScreen />)
     // default tab shows the gameplay sections
     expect(screen.getByText(/draft/i)).toBeInTheDocument()
-    // switching to Sinergie reveals the grouped synergy list (Gruppi & Origini)
-    await userEvent.click(screen.getByRole('button', { name: 'Sinergie' }))
-    expect(screen.getByText('Gruppi & Origini')).toBeInTheDocument()
-    expect(screen.getByText('Golden Trio')).toBeInTheDocument()
   })
 })
 
