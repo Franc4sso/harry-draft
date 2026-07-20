@@ -1,6 +1,5 @@
 'use client'
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
 import type { ActiveRelic, DraftedWizard } from '@/types'
 import { WizardCardRow } from '@/components/cards/WizardCardRow'
 import { WizardCardColumn } from '@/components/cards/WizardCardColumn'
@@ -10,67 +9,9 @@ import { Insegna } from '@/components/ui/Insegna'
 import { Parchment } from '@/components/ui/Parchment'
 import { Stagger, StaggerItem } from '@/components/ui/motion'
 import { powerOf } from '@/game/engine/combat/teamGen'
-import { previewSynergies, type SynergyPreview } from '@/game/engine/synergy'
 import { DuoTracker } from '@/components/draft/DuoTracker'
-import { synergyBonusText } from '@/lib/glossary'
 import { displayName } from '@/lib/displayName'
 import { isDead } from '@/game/engine/roster'
-
-/** Right rail: the synergies that WOULD ACTIVATE if you recruit the focused
- *  candidate (accounting for the swap when the squad is full). Activation is the
- *  only thing shown — building-but-inactive synergies are deliberately omitted. */
-function ActivationRail({ candidate, activating }: { candidate: DraftedWizard | null; activating: SynergyPreview[] }) {
-  return (
-    <Frame variant="panel" innerClassName="relative overflow-hidden">
-      <Parchment className="absolute inset-0" />
-      <div className="relative border-b border-white/10 bg-[#7cdc7c]/[0.06] px-4 py-3">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Sinergie attivate</p>
-        <p className="mt-0.5 text-sm font-display text-white/90">
-          {candidate ? <>Reclutando <span className="text-[#8ee68e]">{displayName(candidate)}</span></> : 'Scegli una recluta'}
-        </p>
-      </div>
-
-      <div className="relative p-3">
-        {!candidate && (
-          <p className="px-1 py-6 text-center text-xs text-white/40">
-            Passa sopra o seleziona una recluta per vedere quali sinergie attiva.
-          </p>
-        )}
-        {candidate && activating.length === 0 && (
-          <p className="px-1 py-6 text-center text-xs text-white/45">
-            Nessuna sinergia si attiva con questa scelta.
-          </p>
-        )}
-        <div className="flex flex-col gap-2">
-          <AnimatePresence initial={false}>
-            {activating.map(p => (
-              <motion.div
-                key={p.synergy.id}
-                initial={{ opacity: 0, x: 6 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 6 }}
-                transition={{ duration: 0.12, ease: 'easeOut' }}
-                className="rounded-xl border p-2.5"
-                style={{ borderColor: 'rgba(124,220,124,0.5)', background: 'rgba(124,220,124,0.10)', boxShadow: '0 0 16px rgba(124,220,124,0.14)' }}
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <span className="inline-flex items-center gap-1 text-sm font-semibold text-white/95">
-                    <span aria-hidden className="text-[#8ee68e]">✦</span>
-                    {p.synergy.name.replace(/^\d+\s+/, '')}
-                  </span>
-                  <span className="shrink-0 rounded-full bg-[#7cdc7c]/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[#8ee68e]">
-                    si attiva
-                  </span>
-                </div>
-                <p className="mt-1 text-[11px] leading-snug text-[#cfeccf]">{synergyBonusText(p.synergy).join(' · ')}</p>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      </div>
-    </Frame>
-  )
-}
 
 export function RecruitScreen({
   offer, team, teamMax, relics, onPick, onSkip, noRecruits,
@@ -100,7 +41,6 @@ export function RecruitScreen({
   // When the squad is full a recruit swaps someone out, so synergy activation is
   // evaluated against the team WITHOUT the wizard being replaced.
   const baseTeam = full && replaceId ? team.filter(t => t.wizard.id !== replaceId) : team
-  const activating = focus ? previewSynergies(baseTeam, focus).filter(p => p.willActivate) : []
   const replacedName = full && replaceId
     ? displayName(team.find(t => t.wizard.id === replaceId)!)
     : undefined
@@ -213,13 +153,11 @@ export function RecruitScreen({
           )}
         </div>
 
-        {/* Synergy rail (right column) — same sticky aside position as the draft.
-            Below the activations, the SAME Duo tracker of the draft, valutato contro
-            baseTeam (squadra meno il sostituito) + reliquie: dice quali combo la recluta
-            considerata accende o avvicina. */}
+        {/* Right rail — same sticky aside position as the draft. The Duo tracker,
+            valutato contro baseTeam (squadra meno il sostituito) + reliquie: dice
+            quali combo la recluta considerata accende o avvicina. */}
         <aside>
           <div className="sticky top-28 flex max-h-[calc(100dvh-8rem)] flex-col gap-4 overflow-y-auto [scrollbar-gutter:stable]">
-            <ActivationRail candidate={focus} activating={activating} />
             <Frame variant="panel" innerClassName="relative p-3">
               <Parchment className="absolute inset-0" />
               <div className="relative">

@@ -73,14 +73,14 @@ describe('RecruitScreen', () => {
     expect(col.className).toContain('lg:grid-cols-3')
   })
 
-  it('keeps the synergy rail as a right-hand aside sibling of the candidates', () => {
+  it('keeps the Combo Duo rail as a right-hand aside sibling of the candidates', () => {
     const onPick = vi.fn()
     const { container } = render(
       <RecruitScreen offer={offer} team={team} teamMax={5} onPick={onPick} relics={[]} />,
     )
     const aside = container.querySelector('aside')
     expect(aside).not.toBeNull()
-    expect(aside!.textContent).toContain('Sinergie attivate')
+    expect(aside!.querySelector('[data-testid="draft-duo-tracker"]')).not.toBeNull()
     // Layout mirrors the draft exactly: the candidates + rail live in a two-column
     // grid (md:grid-cols-[1fr_280px]); the aside is its right-hand column.
     const shell = aside!.parentElement!
