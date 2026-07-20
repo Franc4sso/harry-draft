@@ -7,7 +7,7 @@ import { trioGates } from '@/game/engine/trios'
 import { SIGNAL_COLOR, SIGNAL_HOWTO, SIGNAL_ICON, SIGNAL_LABEL } from '@/data/duos'
 import { trioText } from '@/game/engine/trioText'
 
-// Stesso linguaggio cromatico di SynergyTracker: oro = attivo, verde = a un passo.
+// Linguaggio cromatico: oro = attivo, verde = a un passo.
 const GOLD = '#d9b65f'
 const GREEN = '#3ecb6a'
 

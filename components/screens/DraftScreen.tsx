@@ -50,7 +50,7 @@ export function DraftScreen({
       */}
       <div className="mx-auto grid max-w-6xl grid-cols-1 items-start gap-6 p-4 md:grid-cols-[1fr_320px]">
         {/* items-start (above) + content-start (here) keep each candidate at its
-            own height: without them the column stretches to match the synergy
+            own height: without them the column stretches to match the tracker
             rail, growing the hovered card downward when the rail gets taller. */}
         <section onPointerLeave={() => setConsidered(null)}>
           {/* Re-key by pick count so each new hand cascades in again. */}
@@ -68,7 +68,7 @@ export function DraftScreen({
           </Stagger>
         </section>
 
-        {/* Synergy tracker: right rail on desktop, stacks below candidates on mobile */}
+        {/* Combo tracker: right rail on desktop, stacks below candidates on mobile */}
         <aside>
           <Frame variant="panel" className="sticky top-28 max-h-[calc(100dvh-8rem)] overflow-y-auto [scrollbar-gutter:stable]" innerClassName="relative p-3">
             <Parchment className="absolute inset-0" />

@@ -5,7 +5,7 @@ import { duoProgress, previewDuos } from '@/game/engine/duos'
 import { DuoRecipe } from '@/components/run/DuoPanel'
 import { cn } from '@/lib/cn'
 
-// Stesso linguaggio cromatico di SynergyTracker: verde = si attiva/avanza, oro = attiva.
+// Linguaggio cromatico: verde = si attiva/avanza, oro = attiva.
 const GOLD = '#d9b65f'
 const GREEN = '#3ecb6a'
 
@@ -13,7 +13,7 @@ const GREEN = '#3ecb6a'
  * Tracker COMPATTO delle Combo Duo per draft e recluta: una riga per combo — nome, ricetta
  * (due gemme fuse dal nodo "＋") — niente muri di testo. Quando il giocatore considera un
  * candidato (hover/focus), le righe sono ricalcolate CON il candidato e marcate
- * "si attiva" / "avanza" nello stesso linguaggio del SynergyTracker; le righe si riordinano
+ * "si attiva" / "avanza"; le righe si riordinano
  * con un'animazione di layout così la combo che si accende sale in cima da sola. L'effetto
  * della combo compare solo quando è (o sta per essere) accesa: è il momento in cui serve.
  */
