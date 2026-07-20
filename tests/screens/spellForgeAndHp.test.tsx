@@ -72,13 +72,13 @@ describe('SpellForgeScreen', () => {
 describe('TeamSynergyBar — HP visible in the map sidebar', () => {
   it('renders each wizard current/max HP in the vertical sidebar', () => {
     const team = [dw('Harry', 'expelliarmus', { currentHp: 40, maxHp: 100 })]
-    render(<TeamSynergyBar team={team} synergies={[]} orientation="vertical" />)
+    render(<TeamSynergyBar team={team} orientation="vertical" />)
     expect(screen.getByText('40/100')).toBeInTheDocument()
   })
 
   it('shows K.O. for a fallen wizard', () => {
     const team = [dw('Harry', 'expelliarmus', { currentHp: 0, maxHp: 100 })]
-    render(<TeamSynergyBar team={team} synergies={[]} orientation="vertical" />)
+    render(<TeamSynergyBar team={team} orientation="vertical" />)
     expect(screen.getByText('K.O.')).toBeInTheDocument()
   })
 })

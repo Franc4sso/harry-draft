@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen, within } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { TeamSynergyBar } from '@/components/run/TeamSynergyBar'
 
 const team = [
@@ -24,30 +23,32 @@ const memberWithPool = {
   spell: { id: 'expelliarmus', name: 'Expelliarmus', desc: 'Disarma il bersaglio.', type: 'Attacco', hitChance: 0.95 },
 } as any
 
-const synergies = [
-  { synergy: { id: 's', name: 'Coraggio', bonus: { atk: 10 } }, memberIds: ['a', 'b'] },
-] as any
-
 describe('TeamSynergyBar', () => {
-  it('renders each member with name and level, plus synergies', () => {
-    render(<TeamSynergyBar team={team} synergies={synergies} />)
+  it('renders each member with name and level', () => {
+    render(<TeamSynergyBar team={team} />)
     expect(screen.getByText('Harry')).toBeInTheDocument()
     expect(screen.getByText('Ron')).toBeInTheDocument()
     expect(screen.getByText(/Lv\.?\s*3/i)).toBeInTheDocument()
     expect(screen.getByText(/Lv\.?\s*1/i)).toBeInTheDocument()
-    expect(screen.getByText(/Coraggio/)).toBeInTheDocument()
   })
 
-  it('defaults missing level to 1 and tolerates synergies without a bonus', () => {
+  it('defaults missing level to 1', () => {
     const noLevel = [{ wizard: { id: 'c', name: 'Hermione', house: 'Grifondoro' }, stats: {}, maxHp: 100, spell: { id: 'z' } }] as any
-    render(<TeamSynergyBar team={noLevel} synergies={[{ synergy: { id: 'q', name: 'Astuzia' }, memberIds: ['c'] }] as any} />)
+    render(<TeamSynergyBar team={noLevel} />)
     expect(screen.getByText('Hermione')).toBeInTheDocument()
     expect(screen.getByText(/Lv\.?\s*1/i)).toBeInTheDocument()
-    expect(screen.getByText(/Astuzia/)).toBeInTheDocument()
+  })
+
+  it('horizontal: renders the roster with no synergy chips', () => {
+    render(<TeamSynergyBar team={team} />)
+    expect(screen.getByTestId('team-synergy-bar')).toBeInTheDocument()
+    expect(screen.getByText('Harry')).toBeInTheDocument()
+    // No synergy chip markers (former SynergyChip used a data-synergy attribute).
+    expect(document.querySelector('[data-synergy]')).not.toBeInTheDocument()
   })
 
   it('vertical row: shows the equipped spell with no swap selector (one wizard, one spell)', () => {
-    render(<TeamSynergyBar team={[memberWithPool]} synergies={[]} orientation="vertical" />)
+    render(<TeamSynergyBar team={[memberWithPool]} orientation="vertical" />)
 
     // The role now reads as a text label on the compact row.
     expect(screen.getByText('Attaccante')).toBeInTheDocument()
@@ -69,26 +70,17 @@ describe('TeamSynergyBar', () => {
     expect(within(memberRow).queryByRole('button')).not.toBeInTheDocument()
   })
 
-  it('vertical: Sinergie e Combo vivono in tab — default Combo, il click cambia pannello', async () => {
-    const user = userEvent.setup()
-    render(<TeamSynergyBar team={team} synergies={synergies} orientation="vertical" />)
+  it('vertical: la squadra resta sempre visibile e il pannello Combo Duo è l\'unico contenuto sotto il roster (niente tab)', () => {
+    render(<TeamSynergyBar team={team} orientation="vertical" />)
 
-    // Default: tab Combo selezionato, pannello Duo visibile, lista sinergie nascosta.
-    expect(screen.getByTestId('sidebar-tab-combo')).toHaveAttribute('aria-selected', 'true')
+    expect(screen.getByTestId('team-synergy-bar')).toBeInTheDocument()
+    expect(screen.getByText('Harry')).toBeInTheDocument()
+    expect(screen.getByText('Ron')).toBeInTheDocument()
+
+    // Il DuoPanel è montato direttamente, senza struttura a tab.
     expect(screen.getByTestId('duo-panel')).toBeInTheDocument()
-    expect(screen.queryByText(/Coraggio/)).not.toBeInTheDocument()
-
-    // Click su Sinergie: la lista appare, il pannello Duo sparisce.
-    await user.click(screen.getByTestId('sidebar-tab-sinergie'))
-    expect(screen.getByText(/Coraggio/)).toBeInTheDocument()
-    expect(screen.queryByTestId('duo-panel')).not.toBeInTheDocument()
-  })
-
-  it('vertical: la squadra resta sempre visibile, qualunque tab sia aperto', async () => {
-    const user = userEvent.setup()
-    render(<TeamSynergyBar team={team} synergies={synergies} orientation="vertical" />)
-    expect(screen.getByText('Harry')).toBeInTheDocument()
-    await user.click(screen.getByTestId('sidebar-tab-sinergie'))
-    expect(screen.getByText('Harry')).toBeInTheDocument()
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument()
+    expect(screen.queryByRole('tablist')).not.toBeInTheDocument()
+    expect(document.querySelector('[data-testid^="sidebar-tab-"]')).not.toBeInTheDocument()
   })
 })

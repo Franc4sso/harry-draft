@@ -112,7 +112,6 @@ export function RunBRunner({
       >
         <TeamSynergyBar
           team={c.run.team}
-          synergies={c.run.activeSynergies}
           relics={c.run.relics}
           orientation="vertical"
         />

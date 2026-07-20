@@ -1,97 +1,16 @@
 'use client'
-import { useState, type ReactNode } from 'react'
-import type { DraftedWizard, ActiveSynergy, ActiveRelic, Synergy, House, Role } from '@/types'
+import type { DraftedWizard, ActiveRelic, Role } from '@/types'
 import { DuoPanel } from '@/components/run/DuoPanel'
-import { detectDuos } from '@/game/engine/duos'
-import { livingOf } from '@/game/engine/roster'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { Chip } from '@/components/ui/Chip'
-import { RoleIcon } from '@/components/cards/RoleIcon'
 import { houseTheme } from '@/lib/theme'
 import { displayName } from '@/lib/displayName'
-import { synergyBonusText, spellTypeChip } from '@/lib/glossary'
+import { spellTypeChip } from '@/lib/glossary'
 
 /** Role accent colours mirror the spell-type palette (Attaccante↔Attacco, etc.),
- *  so a role synergy reads with the same colour language as the wizard's kit. */
+ *  so a role reads with the same colour language as the wizard's kit. */
 const ROLE_COLOR: Record<Role, string> = {
   Attaccante: '#FF8A7A', Tank: '#7DB7FF', Supporto: '#7CFC9B', Controllo: '#C98BFF',
-}
-const GOLD = '#caa24a'
-
-/** The accent colour + emblem for a synergy, encoding WHAT bonds the group:
- *  a House shows its crest colour + initial, a Role shows its icon, a group/origin
- *  (Golden Trio, Mangiamorte, Tossicità…) falls back to the arcane gold star. */
-function synergyVisual(syn: Synergy): { accent: string; marker: ReactNode } {
-  const req = syn.requires
-  if (syn.kind === 'house' && req?.house) {
-    const h = req.house as House
-    const accent = houseTheme(h).color
-    return { accent, marker: <span className="font-display text-[11px] font-bold leading-none">{h[0]}</span> }
-  }
-  if (syn.kind === 'role' && req?.role) {
-    const r = req.role as Role
-    return { accent: ROLE_COLOR[r], marker: <RoleIcon role={r} size={12} /> }
-  }
-  return { accent: GOLD, marker: <span aria-hidden className="text-[11px] leading-none">✦</span> }
-}
-
-/** One active synergy as a full-width row: accent emblem · name · member count,
- *  with the bonus on its own line so nothing competes for space (the old wrapped
- *  pills crushed the name and bonus together and were unreadable in the sidebar). */
-function SynergyRow({ s }: { s: ActiveSynergy }) {
-  const { accent, marker } = synergyVisual(s.synergy)
-  const name = s.synergy.name.replace(/^\d+\s+/, '')
-  const count = s.memberIds?.length ?? s.synergy.requires?.count ?? 0
-  const bonus = synergyBonusText(s.synergy).join(' · ')
-  return (
-    <li
-      data-synergy={s.synergy.id}
-      className="flex items-start gap-2.5 rounded-lg border border-white/10 bg-black/25 px-2 py-1.5"
-    >
-      <span
-        aria-hidden
-        className="mt-px grid h-6 w-6 shrink-0 place-items-center rounded-md border"
-        style={{ color: accent, borderColor: `${accent}66`, background: `${accent}1f` }}
-      >
-        {marker}
-      </span>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-baseline gap-1.5">
-          <span className="truncate text-[13px] font-semibold leading-tight" style={{ color: '#f3e6c4' }}>{name}</span>
-          {count > 0 && (
-            <span className="shrink-0 rounded-full bg-white/10 px-1.5 text-[10px] font-semibold text-[#e8dcb6]" title={`${count} maghi in squadra`}>
-              ×{count}
-            </span>
-          )}
-        </div>
-        {bonus && <p className="mt-0.5 text-[11px] leading-snug text-[#c9bfa0]">{bonus}</p>}
-      </div>
-    </li>
-  )
-}
-
-function SynergyChip({ s }: { s: ActiveSynergy }) {
-  const bonus = synergyBonusText(s.synergy).join(' · ')
-  const count = s.memberIds?.length ?? 0
-  return (
-    <span
-      data-synergy={s.synergy.id}
-      className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-semibold"
-      style={{ color: '#f3e6c4', borderColor: 'rgba(202,162,74,0.6)', background: 'rgba(176,141,87,0.16)' }}
-    >
-      <span aria-hidden style={{ color: '#caa24a' }}>✦</span>
-      {s.synergy.name.replace(/^\d+\s+/, '')}
-      {count > 0 && (
-        <span
-          className="rounded-full bg-black/30 px-1.5 text-[#e8dcb6]"
-          title={`${count} maghi in squadra`}
-        >
-          ×{count}
-        </span>
-      )}
-      {bonus && <span className="text-[#c9bfa0]">{bonus}</span>}
-    </span>
-  )
 }
 
 /** A wizard's health as read across the run (`currentHp` persists between battles;
@@ -162,47 +81,13 @@ function MemberRow({ m }: { m: DraftedWizard }) {
   )
 }
 
-type SidebarTab = 'sinergie' | 'combo'
-
 /** Sidebar verticale (mappa/recruit/reliquia): squadra sempre visibile in alto — è lo stato
- *  che il giocatore legge di continuo — mentre Sinergie e Combo Duo vivono in due TAB sotto,
- *  così nessuna delle due liste fa muro. Default sul tab Combo: è quello che guida le scelte
- *  (chi reclutare, quale reliquia prendere); le sinergie attive restano leggibili dal badge. */
-function VerticalBar({ team, synergies, relics }: {
+ *  che il giocatore legge di continuo — il pannello Combo Duo è l'unico contenuto sotto,
+ *  senza struttura a tab. */
+function VerticalBar({ team, relics }: {
   team: DraftedWizard[]
-  synergies: ActiveSynergy[]
   relics: ActiveRelic[]
 }) {
-  const [tab, setTab] = useState<SidebarTab>('combo')
-  const activeDuos = detectDuos(livingOf(team), relics).length
-
-  const tabBtn = (id: SidebarTab, label: string, count: number) => {
-    const on = tab === id
-    return (
-      <button
-        type="button"
-        data-testid={`sidebar-tab-${id}`}
-        aria-selected={on}
-        role="tab"
-        onClick={() => setTab(id)}
-        className="flex flex-1 items-center justify-center gap-1.5 rounded-lg px-2 py-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] transition-colors"
-        style={on
-          ? { color: '#f3e6c4', background: 'rgba(202,162,74,0.16)', boxShadow: 'inset 0 0 0 1px rgba(202,162,74,0.5)' }
-          : { color: 'rgba(255,255,255,0.45)' }}
-      >
-        {label}
-        {count > 0 && (
-          <span
-            className="rounded-full px-1.5 text-[9px] font-bold tabular-nums"
-            style={{ color: '#e8dcb6', background: on ? 'rgba(0,0,0,0.35)' : 'rgba(202,162,74,0.2)' }}
-          >
-            {count}
-          </span>
-        )}
-      </button>
-    )
-  }
-
   return (
     <div
       data-testid="team-synergy-bar"
@@ -211,52 +96,33 @@ function VerticalBar({ team, synergies, relics }: {
       <div className="flex flex-col gap-2">
         {team.map((m) => <MemberRow key={m.wizard.id} m={m} />)}
       </div>
-
-      <div className="flex flex-col gap-2 border-t border-white/10 pt-2.5">
-        <div role="tablist" className="flex gap-1 rounded-xl border border-white/10 bg-black/25 p-1">
-          {tabBtn('combo', 'Combo', activeDuos)}
-          {tabBtn('sinergie', 'Sinergie', synergies.length)}
-        </div>
-
-        {tab === 'sinergie' && (
-          synergies.length > 0 ? (
-            <ul className="flex flex-col gap-1.5">
-              {synergies.map((s) => <SynergyRow key={s.synergy.id} s={s} />)}
-            </ul>
-          ) : (
-            <p className="rounded-lg border border-dashed border-white/10 px-2 py-2 text-[11px] leading-snug text-white/40">
-              Nessuna sinergia attiva. Recluta maghi della stessa Casa o dello stesso ruolo per accendere i bonus.
-            </p>
-          )
-        )}
-
-        {tab === 'combo' && <DuoPanel team={team} relics={relics} frameless />}
+      <div className="border-t border-white/10 pt-2.5">
+        <DuoPanel team={team} relics={relics} frameless />
       </div>
     </div>
   )
 }
 
 /**
- * The current team + active synergies, kept in view across the run screens. Purely
- * presentational — reads the drafted team and the synergies the engine already
- * detected. `orientation` switches between the compact top strip ('horizontal',
- * default) and a left-hand sidebar ('vertical') used next to the map tree, where
- * members get larger portraits so they read better. In vertical mode, each row
- * also folds in the role icon and equipped spell (formerly the separate LOADOUT
- * box) — a plain display, no swap selector (a wizard's spell is fixed).
+ * The current team, kept in view across the run screens. Purely presentational —
+ * reads the drafted team. `orientation` switches between the compact top strip
+ * ('horizontal', default) and a left-hand sidebar ('vertical') used next to the
+ * map tree, where members get larger portraits so they read better and the Combo
+ * Duo panel sits below the roster. In vertical mode, each row also folds in the
+ * role icon and equipped spell (formerly the separate LOADOUT box) — a plain
+ * display, no swap selector (a wizard's spell is fixed).
  */
 export function TeamSynergyBar({
-  team, synergies, relics = [], orientation = 'horizontal',
+  team, relics = [], orientation = 'horizontal',
 }: {
   team: DraftedWizard[]
-  synergies: ActiveSynergy[]
   /** Active relics — only used to compute the Duo panel (vertical orientation). Optional
    *  and defaults to none so existing (non-Duo-aware) call sites/tests are unaffected. */
   relics?: ActiveRelic[]
   orientation?: 'horizontal' | 'vertical'
 }) {
   if (orientation === 'vertical') {
-    return <VerticalBar team={team} synergies={synergies} relics={relics} />
+    return <VerticalBar team={team} relics={relics} />
   }
 
   return (
@@ -284,16 +150,6 @@ export function TeamSynergyBar({
           )
         })}
       </div>
-
-      {/* Active synergies — gold chips, after the roster. */}
-      {synergies.length > 0 && (
-        <>
-          <span aria-hidden className="mx-0.5 h-5 w-px bg-white/10" />
-          <div className="flex flex-wrap items-center gap-1.5">
-            {synergies.map((s) => <SynergyChip key={s.synergy.id} s={s} />)}
-          </div>
-        </>
-      )}
     </div>
   )
 }
