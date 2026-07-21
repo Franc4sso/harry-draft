@@ -162,6 +162,66 @@ defenseK: 0.5,
     // normalEnemyCount is the dominant lever (every normal fight, not just
     // elite/boss, feels the extra body — normal fights are far more frequent),
     // so it moved the needle harder per step than enemyCountByArea alone.
+    //
+    // SWEPT, BLOCKED — did NOT ship a change (2026-07-21, post-rimozione bonus sinergia):
+    // removing the 9 team-synergy bonuses (Task 2) crashed campaignBalanceRestricted from
+    // the prior 0.1500 ship value to 0.0083 (1/120) — losing the free synergy power hit the
+    // player side much harder than enemies (enemies never drafted synergies either — symmetric
+    // removal, asymmetric impact). Re-swept both enemy-count levers (120-seed
+    // campaignBalanceRestricted; normalEnemyCount paired with enemyCountByArea below each
+    // row), leva dominante first per the brief, this task's stated pin `elites>=2` respected
+    // throughout (no enemyCountByArea value < 2):
+    //   normalEnemyCount=3, enemyCountByArea=[3,3,5] (prior ship)  → restricted 0.0083
+    //   normalEnemyCount=2, enemyCountByArea=[3,3,5]               → restricted 0.0167
+    //   normalEnemyCount=2, enemyCountByArea=[2,3,4]               → restricted 0.0333
+    //   normalEnemyCount=2, enemyCountByArea=[2,3,3]               → restricted 0.0250 (worse —
+    //                                                                 non-monotonic, matches this
+    //                                                                 file's older lever history)
+    //   normalEnemyCount=1, enemyCountByArea=[2,3,3]               → restricted 0.0333
+    //   normalEnemyCount=1, enemyCountByArea=[2,3,4]               → restricted 0.0333 (flat vs
+    //                                                                 the row above)
+    //   normalEnemyCount=1, enemyCountByArea=[2,2,3]               → restricted 0.0583 (in band,
+    //                                                                 but only 1-seed margin: 7/120)
+    //   normalEnemyCount=1, enemyCountByArea=[2,2,2]               → restricted 0.0667 (in band,
+    //                                                                 8/120, best result found —
+    //                                                                 BUT see conflict below)
+    // CONFLICT FOUND (blocks shipping any enemyCountByArea value < 3 in ANY area):
+    // tests/engine/combat/teamGen.test.ts "elite packs field an active synergy in the
+    // overwhelming majority of cases" is a separately locked invariant (user-pinned
+    // 2026-07-03, "so a future balance sweep can't silently trim"). Post the same
+    // Task-2 synergy removal, SYNERGIES now contains exactly ONE entry (`tossicita`,
+    // data/synergies.ts, `requires.count: 3`) — every other synergy (marauder count:2,
+    // da count:4, etc., referenced in that test's own now-stale comment) was deleted. An
+    // elite pack below 3 units can therefore NEVER realize a synergy (0% by construction,
+    // not RNG variance) — verified: enemyCountByArea=[2,2,2] measures elite synergy rate
+    // 0.0% (was 100% at the prior [3,3,5]), hard-failing that test's >=0.95 assertion.
+    // battlePackage.ts feeds enemyCountByArea into REAL elite generation with no independent
+    // floor, so this isn't a test-only artifact — a live [2,2,2] elite would in fact almost
+    // never carry a theme. Every area's elite count must stay >=3 (not >=2) to keep that
+    // invariant meaningful, which is STRICTER than this task's stated `elites>=2` pin.
+    // Re-tested at the >=3 floor: normalEnemyCount=1, enemyCountByArea=[3,3,3] → restricted
+    // 0.0083 — IDENTICAL to the original baseline, i.e. with the synergy-count-3 floor
+    // respected, this task's two in-scope levers (normalEnemyCount already at its practical
+    // floor of 1; enemyCountByArea floored at 3-everywhere by the other invariant) cannot
+    // move the needle AT ALL. BLOCKED per brief Step 3: reverted to the original values
+    // (3 / [3,3,5]) rather than ship a no-op change with elevated risk; a different lever
+    // (statMult, or relaxing/updating the elite-synergy invariant test) needs a human
+    // decision — out of this task's scope.
+    // Tier-3 statMult also empirically checked (brief allows it "solo se le prime due non
+    // bastano"), both confirmed NOT viable on their own and left UNCHANGED:
+    //   campaignB.baseBudget/budgetStep/eliteBudgetMult/bossBudgetMult halved-to-aggressive
+    //     (40/10/0.5/0.6 → 20/5/0.3/0.4)         → restricted 0.0083 (INERT — confirms this
+    //                                                file's own 2026-07-04 note that budget
+    //                                                saturates the roster's weakest slice
+    //                                                regardless of target, still true post-
+    //                                                synergy-removal)
+    //   campaignB normal/elite/boss LevelBase+PerArea driven to the degenerate floor
+    //     (2/4/6,perArea2 → 1/1/1,perArea1, ALL areas level-1)  → restricted 0.0333 (moves,
+    //                                                but still < 0.05 even at a level-1-
+    //                                                everywhere floor, AND breaks the
+    //                                                normal<elite<boss / area-N<area-N+1
+    //                                                level-ordering invariant other tests pin —
+    //                                                rejected on both grounds)
     normalEnemyCount: 3,
     // RAISED 2026-07-03 (USER DECISION, "livelli e quantità elite/boss troppo bassi"):
     // one extra elite in the final area, [2,3,3]→[2,3,4]. Paired with the elite/boss
@@ -216,6 +276,12 @@ defenseK: 0.5,
     // area-2 elite trimmed 5→3 (USER DECISION 2026-07-08) so a boss (Bellatrix unitCount 4)
     // is never SMALLER than an elite — a boss should read as the bigger threat, not a scrawnier
     // one. Paired with Bellatrix 3→4; balance re-measured.
+    //
+    // SWEPT, BLOCKED — value unchanged (2026-07-21, post-rimozione bonus sinergia): see
+    // normalEnemyCount's comment above for the full sweep table and the conflict found
+    // (any area's elite count < 3 kills tests/engine/combat/teamGen.test.ts's elite-synergy
+    // invariant now that only one count:3 synergy remains). Left at the original [3,3,5]
+    // rather than ship a no-op-for-balance change with elevated risk.
     enemyCountByArea: [3, 3, 5] as readonly number[],
     maxEnemies: 5,
     // --- Displayed enemy LEVEL by (area, kind) ---
