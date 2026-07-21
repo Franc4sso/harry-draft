@@ -10,15 +10,16 @@ const harry: Wizard = {
 }
 
 describe('wizardAffiliations', () => {
-  it('includes group memberships by id and by tag', () => {
+  // goldenTrio/order/da/deatheater/marauder were all removed from SYNERGIES along with the
+  // other 8 team synergies (2026-07-21) — Tossicità (tag:veleno) is the only entry left, so a
+  // wizard with no 'veleno' tag (like this `harry` fixture) matches nothing at all now.
+  it('matches no synergy for a wizard without the veleno tag (all group/tag synergies removed)', () => {
     const ids = wizardAffiliations(harry).map((a) => a.synergyId)
-    expect(ids).toContain('goldenTrio')    // by id membership
-    expect(ids).toContain('order')         // by tag
-    expect(ids).toContain('da')            // by tag
+    expect(ids).toEqual([])
   })
-  it('excludes synergies the wizard cannot join', () => {
-    const ids = wizardAffiliations(harry).map((a) => a.synergyId)
-    expect(ids).not.toContain('deatheater')
-    expect(ids).not.toContain('marauder')
+  it('matches Tossicità for a wizard carrying the veleno tag', () => {
+    const poisoner: Wizard = { ...harry, id: 'poisoner-fixture', tags: ['veleno'] }
+    const ids = wizardAffiliations(poisoner).map((a) => a.synergyId)
+    expect(ids).toEqual(['tossicita'])
   })
 })

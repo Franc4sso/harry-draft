@@ -8,9 +8,13 @@ import type { DraftedWizard } from '@/types'
 
 const choices = RELICS.slice(0, 3)
 
-function makeDeatheater(id: string): DraftedWizard {
+// 'deatheater' was a group synergy removed along with the other 8 team synergies
+// (2026-07-21) — Tossicità (origin, tag:veleno, requires 3) is the only synergy left that can
+// activate, so this fixture is tagged 'veleno' instead to keep exercising a real active-synergy
+// render path.
+function makePoisoner(id: string): DraftedWizard {
   return {
-    wizard: { id, name: id, house: 'Serpeverde', role: 'Attaccante', tags: ['deatheater'] },
+    wizard: { id, name: id, house: 'Serpeverde', role: 'Attaccante', tags: ['veleno'] },
     stats: { hp: 100, atk: 20, def: 10, spd: 10 },
     maxHp: 100,
     spell: { id: 'test', name: 'Test', type: 'Attacco', effects: [] } as any,
@@ -30,7 +34,7 @@ describe('RelicChoiceScreen', () => {
     expect(onChoose).toHaveBeenCalledWith(choices[1])
   })
   it('shows the squad and active synergies while choosing', () => {
-    const team = [makeDeatheater('g1'), makeDeatheater('g2'), makeDeatheater('g3')]
+    const team = [makePoisoner('g1'), makePoisoner('g2'), makePoisoner('g3')]
     const synergies = detectSynergies(team)
     render(<RelicChoiceScreen choices={choices} owned={[]} team={team} synergies={synergies} onChoose={() => {}} />)
     expect(screen.getByTestId('relic-squad')).toBeInTheDocument()

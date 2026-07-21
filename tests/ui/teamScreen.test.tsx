@@ -20,15 +20,18 @@ describe('TeamScreen', () => {
     render(<TeamScreen team={t} />)
     for (const m of t) expect(screen.getByText(displayName(m))).toBeInTheDocument()
   }, 15000)
-  it('shows the golden trio synergy when present', () => {
-    const t = team(['harry', 'ron', 'hermione', 'luna', 'neville'])
+  it('shows the Tossicità synergy when present', () => {
+    // Golden Trio (id-list group synergy) was removed along with the other 8 team synergies
+    // (2026-07-21) — Tossicità (origin, tag:veleno, requires 3) is the only one left that can
+    // activate. bellatrix/dolohov/greyback are veleno-tagged (data/wizards.ts).
+    const t = team(['bellatrix', 'dolohov', 'greyback', 'pansy', 'goyle'])
     render(<TeamScreen team={t} />)
-    // "Golden Trio" now appears both in the synergy panel and as an affiliation
-    // chip on each trio member's card, so assert at least one occurrence.
-    expect(screen.getAllByText(/Golden Trio/i).length).toBeGreaterThan(0)
+    // "Tossicità" appears both in the synergy panel and as an affiliation chip on each
+    // veleno member's card, so assert at least one occurrence.
+    expect(screen.getAllByText(/Tossicità/i).length).toBeGreaterThan(0)
   })
   it('shows synergy bonus text and member names', () => {
-    const t = team(['harry', 'ron', 'hermione', 'luna', 'neville'])
+    const t = team(['bellatrix', 'dolohov', 'greyback', 'pansy', 'goyle'])
     render(<TeamScreen team={t} />)
     const active = detectSynergies(t)
     expect(active.length).toBeGreaterThan(0)

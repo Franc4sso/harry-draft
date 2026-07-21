@@ -4,7 +4,7 @@ import { createRng } from '@/game/engine/rng'
 import { RELICS } from '@/data/relics'
 import { WIZARDS } from '@/data/wizards'
 import { SPELL_BY_ID } from '@/data/spells'
-import type { ActiveRelic, ActiveSynergy, DraftedWizard, Stats } from '@/types'
+import type { ActiveRelic, DraftedWizard, Stats } from '@/types'
 
 const egida = RELICS.find(r => r.id === 'egida-tassorosso')!
 const cuore = RELICS.find(r => r.id === 'cuore-del-tasso')!
@@ -12,8 +12,12 @@ const spada = RELICS.find(r => r.id === 'spada-grifondoro')!
 const sigillo = RELICS.find(r => r.id === 'sigillo-carnefice')!
 
 const mk = (id: string, stats: Stats): DraftedWizard => ({ wizard: WIZARDS.find(w => w.id === id)!, stats, maxHp: stats.hp, spell: SPELL_BY_ID['base_attack']! })
-// A controlled high-regen synergy so the wall actually overflows each tick (kept off the roster).
-const regenSyn = (amount: number): ActiveSynergy => ({ synergy: { id: 'test-regen', name: 'Test Regen', kind: 'group', requires: { count: 1 }, bonus: { regen: amount } }, memberIds: [] })
+// A controlled high-regen relic so the wall actually overflows each tick (kept off the roster).
+// NOTE: regen-via-ActiveSynergy (`bonus.regen`) was removed from the engine (2026-07-21, along
+// with the 8 team synergies and totalRegen) — regen now flows only through relics
+// (totalRelicRegen, game/engine/relics.ts), so this fixture is a synthetic ActiveRelic instead
+// of the ActiveSynergy it used to be. Same controlled-magnitude intent, real channel.
+const regenRelic = (amount: number): ActiveRelic => ({ relic: { id: 'test-regen', name: 'Test Regen', desc: '', rarity: 'comune', bonus: { regen: amount } }, stageObtained: 0 })
 const convert: ActiveRelic[] = [{ relic: egida, stageObtained: 0 }, { relic: cuore, stageObtained: 0 }]
 const execRelics: ActiveRelic[] = [{ relic: spada, stageObtained: 0 }, { relic: sigillo, stageObtained: 0 }]
 
@@ -53,21 +57,21 @@ describe('Scudi-Rigen counter-web', () => {
     // now holds on 'seed12' at the unchanged atk=60 — same knife-edge nature as before, only the
     // demonstrating seed moved.
     const attrition = [mk('cedric', { hp: 300, atk: 60, def: 16, spd: 16 })]
-    const plain = simulateBattle(wall(), attrition, createRng('seed12'), { leftSyn: [regenSyn(60)] })
-    const withConvert = simulateBattle(wall(), attrition, createRng('seed12'), { leftSyn: [regenSyn(60)], leftRelics: convert })
+    const plain = simulateBattle(wall(), attrition, createRng('seed12'), { leftRelics: [regenRelic(60)] })
+    const withConvert = simulateBattle(wall(), attrition, createRng('seed12'), { leftRelics: [regenRelic(60), ...convert] })
     expect(plain.winner).toBe('right')  // baseline: chip out-damages a non-converting wall
     expect(withConvert.winner).toBe('left')  // conversion flips it: shield-conversion beats attrition
   })
 
   it('LOSES to Esecuzione (the finisher closes it under threshold)', () => {
     const finisher = [mk('harry', { hp: 300, atk: 60, def: 16, spd: 30 })]
-    const r = simulateBattle(wall(), finisher, createRng('sr-exec'), { leftSyn: [regenSyn(60)], leftRelics: convert, rightRelics: execRelics })
+    const r = simulateBattle(wall(), finisher, createRng('sr-exec'), { leftRelics: [regenRelic(60), ...convert], rightRelics: execRelics })
     expect(r.winner).toBe('right')
   })
 
   it('LOSES to Burst (one big hit blows through the shield)', () => {
     const burst = [mk('voldemort', { hp: 300, atk: 400, def: 20, spd: 99 })]
-    const r = simulateBattle(wall(), burst, createRng('sr-burst'), { leftSyn: [regenSyn(60)], leftRelics: convert })
+    const r = simulateBattle(wall(), burst, createRng('sr-burst'), { leftRelics: [regenRelic(60), ...convert] })
     expect(r.winner).toBe('right')
   })
 })

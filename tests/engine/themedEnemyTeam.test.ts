@@ -33,22 +33,31 @@ describe('themedEnemyTeam', () => {
     }
   })
 
-  it('high strength (boss, late area) → cohesive team with >=2 synergies (usually)', () => {
+  it('high strength (boss, late area) → still may realize a theme, but cohesion is no longer guaranteed', () => {
+    // Pre-2026-07-21 there were 9 synergies (house/role/tag), so boss packs — which only ever
+    // guarantee >=2 themed members (the softer, non-forced floor; see teamGen.ts wantFloor/
+    // acceptMin) — usually stumbled into SOME active synergy across a wide pool of possible
+    // families. With SYNERGIES reduced to the single Tossicità (tag:veleno, requires 3), that
+    // 2-member soft floor can no longer reliably cross the 3-member activation threshold, so
+    // cohesion is now rare, not usual (measured: 0/6 with the old fixture seeds). This test only
+    // guards the structural property that still holds: themedEnemyTeam never throws and always
+    // returns a valid team of the requested size, themed or not.
     const opts = { area: 2, kind: 'boss' as const, budget: 2000, count: 5, excludeThemes: [] }
-    let cohesive = 0
     for (const s of ['a', 'b', 'c', 'd', 'e', 'f']) {
       const { team } = themedEnemyTeam(createRng(s).fork(3), opts)
-      if (detectSynergies(team).length >= 1) cohesive++
+      expect(team.length).toBe(5)
+      expect(detectSynergies(team).length).toBeGreaterThanOrEqual(0)
     }
-    expect(cohesive).toBeGreaterThanOrEqual(4)
   })
 
-  it('respects excludeThemes (does not pick an excluded theme when alternatives exist)', () => {
+  it('excludeThemes on the sole remaining theme falls back to it (only one theme exists post-2026-07-21)', () => {
+    // THEMES has a single entry now ('tag:veleno'). pickTheme's own documented fallback
+    // ("Falls back to the full set if exclusion empties the pool") means excluding the only
+    // realized theme no longer yields a DIFFERENT theme — it yields the same one back.
     const base = { area: 2, kind: 'boss' as const, budget: 2000, count: 5 }
     const first = themedEnemyTeam(createRng('x').fork(3), { ...base, excludeThemes: [] })
-    expect(first.themeId).not.toBeNull()
-    const second = themedEnemyTeam(createRng('x').fork(3), { ...base, excludeThemes: [first.themeId!] })
-    expect(second.themeId).not.toBe(first.themeId)
+    const second = themedEnemyTeam(createRng('x').fork(3), { ...base, excludeThemes: first.themeId ? [first.themeId] : [] })
+    expect(second.team.length).toBe(5)
   })
 
   it('never returns an empty team', () => {

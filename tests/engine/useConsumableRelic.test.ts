@@ -61,17 +61,21 @@ describe('useConsumableRelic — revive', () => {
   })
 
   it('recomputes activeSynergies after reviving a wizard that re-activates a synergy', () => {
-    // goldenTrio requires harry + ron + hermione all alive
-    // harry is dead → goldenTrio NOT in the initial activeSynergies
-    const state = mkState([mk('harry', 0), mk('ron'), mk('hermione')], [lacrimeFenice])
-    expect(state.activeSynergies.find(s => s.synergy.id === 'goldenTrio')).toBeUndefined()
+    // goldenTrio (harry+ron+hermione, id-list synergy) was removed along with the other 8 team
+    // synergies (2026-07-21) — Tossicità (tag:veleno, requires 3) is the only synergy left, so
+    // this fixture switches to 3 veleno-tagged wizards to keep exercising the same real
+    // behavior: activeSynergies must be recomputed from the LIVING team after a revive.
+    // bellatrix/pansy/blaise are veleno-tagged (same trio used elsewhere, e.g.
+    // tests/engine/synergyRemoval.test.ts).
+    const state = mkState([mk('bellatrix', 0), mk('pansy'), mk('blaise')], [lacrimeFenice])
+    expect(state.activeSynergies.find(s => s.synergy.id === 'tossicita')).toBeUndefined()
 
     const out = useConsumableRelic(state, 'lacrime-fenice')
     // activeSynergies must equal detectSynergies(livingOf(newTeam))
     const expected = detectSynergies(livingOf(out.team))
     expect(out.activeSynergies).toEqual(expected)
-    // goldenTrio now active because harry is back
-    expect(out.activeSynergies.find(s => s.synergy.id === 'goldenTrio')).toBeTruthy()
+    // tossicita now active because bellatrix is back
+    expect(out.activeSynergies.find(s => s.synergy.id === 'tossicita')).toBeTruthy()
   })
 })
 

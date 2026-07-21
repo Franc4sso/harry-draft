@@ -65,12 +65,16 @@ describe('execute relics', () => {
   })
 })
 
-describe('Spietatezza synergy', () => {
-  it('activates with 3 esecuzione-tagged wizards', () => {
+describe('Spietatezza synergy (removed)', () => {
+  // The Spietatezza group synergy was removed from SYNERGIES (2026-07-21) along with the
+  // other 8 team synergies; execute now reaches a team only via relics (spada-grifondoro /
+  // sigillo-carnefice) — see teamExecute above, whose `spietatezza` branch is unreachable
+  // dead code (id no longer exists in SYNERGIES) but is harmless and out of this task's scope.
+  it('does not activate even with 3 esecuzione-tagged wizards', () => {
     const t = ['voldemort', 'lucius', 'harry'].map(id => mk(id, { hp: 100, atk: 30, def: 10, spd: 20 }))
-    expect(detectSynergies(t).map(a => a.synergy.id)).toContain('spietatezza')
+    expect(detectSynergies(t).map(a => a.synergy.id)).not.toContain('spietatezza')
   })
-  it('does not activate with only 2', () => {
+  it('does not activate with only 2 either', () => {
     const t = ['voldemort', 'lucius'].map(id => mk(id, { hp: 100, atk: 30, def: 10, spd: 20 }))
     expect(detectSynergies(t).map(a => a.synergy.id)).not.toContain('spietatezza')
   })

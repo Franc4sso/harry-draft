@@ -8,15 +8,24 @@ describe('theme catalog', () => {
     for (const t of THEMES) expect(t.poolSize).toBeGreaterThanOrEqual(3)
   })
 
-  it('pickTheme is deterministic for a seed and excludes given ids', () => {
+  it('pickTheme is deterministic for a seed', () => {
     const rng = createRng('s1').fork(7)
     const t = pickTheme(rng, [])
     expect(t).not.toBeNull()
     const rng2 = createRng('s1').fork(7)
     expect(pickTheme(rng2, [])!.id).toBe(t!.id)
-    // excluding the chosen theme yields a different one
+  })
+
+  it('excluding every theme falls back to the full set (only one theme exists post-2026-07-21)', () => {
+    // THEMES was reduced to a single entry ('tag:veleno', derived from the sole remaining
+    // synergy Tossicità) when the 9 team synergies were removed. pickTheme's exclusion filter
+    // now always empties the pool, so its own documented fallback ("Falls back to the full set
+    // if exclusion empties the pool") is what's under test — excluding the only theme id still
+    // returns that same theme, not a different one.
+    const t = pickTheme(createRng('s1').fork(7), [])
+    expect(t).not.toBeNull()
     const other = pickTheme(createRng('s1').fork(7), [t!.id])
-    expect(other!.id).not.toBe(t!.id)
+    expect(other!.id).toBe(t!.id)
   })
 
   it('themeStrength rises with area and with node kind, clamped to [0,1]', () => {

@@ -16,14 +16,21 @@ describe('affiliationChips', () => {
     expect(role).toBeTruthy()
     expect(role!.label).toBe(WIZARD_BY_ID['harry']!.role)
   })
-  it('adds a special chip for group synergies (Golden Trio) carrying its synergyId', () => {
+  it('adds a special chip for the Tossicità origin synergy carrying its synergyId', () => {
+    // Golden Trio (an id-list group synergy) was removed along with the other 8 team synergies
+    // (2026-07-21) — Tossicità (origin, tag:veleno) is the only synergy left that can produce a
+    // special chip. bellatrix carries the veleno tag (data/wizards.ts).
+    const chips = affiliationChips(WIZARD_BY_ID['bellatrix']!)
+    const tox = chips.find(c => c.kind === 'special' && c.synergyId === 'tossicita')
+    expect(tox).toBeTruthy()
+    expect(tox!.label).toBe('Tossicità')
+  })
+  it('emits no special chip for a wizard matching no remaining synergy (harry has no veleno tag)', () => {
     const chips = affiliationChips(WIZARD_BY_ID['harry']!)
-    const trio = chips.find(c => c.kind === 'special' && c.synergyId === 'goldenTrio')
-    expect(trio).toBeTruthy()
-    expect(trio!.label).toBe('Golden Trio')
+    expect(chips.filter(c => c.kind === 'special')).toHaveLength(0)
   })
   it('does not emit a special chip for house/role-kind synergies', () => {
-    const chips = affiliationChips(WIZARD_BY_ID['harry']!)
+    const chips = affiliationChips(WIZARD_BY_ID['bellatrix']!)
     const specials = chips.filter(c => c.kind === 'special')
     // every special must be a group/origin synergy, never "3 Grifondoro"/"3 Attaccanti"
     for (const s of specials) expect(/^\d/.test(s.label)).toBe(false)
