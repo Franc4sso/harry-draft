@@ -2,7 +2,8 @@ import { describe, it, expect, vi } from 'vitest'
 import { render, screen, fireEvent, within } from '@testing-library/react'
 import { ShopScreen } from '@/components/screens/ShopScreen'
 import type { ShopStock } from '@/game/engine/resolvers/shop'
-import type { DraftedWizard } from '@/types'
+import type { ActiveRelic, DraftedWizard } from '@/types'
+import { BALANCE } from '@/data/constants'
 
 const relic = { id: 'giratempo', name: 'Giratempo', desc: '+12 Velocità', rarity: 'comune' } as never
 const stock: ShopStock = {
@@ -14,6 +15,10 @@ const stock: ShopStock = {
   rerollPrice: 15,
 }
 const team = [{ wizard: { id: 'harry', name: 'Harry', house: 'Grifondoro', role: 'Attaccante' }, stats: { hp: 1, atk: 1, def: 1, spd: 1 }, maxHp: 1, spell: { id: 's', name: 'S', type: 'Attacco', hitChance: 1 } }] as unknown as DraftedWizard[]
+const fiveOwned: ActiveRelic[] = Array.from({ length: BALANCE.relics.maxRelics }, (_, i) => ({
+  relic: { id: `owned-${i}`, name: `Reliquia ${i}`, desc: '', rarity: 'comune' } as never,
+  stageObtained: 0,
+}))
 
 describe('ShopScreen', () => {
   it('shows prices, greys sold slots, and buys an affordable relic', () => {
@@ -44,5 +49,30 @@ describe('ShopScreen', () => {
     const woundedTeam = [{ wizard: { id: 'harry', name: 'Harry', house: 'Grifondoro', role: 'Attaccante' }, stats: { hp: 100, atk: 1, def: 1, spd: 1 }, maxHp: 100, currentHp: 60, spell: { id: 's', name: 'S', type: 'Attacco', hitChance: 1 } }] as unknown as DraftedWizard[]
     render(<ShopScreen stock={stock} bought={[]} cioccorane={100} team={woundedTeam} onBuy={() => {}} onReroll={() => {}} onLeave={() => {}} />)
     expect(within(screen.getByTestId('shop-slot-heal')).getByRole('button')).not.toBeDisabled()
+  })
+
+  it('at the relic cap, buying a relic slot shows the swap panel instead of buying immediately', () => {
+    const onBuy = vi.fn()
+    render(<ShopScreen stock={stock} bought={[]} cioccorane={100} team={team} relics={fiveOwned} onBuy={onBuy} onReroll={() => {}} onLeave={() => {}} />)
+    fireEvent.click(within(screen.getByTestId('shop-slot-relic-0')).getByRole('button', { name: 'Compra' }))
+    expect(onBuy).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByTestId(`swap-${fiveOwned[0]!.relic.id}`))
+    expect(onBuy).toHaveBeenCalledWith('relic-0', { replaceRelicId: fiveOwned[0]!.relic.id })
+  })
+
+  it('at the relic cap, rejecting the swap panel returns to the normal Compra button without buying', () => {
+    const onBuy = vi.fn()
+    render(<ShopScreen stock={stock} bought={[]} cioccorane={100} team={team} relics={fiveOwned} onBuy={onBuy} onReroll={() => {}} onLeave={() => {}} />)
+    fireEvent.click(within(screen.getByTestId('shop-slot-relic-0')).getByRole('button', { name: 'Compra' }))
+    fireEvent.click(screen.getByTestId('relic-reject'))
+    expect(onBuy).not.toHaveBeenCalled()
+    expect(within(screen.getByTestId('shop-slot-relic-0')).getByRole('button', { name: 'Compra' })).toBeInTheDocument()
+  })
+
+  it('below the relic cap, buying a relic slot calls onBuy immediately (unchanged flow)', () => {
+    const onBuy = vi.fn()
+    render(<ShopScreen stock={stock} bought={[]} cioccorane={100} team={team} relics={[]} onBuy={onBuy} onReroll={() => {}} onLeave={() => {}} />)
+    fireEvent.click(within(screen.getByTestId('shop-slot-relic-0')).getByRole('button', { name: 'Compra' }))
+    expect(onBuy).toHaveBeenCalledWith('relic-0', undefined)
   })
 })

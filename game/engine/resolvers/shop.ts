@@ -1,7 +1,7 @@
 import type { Relic, RunEvent, RunNode, RunState } from '@/types'
 import type { Rng } from '../rng'
 import { parseAreaNodeId } from '../map'
-import { offerRelics } from '../relics'
+import { offerRelics, addRelicWithChoice } from '../relics'
 import { detectSynergies } from '../synergy'
 import { livingOf } from '../roster'
 import { corruptOnAssign } from '../sacrifice'
@@ -52,8 +52,10 @@ export const shopResolver: NodeResolver = {
     if (slot.kind === 'relic') {
       if (!slot.relic) return state // malformed relic slot: no-op, never fall through to removeWizard
       const active = { relic: slot.relic, stageObtained: state.stage, ...(choice.carrierId ? { assignedTo: choice.carrierId } : {}) }
+      const nextRelics = addRelicWithChoice(next.relics, active, choice.replaceRelicId)
+      if (nextRelics === next.relics) return state // a 5 senza scelta valida → rifiuto no-op, non spende, non segna comprato
       const team = choice.carrierId ? corruptOnAssign(next.team, slot.relic, choice.carrierId) : next.team
-      next = { ...next, team, relics: [...next.relics, active] }
+      next = { ...next, team, relics: nextRelics }
     } else if (slot.kind === 'heal') {
       const healed = next.team.map(dw => (dw.corrotto ? dw : { ...dw, currentHp: dw.maxHp }))
       next = { ...next, team: healed, activeSynergies: detectSynergies(livingOf(healed)) }

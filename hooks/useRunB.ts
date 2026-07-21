@@ -47,7 +47,7 @@ export interface RunBController {
   chooseSpellUpgrade: (wizardId: string) => void
   useConsumableRelic: (relicId: string) => void
   cioccorane: number
-  buyShopItem: (slotId: string, opts?: { carrierId?: string; targetWizardId?: string }) => void
+  buyShopItem: (slotId: string, opts?: { carrierId?: string; targetWizardId?: string; replaceRelicId?: string }) => void
   rerollShop: () => void
   leaveShop: () => void
   advanceArea: () => void
@@ -96,13 +96,14 @@ export function useRunB(seed: string): RunBController {
 
   const acknowledgeVictory = useCallback(() => { commit({ ...runRef.current, phase: 'map' }, 'map') }, [commit, runRef])
 
-  const buyShopItem = useCallback((slotId: string, opts?: { carrierId?: string; targetWizardId?: string }) => {
+  const buyShopItem = useCallback((slotId: string, opts?: { carrierId?: string; targetWizardId?: string; replaceRelicId?: string }) => {
     const node = runRef.current.map!.find(n => n.id === runRef.current.currentNodeId)!
     const slot = shopOffer(runRef.current, node, createRng(runRef.current.seed)).slots.find(s => s.id === slotId)
     if (!slot) return
-    // Apply the purchase FIRST (pure); a no-op (already bought / remove-guard) must not charge.
+    // Apply the purchase FIRST (pure); a no-op (already bought / remove-guard / relic-cap
+    // rejection without a chosen swap) must not charge.
     const next = shopResolver.resolve(runRef.current, node,
-      { kind: 'shop-buy', slotId, carrierId: opts?.carrierId, targetWizardId: opts?.targetWizardId }, createRng(runRef.current.seed))
+      { kind: 'shop-buy', slotId, carrierId: opts?.carrierId, targetWizardId: opts?.targetWizardId, replaceRelicId: opts?.replaceRelicId }, createRng(runRef.current.seed))
     if (next === runRef.current) return
     // Deduct the wallet; if unaffordable, abort with NO state change (discard `next`).
     const spent = spendCioccorane(profileRef.current, slot.price)

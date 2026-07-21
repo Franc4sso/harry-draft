@@ -1,27 +1,55 @@
 'use client'
 import { useState } from 'react'
-import type { DraftedWizard } from '@/types'
+import type { ActiveRelic, DraftedWizard } from '@/types'
 import type { ShopStock, ShopSlot } from '@/game/engine/resolvers/shop'
 import { Button } from '@/components/ui/Button'
 import { Frame } from '@/components/ui/Frame'
 import { Insegna } from '@/components/ui/Insegna'
 import { displayName } from '@/lib/displayName'
 import { RELIC_RARITY_COLOR } from '@/lib/relicRarity'
+import { RelicSwapPanel } from '@/components/relics/RelicSwapPanel'
+import { BALANCE } from '@/data/constants'
 
 const canAfford = (price: number, wallet: number) => price <= wallet
 
-function Slot({ slot, sold, wallet, team, onBuy }: {
-  slot: ShopSlot; sold: boolean; wallet: number; team: DraftedWizard[]
-  onBuy: (slotId: string, opts?: { carrierId?: string; targetWizardId?: string }) => void
+function Slot({ slot, sold, wallet, team, relics, onBuy }: {
+  slot: ShopSlot; sold: boolean; wallet: number; team: DraftedWizard[]; relics: ActiveRelic[]
+  onBuy: (slotId: string, opts?: { carrierId?: string; targetWizardId?: string; replaceRelicId?: string }) => void
 }) {
   const [pick, setPick] = useState<string | null>(null)
+  const [wantsToBuy, setWantsToBuy] = useState(false)
   const affordable = canAfford(slot.price, wallet)
   const needsTarget = slot.kind === 'removeWizard' || (slot.kind === 'relic' && slot.relic?.assignable)
   const teamFull = team.every(d => (d.currentHp ?? d.maxHp) >= d.maxHp)
+  const atCap = slot.kind === 'relic' && relics.length >= BALANCE.relics.maxRelics
   const disabled = sold || !affordable || Boolean(needsTarget && !pick) || (slot.kind === 'heal' && teamFull)
   const label = slot.kind === 'relic' ? (slot.relic?.name ?? 'Reliquia')
     : slot.kind === 'heal' ? 'Cura completa' : 'Rimuovi un mago'
   const color = slot.kind === 'relic' && slot.relic ? RELIC_RARITY_COLOR[slot.relic.rarity] : '#9aa3ad'
+
+  if (slot.kind === 'relic' && slot.relic && atCap && wantsToBuy && !sold && (!needsTarget || pick)) {
+    return (
+      <Frame
+        variant="card"
+        innerClassName="relative flex h-full flex-col gap-2 p-4"
+        style={{ boxShadow: `0 0 16px ${color}22` }}
+        data-testid={`shop-slot-${slot.id}`}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-display text-sm leading-tight">{label}</span>
+          <span className="whitespace-nowrap text-xs font-semibold text-[#e8dcb6]">{slot.price} 🍫</span>
+        </div>
+        <RelicSwapPanel
+          incoming={slot.relic}
+          owned={relics}
+          onSwap={(replaceRelicId) =>
+            onBuy(slot.id, needsTarget ? { carrierId: pick ?? undefined, replaceRelicId } : { replaceRelicId })
+          }
+          onReject={() => { setWantsToBuy(false); setPick(null) }}
+        />
+      </Frame>
+    )
+  }
 
   return (
     <Frame
@@ -63,7 +91,8 @@ function Slot({ slot, sold, wallet, team, onBuy }: {
       <button
         type="button"
         disabled={disabled}
-        onClick={() =>
+        onClick={() => {
+          if (atCap) { setWantsToBuy(true); return } // collezione piena: mostra RelicSwapPanel invece di comprare subito
           onBuy(
             slot.id,
             slot.kind === 'removeWizard'
@@ -72,7 +101,7 @@ function Slot({ slot, sold, wallet, team, onBuy }: {
                 ? { carrierId: pick ?? undefined }
                 : undefined,
           )
-        }
+        }}
         className="mt-auto rounded-lg border border-amber-300/40 bg-amber-300/10 px-2 py-1 text-xs font-semibold text-amber-100 disabled:cursor-default disabled:opacity-40"
       >
         {sold ? 'Esaurito' : 'Compra'}
@@ -81,12 +110,13 @@ function Slot({ slot, sold, wallet, team, onBuy }: {
   )
 }
 
-export function ShopScreen({ stock, bought, cioccorane, team, onBuy, onReroll, onLeave }: {
+export function ShopScreen({ stock, bought, cioccorane, team, relics, onBuy, onReroll, onLeave }: {
   stock: ShopStock
   bought: string[]
   cioccorane: number
   team: DraftedWizard[]
-  onBuy: (slotId: string, opts?: { carrierId?: string; targetWizardId?: string }) => void
+  relics?: ActiveRelic[]
+  onBuy: (slotId: string, opts?: { carrierId?: string; targetWizardId?: string; replaceRelicId?: string }) => void
   onReroll: () => void
   onLeave: () => void
 }) {
@@ -105,6 +135,7 @@ export function ShopScreen({ stock, bought, cioccorane, team, onBuy, onReroll, o
             sold={bought.includes(slot.id)}
             wallet={cioccorane}
             team={team}
+            relics={relics ?? []}
             onBuy={onBuy}
           />
         ))}

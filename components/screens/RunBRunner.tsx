@@ -68,7 +68,7 @@ export interface RunnerController {
   chooseSpellUpgrade: (wizardId: string) => void
   useConsumableRelic: (relicId: string) => void
   cioccorane?: number
-  buyShopItem?: (slotId: string, opts?: { carrierId?: string; targetWizardId?: string }) => void
+  buyShopItem?: (slotId: string, opts?: { carrierId?: string; targetWizardId?: string; replaceRelicId?: string }) => void
   rerollShop?: () => void
   leaveShop?: () => void
   advanceArea: () => void
@@ -260,6 +260,7 @@ export function RunBRunner({
                 bought={c.currentNode?.shopBought ?? []}
                 cioccorane={c.cioccorane ?? 0}
                 team={c.run.team}
+                relics={c.run.relics}
                 onBuy={c.buyShopItem}
                 onReroll={c.rerollShop}
                 onLeave={c.leaveShop}

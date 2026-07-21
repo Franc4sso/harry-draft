@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { shopResolver, shopOffer } from '@/game/engine/resolvers/shop'
 import { createRng } from '@/game/engine/rng'
 import { offerRecruits, recruitVia } from '@/game/engine/recruit'
-import type { RunNode, RunState } from '@/types'
+import { RELICS, JOKER_RELIC_IDS, SACRIFICE_RELIC_IDS } from '@/data/relics'
+import type { ActiveRelic, RunNode, RunState } from '@/types'
 
 function team(n: number) {
   return offerRecruits(createRng(1), { exclude: new Set() }).slice(0, n).map(d => recruitVia(d, 'iniziale', 1))
@@ -11,6 +12,10 @@ function state(over: Partial<RunState> = {}): RunState {
   const node: RunNode = { id: 'a0f1n0', type: 'shop', next: [] }
   return { seed: 's', phase: 'shop-node', team: team(2), activeSynergies: [], stage: 0, relics: [],
     map: [node], currentNodeId: 'a0f1n0', area: 0, ...over }
+}
+function fiveOwned(excludeIds: Set<string>): ActiveRelic[] {
+  const pool = RELICS.filter(r => !JOKER_RELIC_IDS.includes(r.id) && !SACRIFICE_RELIC_IDS.includes(r.id) && !excludeIds.has(r.id))
+  return pool.slice(0, 5).map((relic, i) => ({ relic, stageObtained: i }))
 }
 const rng = () => createRng('s')
 const node = (s: RunState) => s.map!.find(n => n.id === 'a0f1n0')!
@@ -59,5 +64,49 @@ describe('shopResolver', () => {
     expect(boughtIds).toContain(relic0.relic!.id)
     expect(boughtIds).toContain(relic1.relic!.id)
     expect(relic0.relic!.id).not.toBe(relic1.relic!.id)
+  })
+
+  describe('at the relic cap', () => {
+    it('replaces the chosen owned relic when replaceRelicId is given', () => {
+      const owned = fiveOwned(new Set())
+      const s = state({ relics: owned })
+      const relicSlot = shopOffer(s, node(s), rng()).slots
+        .find(x => x.kind === 'relic' && !owned.some(a => a.relic.id === x.relic!.id))!
+      const replaceId = owned[0]!.relic.id
+
+      const out = shopResolver.resolve(s, node(s), { kind: 'shop-buy', slotId: relicSlot.id, replaceRelicId: replaceId }, rng())
+
+      expect(out.relics).toHaveLength(5)
+      expect(out.relics.some(a => a.relic.id === replaceId)).toBe(false)
+      expect(out.relics.some(a => a.relic.id === relicSlot.relic!.id)).toBe(true)
+      expect(node(out).shopBought).toContain(relicSlot.id)
+    })
+
+    it('is a no-op that does not spend or mark the slot bought without replaceRelicId', () => {
+      const owned = fiveOwned(new Set())
+      const s = state({ relics: owned })
+      const relicSlot = shopOffer(s, node(s), rng()).slots
+        .find(x => x.kind === 'relic' && !owned.some(a => a.relic.id === x.relic!.id))!
+
+      const out = shopResolver.resolve(s, node(s), { kind: 'shop-buy', slotId: relicSlot.id }, rng())
+
+      expect(out).toBe(s)
+      expect(node(out).shopBought ?? []).not.toContain(relicSlot.id)
+    })
+
+    it('preserves carrierId/corruption on the swapped-in relic', () => {
+      const owned = fiveOwned(new Set())
+      const s = state({ relics: owned })
+      const relicSlot = shopOffer(s, node(s), rng()).slots
+        .find(x => x.kind === 'relic' && !owned.some(a => a.relic.id === x.relic!.id))!
+      const replaceId = owned[0]!.relic.id
+      const carrier = s.team[0]!.wizard.id
+
+      const out = shopResolver.resolve(
+        s, node(s), { kind: 'shop-buy', slotId: relicSlot.id, carrierId: carrier, replaceRelicId: replaceId }, rng(),
+      )
+      const stored = out.relics.find(a => a.relic.id === relicSlot.relic!.id)!
+      expect(stored.assignedTo).toBe(carrier)
+    })
   })
 })
