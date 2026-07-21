@@ -1,7 +1,7 @@
 import type { DraftedWizard, Relic, RunEvent, RunNode, RunState } from '@/types'
 import type { Rng } from '../rng'
 import { offerRecruits, recruitVia, replaceMember } from '../recruit'
-import { offerRelics, offerJokers } from '../relics'
+import { offerRelics, offerJokers, addRelicWithChoice } from '../relics'
 import { detectSynergies } from '../synergy'
 import { livingOf } from '../roster'
 import { parseAreaNodeId } from '../map'
@@ -55,7 +55,9 @@ export const relicResolver: NodeResolver = {
     const ev: RunEvent = { area: state.area ?? 0, nodeId: node.id, kind: 'relic',
       summary: `Ottieni la reliquia ${relic.name ?? relic.id}` }
     const active = { relic, stageObtained: state.stage, ...(choice.assignedTo ? { assignedTo: choice.assignedTo } : {}) }
+    const nextRelics = addRelicWithChoice(state.relics, active, choice.replaceRelicId)
+    if (nextRelics === state.relics) return state // a 5 senza scelta valida → rifiuto no-op
     const team = choice.assignedTo ? corruptOnAssign(state.team, relic, choice.assignedTo) : state.team
-    return { ...state, team, relics: [...state.relics, active], log: [...(state.log ?? []), ev] }
+    return { ...state, team, relics: nextRelics, log: [...(state.log ?? []), ev] }
   },
 }

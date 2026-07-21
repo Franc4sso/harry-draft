@@ -8,6 +8,8 @@ import { Insegna } from '@/components/ui/Insegna'
 import { Stagger, StaggerItem } from '@/components/ui/motion'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { RELIC_RARITY_COLOR } from '@/lib/relicRarity'
+import { RelicSwapPanel } from '@/components/relics/RelicSwapPanel'
+import { BALANCE } from '@/data/constants'
 
 /** Compact rarity-tinted sigil for a relic already in the collection. */
 function OwnedSigil({ relic }: { relic: Relic }) {
@@ -86,13 +88,14 @@ export function RelicNodeScreen({
   offer: Relic[]
   owned: ActiveRelic[]
   team: DraftedWizard[]
-  onPick: (relicId: string, assignedTo?: string) => void
+  onPick: (relicId: string, assignedTo?: string, replaceRelicId?: string) => void
 }) {
   const [pick, setPick] = useState<string | null>(null)
   const [carrier, setCarrier] = useState<string | null>(null)
 
   const pickedRelic = offer.find(r => r.id === pick)
   const needsCarrier = Boolean(pickedRelic?.assignable)
+  const atCap = owned.length >= BALANCE.relics.maxRelics
 
   return (
     <main className="flex-1 flex flex-col items-center gap-6 p-6">
@@ -140,7 +143,16 @@ export function RelicNodeScreen({
         </div>
       )}
 
-      <Button variant="primary" disabled={!pick || (needsCarrier && !carrier)} onClick={() => pick && onPick(pick, needsCarrier ? carrier ?? undefined : undefined)}>Prendi</Button>
+      {atCap && pickedRelic && (!needsCarrier || carrier) ? (
+        <RelicSwapPanel
+          incoming={pickedRelic}
+          owned={owned}
+          onSwap={(replaceRelicId) => onPick(pickedRelic.id, needsCarrier ? carrier ?? undefined : undefined, replaceRelicId)}
+          onReject={() => { setPick(null); setCarrier(null) }}
+        />
+      ) : (
+        <Button variant="primary" disabled={!pick || (needsCarrier && !carrier) || atCap} onClick={() => pick && onPick(pick, needsCarrier ? carrier ?? undefined : undefined)}>Prendi</Button>
+      )}
 
       <style>{`
         @keyframes relicAuraPulse { 0%,100% { opacity: 0.55; transform: scale(1); } 50% { opacity: 0.9; transform: scale(1.08); } }

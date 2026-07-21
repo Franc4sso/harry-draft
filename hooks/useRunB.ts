@@ -38,7 +38,7 @@ export interface RunBController {
   acknowledgeVictory: () => void
   chooseRecruit: (wizardId: string, replaceId?: string) => void
   skipRecruit: () => void
-  chooseRelic: (relicId: string, assignedTo?: string) => void
+  chooseRelic: (relicId: string, assignedTo?: string, replaceRelicId?: string) => void
   buyAltare: (relicId: string, costWizardId?: string, costRelicId?: string, carrierId?: string) => void
   skipAltare: () => void
   ackInfirmary: () => void

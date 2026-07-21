@@ -3,7 +3,7 @@ import type { Rng } from '../rng'
 
 export type ResolverChoice =
   | { kind: 'recruit-pick'; wizardId: string; replaceId?: string }
-  | { kind: 'relic-pick'; relicId: string; assignedTo?: string }
+  | { kind: 'relic-pick'; relicId: string; assignedTo?: string; replaceRelicId?: string }
   | { kind: 'event-choice'; optionId: string }
   | { kind: 'spell-upgrade'; wizardId: string }
   | { kind: 'shop-buy'; slotId: string; carrierId?: string; targetWizardId?: string }

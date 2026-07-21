@@ -30,7 +30,7 @@ export interface EndlessController {
   acknowledgeVictory: () => void
   chooseRecruit: (wizardId: string, replaceId?: string) => void
   skipRecruit: () => void
-  chooseRelic: (relicId: string, assignedTo?: string) => void
+  chooseRelic: (relicId: string, assignedTo?: string, replaceRelicId?: string) => void
   ackInfirmary: () => void
   currentEvent: CurrentEventView | null
   chooseEventOption: (optionId: string) => void
@@ -111,9 +111,9 @@ export function useEndless(seed: string): EndlessController {
     shared.skipRecruit()
   }, [shared])
 
-  const chooseRelic = useCallback((relicId: string, assignedTo?: string) => {
-    actionsRef.current.push({ t: 'resolve', choice: { kind: 'relic-pick', relicId, assignedTo } })
-    shared.chooseRelic(relicId, assignedTo)
+  const chooseRelic = useCallback((relicId: string, assignedTo?: string, replaceRelicId?: string) => {
+    actionsRef.current.push({ t: 'resolve', choice: { kind: 'relic-pick', relicId, assignedTo, replaceRelicId } })
+    shared.chooseRelic(relicId, assignedTo, replaceRelicId)
   }, [shared])
 
   const ackInfirmary = useCallback(() => {

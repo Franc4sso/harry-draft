@@ -103,7 +103,7 @@ export interface RunSharedController {
   commitBattle: () => void
   chooseRecruit: (wizardId: string, replaceId?: string) => void
   skipRecruit: () => void
-  chooseRelic: (relicId: string, assignedTo?: string) => void
+  chooseRelic: (relicId: string, assignedTo?: string, replaceRelicId?: string) => void
   buyAltare: (relicId: string, costWizardId?: string, costRelicId?: string, carrierId?: string) => void
   skipAltare: () => void
   ackInfirmary: () => void
@@ -198,8 +198,8 @@ export function useRunShared(opts: UseRunSharedOpts): RunSharedController {
     commit({ ...next, phase: 'map' }, 'map')
   }, [commit])
 
-  const chooseRelic = useCallback((relicId: string, assignedTo?: string) => {
-    const next = resolveCurrent(runRef.current, { kind: 'relic-pick', relicId, assignedTo }, createRng(runRef.current.seed))
+  const chooseRelic = useCallback((relicId: string, assignedTo?: string, replaceRelicId?: string) => {
+    const next = resolveCurrent(runRef.current, { kind: 'relic-pick', relicId, assignedTo, replaceRelicId }, createRng(runRef.current.seed))
     commit({ ...next, phase: 'map' }, 'map')
   }, [commit])
 

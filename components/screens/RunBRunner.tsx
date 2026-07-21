@@ -56,7 +56,7 @@ export interface RunnerController {
   acknowledgeVictory: () => void
   chooseRecruit: (wizardId: string, replaceId?: string) => void
   skipRecruit: () => void
-  chooseRelic: (relicId: string, assignedTo?: string) => void
+  chooseRelic: (relicId: string, assignedTo?: string, replaceRelicId?: string) => void
   /** Altare Oscuro (P5): campaign-only, mirrors buyShopItem/leaveShop's optionality —
    *  endless never generates 'altare' nodes (Task 6), so EndlessController doesn't
    *  implement these. */
@@ -215,7 +215,7 @@ export function RunBRunner({
             offer={relicOffer(c.run, c.currentNode!, createRng(c.run.seed))}
             owned={c.run.relics}
             team={c.run.team}
-            onPick={(relicId, assignedTo) => c.chooseRelic(relicId, assignedTo)}
+            onPick={(relicId, assignedTo, replaceRelicId) => c.chooseRelic(relicId, assignedTo, replaceRelicId)}
           />,
         )
 
