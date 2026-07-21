@@ -161,7 +161,7 @@ export function RecruitScreen({
             <Frame variant="panel" innerClassName="relative p-3">
               <Parchment className="absolute inset-0" />
               <div className="relative">
-                <DuoTracker picks={baseTeam} considered={focus} relics={relics} />
+                <DuoTracker picks={baseTeam} considered={focus} relics={relics} prevTeam={full ? team : undefined} />
               </div>
             </Frame>
           </div>
