@@ -613,6 +613,7 @@ defenseK: 0.5,
   relics: {
     offerCount: 3,
     jokerNodeChance: 0.35,
+    maxRelics: 5, // cap reliquie del giocatore (swap/scarto su tutte le fonti)
     rarityWeights: {
       'comune': 50,
       'non-comune': 28,

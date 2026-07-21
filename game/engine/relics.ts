@@ -1,5 +1,6 @@
 import type { ActiveRelic, ActiveSynergy, DraftedWizard, Keyword, RelicCondition, RelicScaling, Stats, Side } from '@/types'
 import type { Relic } from '@/types'
+import type { RelicRarity } from '@/types/relic'
 import type { Rng } from './rng'
 import type { EventBus } from './combat/eventBus'
 import { RELICS, JOKER_RELIC_IDS, SACRIFICE_RELIC_IDS } from '@/data/relics'
@@ -8,6 +9,9 @@ import { livingOf } from './roster'
 
 const JOKER_SET = new Set(JOKER_RELIC_IDS)
 const SACRIFICE_SET = new Set(SACRIFICE_RELIC_IDS)
+
+/** Rarità dalla peggiore alla migliore — usato per lo scarto automatico. */
+export const RELIC_RARITY_ORDER: readonly RelicRarity[] = ['comune', 'non-comune', 'rara', 'epica']
 
 let relicRestriction: ReadonlySet<string> | null = null
 
@@ -247,4 +251,34 @@ export function offerSacrifices(rng: Rng, owned: ActiveRelic[]): Relic[] {
     remaining.splice(idx, 1)
   }
   return chosen
+}
+
+/** Aggiunge una reliquia rispettando il cap, con scelta esplicita di scambio.
+ *  Sotto il cap: append. Al cap con replaceId valido: sostituisce (ordine preservato).
+ *  Al cap senza replaceId (o id non posseduto): no-op reference-equal (= rifiuto). */
+export function addRelicWithChoice(
+  relics: ActiveRelic[], active: ActiveRelic, replaceId?: string,
+): ActiveRelic[] {
+  if (relics.length < BALANCE.relics.maxRelics) return [...relics, active]
+  if (!replaceId) return relics
+  const idx = relics.findIndex(a => a.relic.id === replaceId)
+  if (idx < 0) return relics
+  const next = relics.slice()
+  next[idx] = active
+  return next
+}
+
+/** Aggiunge una reliquia scartando automaticamente la peggiore se al cap.
+ *  Sotto il cap: append. Al cap: rimuove la rarità più bassa (a parità, la più vecchia =
+ *  stageObtained minore, poi indice minore) e aggiunge la nuova in coda. */
+export function addRelicAutoDrop(relics: ActiveRelic[], active: ActiveRelic): ActiveRelic[] {
+  if (relics.length < BALANCE.relics.maxRelics) return [...relics, active]
+  const rank = (r: RelicRarity) => RELIC_RARITY_ORDER.indexOf(r)
+  let worst = 0
+  for (let i = 1; i < relics.length; i++) {
+    const a = relics[i]!, b = relics[worst]!
+    const ra = rank(a.relic.rarity), rb = rank(b.relic.rarity)
+    if (ra < rb || (ra === rb && (a.stageObtained ?? 0) < (b.stageObtained ?? 0))) worst = i
+  }
+  return [...relics.slice(0, worst), ...relics.slice(worst + 1), active]
 }
