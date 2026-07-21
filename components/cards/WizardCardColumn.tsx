@@ -144,9 +144,9 @@ export function WizardCardColumn({
           </div>
         )}
 
-        {/* compact (icon-only): the full labels can duplicate a role word (e.g. taunt's
-            label is "Tank"), which the crown/RoleBadge already own — see wizardCard.test. */}
-        <div className="mb-2"><DuoSignalMarks wizard={wizard} compact /></div>
+        {/* Named signals so the Combo value is explicit. taunt reads "Muro" (not "Tank")
+            to avoid echoing the crown/RoleBadge — see DuoSignalMarks.cardLabel. */}
+        <div className="mb-2"><DuoSignalMarks wizard={wizard} /></div>
 
         {/* SPELL BLOCK — hero move. No type chip: the role-accent bar carries
             the "kind" cue instead. */}

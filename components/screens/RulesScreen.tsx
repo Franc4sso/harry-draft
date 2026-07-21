@@ -263,7 +263,14 @@ export function RulesScreen() {
                     </span>
                     <div className="min-w-0">
                       <p className="text-sm font-semibold" style={{ color }}>{house}</p>
-                      <p className="text-xs leading-snug text-white/70">{trioText(house, 0)}</p>
+                      <p className="text-xs leading-snug text-white/70">
+                        <span className="text-white/45">3 maghi:</span> {trioText(house, 0)}
+                      </p>
+                      {trioText(house, 1) !== trioText(house, 0) && (
+                        <p className="mt-0.5 text-xs leading-snug text-white/70">
+                          <span className="text-white/45">4+ maghi:</span> {trioText(house, 1)}
+                        </p>
+                      )}
                     </div>
                   </div>
                 )

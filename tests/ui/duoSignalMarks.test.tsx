@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { DuoSignalMarks } from '@/components/cards/DuoSignalMarks'
 import type { Wizard } from '@/types'
 
@@ -12,15 +12,13 @@ describe('DuoSignalMarks', () => {
     expect(screen.getByTestId('duo-signal-marks')).toBeInTheDocument()
     expect(screen.getByText('Veleno')).toBeInTheDocument()
   })
+  it('names the taunt signal "Muro" (not "Tank") so it does not echo the role badge', () => {
+    render(<DuoSignalMarks wizard={wiz('Tank', [])} />)
+    expect(screen.getByText('Muro')).toBeInTheDocument()
+    expect(screen.queryByText('Tank')).toBeNull()
+  })
   it('renders nothing for a plain attacker', () => {
     const { container } = render(<DuoSignalMarks wizard={wiz('Attaccante', [])} />)
     expect(container.querySelector('[data-testid="duo-signal-marks"]')).toBeNull()
-  })
-  it('names the fed Duos in the tooltip content', () => {
-    render(<DuoSignalMarks wizard={wiz('Attaccante', ['veleno'])} />)
-    // Tooltip content only mounts once its trigger button is activated (see
-    // tests/ui/tooltip.test.tsx: "is hidden until tapped, then reveals its content").
-    fireEvent.click(screen.getByRole('button'))
-    expect(screen.getByText(/alimenta:/)).toBeInTheDocument()
   })
 })

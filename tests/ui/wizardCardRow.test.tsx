@@ -44,10 +44,10 @@ describe('WizardCardRow', () => {
   })
 
   it('shows no trait chip when the wizard is not shiny', () => {
+    // Query the chip by testid, not by trait name: a trait name like "Esecuzione" also
+    // appears as a Combo-signal label on the card, so a text query would false-positive.
     render(<WizardCardRow drafted={{ ...harry(), shiny: undefined }} />)
-    for (const id of Object.keys(TRAIT_BY_ID)) {
-      expect(screen.queryByText(TRAIT_BY_ID[id]!.name)).toBeNull()
-    }
+    expect(screen.queryByTestId('trait-chip')).toBeNull()
   })
 
   it('fires onClick when clickable', async () => {
@@ -65,7 +65,7 @@ describe('WizardCardRow', () => {
 })
 
 describe('WizardCardRow Duo affordance', () => {
-  it('shows compact signal marks for a veleno mage', () => {
+  it('shows Duo signal marks for a veleno mage', () => {
     render(<WizardCardRow drafted={velenoDrafted()} />)
     expect(screen.getByTestId('duo-signal-marks')).toBeInTheDocument()
   })

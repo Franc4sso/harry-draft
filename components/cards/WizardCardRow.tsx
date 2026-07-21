@@ -110,7 +110,7 @@ export function WizardCardRow({
             {displayName(drafted)}
             {drafted.shiny && <span aria-hidden className="ml-1 text-amber-300">✨</span>}
           </h3>
-          <DuoSignalMarks wizard={wizard} compact />
+          <DuoSignalMarks wizard={wizard} />
         </div>
 
         {/* Persisted health (currentHp) — shown only for the real run roster (draft/recruit
@@ -155,6 +155,7 @@ export function WizardCardRow({
             <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-sky-300/55">Tratto</span>
             <Tooltip content={shinyTrait.desc}>
               <span
+                data-testid="trait-chip"
                 className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold"
                 style={{ color: '#bcd9f5', borderColor: 'rgba(96,156,214,0.55)', background: 'rgba(40,92,162,0.22)' }}
               >
