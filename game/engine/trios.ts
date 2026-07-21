@@ -1,5 +1,6 @@
-import type { ActiveDuo, DraftedWizard, House } from '@/types'
+import type { ActiveDuo, ActiveRelic, DraftedWizard, House } from '@/types'
 import { livingOf } from '@/game/engine/roster'
+import { detectDuos } from '@/game/engine/duos'
 
 // BILANCIAMENTO (misurato 2026-07-14, fase 2). I Trio sono potenza SOLO del player, gated su
 // ≥1 Duo attivo + 3 maghi stessa casa. A/B su campaignBalanceRestricted (il gate REALE; l'harness
@@ -46,6 +47,15 @@ export function trioGates(team: DraftedWizard[], duos: ActiveDuo[]): { house: Ho
     out.push({ house, grade: n >= 4 ? 1 : 0 })
   }
   return out
+}
+
+/** Le case il cui Trio è attivo ORA e cade dopo lo swap. Il gate Trio (trioGates) richiede
+ *  >=1 Duo attivo E >=3 maghi vivi della casa: entrambe le rotture (perdere il Duo o scendere
+ *  sotto i 3 di casata) fanno cadere il Trio. Pure. */
+export function trioGateLoss(current: DraftedWizard[], next: DraftedWizard[], relics: ActiveRelic[]): House[] {
+  const before = trioGates(current, detectDuos(current, relics)).map(g => g.house)
+  const after = new Set(trioGates(next, detectDuos(next, relics)).map(g => g.house))
+  return before.filter(h => !after.has(h))
 }
 
 /** Player-only. For each wizard, its house's Trio effect IF the team has ≥1 active Duo AND
