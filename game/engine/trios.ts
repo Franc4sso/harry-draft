@@ -53,8 +53,8 @@ export function trioGates(team: DraftedWizard[], duos: ActiveDuo[]): { house: Ho
  *  >=1 Duo attivo E >=3 maghi vivi della casa: entrambe le rotture (perdere il Duo o scendere
  *  sotto i 3 di casata) fanno cadere il Trio. Pure. */
 export function trioGateLoss(current: DraftedWizard[], next: DraftedWizard[], relics: ActiveRelic[]): House[] {
-  const before = trioGates(current, detectDuos(current, relics)).map(g => g.house)
-  const after = new Set(trioGates(next, detectDuos(next, relics)).map(g => g.house))
+  const before = trioGates(current, detectDuos(livingOf(current), relics)).map(g => g.house)
+  const after = new Set(trioGates(next, detectDuos(livingOf(next), relics)).map(g => g.house))
   return before.filter(h => !after.has(h))
 }
 

@@ -6,6 +6,11 @@ import type { DraftedWizard } from '@/types'
 const dw = (id: string, role: string, house: string, tags: string[] = []): DraftedWizard =>
   ({ wizard: { id, role, house, tags }, level: 1 } as unknown as DraftedWizard)
 
+// Variante morta: currentHp:0 è la forma standard usata in tutta la test suite (vedi
+// tests/engine/recruitSwapDead.test.ts) — isDead in roster.ts legge (currentHp ?? maxHp) <= 0.
+const deadDw = (id: string, role: string, house: string, tags: string[] = []): DraftedWizard =>
+  ({ wizard: { id, role, house, tags }, level: 1, currentHp: 0 } as unknown as DraftedWizard)
+
 describe('trioGateLoss', () => {
   it('segnala la casa il cui Trio cade quando si rimuove un mago della casa', () => {
     // 3 Serpeverde + Duo Cancrena attivo (veleno+esecuzione su 2 di loro) → Trio Serpeverde attivo.
@@ -39,5 +44,22 @@ describe('trioGateLoss', () => {
     const current = [s1, s2, s3]
     const next = [s1, dw('s5', 'Tank', 'Serpeverde'), s3]
     expect(trioGateLoss(current, next, [])).toContain('Serpeverde')
+  })
+
+  it('un mago MORTO non deve accendere il Duo che sblocca il Trio (regressione: detectDuos va su livingOf)', () => {
+    // 3 Serpeverde vivi SENZA tag (nessun Duo Cancrena reale, quindi Trio Serpeverde NON attivo)
+    // + 2 Grifondoro MORTI che portano i tag veleno/esecuzione. Nel gioco reale i morti non
+    // combattono: detectDuos deve ignorarli. Se trioGateLoss passa i team RAW (bug), i due
+    // Grifondoro morti accendono comunque il segnale Cancrena e il Trio Serpeverde risulta
+    // (erroneamente) attivo → la sua caduta viene (erroneamente) segnalata.
+    const s1 = dw('s1', 'Attaccante', 'Serpeverde')
+    const s2 = dw('s2', 'Tank', 'Serpeverde')
+    const s3 = dw('s3', 'Controllo', 'Serpeverde')
+    const deadG1 = deadDw('g1', 'Attaccante', 'Grifondoro', ['veleno', 'esecuzione'])
+    const deadG2 = deadDw('g2', 'Tank', 'Grifondoro', ['veleno', 'esecuzione'])
+    const current = [s1, s2, s3, deadG1, deadG2]
+    // Rimuovo un Serpeverde vivo → se il Trio Serpeverde non era mai attivo, non c'è nulla da perdere.
+    const next = [s1, s2, deadG1, deadG2]
+    expect(trioGateLoss(current, next, [])).not.toContain('Serpeverde')
   })
 })
