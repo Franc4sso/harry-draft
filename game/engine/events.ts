@@ -8,6 +8,7 @@ import { draftWizard } from './statRoll'
 import { powerOf } from './combat/teamGen'
 import { RELIC_BY_ID, RULE_BREAKING_RELIC_IDS } from '@/data/relics'
 import { applySacrificeCost } from './sacrifice'
+import { addRelicAutoDrop } from './relics'
 
 export interface EventEffectResult {
   state: RunState
@@ -106,8 +107,11 @@ export function applyEventEffects(state: RunState, effects: EventEffect[], rng: 
         const pickedId = rng.pick(candidates)
         const relic = RELIC_BY_ID[pickedId]
         if (!relic) break
-        s = { ...s, relics: [...s.relics, { relic, stageObtained: s.stage }] }
-        log.push(`grantRelic ${pickedId}`)
+        const before = s.relics
+        const nextRelics = addRelicAutoDrop(before, { relic, stageObtained: s.stage })
+        const droppedId = before.find(a => !nextRelics.includes(a))?.relic.id
+        s = { ...s, relics: nextRelics }
+        log.push(droppedId ? `grantRelic ${pickedId} (scartata ${droppedId})` : `grantRelic ${pickedId}`)
         break
       }
       case 'cioccorane': {
