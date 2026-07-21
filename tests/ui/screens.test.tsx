@@ -8,6 +8,7 @@ import { MenuScreen } from '@/components/screens/MenuScreen'
 import { RulesScreen } from '@/components/screens/RulesScreen'
 import { CreditsScreen } from '@/components/screens/CreditsScreen'
 import { SPELLS } from '@/data/spells'
+import { DUOS } from '@/data/duos'
 import { EFFECT_META, SPELL_TYPE_META } from '@/lib/glossary'
 
 describe('MenuScreen', () => {
@@ -40,6 +41,14 @@ describe('Compendio (RulesScreen)', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Magie' }))
     for (const s of SPELLS) {
       expect(screen.getAllByText(s.name).length).toBeGreaterThan(0)
+    }
+  }, 15000)
+  it('lists every Combo Duo with its effect under the Combo Duo tab', async () => {
+    render(<RulesScreen />)
+    await userEvent.click(screen.getByRole('button', { name: 'Combo Duo' }))
+    for (const duo of DUOS) {
+      expect(screen.getAllByText(duo.name).length).toBeGreaterThan(0)
+      expect(screen.getByText(duo.desc)).toBeInTheDocument()
     }
   }, 15000)
   it('renders all glossary categories', () => {

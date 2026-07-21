@@ -8,6 +8,7 @@ import { Chip } from '@/components/ui/Chip'
 import { RoleIcon } from '@/components/cards/RoleIcon'
 import { SPELLS } from '@/data/spells'
 import { RELICS } from '@/data/relics'
+import { DUOS, SIGNAL_LABEL, SIGNAL_ICON, SIGNAL_COLOR, SIGNAL_HOWTO } from '@/data/duos'
 import { RELIC_RARITY_COLOR } from '@/lib/relicRarity'
 import { ROLE_INFO } from '@/lib/roleInfo'
 import {
@@ -21,7 +22,7 @@ import type { Role } from '@/types'
 const HOW_TO_PLAY: Array<{ title: string; body: string }> = [
   { title: 'Draft', body: 'Scegli 1 mago tra 3 carte. Ripeti finché la squadra iniziale ha 3 maghi; recluti gli altri lungo il cammino (fino a 5). Le carte non scelte vengono scartate.' },
   { title: 'Tier', body: 'Tier 1 Leggendario (raro e forte) → Tier 4 Comune. Mai più di un Tier 1 per schermata; ogni schermata garantisce almeno un Tier alto.' },
-  { title: 'Combattimento', body: 'Le battaglie sono simulate automaticamente e in modo deterministico: velocità, danni, critici, schivate, cure e sinergie decidono il vincitore.' },
+  { title: 'Combattimento', body: 'Le battaglie sono simulate automaticamente e in modo deterministico: velocità, danni, critici, schivate, cure e Combo Duo decidono il vincitore.' },
 ]
 
 const SPELL_TYPE_ORDER: SpellType[] = ['Attacco', 'Difesa', 'Cura', 'Controllo']
@@ -45,9 +46,10 @@ const RARITY_BLURB: Record<RelicRarity, string> = {
   epica: 'Effetti potenti con trigger speciali.',
 }
 
-type Tab = 'gioco' | 'magie' | 'reliquie'
+type Tab = 'gioco' | 'combo' | 'magie' | 'reliquie'
 const TABS: Array<{ id: Tab; label: string }> = [
   { id: 'gioco', label: 'Come si gioca' },
+  { id: 'combo', label: 'Combo Duo' },
   { id: 'magie', label: 'Magie' },
   { id: 'reliquie', label: 'Reliquie' },
 ]
@@ -184,6 +186,51 @@ export function RulesScreen() {
             </div>
           </section>
         </div>
+      )}
+
+      {/* Combo Duo */}
+      {tab === 'combo' && (
+        <section className="w-full space-y-6">
+          <p className="max-w-2xl text-sm leading-relaxed text-white/60">
+            Due <span className="text-gold">segnali</span> in squadra accendono una <span className="text-gold">Combo Duo</span>:
+            un bonus di battaglia permanente. I segnali vengono dai ruoli dei maghi o dalle loro affinità
+            (veleno, esecuzione, scudo/rigen, magie oscure). Accendi entrambi i segnali di una combo e l'effetto è tuo.
+          </p>
+
+          <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+            {DUOS.map((duo) => (
+              <GlowPanel key={duo.id} className="flex flex-col gap-3 p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-display text-lg font-bold text-gold">{duo.name}</p>
+                  {/* Recipe: signal ＋ signal, each in its own colour/glyph */}
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    {duo.signals.map((sig, i) => (
+                      <span key={sig} className="flex items-center gap-1.5">
+                        {i > 0 && <span aria-hidden className="text-white/30">＋</span>}
+                        <span
+                          className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold"
+                          style={{ color: SIGNAL_COLOR[sig], borderColor: `${SIGNAL_COLOR[sig]}66`, background: `${SIGNAL_COLOR[sig]}18` }}
+                        >
+                          <span aria-hidden>{SIGNAL_ICON[sig]}</span>
+                          {SIGNAL_LABEL[sig]}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                <p className="text-sm leading-snug text-white/75">{duo.desc}</p>
+                <div className="mt-auto flex flex-col gap-1 border-t border-white/10 pt-2">
+                  {duo.signals.map((sig) => (
+                    <p key={sig} className="flex items-center gap-1.5 text-[11px] text-white/45">
+                      <span aria-hidden style={{ color: SIGNAL_COLOR[sig] }}>{SIGNAL_ICON[sig]}</span>
+                      <span className="text-white/60">{SIGNAL_LABEL[sig]}:</span> {SIGNAL_HOWTO[sig]}
+                    </p>
+                  ))}
+                </div>
+              </GlowPanel>
+            ))}
+          </div>
+        </section>
       )}
 
       {/* Magie */}

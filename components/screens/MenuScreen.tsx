@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, useReducedMotion } from 'framer-motion'
-import { SealButton } from '@/components/ui/SealButton'
 import { loadRun, clearRun } from '@/lib/runStore'
 
 // A defined Hogwarts-at-night skyline. Kept as one path so the silhouette + its
@@ -29,6 +28,50 @@ const EMBERS = Array.from({ length: 20 }, (_, i) => ({
   delay: -((i * 1.7) % 10),
   key: i,
 }))
+
+/** One of the two peer game modes on the home screen. A framed doorway — accent-tinted,
+ *  its own kicker/title/blurb — so Campagna and Infinita read as equal choices. `primary`
+ *  fills the panel (the default run); the other is an outline in its own accent. */
+function ModeDoor({
+  onClick, testId, accent, kicker, title, blurb, primary = false,
+}: {
+  onClick: () => void
+  testId: string
+  accent: string
+  kicker: string
+  title: string
+  blurb: string
+  primary?: boolean
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      data-testid={testId}
+      className="group relative flex flex-col items-center gap-2 rounded-2xl border px-6 py-6 text-center transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+      style={{
+        borderColor: `${accent}${primary ? 'cc' : '55'}`,
+        background: primary
+          ? `linear-gradient(180deg, ${accent}30, ${accent}10)`
+          : 'rgba(255,255,255,0.03)',
+        boxShadow: primary ? `0 0 24px -6px ${accent}66, inset 0 1px 0 ${accent}40` : 'none',
+        // @ts-expect-error — CSS custom prop for the focus ring color
+        '--tw-ring-color': accent,
+      }}
+    >
+      <span className="font-display text-[10px] uppercase tracking-[0.28em]" style={{ color: accent }}>
+        {kicker}
+      </span>
+      <span
+        className="font-display text-2xl font-extrabold tracking-wide"
+        style={{ color: primary ? '#f6ecc4' : '#e8e2f4' }}
+      >
+        {title}
+      </span>
+      <span className="max-w-[22ch] text-xs leading-snug text-white/55">{blurb}</span>
+    </button>
+  )
+}
 
 export function MenuScreen() {
   const router = useRouter()
@@ -141,40 +184,46 @@ export function MenuScreen() {
         transition={{ duration: 0.6, delay: 0.3, ease: 'easeOut' }}
         className="relative z-10 flex flex-col items-center gap-4"
       >
-        <div className="relative flex flex-col items-center gap-3">
+        {hasSavedRun && (
+          <button
+            type="button"
+            onClick={continua}
+            data-testid="continue-cta"
+            className="font-display text-sm uppercase tracking-wider text-gold transition-colors hover:text-[#f3e6a0] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f3e6a0]"
+          >
+            ↻ Riprendi la run in corso
+          </button>
+        )}
+
+        {/* Two peer doorways: Campagna and Infinita are equal choices, not a CTA + afterthought. */}
+        <div className="relative grid w-full max-w-xl grid-cols-1 gap-4 sm:grid-cols-2">
           {!reduce && (
             <motion.span
               aria-hidden
-              className="absolute inset-0 -z-10 rounded-full blur-2xl"
-              style={{ background: 'radial-gradient(circle, rgba(217,182,95,0.5), transparent 70%)' }}
-              animate={{ opacity: [0.5, 0.85, 0.5], scale: [0.94, 1.08, 0.94] }}
-              transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut' }}
+              className="absolute inset-0 -z-10 rounded-[28px] blur-2xl"
+              style={{ background: 'radial-gradient(circle, rgba(217,182,95,0.35), transparent 70%)' }}
+              animate={{ opacity: [0.4, 0.7, 0.4], scale: [0.96, 1.05, 0.96] }}
+              transition={{ duration: 3.6, repeat: Infinity, ease: 'easeInOut' }}
             />
           )}
-          <SealButton onClick={play} data-testid="play-cta" className="px-16 py-5 text-lg">
-            Gioca
-          </SealButton>
-
-          <button
-            type="button"
+          <ModeDoor
+            onClick={play}
+            testId="play-cta"
+            accent="#d9b65f"
+            kicker="Campagna"
+            title="Gioca"
+            blurb="Tre aree, un Boss Finale. La run che si può vincere."
+            primary
+          />
+          <ModeDoor
             onClick={() => router.push('/endless')}
-            data-testid="endless-cta"
-            className="font-display text-sm uppercase tracking-wider text-gold/80 transition-colors hover:text-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f3e6a0]"
-          >
-            Modalità infinita
-          </button>
-
-          {hasSavedRun && (
-            <button
-              type="button"
-              onClick={continua}
-              className="font-display text-sm uppercase tracking-wider text-gold/80 transition-colors hover:text-gold focus:outline-none focus-visible:ring-2 focus-visible:ring-[#f3e6a0]"
-            >
-              Continua run
-            </button>
-          )}
+            testId="endless-cta"
+            accent="#b98cff"
+            kicker="Senza fine"
+            title="Modalità Infinita"
+            blurb="Aree che non finiscono mai. Quanto lontano arrivi?"
+          />
         </div>
-        <p className="text-xs text-white/45">Ogni partita, una nuova mano del destino.</p>
 
         <div className="mt-1 flex items-center gap-5">
           <Link href="/rules" className="font-display text-xs uppercase tracking-wider text-white/45 transition-colors hover:text-gold">Compendio</Link>
