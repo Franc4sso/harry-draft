@@ -33,11 +33,12 @@ const EMBERS = Array.from({ length: 20 }, (_, i) => ({
  *  its own kicker/title/blurb — so Campagna and Infinita read as equal choices. `primary`
  *  fills the panel (the default run); the other is an outline in its own accent. */
 function ModeDoor({
-  onClick, testId, accent, kicker, title, blurb, primary = false,
+  onClick, testId, accent, icon, kicker, title, blurb, primary = false,
 }: {
   onClick: () => void
   testId: string
   accent: string
+  icon: string
   kicker: string
   title: string
   blurb: string
@@ -48,7 +49,7 @@ function ModeDoor({
       type="button"
       onClick={onClick}
       data-testid={testId}
-      className="group relative flex flex-col items-center gap-2 rounded-2xl border px-6 py-6 text-center transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+      className="group relative flex h-full flex-col items-center justify-start gap-2.5 rounded-2xl border px-6 pb-6 pt-7 text-center transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
       style={{
         borderColor: `${accent}${primary ? 'cc' : '55'}`,
         background: primary
@@ -59,16 +60,23 @@ function ModeDoor({
         '--tw-ring-color': accent,
       }}
     >
+      <span
+        aria-hidden
+        className="grid h-11 w-11 place-items-center rounded-full border text-xl transition-transform duration-200 group-hover:scale-110"
+        style={{ color: accent, borderColor: `${accent}66`, background: `${accent}1a` }}
+      >
+        {icon}
+      </span>
       <span className="font-display text-[10px] uppercase tracking-[0.28em]" style={{ color: accent }}>
         {kicker}
       </span>
       <span
-        className="font-display text-2xl font-extrabold tracking-wide"
+        className="font-display text-2xl font-extrabold leading-none tracking-wide"
         style={{ color: primary ? '#f6ecc4' : '#e8e2f4' }}
       >
         {title}
       </span>
-      <span className="max-w-[22ch] text-xs leading-snug text-white/55">{blurb}</span>
+      <span className="max-w-[24ch] text-xs leading-snug text-white/55">{blurb}</span>
     </button>
   )
 }
@@ -173,7 +181,7 @@ export function MenuScreen() {
           ))}
         </h1>
         <p className="mx-auto max-w-md text-white/60">
-          Pesca la tua squadra di maghi, attraversa tre aree e affronta il Boss Finale.
+          Pesca la tua squadra di maghi. Scegli come affrontare il destino.
         </p>
       </motion.div>
 
@@ -195,8 +203,9 @@ export function MenuScreen() {
           </button>
         )}
 
-        {/* Two peer doorways: Campagna and Infinita are equal choices, not a CTA + afterthought. */}
-        <div className="relative grid w-full max-w-xl grid-cols-1 gap-4 sm:grid-cols-2">
+        {/* Two peer doorways: Campagna and Infinita are equal choices, not a CTA + afterthought.
+            items-stretch keeps both cards the same height regardless of copy length. */}
+        <div className="relative grid w-full max-w-xl grid-cols-1 items-stretch gap-4 sm:grid-cols-2">
           {!reduce && (
             <motion.span
               aria-hidden
@@ -210,18 +219,20 @@ export function MenuScreen() {
             onClick={play}
             testId="play-cta"
             accent="#d9b65f"
+            icon="⚔"
             kicker="Campagna"
-            title="Gioca"
-            blurb="Tre aree, un Boss Finale. La run che si può vincere."
+            title="Nuova run"
+            blurb="Tre aree, un Boss Finale. La corsa che si può vincere."
             primary
           />
           <ModeDoor
             onClick={() => router.push('/endless')}
             testId="endless-cta"
             accent="#b98cff"
+            icon="∞"
             kicker="Senza fine"
-            title="Modalità Infinita"
-            blurb="Aree che non finiscono mai. Quanto lontano arrivi?"
+            title="Infinita"
+            blurb="Ondate senza fine. Quanto lontano arrivi?"
           />
         </div>
 

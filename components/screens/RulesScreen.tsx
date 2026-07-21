@@ -9,6 +9,9 @@ import { RoleIcon } from '@/components/cards/RoleIcon'
 import { SPELLS } from '@/data/spells'
 import { RELICS } from '@/data/relics'
 import { DUOS, SIGNAL_LABEL, SIGNAL_ICON, SIGNAL_COLOR, SIGNAL_HOWTO } from '@/data/duos'
+import { trioText } from '@/game/engine/trioText'
+import { houseTheme } from '@/lib/theme'
+import type { House } from '@/types'
 import { RELIC_RARITY_COLOR } from '@/lib/relicRarity'
 import { ROLE_INFO } from '@/lib/roleInfo'
 import {
@@ -229,6 +232,43 @@ export function RulesScreen() {
                 </div>
               </GlowPanel>
             ))}
+          </div>
+
+          {/* Le casate amplificano le Combo — sistema Trio (game/engine/trios.ts). */}
+          <div className="mt-2 space-y-3 rounded-2xl border border-gold/25 bg-gold/[0.04] p-5">
+            <div>
+              <p className="font-display text-lg font-bold text-gold">Le casate potenziano le Combo</p>
+              <p className="mt-1 max-w-2xl text-sm leading-relaxed text-white/65">
+                Con <span className="text-white/85">3 maghi della stessa casata</span> in squadra e almeno una
+                Combo Duo attiva, quella casata <span className="text-white/85">amplifica</span> le tue combo con un
+                bonus permanente. Con <span className="text-white/85">4+ maghi</span> il bonus è più forte. Costruire
+                di casata è un secondo livello di sinergia sopra le Combo.
+              </p>
+            </div>
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
+              {(['Grifondoro', 'Serpeverde', 'Corvonero', 'Tassorosso'] as House[]).map((house) => {
+                const color = houseTheme(house).color
+                return (
+                  <div
+                    key={house}
+                    className="flex items-start gap-3 rounded-xl border bg-black/25 p-3"
+                    style={{ borderColor: `${color}44` }}
+                  >
+                    <span
+                      aria-hidden
+                      className="grid h-7 w-7 shrink-0 place-items-center rounded-md border font-display text-sm font-bold"
+                      style={{ color, borderColor: `${color}66`, background: `${color}1f` }}
+                    >
+                      {house[0]}
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold" style={{ color }}>{house}</p>
+                      <p className="text-xs leading-snug text-white/70">{trioText(house, 0)}</p>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </section>
       )}

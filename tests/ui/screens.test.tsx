@@ -12,11 +12,13 @@ import { DUOS } from '@/data/duos'
 import { EFFECT_META, SPELL_TYPE_META } from '@/lib/glossary'
 
 describe('MenuScreen', () => {
-  it('shows the title and three actions', () => {
+  it('shows the title and both game modes', () => {
     render(<MenuScreen />)
     // Title letters are split into animated spans; the accessible name lives on the h1.
     expect(screen.getByRole('heading', { name: 'Harry Draft' })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /gioca/i })).toBeInTheDocument()
+    // Two peer modes: Campagna (play-cta) and Infinita (endless-cta).
+    expect(screen.getByTestId('play-cta')).toBeInTheDocument()
+    expect(screen.getByTestId('endless-cta')).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /compendio/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /credits/i })).toBeInTheDocument()
   }, 15000)
