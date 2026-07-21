@@ -131,7 +131,13 @@ function endlessDeathFloor(seed: string): number {
   let s = startRunB(seed)
   s = { ...s, endless: true }
   const offer = starterOffer(seed, 'Grifondoro')
-  const starters = [...offer].sort((a, b) => powerOf(b) - powerOf(a)).slice(0, 3).map(d => d.wizard.id)
+  // Starters sorted by ATK, not powerOf (2026-07-21): after the synergy removal the
+  // powerOf ranking (hp + atk*2 + def*1.5 + spd) picks three pure bulk units
+  // (moody/mcgonagall/hagrid) — a zero-damage team that loses the FIRST battle on >50%
+  // of seeds (median death-floor 1), which turned this sweep into noise. Damage-first
+  // drafting is the actual near-optimal line post-removal (20-seed probe: byPower
+  // median=1, byAtk median=34) and restores the sweep as a calibration instrument.
+  const starters = [...offer].sort((a, b) => b.stats.atk - a.stats.atk).slice(0, 3).map(d => d.wizard.id)
   s = chooseStarters(s, 'Grifondoro', starters, createRng(seed))
   s = { ...s, endless: true }
 
@@ -221,8 +227,21 @@ describe('endless scaling calibration', () => {
     // play is OUT OF SCOPE for Task 1 (mechanical swap removal only); belongs to a dedicated
     // balance pass once Task 2/3 (spellPool collapse) lands. Relaxed to a structural sanity
     // check rather than inventing a new target band without real playtest evidence.
-    expect(median).toBeGreaterThanOrEqual(1)
+    //
+    // *** RESTORED (2026-07-21, exponential post-area-3 ramp + ATK-first bot draft) ***
+    // Two changes re-anchored this sweep: (1) the bot drafts starters by ATK (see
+    // endlessDeathFloor — the old powerOf pick fielded a zero-damage all-bulk team that
+    // died at floor 1, so the sweep measured the draft bug, not the scaling); (2)
+    // BALANCE.endless gained levelExpGrowth^(floor−expStartFloor), a user-directed
+    // exponential wall past the third area. Measured (60 seeds): median=34, p90=34,
+    // min=2, max=39 — deaths cluster hard at the wall (areas 6-8). p90≈median is the
+    // EXPECTED signature of exponential scaling (a wall, not a graded tail): past it,
+    // enemy level growth outruns any possible win-based player leveling by design.
+    // The window below is structural: the bot must survive the early game (median ≥ 10
+    // guards against a floor-1-death harness regression) and NO seed may go immortal.
+    expect(median).toBeGreaterThanOrEqual(10)
     expect(p90).toBeGreaterThanOrEqual(median)
+    expect(floors[floors.length - 1]!).toBeLessThan(SAFETY_CAP_FLOOR)
   })
 
   it('is deterministic (same seeds -> same death-floors)', () => {

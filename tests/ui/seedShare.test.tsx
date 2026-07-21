@@ -14,9 +14,10 @@ beforeEach(() => {
 describe('MenuScreen play', () => {
   it('launches a run without asking for a seed', () => {
     render(<MenuScreen />)
-    // No seed field to fill in — the run is summoned straight away.
+    // No seed field to fill in — the run is summoned straight away. The campaign
+    // door is the ModeDoor titled "Nuova run" (kicker "Campagna").
     expect(screen.queryByLabelText(/seed/i)).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: /gioca/i }))
+    fireEvent.click(screen.getByRole('button', { name: /nuova run/i }))
     expect(push).toHaveBeenCalledWith('/play')
   })
 })
