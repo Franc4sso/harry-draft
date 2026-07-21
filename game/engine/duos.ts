@@ -107,3 +107,22 @@ export function previewDuos(team: DraftedWizard[], relics: ActiveRelic[], candid
   }
   return { completes, advances }
 }
+
+export type DuoLoss = { breaks: Duo[]; regresses: Duo[] }
+
+/** Diff INVERSO di previewDuos: quando una sostituzione (recruit a squadra piena) rimuove un
+ *  teammate. `current` = squadra COMPLETA attuale, `next` = squadra risultante (current − uscito
+ *  + candidato). breaks = Duo attivo ora che si spegne; regresses = Duo a un passo ora che
+ *  arretra a due+. Pure, usa livingOf come previewDuos così un morto non gonfia il diff. */
+export function previewDuoLoss(current: DraftedWizard[], next: DraftedWizard[], relics: ActiveRelic[]): DuoLoss {
+  const before = new Map(duoProgress(livingOf(current), relics).map(p => [p.duo.id, p]))
+  const after = new Map(duoProgress(livingOf(next), relics).map(p => [p.duo.id, p]))
+  const breaks: Duo[] = []
+  const regresses: Duo[] = []
+  for (const b of before.values()) {
+    const a = after.get(b.duo.id)!
+    if (b.active && !a.active) breaks.push(b.duo)
+    else if (b.missing.length === 1 && a.missing.length >= 2) regresses.push(b.duo)
+  }
+  return { breaks, regresses }
+}
