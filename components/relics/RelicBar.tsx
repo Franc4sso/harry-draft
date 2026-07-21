@@ -65,24 +65,24 @@ export function RelicBar({ relics, className, onUse, team }: RelicBarProps) {
               </button>
             )}
 
-            {/* Tooltip — opens to the RIGHT into the map area (ample space, never off-screen,
-                matches the enemy-preview pattern in MapScreen). Shown on hover/focus.
-                A filled header band in the rarity colour + a side arrow read faster than the
-                old flat panel. */}
+            {/* Tooltip — opens DOWNWARD, anchored to the left edge of the pill, so it stays
+                inside the narrow left sidebar (opening rightward spilled over the map tree
+                and got clipped). Shown on hover/focus. A filled header band in the rarity
+                colour + a top arrow read faster than the old flat panel. */}
             <span
               role="tooltip"
-              className="pointer-events-none absolute left-full top-0 z-[60] ml-3 w-56 overflow-hidden rounded-xl border opacity-0 shadow-2xl transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+              className="pointer-events-none absolute left-0 top-full z-[60] mt-2 w-56 max-w-[16rem] overflow-hidden rounded-xl border opacity-0 shadow-2xl transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
               style={{
                 background: '#181327',
                 borderColor: color,
                 boxShadow: `0 0 0 1px ${color}33, 0 18px 44px -12px rgba(0,0,0,0.95)`,
               }}
             >
-              {/* side arrow (points back at the pill) */}
+              {/* top arrow (points back up at the pill) */}
               <span
                 aria-hidden
-                className="absolute right-full top-3.5 border-[6px] border-transparent"
-                style={{ borderRightColor: color }}
+                className="absolute bottom-full left-4 border-[6px] border-transparent"
+                style={{ borderBottomColor: color }}
               />
               <span
                 className="flex items-center gap-2 px-2.5 py-1.5"

@@ -60,4 +60,13 @@ describe('RelicBar — consumable "Usa" button', () => {
     render(<RelicBar relics={[lacrime]} />)
     expect(screen.queryByRole('button', { name: 'Usa' })).toBeNull()
   })
+
+  // The relic tooltip lives in a narrow LEFT sidebar (RunBRunner map view); opening it
+  // rightward (left-full) spilled over the map tree and got clipped. It must open downward.
+  it('opens its tooltip downward, not rightward, so it stays inside the sidebar', () => {
+    render(<RelicBar relics={[lacrime]} />)
+    const tip = screen.getByRole('tooltip')
+    expect(tip.className).toContain('top-full')
+    expect(tip.className).not.toContain('left-full')
+  })
 })
