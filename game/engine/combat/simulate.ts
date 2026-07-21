@@ -4,7 +4,7 @@ import type {
 import type { Rng } from '../rng'
 import { BALANCE } from '@/data/constants'
 import { STATUS_BY_ID } from '@/data/statuses'
-import { applyBonuses, totalRegen } from '../synergy'
+import { applyBonuses } from '../synergy'
 import { applyRelicBonuses, keywordDamageMult, registerRelicTriggers, totalRelicRegen } from '../relics'
 import { teamExecute } from '../execute'
 import { teamShieldConvert } from '../shieldConvert'
@@ -38,6 +38,12 @@ export function toBattleUnits(
   const alwaysHitIds = teamAlwaysHit(team, relics)
   const trioMap = trioEffects(team, duos)
   return team.map(dw => {
+    // applyBonuses stays: SYNERGIES-detected entries no longer carry stat bonuses (only
+    // Tossicità's keywordMult, a no-op here), but the boss's synthetic exclusiveSynergy
+    // (data/bosses.ts, e.g. Voldemort's allPct 0.2) is ALSO delivered through this same
+    // ActiveSynergy[] channel and DOES carry a flat/allPct stat bonus — dropping the call
+    // would silently zero out that boss buff. See tests/engine/duoStress.test.ts (final-boss
+    // hard slice) which regresses without it.
     const synBuffed = applyBonuses(dw.stats, synergies)
     const relicBuffed = applyRelicBonuses(synBuffed, team, relics, dw.wizard.id)
     const m = Math.max(0, 1 + menacePct)
@@ -92,8 +98,8 @@ export function simulateBattle(
   // UNTORE: computed once per battle — same reasoning as MIASMA above.
   const untore = (opts.leftDuos ?? []).some(d => d.duo.id === 'untore')
   const regen: Record<Side, number> = {
-    left: totalRegen(leftSyn) + totalRelicRegen(left, leftRelics),
-    right: totalRegen(rightSyn) + totalRelicRegen(right, rightRelics),
+    left: totalRelicRegen(left, leftRelics),
+    right: totalRelicRegen(right, rightRelics),
   }
   const log: LogEntry[] = []
   // Per-step engine snapshots, kept 1:1 with `log` via pushLog. Each captures a DEEP COPY

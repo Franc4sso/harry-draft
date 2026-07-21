@@ -4,6 +4,7 @@ import {
   formatSpellStats, spellEffectChips, synergyBonusText,
 } from '@/lib/glossary'
 import type { Spell } from '@/types/spell'
+import type { Synergy } from '@/types'
 import { SYNERGIES } from '@/data/synergies'
 
 const atk: Spell = { id: 'x', name: 'X', desc: 'd', type: 'Attacco', power: 1.4, hitChance: 0.9, cooldown: 1 }
@@ -75,19 +76,20 @@ describe('EFFECT_META control blurbs', () => {
 })
 
 describe('synergyBonusText', () => {
-  // deatheater: bonus { atk: 25 } — exercises flat-stat formatting
+  const fakeSynergy = (bonus: Synergy['bonus']): Synergy =>
+    ({ id: 'x', name: 'X', kind: 'origin', requires: {}, bonus }) as Synergy
+
   it('formats flat stats', () => {
-    const s = SYNERGIES.find(x => x.id === 'deatheater')!
-    expect(synergyBonusText(s)).toEqual(['+25 ATK'])
+    expect(synergyBonusText(fakeSynergy({ atk: 25 }))).toEqual(['+25 ATK'])
   })
-  // goldenTrio: bonus { allPct: 0.15 } — exercises percent-of-all formatting
   it('formats allPct as a percent of all stats', () => {
-    const s = SYNERGIES.find(x => x.id === 'goldenTrio')!
-    expect(synergyBonusText(s)).toEqual(['+15% a tutte le statistiche'])
+    expect(synergyBonusText(fakeSynergy({ allPct: 0.15 }))).toEqual(['+15% a tutte le statistiche'])
   })
-  // weasley: bonus { regen: 8, def: 10 } — exercises regen + flat-stat formatting together
   it('formats regen alongside a flat stat', () => {
-    const s = SYNERGIES.find(x => x.id === 'weasley')!
-    expect(synergyBonusText(s)).toEqual(['+10 DIF', 'Rigenera 8/turno'])
+    expect(synergyBonusText(fakeSynergy({ regen: 8, def: 10 }))).toEqual(['+10 DIF', 'Rigenera 8/turno'])
+  })
+  it('tossicita (real SYNERGIES entry): keywordMult bonus has no formatter, text is empty', () => {
+    const tossicita = SYNERGIES.find(s => s.id === 'tossicita')!
+    expect(synergyBonusText(tossicita)).toEqual([])
   })
 })

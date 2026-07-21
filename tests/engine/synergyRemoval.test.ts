@@ -20,9 +20,10 @@ describe('rimozione sinergie role/house', () => {
     const t = team(['dumbledore', 'harry', 'mcgonagall', 'sirius'])
     expect(detectSynergies(t).some(a => a.synergy.kind === 'house')).toBe(false)
   })
-  it('le sinergie group/origin RESTANO', () => {
-    // bellatrix, pansy, blaise: tutti tag 'veleno' -> Tossicità (origin)
-    const t = team(['bellatrix', 'pansy', 'blaise'])
-    expect(detectSynergies(t).some(a => a.synergy.kind === 'origin')).toBe(true)
+  it('resta solo Tossicità (origin), nessuna sinergia group', () => {
+    const t = team(['bellatrix', 'pansy', 'blaise']) // 3 tag veleno
+    const active = detectSynergies(t)
+    expect(active.some(a => a.synergy.id === 'tossicita')).toBe(true)
+    expect(active.some(a => a.synergy.kind === 'group')).toBe(false)
   })
 })
