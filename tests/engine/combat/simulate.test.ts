@@ -5,6 +5,8 @@ import { detectSynergies } from '@/game/engine/synergy'
 import { createRng } from '@/game/engine/rng'
 import { WIZARDS } from '@/data/wizards'
 import { SPELL_BY_ID } from '@/data/spells'
+import { RELIC_BY_ID } from '@/data/relics'
+import type { ActiveRelic } from '@/types'
 
 function team(rng = createRng(1), n = 5) {
   return WIZARDS.slice(0, 200).filter((_, i) => i % 2 === 0).slice(0, n).map(w => draftWizard(rng, w))
@@ -120,20 +122,14 @@ describe('simulate', () => {
     expect(sawRevive).toBe(true)
   })
 
-  it('regeneration synergy emits a heal log entry so the replay reflects it', () => {
+  it('regeneration emits a heal log entry so the replay reflects it', () => {
     // In a real fight, left units take HP damage and survive several turns; a regen
-    // synergy on the left must heal them end-of-turn AND be logged, otherwise
+    // relic on the left must heal them end-of-turn AND be logged, otherwise
     // buildReplay (which reconstructs HP from log deltas) can never show the regen.
     const left = team(createRng(1))
     const right = team(createRng(2))
-    const regenSyn = [{
-      synergy: {
-        id: 'testRegen', name: 'Test Regen', kind: 'role' as const,
-        requires: { role: 'Supporto' as const, count: 1 }, bonus: { regen: 30 },
-      },
-      memberIds: [] as string[],
-    }]
-    const res = simulateBattle(left, right, createRng(3), { leftSyn: regenSyn })
+    const regenRelics: ActiveRelic[] = [{ relic: RELIC_BY_ID['bezoar']!, stageObtained: 0 }]
+    const res = simulateBattle(left, right, createRng(3), { leftRelics: regenRelics })
     const regenEntries = res.log.filter(e => e.action === 'Rigenera' && e.flags.includes('heal'))
     expect(regenEntries.length).toBeGreaterThan(0)
     expect(regenEntries.every(e => (e.value ?? 0) > 0 && e.targetSide === 'left')).toBe(true)
