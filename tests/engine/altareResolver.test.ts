@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { altareResolver, altareOffer } from '@/game/engine/resolvers/altare'
 import { createRng } from '@/game/engine/rng'
 import { offerRecruits, recruitVia } from '@/game/engine/recruit'
-import { SACRIFICE_RELIC_IDS, RELIC_BY_ID } from '@/data/relics'
-import type { RunNode, RunState } from '@/types'
+import { SACRIFICE_RELIC_IDS, RELICS, JOKER_RELIC_IDS, RELIC_BY_ID } from '@/data/relics'
+import type { ActiveRelic, RunNode, RunState } from '@/types'
 
 function team(n: number) {
   return offerRecruits(createRng(1), { exclude: new Set() }).slice(0, n).map(d => recruitVia(d, 'iniziale', 1))
@@ -125,6 +125,44 @@ describe('altareResolver', () => {
     const ev = out.log!.find(e => e.kind === 'altare')
     expect(ev).toBeDefined()
     expect(ev!.summary).toContain('Diario di Tom Riddle')
+  })
+})
+
+describe('altareResolver at the cap (swap a 5)', () => {
+  /** 5 owned relics excluding the sacrifice pool (so the altare offer stays untouched). */
+  function fiveOwned(excludeIds: Set<string>): ActiveRelic[] {
+    const pool = RELICS.filter(r => !JOKER_RELIC_IDS.includes(r.id) && !SACRIFICE_RELIC_IDS.includes(r.id) && !excludeIds.has(r.id))
+    return pool.slice(0, 5).map((relic, i) => ({ relic, stageObtained: i }))
+  }
+
+  it('con replaceRelicId: sostituisce E il costo (wizard) è comunque pagato una sola volta', () => {
+    const { state: base } = findSeedOffering('diario-riddle', 3)
+    const s0 = { ...base, relics: fiveOwned(new Set()) }
+    const wizardId = s0.team[0]!.wizard.id
+    const replaceId = s0.relics[0]!.relic.id
+
+    const out = altareResolver.resolve(s0, node(s0),
+      { kind: 'altare-buy', relicId: 'diario-riddle', costWizardId: wizardId, replaceRelicId: replaceId }, createRng(s0.seed))
+
+    expect(out.relics).toHaveLength(5)
+    expect(out.relics.some(a => a.relic.id === replaceId)).toBe(false)
+    expect(out.relics.some(a => a.relic.id === 'diario-riddle')).toBe(true)
+    // costo pagato una sola volta: il mago sacrificato esce dal team
+    expect(out.team.map(d => d.wizard.id)).not.toContain(wizardId)
+    expect(out.team).toHaveLength(s0.team.length - 1)
+  })
+
+  it('senza replaceRelicId: no-op reference-equal E il costo NON viene pagato (rifiuto gratis)', () => {
+    const { state: base } = findSeedOffering('diario-riddle', 3)
+    const s0 = { ...base, relics: fiveOwned(new Set()) }
+    const wizardId = s0.team[0]!.wizard.id
+
+    const out = altareResolver.resolve(s0, node(s0),
+      { kind: 'altare-buy', relicId: 'diario-riddle', costWizardId: wizardId }, createRng(s0.seed))
+
+    expect(out).toBe(s0)
+    // il mago del costo NON deve essere stato rimosso: il rifiuto non costa nulla
+    expect(out.team.map(d => d.wizard.id)).toContain(wizardId)
   })
 })
 

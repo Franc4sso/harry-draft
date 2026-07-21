@@ -1,7 +1,7 @@
 import type { Relic, RunEvent, RunNode, RunState } from '@/types'
 import type { Rng } from '../rng'
 import { parseAreaNodeId } from '../map'
-import { offerSacrifices } from '../relics'
+import { offerSacrifices, addRelicWithChoice } from '../relics'
 import { canPay, applySacrificeCost, corruptOnAssign, type SacrificeCost } from '../sacrifice'
 import type { NodeResolver } from './types'
 
@@ -37,10 +37,12 @@ export const altareResolver: NodeResolver = {
     if (!cost || !canPay(state, cost)) return state
     const paid = applySacrificeCost(state, cost)
     if (paid === state) return state
-    const team = choice.carrierId ? corruptOnAssign(paid.team, relic, choice.carrierId) : paid.team
     const active = { relic, stageObtained: paid.stage, ...(choice.carrierId ? { assignedTo: choice.carrierId } : {}) }
+    const nextRelics = addRelicWithChoice(paid.relics, active, choice.replaceRelicId)
+    if (nextRelics === paid.relics) return state // a 5 senza scelta valida → rifiuto: il costo NON va pagato
+    const team = choice.carrierId ? corruptOnAssign(paid.team, relic, choice.carrierId) : paid.team
     const ev: RunEvent = { area: state.area ?? 0, nodeId: node.id, kind: 'altare',
       summary: `All'Altare Oscuro ottieni ${relic.name}, pagando il suo prezzo` }
-    return { ...paid, team, relics: [...paid.relics, active], log: [...(paid.log ?? []), ev] }
+    return { ...paid, team, relics: nextRelics, log: [...(paid.log ?? []), ev] }
   },
 }

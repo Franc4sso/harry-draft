@@ -7,7 +7,7 @@ export type ResolverChoice =
   | { kind: 'event-choice'; optionId: string }
   | { kind: 'spell-upgrade'; wizardId: string }
   | { kind: 'shop-buy'; slotId: string; carrierId?: string; targetWizardId?: string; replaceRelicId?: string }
-  | { kind: 'altare-buy'; relicId: string; costWizardId?: string; costRelicId?: string; carrierId?: string }
+  | { kind: 'altare-buy'; relicId: string; costWizardId?: string; costRelicId?: string; carrierId?: string; replaceRelicId?: string }
   | { kind: 'combat-ack' }
   | { kind: 'skip' }
 

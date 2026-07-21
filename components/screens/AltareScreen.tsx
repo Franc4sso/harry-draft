@@ -10,6 +10,8 @@ import { Insegna } from '@/components/ui/Insegna'
 import { Stagger, StaggerItem } from '@/components/ui/motion'
 import { RELIC_RARITY_COLOR } from '@/lib/relicRarity'
 import { displayName } from '@/lib/displayName'
+import { RelicSwapPanel } from '@/components/relics/RelicSwapPanel'
+import { BALANCE } from '@/data/constants'
 
 /** Human-readable POWER line for a Sacrifice Relic — the `desc` already carries the
  *  full flavor + cost sentence, so POWER is just the part before "COSTO:". */
@@ -83,13 +85,14 @@ export function AltareScreen({
   offers: Relic[]
   team: DraftedWizard[]
   owned: ActiveRelic[]
-  onBuy: (relicId: string, choice: { costWizardId?: string; costRelicId?: string; carrierId?: string }) => void
+  onBuy: (relicId: string, choice: { costWizardId?: string; costRelicId?: string; carrierId?: string; replaceRelicId?: string }) => void
   onSkip: () => void
 }) {
   const [pick, setPick] = useState<string | null>(null)
   const [costWizardId, setCostWizardId] = useState<string | null>(null)
   const [costRelicId, setCostRelicId] = useState<string | null>(null)
   const [carrierId, setCarrierId] = useState<string | null>(null)
+  const atCap = owned.length >= BALANCE.relics.maxRelics
 
   const pseudoState = { team, relics: owned } as Parameters<typeof canPay>[0]
   const pickedRelic = offers.find(r => r.id === pick)
@@ -116,12 +119,13 @@ export function AltareScreen({
     pickedRelic && concreteCost && canPay(pseudoState, concreteCost) && (!needsCarrierPick || carrierId),
   )
 
-  const confirm = () => {
+  const confirm = (replaceRelicId?: string) => {
     if (!pickedRelic || !canConfirm) return
     onBuy(pickedRelic.id, {
       costWizardId: costWizardId ?? undefined,
       costRelicId: costRelicId ?? undefined,
       carrierId: carrierId ?? undefined,
+      replaceRelicId,
     })
   }
 
@@ -225,19 +229,28 @@ export function AltareScreen({
         </div>
       )}
 
-      <div className="flex items-center gap-3">
-        {pickedRelic && (
-          <Button
-            variant="danger"
-            disabled={!canConfirm}
-            data-testid={pickedRelic ? `altare-confirm-${pickedRelic.id}` : undefined}
-            onClick={confirm}
-          >
-            Paga il prezzo
-          </Button>
-        )}
-        <Button variant="ghost" onClick={onSkip}>Vai via</Button>
-      </div>
+      {atCap && pickedRelic && canConfirm ? (
+        <RelicSwapPanel
+          incoming={pickedRelic}
+          owned={owned}
+          onSwap={(replaceRelicId) => confirm(replaceRelicId)}
+          onReject={() => { setPick(null); setCostWizardId(null); setCostRelicId(null); setCarrierId(null) }}
+        />
+      ) : (
+        <div className="flex items-center gap-3">
+          {pickedRelic && (
+            <Button
+              variant="danger"
+              disabled={!canConfirm}
+              data-testid={pickedRelic ? `altare-confirm-${pickedRelic.id}` : undefined}
+              onClick={() => confirm()}
+            >
+              Paga il prezzo
+            </Button>
+          )}
+          <Button variant="ghost" onClick={onSkip}>Vai via</Button>
+        </div>
+      )}
     </main>
   )
 }
