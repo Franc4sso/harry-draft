@@ -86,6 +86,6 @@ export const MILESTONES: Milestone[] = [
   { id: 'first-win', when: s => s.outcome === 'win', unlock: { kind: 'wizard', id: 'neville', label: 'Neville Paciock' } },
   // Cleared every area of the run.
   { id: 'reach-final-area', when: s => s.areasCleared >= 3, unlock: { kind: 'relic', id: 'cuore-del-tasso', label: 'Cuore del Tasso' } },
-  // Named-synergy milestone: fires if the player finished with the Golden Trio active.
-  { id: 'trio-complete', when: s => s.namedSynergiesActive.includes('goldenTrio'), unlock: { kind: 'wizard', id: 'molly', label: 'Molly Weasley' } },
+  // Fires if the player finished the run with the Trio (harry/ron/hermione) in the team.
+  { id: 'trio-complete', when: s => ['harry', 'ron', 'hermione'].every(id => s.teamWizardIds.includes(id)), unlock: { kind: 'wizard', id: 'molly', label: 'Molly Weasley' } },
 ]

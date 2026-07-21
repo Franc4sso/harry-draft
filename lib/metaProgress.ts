@@ -4,12 +4,10 @@ import type { MetaProfile } from '@/lib/metaStore'
 import { grantCioccorane, unlockWizard, unlockRelic } from '@/lib/metaStore'
 import { MILESTONES, EARN, type UnlockTarget } from '@/data/unlocks'
 
-// Real named-synergy ids from data/synergies.ts (kind: 'group' | 'origin', excludes the
-// plain house/role count synergies which aren't individually "named" milestones).
-const NAMED_SYNERGY_IDS = new Set([
-  'goldenTrio', 'weasley', 'order', 'deatheater', 'tossicita',
-  'spietatezza', 'bastione', 'oscurita', 'marauder', 'da',
-])
+// Real named-synergy ids from data/synergies.ts. Only Tossicità remains after the
+// other named synergies (goldenTrio, weasley, order, deatheater, spietatezza,
+// bastione, oscurita, marauder, da) were removed.
+const NAMED_SYNERGY_IDS = new Set(['tossicita'])
 
 export interface RunEndSummary {
   outcome: 'win' | 'defeat'

@@ -4,7 +4,7 @@ import { defaultProfile } from '@/lib/metaStore'
 
 const winSummary: RunEndSummary = {
   outcome: 'win', areasCleared: 3, bossesDefeated: 3,
-  namedSynergiesActive: ['goldenTrio'], teamWizardIds: ['harry', 'ron', 'hermione'],
+  namedSynergiesActive: [], teamWizardIds: ['harry', 'ron', 'hermione'],
 }
 const lossSummary: RunEndSummary = {
   outcome: 'defeat', areasCleared: 1, bossesDefeated: 0,
@@ -30,6 +30,26 @@ describe('evaluateMilestones', () => {
     // Re-running with the already-updated profile fires nothing new.
     const second = evaluateMilestones(first.profile, winSummary)
     expect(second.unlocked).toEqual([])
+  })
+})
+
+describe('trio-complete milestone', () => {
+  it('unlocks molly when harry, ron and hermione are all in the team', () => {
+    const trioSummary: RunEndSummary = {
+      outcome: 'defeat', areasCleared: 0, bossesDefeated: 0,
+      namedSynergiesActive: [], teamWizardIds: ['harry', 'ron', 'hermione', 'draco'],
+    }
+    const result = evaluateMilestones(defaultProfile(), trioSummary)
+    expect(result.unlocked.map(u => u.id)).toContain('molly')
+  })
+
+  it('does not unlock molly when the trio is incomplete', () => {
+    const partialTrioSummary: RunEndSummary = {
+      outcome: 'defeat', areasCleared: 0, bossesDefeated: 0,
+      namedSynergiesActive: [], teamWizardIds: ['harry', 'ron'],
+    }
+    const result = evaluateMilestones(defaultProfile(), partialTrioSummary)
+    expect(result.unlocked.map(u => u.id)).not.toContain('molly')
   })
 })
 
