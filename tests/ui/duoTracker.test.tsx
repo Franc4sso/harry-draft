@@ -54,3 +54,24 @@ describe('DuoTracker (draft rail)', () => {
     expect(row).not.toHaveTextContent(/carnefice/i)
   })
 })
+
+describe('DuoTracker — perdite (recruit a squadra piena)', () => {
+  it('marca "si spegne" (data-breaks) il Duo che lo swap disattiva', () => {
+    // prevTeam: Cancrena attivo (2 maghi veleno+esecuzione). Considero un candidato inerte
+    // al posto di uno dei due → picks = team meno il rimpiazzato = solo 'a'.
+    const prevTeam = [mage('a', 'Attaccante', ['veleno', 'esecuzione']), mage('b', 'Tank', ['veleno', 'esecuzione'])]
+    const picks = [mage('a', 'Attaccante', ['veleno', 'esecuzione'])]
+    const candidate = mage('c', 'Controllo')
+    const { container } = render(<DuoTracker picks={picks} considered={candidate} prevTeam={prevTeam} />)
+    const row = container.querySelector('[data-duo="cancrena"]')!
+    expect(row).toHaveAttribute('data-breaks')
+    expect(row).toHaveTextContent(/si spegne/i)
+  })
+
+  it('senza prevTeam il comportamento è invariato (nessuna riga breaks)', () => {
+    const picks = [mage('a', 'Attaccante', ['veleno', 'esecuzione'])]
+    const candidate = mage('c', 'Controllo')
+    const { container } = render(<DuoTracker picks={picks} considered={candidate} />)
+    expect(container.querySelector('[data-breaks]')).toBeNull()
+  })
+})

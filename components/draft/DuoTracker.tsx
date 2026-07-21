@@ -1,13 +1,15 @@
 'use client'
 import { motion, useReducedMotion } from 'framer-motion'
-import type { ActiveRelic, DraftedWizard, DuoProgress } from '@/types'
-import { duoProgress, previewDuos } from '@/game/engine/duos'
+import type { ActiveRelic, DraftedWizard, DuoProgress, House } from '@/types'
+import { duoProgress, previewDuos, previewDuoLoss } from '@/game/engine/duos'
+import { trioGateLoss } from '@/game/engine/trios'
 import { DuoRecipe } from '@/components/run/DuoPanel'
 import { cn } from '@/lib/cn'
 
-// Linguaggio cromatico: verde = si attiva/avanza, oro = attiva.
+// Linguaggio cromatico: verde = si attiva/avanza, oro = attiva, rosa = si spegne (perdita).
 const GOLD = '#d9b65f'
 const GREEN = '#3ecb6a'
+const ROSE = '#f07272'
 
 /**
  * Tracker COMPATTO delle Combo Duo per draft e recluta: una riga per combo — nome, ricetta
@@ -17,11 +19,14 @@ const GREEN = '#3ecb6a'
  * con un'animazione di layout così la combo che si accende sale in cima da sola. L'effetto
  * della combo compare solo quando è (o sta per essere) accesa: è il momento in cui serve.
  */
-export function DuoTracker({ picks, considered, relics = [], className }: {
+export function DuoTracker({ picks, considered, relics = [], prevTeam, className }: {
   picks: DraftedWizard[]
   considered?: DraftedWizard | null
   /** Al draft iniziale non esistono reliquie; al nodo recluta sì, e contano per i segnali tag. */
   relics?: ActiveRelic[]
+  /** Squadra COMPLETA attuale prima dello swap (solo recruit a squadra piena). Se presente,
+   *  il tracker mostra anche cosa lo swap SPEGNE. Assente al draft iniziale → invariato. */
+  prevTeam?: DraftedWizard[]
   className?: string
 }) {
   const reduce = useReducedMotion()
@@ -31,9 +36,21 @@ export function DuoTracker({ picks, considered, relics = [], className }: {
   const completes = new Set(preview?.completes.map(d => d.id))
   const advances = new Set(preview?.advances.map(d => d.id))
 
+  const next = considered ? [...picks, considered] : picks
+  const loss = prevTeam && considered ? previewDuoLoss(prevTeam, next, relics) : null
+  const trioLost = prevTeam && considered ? trioGateLoss(prevTeam, next, relics) : []
+  const breaks = new Set(loss?.breaks.map(d => d.id))
+  const regresses = new Set(loss?.regresses.map(d => d.id))
+
   const stateOf = (p: DuoProgress) => (p.active ? 'active' : p.missing.length === 1 ? 'near' : 'locked')
   const rank = (p: DuoProgress) =>
-    completes.has(p.duo.id) ? 0 : p.active ? 1 : advances.has(p.duo.id) ? 2 : p.missing.length === 1 ? 3 : 4
+    breaks.has(p.duo.id) ? 0
+    : completes.has(p.duo.id) ? 1
+    : p.active ? 2
+    : regresses.has(p.duo.id) ? 3
+    : advances.has(p.duo.id) ? 4
+    : p.missing.length === 1 ? 5
+    : 6
   const sorted = [...progress].sort((a, b) => rank(a) - rank(b))
 
   return (
@@ -47,12 +64,34 @@ export function DuoTracker({ picks, considered, relics = [], className }: {
         due segnali accesi = combo in battaglia
       </p>
 
+      {trioLost.length > 0 && (
+        <div className="mb-2 space-y-1">
+          {trioLost.map(h => (
+            <p
+              key={h}
+              data-testid={`trio-loss-${h}`}
+              className="rounded-md border px-2 py-1 text-[10px] font-semibold"
+              style={{ borderColor: `${ROSE}aa`, background: `${ROSE}1a`, color: ROSE }}
+            >
+              ⚠ Trio di {h} si spegne
+            </p>
+          ))}
+        </div>
+      )}
+
       <ul className="space-y-1.5">
         {sorted.map((p) => {
           const st = stateOf(p)
           const lights = completes.has(p.duo.id)
           const steps = advances.has(p.duo.id)
-          const badge = lights ? 'si attiva' : st === 'active' ? 'attiva' : steps ? 'avanza' : null
+          const broke = breaks.has(p.duo.id)
+          const regressed = regresses.has(p.duo.id)
+          const badge = broke ? 'si spegne'
+            : lights ? 'si attiva'
+            : st === 'active' ? 'attiva'
+            : regressed ? 'arretra'
+            : steps ? 'avanza'
+            : null
           const showDesc = st === 'active' // include le righe che "si attivano": sono active nel team col candidato
           return (
             <motion.li
@@ -63,27 +102,31 @@ export function DuoTracker({ picks, considered, relics = [], className }: {
               data-state={st}
               data-completes={lights ? '' : undefined}
               data-advances={steps ? '' : undefined}
+              data-breaks={broke ? '' : undefined}
+              data-regresses={regressed ? '' : undefined}
               className={cn('rounded-lg border px-2 py-1.5', lights && 'synergy-node-pulse')}
               style={{
-                borderColor: lights || steps ? `${GREEN}66` : st === 'active' ? `${GOLD}66` : 'rgba(255,255,255,0.10)',
-                background: lights
-                  ? `linear-gradient(135deg, ${GREEN}14, transparent 70%)`
-                  : st === 'active'
-                    ? `linear-gradient(135deg, ${GOLD}1a, transparent 70%)`
-                    : undefined,
-                borderStyle: st === 'active' && !lights ? 'solid' : 'dashed',
-                opacity: st === 'locked' && !steps ? 0.75 : 1,
+                borderColor: broke ? `${ROSE}aa` : lights || steps ? `${GREEN}66` : st === 'active' ? `${GOLD}66` : regressed ? `${GOLD}55` : 'rgba(255,255,255,0.10)',
+                background: broke
+                  ? `linear-gradient(135deg, ${ROSE}22, transparent 70%)`
+                  : lights
+                    ? `linear-gradient(135deg, ${GREEN}14, transparent 70%)`
+                    : st === 'active'
+                      ? `linear-gradient(135deg, ${GOLD}1a, transparent 70%)`
+                      : undefined,
+                borderStyle: broke || (st === 'active' && !lights) ? 'solid' : 'dashed',
+                opacity: st === 'locked' && !steps && !regressed ? 0.75 : 1,
               }}
             >
               <div className="flex items-baseline justify-between gap-2">
                 <span
                   className="text-[12px] font-semibold leading-tight"
-                  style={{ color: st === 'active' ? '#f3e6c4' : steps ? GREEN : 'rgba(255,255,255,0.6)' }}
+                  style={{ color: broke ? ROSE : st === 'active' ? '#f3e6c4' : steps ? GREEN : 'rgba(255,255,255,0.6)' }}
                 >
                   {p.duo.name}
                 </span>
                 {badge && (
-                  <span className="shrink-0 text-[10px] font-bold" style={{ color: lights || steps ? GREEN : GOLD }}>
+                  <span className="shrink-0 text-[10px] font-bold" style={{ color: broke ? ROSE : lights || steps ? GREEN : GOLD }}>
                     · {badge}
                   </span>
                 )}
