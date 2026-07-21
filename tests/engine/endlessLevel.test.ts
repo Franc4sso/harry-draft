@@ -33,6 +33,26 @@ describe('endlessEnemyLevel', () => {
     expect(withQuad500).toBeGreaterThan(linearOnly500 * 5) // deep, quadratic dominates
   })
 
+  it('grows exponentially after the third area (expStartFloor), untouched before it', () => {
+    const b = BALANCE.endless.normalLevelBase
+    const k = BALANCE.endless.levelPerFloor
+    const q = BALANCE.endless.levelPerFloorSq
+    const start = BALANCE.endless.expStartFloor
+    // Before/at the boundary the exponential multiplier is 1 — the calibrated
+    // early-game curve (area-2 boss cliff dynamics) is byte-identical.
+    for (const f of [0, 5, 14, start]) {
+      expect(endlessEnemyLevel(f)).toBe(Math.round(b + f * k + f * f * q))
+    }
+    // Past the boundary the curve outgrows the polynomial alone — by floor 40 the
+    // exponential term must at least double the polynomial level.
+    const poly40 = b + 40 * k + 40 * 40 * q
+    expect(endlessEnemyLevel(40)).toBeGreaterThan(poly40 * 2)
+    // Exponential, not polynomial: the multiplier over the bare polynomial keeps
+    // compounding — the over-poly ratio at floor 50 exceeds the one at floor 40.
+    const poly = (f: number) => b + f * k + f * f * q
+    expect(endlessEnemyLevel(50) / poly(50)).toBeGreaterThan(endlessEnemyLevel(40) / poly(40))
+  })
+
   it('is UNCAPPED — exceeds levelMax past the clamp point', () => {
     // Pick a floor far enough out to clear levelMax regardless of the calibrated
     // (possibly small) levelPerFloor, rather than hardcoding a floor tuned to one k.

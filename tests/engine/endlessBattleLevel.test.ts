@@ -20,3 +20,24 @@ describe('endless battle enemy level', () => {
     expect(pkgExplicitFalse.battle.enemyLevel).toBe(pkgOmitted.battle.enemyLevel)
   })
 })
+
+describe('endless battle DISPLAYED enemy level (resolveCombat)', () => {
+  it('reports the real uncapped endless level, not the campaign-clamped tier', async () => {
+    const { resolveCombat } = await import('@/game/engine/resolvers/combat')
+    const { generateArea } = await import('@/game/engine/map')
+    const { createRng } = await import('@/game/engine/rng')
+    const { offerRecruits, recruitVia } = await import('@/game/engine/recruit')
+    const team = offerRecruits(createRng(1), { exclude: new Set() })
+      .slice(0, 2).map(d => recruitVia(d, 'iniziale', 1))
+    const map = generateArea(createRng(1).fork(4).fork(DEEP_AREA), 'ebl-seed', DEEP_AREA,
+      { teamSize: 2, teamMax: 5 }, true)
+    const state = { seed: 'ebl-seed', phase: 'map', team, activeSynergies: [], stage: 0,
+      relics: [], map, currentNodeId: map[0]!.id, area: DEEP_AREA, teamMax: 5, log: [],
+      pendingLevelUps: [], endless: true } as any
+    const node = map.find(n => n.type === 'battle')!
+    const out = resolveCombat(state, node, createRng('ebl-seed').fork(2))
+    // The badge the battle UI shows must match the package's real (uncapped) level.
+    expect(out.enemyLevel).toBe(node.battle!.enemyLevel)
+    expect(out.enemyLevel).toBeGreaterThan(BALANCE.leveling.levelMax)
+  })
+})

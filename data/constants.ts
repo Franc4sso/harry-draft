@@ -443,6 +443,17 @@ defenseK: 0.5,
     normalLevelBase: 2,   // enemy level at floor 0 (matches campaignB area-0 normal)
     levelPerFloor: 0.1,
     levelPerFloorSq: 0.010, // quadratic catch-up term — see re-calibration note above
+    // Exponential ramp AFTER the third area (user directive 2026-07-21: "dopo la terza
+    // area devono diventare esponenzialmente più forti"). The multiplier is 1 up to
+    // expStartFloor (= 3 areas × floorsPerArea:5), so the calibrated early-game curve —
+    // including the floor-14 Voldemort-cliff dynamics the sweeps above protect — is
+    // byte-identical; past it the whole polynomial level is scaled by
+    // levelExpGrowth^(floor − expStartFloor). At 1.05: floor 20 → ×1.28, floor 30 →
+    // ×2.08, floor 40 → ×3.39, floor 50 → ×5.52 — closes the mid-game sag where
+    // uncapped win-based player leveling (~1.6 lv/floor) outran the ~0.5 lv/floor
+    // polynomial slope for entire areas.
+    expStartFloor: 15,
+    levelExpGrowth: 1.05,
     pointsPerFloor: 100,  // score base unit (see endlessScore.ts, Task 5)
   },
   // Task 21 (2026-07-02, final calibration): USER DECISION set the final boss

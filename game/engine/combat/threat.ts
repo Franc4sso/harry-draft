@@ -54,5 +54,10 @@ export function budgetB(depth: number): number {
 export function endlessEnemyLevel(floor: number): number {
   const e = BALANCE.endless
   const f = Math.max(0, floor)
-  return Math.max(1, Math.round(e.normalLevelBase + f * e.levelPerFloor + f * f * e.levelPerFloorSq))
+  const poly = e.normalLevelBase + f * e.levelPerFloor + f * f * e.levelPerFloorSq
+  // Exponential ramp past the third area (multiplier is exactly 1 before
+  // expStartFloor, so the calibrated early-game curve is untouched — see the
+  // `endless` block in data/constants.ts for the tuning rationale).
+  const exp = e.levelExpGrowth ** Math.max(0, f - e.expStartFloor)
+  return Math.max(1, Math.round(poly * exp))
 }

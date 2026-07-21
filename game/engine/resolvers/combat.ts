@@ -47,14 +47,16 @@ export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatR
   const depth = globalDepth(area, floor)
   const battleRng = rng.fork(depth + 100)
   const nodeType: EnemyKind = isBoss ? 'boss' : (node.type === 'elite' ? 'elite' : 'normal')
-  // Displayed level is still the explicit area+kind threat tier (identical to the value
-  // the package stored).
-  const enemyLevel = enemyLevelFor(area, nodeType, isFinalBoss)
 
   // Single source of truth: read the pre-generated package from the node. Legacy
   // saves (no node.battle) reconstruct it from the SAME builder — no divergence. The
   // combat path adds ZERO new rng draws: the team/relics are pre-built.
   const pkg = node.battle ?? buildBattlePackage(state.seed, area, floor, node.type as 'battle' | 'elite' | 'boss', [], state.endless ?? false).battle
+  // Displayed level = the level the package actually stamped on the units (endless:
+  // uncapped endlessEnemyLevel; campaign: enemyLevelFor). The campaign formula is only
+  // a fallback for pre-package legacy saves — using it unconditionally froze the
+  // endless badge at levelMax while real stats kept growing.
+  const enemyLevel = pkg.enemyLevel ?? enemyLevelFor(area, nodeType, isFinalBoss)
   // Enemies now carry a real level (stamped in buildBattlePackage) and go through the
   // SAME leveling path as the player, so a level-N enemy shows level-N stats instead
   // of flat level-1 stats propped up entirely by menace.
