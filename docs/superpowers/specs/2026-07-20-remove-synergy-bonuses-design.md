@@ -98,6 +98,20 @@ sono altrimenti illeggibili).
 - Boss finale: `exclusiveSynergy` +20% preservata → balance boss invariato dal lato bonus.
 - `campaignBalanceB` è reference-only (0.0000 da "UN MAGO UNA MAGIA"), NON è il gate.
 
+## Note di implementazione (post-esecuzione, 2026-07-21)
+
+- **`applyBonuses` NON rimossa** (correzione al piano): è l'unica funzione che applica il
+  +20% del boss (`exclusiveSynergy` → `battlePackage.ts` → `rightSyn` → `simulate.ts:41`).
+  Il piano assumeva erroneamente il boss "indipendente da SYNERGIES". Tenuta e documentata
+  come boss-only; `SYNERGIES` non contribuisce più bonus stat (Tossicità è keywordMult-only),
+  quindi è no-op per i team normali. `synergyThreshold` tenuta (consumer vivo `themes.ts`).
+- **Ri-taratura BLOCCATA e accettata**: le leve enemy-count sono sature. L'invariante pinnato
+  "elite packs field an active synergy" (`teamGen.test.ts`), con la sola Tossicità (count:3)
+  rimasta, impone di fatto `elites>=3` → strozza `enemyCountByArea`. Nessuna combinazione
+  dentro i pin riporta il winRate in [0.05,0.13]: resta **0.0083**. **Decisione utente: accettare
+  il gioco più duro** (il gate passa, assert `> 0`). Valori di pressione invariati; soglia
+  `scudiRigenSweep shieldUptakeRate` ritirata `>0.05`→`>0` (pressione, non regressione kit).
+
 ## Criteri di successo
 1. Nessun bonus stat di squadra da sinergia nel motore (player né nemici).
 2. Tossicità funziona come stile veleno (trigger + keywordMult); Duo + Trio intatti.
