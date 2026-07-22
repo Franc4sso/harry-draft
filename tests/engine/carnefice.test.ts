@@ -26,14 +26,18 @@ describe('sinergia spietatezza (archetipo Carnefice)', () => {
 })
 
 describe('bumpExecuteThreshold (valanga soglia)', () => {
-  it('alza la soglia execute della squadra, capata', () => {
-    const u = (): BattleUnit => ({ execute: { threshold: 0.35, bonus: 0.25 } } as unknown as BattleUnit)
-    const team = [u(), u()]
+  it('alza la soglia execute condivisa di UN solo step per chiamata (no compounding per-unità)', () => {
+    // Nel motore reale teamExecute() produce UN SOLO oggetto, spalmato per riferimento su
+    // tutta la squadra (simulate.ts:35,60). Il test deve rispecchiare questo invariante:
+    // due unità che condividono lo STESSO oggetto execute, non due oggetti distinti.
+    const shared = { threshold: 0.35, bonus: 0.25 }
+    const team = [{ execute: shared } as unknown as BattleUnit, { execute: shared } as unknown as BattleUnit]
     bumpExecuteThreshold(team)
-    expect(team[0]!.execute!.threshold).toBeCloseTo(0.40) // +0.05
-    expect(team[1]!.execute!.threshold).toBeCloseTo(0.40) // squadra intera
+    expect(shared.threshold).toBeCloseTo(0.40) // UN solo bump di +0.05, non +0.10
+    expect(team[0]!.execute!.threshold).toBeCloseTo(0.40)
+    expect(team[1]!.execute!.threshold).toBeCloseTo(0.40) // stesso oggetto, stesso valore
     for (let i = 0; i < 20; i++) bumpExecuteThreshold(team)
-    expect(team[0]!.execute!.threshold).toBeLessThanOrEqual(0.6) // cap
+    expect(shared.threshold).toBeLessThanOrEqual(0.6) // cap
   })
   it('è un no-op sicuro su unità senza execute', () => {
     const team = [{} as BattleUnit]

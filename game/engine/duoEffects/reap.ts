@@ -29,11 +29,14 @@ export function willReap(killer: BattleUnit): boolean {
 
 /** SPIETATEZZA (archetipo Carnefice): ogni kill di un carnefice alza la soglia di esecuzione
  *  della sua SQUADRA (l'oggetto execute è condiviso). Pura mutazione, no rng — non tocca il
- *  replay determinismo. No-op sicuro su unità senza execute. */
+ *  replay determinismo. No-op sicuro su unità senza execute.
+ *
+ *  toBattleUnits (simulate.ts) calcola `execute` UNA volta per squadra (teamExecute) e lo
+ *  spalma per RIFERIMENTO su ogni unità — non è un oggetto per-unità. Bumpare in un loop
+ *  per-unità muterebbe lo stesso oggetto condiviso N volte (una per unità viva), facendo
+ *  compoundare lo step invece di applicarlo una sola volta. Prendiamo quindi il primo
+ *  execute trovato (sono tutti lo stesso riferimento) e lo bumpiamo UNA volta sola. */
 export function bumpExecuteThreshold(team: BattleUnit[]): void {
-  for (const u of team) {
-    if (u.execute) {
-      u.execute.threshold = Math.min(CARNEFICE_THRESHOLD_CAP, u.execute.threshold + CARNEFICE_THRESHOLD_STEP)
-    }
-  }
+  const ex = team.find(u => u.execute)?.execute
+  if (ex) ex.threshold = Math.min(CARNEFICE_THRESHOLD_CAP, ex.threshold + CARNEFICE_THRESHOLD_STEP)
 }
