@@ -189,8 +189,9 @@ defenseK: 0.5,
     // tests/engine/combat/teamGen.test.ts "elite packs field an active synergy in the
     // overwhelming majority of cases" is a separately locked invariant (user-pinned
     // 2026-07-03, "so a future balance sweep can't silently trim"). Post the same
-    // Task-2 synergy removal, SYNERGIES now contains exactly ONE entry (`tossicita`,
-    // data/synergies.ts, `requires.count: 3`) — every other synergy (marauder count:2,
+    // Task-2 TEAM-synergy removal, SYNERGIES now contains only ARCHETYPE synergies —
+    // `tossicita` (veleno) and `spietatezza` (esecuzione, revived 2026-07-22), both
+    // `requires.count: 3` on a tag (data/synergies.ts). Every TEAM synergy (marauder count:2,
     // da count:4, etc., referenced in that test's own now-stale comment) was deleted. An
     // elite pack below 3 units can therefore NEVER realize a synergy (0% by construction,
     // not RNG variance) — verified: enemyCountByArea=[2,2,2] measures elite synergy rate
