@@ -2,8 +2,8 @@ import type { Relic } from '@/types'
 
 export const RELICS: Relic[] = [
   // Comuni — passive piatte
-  { id: 'giratempo', name: 'Giratempo', desc: '+12 Velocità a tutta la squadra.', rarity: 'comune', bonus: { spd: 12 } },
-  { id: 'mantello-invisibilita', name: "Mantello dell'Invisibilità", desc: '+14 Difesa a tutta la squadra.', rarity: 'comune', bonus: { def: 14 } },
+  { id: 'giratempo', name: 'Giratempo', desc: 'Assegna a un mago: +30 Velocità solo a lui. Il tempo è personale.', rarity: 'comune', assignable: true, carrierBonus: { spd: 30 } },
+  { id: 'mantello-invisibilita', name: "Mantello dell'Invisibilità", desc: 'Assegna a un mago: +26 Difesa solo a lui. Uno solo può nascondersi.', rarity: 'comune', assignable: true, carrierBonus: { def: 26 } },
   { id: 'mappa-malandrino', name: 'Mappa del Malandrino', desc: '+6 Attacco a tutta la squadra; i colpi infliggono +12% danni ai bersagli sotto il 50% di vita (Esecuzione).', rarity: 'comune', bonus: { atk: 6 }, keywords: ['esecuzione'], grantsExecute: { threshold: 0.5, bonus: 0.12 } },
   { id: 'pozione-fortuna', name: 'Felix Felicis', desc: '+5% a tutte le statistiche.', rarity: 'comune', bonus: { allPct: 0.05 } },
   { id: 'bezoar', name: 'Bezoar', desc: 'Rigenerazione +8 a tutta la squadra.', rarity: 'comune', bonus: { regen: 8 } },
@@ -21,9 +21,9 @@ export const RELICS: Relic[] = [
   { id: 'fiala-supporto', name: 'Calice del Guaritore', desc: 'Rigenerazione +16 se hai almeno 2 Supporti.', rarity: 'rara', bonus: { regen: 16 }, condition: { role: 'Supporto', count: 2 } },
   { id: 'sfera-controllo', name: 'Sfera del Dominio', desc: '+16 Velocità se hai almeno 2 Controllo.', rarity: 'rara', bonus: { spd: 16 }, condition: { role: 'Controllo', count: 2 } },
   { id: 'occhio-moody', name: 'Occhio di Malocchio', desc: '+8% a tutte le statistiche.', rarity: 'rara', bonus: { allPct: 0.08 } },
-  { id: 'pensatoio', name: 'Pensatoio', desc: '+15 Attacco e +15 Difesa.', rarity: 'rara', bonus: { atk: 15, def: 15 } },
+  { id: 'pensatoio', name: 'Pensatoio', desc: '+35 Attacco a tutta la squadra, ma -18 Difesa. Rivivere la battaglia rende più aggressivi e più esposti.', rarity: 'rara', bonus: { atk: 35 }, drawback: { def: -18 } },
   // Epiche — passive forti
-  { id: 'bacchetta-sambuco', name: 'Bacchetta di Sambuco', desc: '+12% a tutte le statistiche.', rarity: 'epica', bonus: { allPct: 0.12 } },
+  { id: 'bacchetta-sambuco', name: 'Bacchetta di Sambuco', desc: '+20% a tutte le statistiche se hai almeno 3 Grifondoro. La Bacchetta serve solo un maestro degno.', rarity: 'epica', bonus: { allPct: 0.20 }, condition: { house: 'Grifondoro', count: 3 } },
   { id: 'pietra-resurrezione', name: 'Pietra della Resurrezione', desc: 'A inizio battaglia, scudo a tutta la squadra.', rarity: 'epica', triggers: [{ hook: 'onBattleStart', effects: [{ kind: 'shield', amount: 30 }] }] },
   // Veleno set (non-comune + rara + epica boccino)
   { id: 'ampolla-veleno', name: 'Ampolla di Veleno', desc: 'Il danno da Veleno della squadra è aumentato del 50%.', rarity: 'non-comune', keywords: ['veleno'], keywordMult: { veleno: 0.5 } },
@@ -165,7 +165,7 @@ export const JOKER_RELIC_IDS: string[] = [
   'fame-vorace', 'collezionista-anime', 'marchio-vorace',
   'marcia-di-guerra', 'fortezza-vivente', 'vento-crescente', 'eredita-dei-caduti',
   'ultimo-baluardo', 'branco-ristretto', 'furia-morente', 'canto-del-cigno',
-  'assalto-d-apertura', 'patto-vorace', 'sete-di-sangue',
+  'assalto-d-apertura', 'patto-vorace', 'sete-di-sangue', 'pensatoio',
 ]
 export const SACRIFICE_RELIC_IDS: string[] = [
   'diario-riddle', 'mano-della-gloria', 'specchio-erised', 'calice-avvelenato', 'corona-spettrale',

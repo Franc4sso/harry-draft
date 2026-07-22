@@ -44,7 +44,7 @@ export const STARTER_RELICS: string[] = [
   'fame-vorace', 'collezionista-anime', 'marchio-vorace',
   'marcia-di-guerra', 'fortezza-vivente', 'vento-crescente', 'eredita-dei-caduti',
   'ultimo-baluardo', 'branco-ristretto', 'furia-morente', 'canto-del-cigno',
-  'assalto-d-apertura', 'patto-vorace', 'sete-di-sangue',
+  'assalto-d-apertura', 'patto-vorace', 'sete-di-sangue', 'pensatoio',
 ]
 
 // Rarity-scaled unlock costs: rarer = pricier. Tier 1 (Leggendario) is the rarest
