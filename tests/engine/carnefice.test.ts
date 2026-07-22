@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { detectSynergies } from '@/game/engine/synergy'
 import { teamExecute } from '@/game/engine/execute'
-import type { DraftedWizard } from '@/types'
+import { bumpExecuteThreshold } from '@/game/engine/duoEffects/reap'
+import type { DraftedWizard, BattleUnit } from '@/types'
 
 const dw = (id: string, tags: string[] = []): DraftedWizard =>
   ({ wizard: { id, role: 'Attaccante', house: 'Serpeverde', tags }, level: 1 } as unknown as DraftedWizard)
@@ -21,5 +22,21 @@ describe('sinergia spietatezza (archetipo Carnefice)', () => {
     expect(ex).toBeDefined()
     expect(ex!.threshold).toBeGreaterThanOrEqual(0.35)
     expect(ex!.bonus).toBeGreaterThan(0)
+  })
+})
+
+describe('bumpExecuteThreshold (valanga soglia)', () => {
+  it('alza la soglia execute della squadra, capata', () => {
+    const u = (): BattleUnit => ({ execute: { threshold: 0.35, bonus: 0.25 } } as unknown as BattleUnit)
+    const team = [u(), u()]
+    bumpExecuteThreshold(team)
+    expect(team[0]!.execute!.threshold).toBeCloseTo(0.40) // +0.05
+    expect(team[1]!.execute!.threshold).toBeCloseTo(0.40) // squadra intera
+    for (let i = 0; i < 20; i++) bumpExecuteThreshold(team)
+    expect(team[0]!.execute!.threshold).toBeLessThanOrEqual(0.6) // cap
+  })
+  it('è un no-op sicuro su unità senza execute', () => {
+    const team = [{} as BattleUnit]
+    expect(() => bumpExecuteThreshold(team)).not.toThrow()
   })
 })

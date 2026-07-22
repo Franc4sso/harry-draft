@@ -3,6 +3,9 @@ import { applyStatus } from '@/game/engine/status'
 import { STATUS_BY_ID } from '@/data/statuses'
 import { MAX_STAT_STACKS } from '@/data/constants'
 
+const CARNEFICE_THRESHOLD_STEP = 0.05  // +5% soglia per kill (STIMA tarabile — playtest)
+const CARNEFICE_THRESHOLD_CAP = 0.6    // tetto soglia (STIMA)
+
 /** MIETITORE (Duo Combos, player-only, per-battle): each execute/kill landed by a player unit
  *  grants that killer one stack of `raccolto` — a permanent (rest-of-battle) +6 atk buff. No rng
  *  involved: the killer is already known at the call site, so there's no determinism concern
@@ -22,4 +25,15 @@ export function maybeReap(killer: BattleUnit): void {
 export function willReap(killer: BattleUnit): boolean {
   const cap = STATUS_BY_ID['raccolto']?.maxStacks ?? MAX_STAT_STACKS
   return killer.statusEffects.filter(e => e.statusId === 'raccolto').length < cap
+}
+
+/** SPIETATEZZA (archetipo Carnefice): ogni kill di un carnefice alza la soglia di esecuzione
+ *  della sua SQUADRA (l'oggetto execute è condiviso). Pura mutazione, no rng — non tocca il
+ *  replay determinismo. No-op sicuro su unità senza execute. */
+export function bumpExecuteThreshold(team: BattleUnit[]): void {
+  for (const u of team) {
+    if (u.execute) {
+      u.execute.threshold = Math.min(CARNEFICE_THRESHOLD_CAP, u.execute.threshold + CARNEFICE_THRESHOLD_STEP)
+    }
+  }
 }

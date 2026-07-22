@@ -25,7 +25,7 @@ import { applyTenaciaAura, cleanseOneControl } from './roleCounter'
 import { stampDuoFields } from '../duoEffects/stamp'
 import { maybeSpreadPoison } from '../duoEffects/spreadOnDeath'
 import { maybeSpitPoison } from '../duoEffects/spitOnHeal'
-import { maybeReap, willReap } from '../duoEffects/reap'
+import { maybeReap, willReap, bumpExecuteThreshold } from '../duoEffects/reap'
 
 export function toBattleUnits(
   team: DraftedWizard[], side: Side, synergies: ActiveSynergy[], relics: ActiveRelic[] = [], menacePct = 0, damageReduction = 0,
@@ -370,11 +370,20 @@ export function simulateBattle(
         // MIASMA: after the death is fully resolved, jump the dead enemy's veleno stacks
         // to one random living enemy (deterministic single rng.pick; no-op if none left).
         if (miasma && realTarget.side === 'right') logSpread(realTarget, turn, maybeSpreadPoison(realTarget, R, rng))
-        // MIETITORE: a direct-hit kill by a `reaper`-flagged player unit grants the killer one
-        // stack of raccolto (+6 atk, rest of battle). Scoped to direct-hit kills only — `actor`
-        // is the known killer here; DoT/fatigue kills (elsewhere in this file) have no attacker
-        // to credit.
-        if (actor.side === 'left' && actor.reaper) maybeReap(actor)
+        // CARNEFICE (archetipo, entrambi i lati) + MIETITORE (Duo, player-only, raddoppia):
+        // a direct-hit kill by a `carnefice`-flagged unit (either side) grants +ATK (raccolto)
+        // to the killer and bumps the execute threshold for the killer's whole team. If the
+        // killer is ALSO `reaper` (Mietitore Duo), it gets a 2nd raccolto stack (Task 3's
+        // doubling). A left-side `reaper` WITHOUT carnefice keeps the old behaviour (retrocompat).
+        // Scoped to direct-hit kills only — `actor` is the known killer here; DoT/fatigue kills
+        // (elsewhere in this file) have no attacker to credit.
+        if (actor.carnefice) {
+          maybeReap(actor)
+          if (actor.reaper) maybeReap(actor)            // MIETITORE: 2° stack (Task 3)
+          bumpExecuteThreshold(actor.side === 'left' ? L : R)
+        } else if (actor.side === 'left' && actor.reaper) {
+          maybeReap(actor)                              // Mietitore senza archetipo (retrocompat)
+        }
       }
       // Recoil can kill the ACTOR via its own dark spell — sync + KO-log + onDeath for the actor too.
       sync(actor)
