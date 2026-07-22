@@ -237,7 +237,13 @@ Run: `npm run typecheck` → nessun errore.
 - `tests/data/relicRedesign.test.ts` — asserisce la VECCHIA forma flat (es. `giratempo` ha `bonus.spd`). Va aggiornato alla nuova forma (carrier/drawback/condizionale) o rimosso se ridondante col nuovo `relicConversions.test.ts`. NON indebolire: se verifica un meccanismo utile, riscrivi l'assert alla forma nuova.
 - `tests/engine/endlessReplay.test.ts` (2 test) e `tests/functions/submitScore.test.ts` (1 test) — hanno snapshot hardcoded di un'offerta joker per un seed fisso; aggiungere `pensatoio` a `JOKER_RELIC_IDS` (pool 14→15) ha spostato gli indici. Ri-registrare gli snapshot col valore REALE del motore (l'implementer legge l'offerta reale per quel seed/nodo e aggiorna la costante — NON `vitest -u` alla cieca senza verificare che il nuovo valore sia corretto).
 - `tests/engine/campaignBalanceRestricted.test.ts` — GIÀ SISTEMATO prima del Task 2 (assert rilassato >0→>=0 con nota, commit 92d5f44). Verificare solo che resti verde, non ritoccare.
-Se emerge un ALTRO test di conteggio pool (relicCap/nodeCatalog/sweep) rotto dal −3, aggiornarlo al nuovo conteggio corretto — NON indebolire l'assert.
+**File sweep rotti dal −3 pool (CONFERMATI nel Task 2 via A/B stash — sistemare qui):**
+- `tests/engine/esecuzioneSweep.test.ts` e `tests/engine/magieOscureSweep.test.ts` — il taglio di 3 reliquie
+  ha ridotto il pool → i draft-rate sweep scendono verso/sotto i loro floor. Come per il precedente Altare
+  (stessa classe): ri-ancorare il floor al valore misurato REALE con un commento datato 2026-07-22 che spiega
+  che è supply-shrink del pool (−3 reliquie), non un kit rotto (rottura=0.000). NON indebolire oltre il necessario:
+  il floor va appena sotto il nuovo valore misurato, restando ben sopra 0.000. Misurare con `--disable-console-intercept`.
+Se emerge un ALTRO test di conteggio pool (relicCap/nodeCatalog) rotto dal −3, aggiornarlo al nuovo conteggio corretto — NON indebolire l'assert.
 
 - [ ] **Step 4: Balance gate (conferma, non taratura)**
 
