@@ -9,8 +9,6 @@ export interface AreaBias {
 
 type Filler = 'battle' | 'recruit' | 'relic' | 'event' | 'spellForge' | 'shop'
 
-const ALTARE_CHANCE = 0.3
-
 /** Flat list of (floor, idx) coordinates for the middle floors only. */
 interface Slot { floor: number; idx: number }
 
@@ -21,14 +19,16 @@ interface Slot { floor: number; idx: number }
  * every boss) plus 2 other filler nodes (battle/recruit/relic) — infirmary never
  * appears on any other floor; exactly one elite in a mid floor within
  * [eliteMinFloor, last-2] (never on the pre-boss floor); at least one relic among the
- * remaining middle nodes.
+ * remaining middle nodes; exactly one 'altare' node on a free middle slot in campaign
+ * mode (Fase 3, 2026-07-22 — always guaranteed, always avoidable since every mid floor
+ * is width 3; excluded entirely in endless mode).
  * Recruit nodes are DELIBERATELY RARE (USER DIRECTIVE, "the game must be hard, recruit
  * nodes must be rare"): recruit is NOT guaranteed (an area may have zero), and is HARD
  * CAPPED at exactly one per area regardless of weighted rolls — any filler roll that
  * would place a 2nd recruit in the same area becomes a battle instead. Remaining
  * middle nodes are weighted fillers (battle/recruit/relic), with a (now small) recruit
  * bias when the team is incomplete.
- * In endless mode, shop and spellForge nodes are excluded entirely.
+ * In endless mode, shop, spellForge, and altare nodes are excluded entirely.
  */
 export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias, endless = false): RunNodeType[][] {
   if (widths.length < 3) throw new Error(`area needs >=3 floors, got ${widths.length}`)
@@ -80,12 +80,13 @@ export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias,
     used.add(key(s.floor, s.idx))
   }
 
-  // 3b. P5 — Altare Oscuro: ~30% delle aree ne piazza ESATTAMENTE UNO su uno slot libero
-  //     (raro e casuale — scelta utente 2026-07-15: mai garantito, sempre evitabile perché
-  //     ogni floor medio è largo 3). Escluso in endless: il controller endless non ha un
-  //     handler altare (stesso motivo dell'esclusione shop/spellForge) e il corto-circuito
-  //     `!endless` NON consuma il roll → gli stream rng endless restano identici a prima.
-  if (!endless && rng.next() < ALTARE_CHANCE) {
+  // 3b. Fase 3 (2026-07-22) — Altare Oscuro: OGNI area (campaign) piazza ESATTAMENTE
+  //     UNO su uno slot libero — garantito (era ~30%, scelta utente 2026-07-15,
+  //     superata). Sempre evitabile perché ogni floor medio è largo 3. Escluso in
+  //     endless: il controller endless non ha un handler altare (stesso motivo
+  //     dell'esclusione shop/spellForge) e il corto-circuito `!endless` NON consuma
+  //     alcun roll rng → gli stream rng endless restano identici a prima.
+  if (!endless) {
     const pool = free()
     if (pool.length > 0) {
       const s = rng.pick(pool)

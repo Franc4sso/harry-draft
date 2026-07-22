@@ -5,16 +5,12 @@ import { areaRng } from '@/game/engine/runEngine'
 const bias = { teamSize: 3, teamMax: 5 }
 
 describe('Nodo Altare — generazione', () => {
-  it('~30% delle aree ha ESATTAMENTE un altare (mai 2+), banda [15%, 45%] su 300 aree', () => {
-    let with1 = 0
+  it('OGNI area (campaign) ha ESATTAMENTE un altare — garantito, su 300 aree', () => {
     for (let i = 0; i < 300; i++) {
       const nodes = generateArea(areaRng(`alt-${i}`, 0), `alt-${i}`, 0, bias)
       const n = nodes.filter(nd => nd.type === 'altare').length
-      expect(n).toBeLessThanOrEqual(1)
-      if (n === 1) with1++
+      expect(n).toBe(1)
     }
-    expect(with1 / 300).toBeGreaterThan(0.15)
-    expect(with1 / 300).toBeLessThan(0.45)
   })
   it("l'altare non ruba MAI i garantiti: infermeria pre-boss, elite, >=1 relic restano", () => {
     for (let i = 0; i < 100; i++) {
