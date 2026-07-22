@@ -46,8 +46,8 @@ describe('useRunB FSM', () => {
   })
 
   it('resuming during a combat phase rebuilds the battle snapshot (no null crash)', () => {
-    // seed-d (not seed-c): after the Altare Oscuro map node landed (~30%/area roll,
-    // Task 6, sacrifice-economy branch), 'seed-c' no longer has a battle/elite one hop
+    // seed-d (not seed-c): after the Altare Oscuro map node landed (now guaranteed 1/area
+    // in campaign, Fase 3 2026-07-22), 'seed-c' no longer has a battle/elite one hop
     // from the entry node (floor 1 = [recruit, altare, relic]) — an expected rng-stream
     // shift from the new roll, not a guarantee violation. seed-d's floor 1 always
     // includes a battle node, so it stays a reliable pick for this reload/rebuild check.

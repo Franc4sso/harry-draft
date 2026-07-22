@@ -45,11 +45,16 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 //   re-anchored 0.10→0.08 (still comfortably above the structural-lockout signal this test guards).
 // Post-altare-guaranteed (Fase 3, 2026-07-22, nodeGen.ts: Altare Oscuro placement went from
 //   ~30%/area probabilistic to guaranteed 1/area in campaign): winRate=0.000 spietatezzaRate=0.000
-//   execUptakeRate=0.067 (8/120) medianTurns=5 maxTurns=23. The guaranteed altare occupies one more
-//   middle slot per area (map reshuffle, not a difficulty change — bot is blind to node content,
-//   see campaignBalanceRestricted.test.ts header), which nudges relic-node supply/timing on some
-//   seeds and dents exec-relic pickup slightly below the old 0.08 floor. Floor re-anchored
-//   0.08→0.05 (still well above the structural-lockout signal — a true kit break measures 0.000).
+//   execUptakeRate=0.067 (8/120) medianTurns=5 maxTurns=23. NOT symmetric reshuffle noise — the
+//   adversarial A/B measured a DIRECTIONAL drop (old 0.083 → new 0.067, ~19% relative). Mechanism is
+//   systematic: the guaranteed altare consumes one middle slot/area that step-4 fillers would
+//   sometimes make a RELIC node, and exec-relics (spada-grifondoro/sigillo-carnefice) come ONLY from
+//   relic nodes → fewer relic nodes → slightly lower exec uptake. This is an ACCEPTED design cost of
+//   the Fase 3 pact-rhythm goal (every node guarantee displaces some filler), not a bug: the archetype
+//   stays clearly draftable (a true structural lockout measures 0.000, not ~0.067). Bot is blind to
+//   node content so difficulty gates don't move (winRate=0.0083 unchanged). Floor re-anchored 0.08→0.05
+//   to reflect the reduced relic-node supply, keeping headroom above the 0.000 break signal. Re-check
+//   at playtest whether the relic-supply dip is felt across archetypes (velenoSweep/scudiRigenSweep).
 //
 // Metric choice — IMPORTANT: there is NO total-damage assertion here. Execute is a damage
 // MULTIPLIER on the killing blow, not a discrete channel like poison's `dot` flag, so a
