@@ -80,10 +80,15 @@ Non aggiunge feature a caso: **concentra** ciò che c'è già.
   con la decisione — ma il rischio è alto. Alternativa da considerare PRIMA: il combat va reso più interessante
   a monte (durata, varianza) invece che più leggibile/interattivo?
 
-### FASE 3 — Ritmo emotivo
-- Abbassare `relic` filler weight, alzare eventi/altare.
-- Tagliare/convertire reliquie flat verso ~20-25 significative.
-- **Ampliare il patto faustiano**: ≥1 momento faustiano per area (non ~30%).
+### ▶ FASE 3 — Ritmo emotivo _(IN CORSO)_
+- ✅ **Ampliare il patto faustiano** — FATTO (2026-07-22): Altare Oscuro **garantito ≥1/area** in
+  campaign (era 30%). Edit chirurgico in `nodeGen.ts` (rimosso `ALTARE_CHANCE`). Endless invariato
+  (parità byte-identica, mismatches=0). Bilanciamento invariato (bot cieco). **Costo di design accettato:**
+  l'Altare consuma uno slot che a volte era reliquia → accesso archetipi-reliquia -~19% (esecuzione
+  0.083→0.067, ancora giocabile). Da validare al playtest: 3 Altari/run sono routine? il calo reliquie
+  si sente su veleno/scudo? Se sì: togliere area 1 (1 riga) / alzare `relic` weight.
+- Abbassare `relic` filler weight, alzare eventi/altare _(prossimo sotto-progetto Fase 3)_.
+- Tagliare/convertire reliquie flat verso ~20-25 significative _(prossimo)_.
 
 ### FASE 4 — Tagliare il rumore
 - Rimuovere/fondere SpellForge.
