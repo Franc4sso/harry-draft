@@ -17,7 +17,7 @@ export const DUOS: Duo[] = [
   { id: 'esecuzione-a-freddo', name: 'Esecuzione a Freddo', signals: ['esecuzione', 'controllo'],
     desc: 'Un nemico stordito o congelato sotto il 50% di vita viene giustiziato all’istante.' },
   { id: 'mietitore', name: 'Mietitore', signals: ['esecuzione', 'magieOscure'],
-    desc: 'Ogni nemico giustiziato dà al suo carnefice +6 attacco per il resto della battaglia.' },
+    desc: 'Raddoppia la mietitura del Carnefice: ogni uccisione dà il doppio del Raccolto (+ATK) per il resto della battaglia.' },
 ]
 
 export const DUO_BY_ID: Record<string, Duo> = Object.fromEntries(DUOS.map(d => [d.id, d]))

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { detectSynergies } from '@/game/engine/synergy'
 import { teamExecute } from '@/game/engine/execute'
-import { bumpExecuteThreshold } from '@/game/engine/duoEffects/reap'
+import { bumpExecuteThreshold, maybeReap } from '@/game/engine/duoEffects/reap'
 import type { DraftedWizard, BattleUnit } from '@/types'
 
 const dw = (id: string, tags: string[] = []): DraftedWizard =>
@@ -42,5 +42,24 @@ describe('bumpExecuteThreshold (valanga soglia)', () => {
   it('è un no-op sicuro su unità senza execute', () => {
     const team = [{} as BattleUnit]
     expect(() => bumpExecuteThreshold(team)).not.toThrow()
+  })
+})
+
+describe('Mietitore raddoppia la mietitura (amplificatore, non doppione)', () => {
+  const mk = () => ({ side: 'left', wizard: { id: 'x' }, statusEffects: [] } as unknown as BattleUnit)
+
+  it('carnefice+reaper → 2 stack raccolto per kill', () => {
+    const unit = mk()
+    // Rispecchia il kill-site (simulate.ts): carnefice chiama sempre maybeReap una volta,
+    // +1 se l'unità è anche reaper (Mietitore).
+    maybeReap(unit)
+    maybeReap(unit)
+    expect(unit.statusEffects.filter((e: any) => e.statusId === 'raccolto').length).toBe(2)
+  })
+
+  it('solo carnefice (senza Mietitore) → 1 stack raccolto per kill', () => {
+    const unit = mk()
+    maybeReap(unit)
+    expect(unit.statusEffects.filter((e: any) => e.statusId === 'raccolto').length).toBe(1)
   })
 })
