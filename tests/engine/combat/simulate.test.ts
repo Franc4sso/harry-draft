@@ -5,7 +5,6 @@ import { detectSynergies } from '@/game/engine/synergy'
 import { createRng } from '@/game/engine/rng'
 import { WIZARDS } from '@/data/wizards'
 import { SPELL_BY_ID } from '@/data/spells'
-import { RELIC_BY_ID } from '@/data/relics'
 import type { ActiveRelic } from '@/types'
 
 function team(rng = createRng(1), n = 5) {
@@ -128,7 +127,8 @@ describe('simulate', () => {
     // buildReplay (which reconstructs HP from log deltas) can never show the regen.
     const left = team(createRng(1))
     const right = team(createRng(2))
-    const regenRelics: ActiveRelic[] = [{ relic: RELIC_BY_ID['bezoar']!, stageObtained: 0 }]
+    // reliquia regen inline (bezoar rimossa nella pulizia pool 2026-07-22)
+    const regenRelics: ActiveRelic[] = [{ relic: { id: 'test-regen', name: 'Test Regen', desc: '', rarity: 'comune', bonus: { regen: 8 } }, stageObtained: 0 }]
     const res = simulateBattle(left, right, createRng(3), { leftRelics: regenRelics })
     const regenEntries = res.log.filter(e => e.action === 'Rigenera' && e.flags.includes('heal'))
     expect(regenEntries.length).toBeGreaterThan(0)

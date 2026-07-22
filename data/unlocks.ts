@@ -39,7 +39,7 @@ export const STARTER_WIZARDS: string[] = [
 // ~12 real relic ids from data/relics.ts, all comune + a half of the non-comune tier
 // (cuore-del-tasso is deliberately left locked as a milestone/purchase reward).
 export const STARTER_RELICS: string[] = [
-  'giratempo', 'mantello-invisibilita', 'mappa-malandrino', 'pozione-fortuna', 'bezoar', 'ricordatutto',
+  'giratempo', 'mantello-invisibilita', 'mappa-malandrino', 'ricordatutto',
   'medaglione-serpeverde', 'diadema-corvonero', 'coppa-tassorosso', 'ampolla-veleno', 'sigillo-carnefice', 'diadema-corrotto',
   'fame-vorace', 'collezionista-anime', 'marchio-vorace',
   'marcia-di-guerra', 'fortezza-vivente', 'vento-crescente', 'eredita-dei-caduti',

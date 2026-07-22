@@ -14,6 +14,12 @@ function team(ids: string[], seed = 1): DraftedWizard[] {
 
 const ar = (id: string): ActiveRelic => ({ relic: RELIC_BY_ID[id]!, stageObtained: 0 })
 
+// reliquia inline (pozione-fortuna rimossa nella pulizia pool 2026-07-22)
+const arAllPct5: ActiveRelic = {
+  relic: { id: 'test-allpct5', name: 'Test AllPct5', desc: '', rarity: 'comune', bonus: { allPct: 0.05 } },
+  stageObtained: 0,
+}
+
 const LEFT_IDS = ['harry', 'ron', 'hermione', 'luna', 'neville']
 const RIGHT_IDS = ['draco', 'crabbe', 'goyle', 'snape', 'bellatrix']
 
@@ -42,11 +48,11 @@ describe('buildReplay with relics', () => {
     }
   })
 
-  it('left units maxHp is higher with pozione-fortuna (+5% all stats) relic', () => {
-    // pozione-fortuna has allPct: 0.05, which scales all stats including hp
+  it('left units maxHp is higher with a +5% all-stats relic', () => {
+    // inline relic has allPct: 0.05, which scales all stats including hp
     const l = team(LEFT_IDS, 7)
     const r = team(RIGHT_IDS, 13)
-    const relics = [ar('pozione-fortuna')]
+    const relics = [arAllPct5]
 
     const resNoRelic = simulateBattle(l, r, createRng(42))
     const resWithRelic = simulateBattle(l, r, createRng(42), { leftRelics: relics })

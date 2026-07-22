@@ -4,7 +4,6 @@ import { toBattleUnits, simulateBattle } from '@/game/engine/combat/simulate'
 import { resolveAction } from '@/game/engine/combat/resolve'
 import { createRng } from '@/game/engine/rng'
 import { SPELL_BY_ID } from '@/data/spells'
-import { RELIC_BY_ID } from '@/data/relics'
 import type { ActiveRelic, BattleUnit, DraftedWizard, Wizard } from '@/types'
 
 function unit(id: string, spellId: string, over: Partial<BattleUnit> = {}): BattleUnit {
@@ -40,14 +39,15 @@ describe('Corrotto in battaglia', () => {
   })
 
   it('team regen di fine turno NON cura un corrotto (simulate.ts)', () => {
-    // Relic 'bezoar' → regen +8 a tutta la squadra a fine turno (simulate.ts ~426).
+    // Reliquia regen +8 a tutta la squadra a fine turno (simulate.ts ~426).
     // Team sinistro: un corrotto ferito + un sano ferito, entrambi Supporto senza
     // bersagli di cura utili (base_attack) così l'unico Cura in log è il team-regen.
     const corrottoWiz = dw('corrotto1', 'base_attack', { currentHp: 40, corrotto: true })
     const sanoWiz = dw('sano1', 'base_attack', { currentHp: 40 })
     const nemico = dw('nemico1', 'base_attack')
 
-    const relics: ActiveRelic[] = [{ relic: RELIC_BY_ID['bezoar']!, stageObtained: 0 }]
+    // reliquia regen inline (bezoar rimossa nella pulizia pool 2026-07-22)
+    const relics: ActiveRelic[] = [{ relic: { id: 'test-regen', name: 'Test Regen', desc: '', rarity: 'comune', bonus: { regen: 8 } }, stageObtained: 0 }]
 
     const result = simulateBattle([corrottoWiz, sanoWiz], [nemico], createRng(1), {
       leftRelics: relics,

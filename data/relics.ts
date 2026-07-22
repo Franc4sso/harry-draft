@@ -5,8 +5,6 @@ export const RELICS: Relic[] = [
   { id: 'giratempo', name: 'Giratempo', desc: 'Assegna a un mago: +30 Velocità solo a lui. Il tempo è personale.', rarity: 'comune', assignable: true, carrierBonus: { spd: 30 } },
   { id: 'mantello-invisibilita', name: "Mantello dell'Invisibilità", desc: 'Assegna a un mago: +26 Difesa solo a lui. Uno solo può nascondersi.', rarity: 'comune', assignable: true, carrierBonus: { def: 26 } },
   { id: 'mappa-malandrino', name: 'Mappa del Malandrino', desc: '+6 Attacco a tutta la squadra; i colpi infliggono +12% danni ai bersagli sotto il 50% di vita (Esecuzione).', rarity: 'comune', bonus: { atk: 6 }, keywords: ['esecuzione'], grantsExecute: { threshold: 0.5, bonus: 0.12 } },
-  { id: 'pozione-fortuna', name: 'Felix Felicis', desc: '+5% a tutte le statistiche.', rarity: 'comune', bonus: { allPct: 0.05 } },
-  { id: 'bezoar', name: 'Bezoar', desc: 'Rigenerazione +8 a tutta la squadra.', rarity: 'comune', bonus: { regen: 8 } },
   { id: 'ricordatutto', name: 'Ricordella', desc: '+6 Difesa e +6 Velocità; a inizio battaglia, piccolo scudo a tutta la squadra.', rarity: 'comune', bonus: { def: 6, spd: 6 },
     triggers: [{ hook: 'onBattleStart', effects: [{ kind: 'shield', amount: 10 }] }] },
   // Rara — esecuzione keyword
@@ -20,7 +18,6 @@ export const RELICS: Relic[] = [
   { id: 'egida-tank', name: 'Egida del Guardiano', desc: '+24 Difesa se hai almeno 3 Tank.', rarity: 'rara', bonus: { def: 24 }, condition: { role: 'Tank', count: 3 } },
   { id: 'fiala-supporto', name: 'Calice del Guaritore', desc: 'Rigenerazione +16 se hai almeno 2 Supporti.', rarity: 'rara', bonus: { regen: 16 }, condition: { role: 'Supporto', count: 2 } },
   { id: 'sfera-controllo', name: 'Sfera del Dominio', desc: '+16 Velocità se hai almeno 2 Controllo.', rarity: 'rara', bonus: { spd: 16 }, condition: { role: 'Controllo', count: 2 } },
-  { id: 'occhio-moody', name: 'Occhio di Malocchio', desc: '+8% a tutte le statistiche.', rarity: 'rara', bonus: { allPct: 0.08 } },
   { id: 'pensatoio', name: 'Pensatoio', desc: '+35 Attacco a tutta la squadra, ma -18 Difesa. Rivivere la battaglia rende più aggressivi e più esposti.', rarity: 'rara', bonus: { atk: 35 }, drawback: { def: -18 } },
   // Epiche — passive forti
   { id: 'bacchetta-sambuco', name: 'Bacchetta di Sambuco', desc: '+20% a tutte le statistiche se hai almeno 3 Grifondoro. La Bacchetta serve solo un maestro degno.', rarity: 'epica', bonus: { allPct: 0.20 }, condition: { house: 'Grifondoro', count: 3 } },
