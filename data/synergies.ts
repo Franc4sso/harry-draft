@@ -7,4 +7,5 @@ import type { Synergy } from '@/types'
 // l'unico sistema di team-building è Combo Duo + Trio di casata (game/engine/trios.ts).
 export const SYNERGIES: Synergy[] = [
   { id: 'tossicita', name: 'Tossicità', kind: 'origin', requires: { tag: 'veleno', count: 3 }, bonus: { keywordMult: { veleno: 0.5 } } },
+  { id: 'spietatezza', name: 'Spietatezza', kind: 'origin', requires: { tag: 'esecuzione', count: 3 }, bonus: { keywordMult: { esecuzione: 0.5 } } },
 ]

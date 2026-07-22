@@ -25,6 +25,8 @@ export function registerSynergyTriggers(
   bus: EventBus, units: BattleUnit[], synergies: ActiveSynergy[], side: Side,
 ): void {
   const tossicita = synergies.some(s => s.synergy.id === 'tossicita')
+  const spietatezza = synergies.some(s => s.synergy.id === 'spietatezza')
+  if (spietatezza) for (const u of units) u.carnefice = true
   if (!tossicita) return
   for (const u of units) {
     bus.onReactive('onHit', (ctx): EffectSpec[] =>

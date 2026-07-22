@@ -88,6 +88,7 @@ export interface BattleUnit extends DraftedWizard {
   livingWall?: { reflect: number }                   // MURO VIVENTE (player Tanks): riflette una frazione del danno assorbito dallo scudo
   coldExecute?: { threshold: number; instakill: boolean } // ESECUZIONE A FREDDO (player attackers)
   reaper?: boolean                                   // MIETITORE (player units)
+  carnefice?: boolean                                // SPIETATEZZA archetype (kill-snowball, both sides)
 }
 
 export type LogFlag = 'crit' | 'dodge' | 'kill' | 'heal' | 'block' | 'stun' | 'dot' | 'pen' | 'shatter' | 'wait' | 'recoil' | 'revive' | 'duo'
