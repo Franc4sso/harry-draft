@@ -66,12 +66,17 @@ describe('replayRun', () => {
   // (startDraft -> pickFrom -> confirmDraftPicks -> reachable -> moveTo) for seed
   // 'replay-seed': legalDraftPicks('replay-seed') is ["cedric","arthur","george"], and one
   // of the reachable nodes from the start is a0f1n0, a 'relic' node offering exactly
-  // ["fortezza-vivente","marcia-di-guerra","patto-vorace"] (deterministic per seed+node id,
+  // ["marcia-di-guerra","marchio-vorace","patto-vorace"] (deterministic per seed+node id,
   // independent of which wizards were drafted — relicOffer keys off state.relics, not team).
+  // RE-RECORDED 2026-07-22 (Task 3, reliquie-flat): pensatoio joined JOKER_RELIC_IDS
+  // (14->15), shifting this node's RNG-picked isJoker roll and its offer contents —
+  // re-measured against the real engine (relicOffer called with the exact same rng
+  // fork/seed replayRun uses) rather than guessed. Old offer was
+  // ["fortezza-vivente","marcia-di-guerra","patto-vorace"].
   const REAL_SEED = 'replay-seed'
   const REAL_STARTERS = legalDraftPicks(REAL_SEED)
   const REAL_FIRST_MOVE = 'a0f1n0' // relic node
-  const REAL_RELIC_OFFER_IDS: string[] = ['fortezza-vivente', 'marcia-di-guerra', 'patto-vorace']
+  const REAL_RELIC_OFFER_IDS: string[] = ['marcia-di-guerra', 'marchio-vorace', 'patto-vorace']
   const REAL_RELIC_OFFER_ID_0 = REAL_RELIC_OFFER_IDS[0]!
 
   it('rejects a relic-pick id never present in the REAL offer at a real relic node (the bug the reviewer reproduced)', () => {
@@ -126,6 +131,17 @@ describe('replayRun', () => {
     // action sequence up to and including the area-2 boss fight, and reading the final
     // score off the state via scoreForEndlessRun. Superseded the old house/starterIds-based
     // fixture recorded under the pre-Task-2 chooseStarters draft path.
+    // RE-RECORDED 2026-07-22 (Task 3, reliquie-flat): pensatoio joining JOKER_RELIC_IDS
+    // shifted which nodes roll as joker offers and their contents, invalidating the three
+    // hardcoded relic-pick ids below (they were no longer present in their node's real
+    // offer). Re-measured by replaying this exact draftPicks/action prefix against the
+    // real engine (relicOffer with the same rng each node uses) up to each relic node and
+    // reading its actual offer: a1f3n1 -> ["boccino-doro","sigillo-carnefice","giratempo"],
+    // a2f2n0 -> ["coppa-tassorosso","spada-grifondoro","ricordatutto"], a2f3n1 ->
+    // ["fame-vorace","pensatoio","sete-di-sangue"] (a joker-node roll now, since pensatoio
+    // is one of the three). Picked index 0 at each, same convention as the original
+    // recording. Final score re-measured at 1875 (unchanged — these relics don't move
+    // scoreForEndlessRun for this fight sequence).
     const log: RunLog = {
       v: 1,
       engine: ENGINE_VERSION,
@@ -145,15 +161,15 @@ describe('replayRun', () => {
         { t: 'move', nodeId: 'a1f2n0' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
         { t: 'move', nodeId: 'a1f3n1' },
-        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'ampolla-veleno' } },
+        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'boccino-doro' } },
         { t: 'move', nodeId: 'a1f4n0' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
         { t: 'move', nodeId: 'a2f1n1' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
         { t: 'move', nodeId: 'a2f2n0' },
-        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'medaglione-serpeverde' } },
+        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'coppa-tassorosso' } },
         { t: 'move', nodeId: 'a2f3n1' },
-        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'collezionista-anime' } },
+        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'fame-vorace' } },
         { t: 'move', nodeId: 'a2f4n0' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
       ],

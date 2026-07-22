@@ -55,6 +55,10 @@ describe('submit-score processing', () => {
   // the response/write must be the SERVER-computed one (1875) — a client-claimed score
   // field doesn't even exist in the request shape, so there is nothing for a forged number
   // to override.
+  // RE-RECORDED 2026-07-22 (Task 3, reliquie-flat): same fixture/relic-id shift as
+  // tests/engine/endlessReplay.test.ts's "a recorded valid run replays..." test — pensatoio
+  // joining JOKER_RELIC_IDS moved these three nodes' real offers. Re-measured against the
+  // real engine (see that test's comment for the full offer dump); score re-confirmed 1875.
   it('accepts a legitimate recorded run and returns the SERVER-computed score, not any client number', async () => {
     written.length = 0
     const log: RunLog = {
@@ -76,15 +80,15 @@ describe('submit-score processing', () => {
         { t: 'move', nodeId: 'a1f2n0' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
         { t: 'move', nodeId: 'a1f3n1' },
-        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'ampolla-veleno' } },
+        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'boccino-doro' } },
         { t: 'move', nodeId: 'a1f4n0' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
         { t: 'move', nodeId: 'a2f1n1' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
         { t: 'move', nodeId: 'a2f2n0' },
-        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'medaglione-serpeverde' } },
+        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'coppa-tassorosso' } },
         { t: 'move', nodeId: 'a2f3n1' },
-        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'collezionista-anime' } },
+        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'fame-vorace' } },
         { t: 'move', nodeId: 'a2f4n0' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
       ],

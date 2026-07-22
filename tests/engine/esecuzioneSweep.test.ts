@@ -55,6 +55,15 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 //   node content so difficulty gates don't move (winRate=0.0083 unchanged). Floor re-anchored 0.08→0.05
 //   to reflect the reduced relic-node supply, keeping headroom above the 0.000 break signal. Re-check
 //   at playtest whether the relic-supply dip is felt across archetypes (velenoSweep/scudiRigenSweep).
+// Post-relic-pool-cut (2026-07-22, reliquie-flat Task 2: 3 relics cut — occhio-moody/
+//   pozione-fortuna/bezoar — from the shared RELICS pool): winRate=0.000 spietatezzaRate=0.000
+//   execUptakeRate=0.050 (6/120) medianTurns=5 maxTurns=23, reproducible across repeat runs of this
+//   deterministic seeded sweep. This is pool SUPPLY-SHRINK, same class as the altare change above, not
+//   a broken kit: removing 3 relics from the pool that offerRelics draws from lowers the odds that any
+//   given relic-node offer contains spada-grifondoro/sigillo-carnefice, with no change to the kit's
+//   mechanics or the bot's (bot is relic-blind; winRate unmoved at 0.000 exactly as before). A true
+//   structural lockout of this archetype measures 0.000, not 0.050. Floor re-anchored 0.05→0.04,
+//   just under the new measured value, keeping clear headroom above the 0.000 break signal.
 //
 // Metric choice — IMPORTANT: there is NO total-damage assertion here. Execute is a damage
 // MULTIPLIER on the killing blow, not a discrete channel like poison's `dot` flag, so a
@@ -191,7 +200,7 @@ describe('favor-Esecuzione viability sweep', () => {
     expect(winRate).toBeLessThanOrEqual(1)
   })
   it('the build fields execute in a meaningful share of runs (draftable)', () => {
-    expect(execUptakeRate).toBeGreaterThan(0.05)
+    expect(execUptakeRate).toBeGreaterThan(0.04)
   })
   it('fights resolve before the turn cap (no stalls)', () => {
     expect(maxTurns).toBeLessThan(BALANCE.combat.turnCap)

@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest'
-import { RELIC_BY_ID, JOKER_RELIC_IDS } from '@/data/relics'
+import { RELICS, RELIC_BY_ID, JOKER_RELIC_IDS } from '@/data/relics'
 import { STARTER_RELICS } from '@/data/unlocks'
+import { selectEnemyRelics } from '@/game/engine/relics'
+import { createRng } from '@/game/engine/rng'
 
 describe('conversione reliquie flat', () => {
   it('giratempo è un carrier +30 SPD (assignable, niente bonus team)', () => {
@@ -26,5 +28,33 @@ describe('conversione reliquie flat', () => {
     const r = RELIC_BY_ID['bacchetta-sambuco']!
     expect(r.bonus).toEqual({ allPct: 0.20 })
     expect(r.condition).toEqual({ house: 'Grifondoro', count: 3 })
+  })
+})
+
+describe('invarianti pool dopo taglio+conversione', () => {
+  it('le 3 reliquie tagliate non esistono più', () => {
+    const ids = RELICS.map(r => r.id)
+    expect(ids).not.toContain('occhio-moody')
+    expect(ids).not.toContain('pozione-fortuna')
+    expect(ids).not.toContain('bezoar')
+  })
+
+  it('selectEnemyRelics non ritorna mai un id in JOKER_RELIC_IDS (proprietà generale, copre pensatoio)', () => {
+    // Firma reale: selectEnemyRelics(rng: Rng, count: number). Campiona su vari seed/count
+    // per robustezza — nessuna fixture fragile, solo la proprietà di esclusione a livello di set.
+    const jokerSet = new Set(JOKER_RELIC_IDS)
+    for (let seed = 0; seed < 20; seed++) {
+      const picked = selectEnemyRelics(createRng(`enemy-relics-${seed}`), 5)
+      for (const { relic } of picked) {
+        expect(jokerSet.has(relic.id)).toBe(false)
+      }
+    }
+  })
+
+  it('pensatoio in particolare non compare mai fra le reliquie nemiche', () => {
+    for (let seed = 0; seed < 20; seed++) {
+      const picked = selectEnemyRelics(createRng(`enemy-relics-pensatoio-${seed}`), 5)
+      expect(picked.map(({ relic }) => relic.id)).not.toContain('pensatoio')
+    }
   })
 })

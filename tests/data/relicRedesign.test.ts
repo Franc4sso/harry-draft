@@ -21,10 +21,12 @@ describe('redesigned relics remain well-formed', () => {
     expect(r.desc).toMatch(/scudo/i)
   })
 
-  it('giratempo still exists with a spd component (redesign reverted if not cleanly expressible)', () => {
+  it('giratempo is now a carrier: assignable +spd on the holder only, no team bonus', () => {
     const r = RELICS.find(x => x.id === 'giratempo')!
     expect(r).toBeTruthy()
-    expect(r.bonus?.spd).toBeGreaterThan(0)
+    expect(r.assignable).toBe(true)
+    expect(r.carrierBonus?.spd).toBeGreaterThan(0)
+    expect(r.bonus).toBeUndefined()
     expect(r.desc).toMatch(/velocità/i)
   })
 })
