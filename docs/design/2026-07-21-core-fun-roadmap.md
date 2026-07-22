@@ -58,18 +58,27 @@ Ognuno genera una storia raccontabile a un amico. Questo è il criterio.
 
 Non aggiunge feature a caso: **concentra** ciò che c'è già.
 
-### ▶ FASE 1 — Leggibilità della build _(IN CORSO — primo progetto)_
+### ✅ FASE 1 — Leggibilità della build _(FATTA — "tradeoff della perdita", master)_
 **Fulcro scelto: DRAFT-TIME.** Se il giocatore non vede la build, niente conta.
-- Quando peschi/recluti un mago, mostrare in tempo reale: quali Duo/Trio **accende**,
-  cosa è **a 1 segnale**, cosa **romperebbe** togliere un teammate.
-- Trasforma il draft in un puzzle leggibile. È qui che nasce la decisione interessante.
-- **Motore già esistente** (`duos.ts`, `trios.ts`) → è UX, non nuovo motore. Rischio basso.
-- _Combat-time readability (barra veleno-vs-HP) = fase successiva, non ora._
+- Al recruit a squadra piena, il DuoTracker mostra live cosa lo swap **spegne** (Duo/Trio), perdita che domina.
+- **Motore già esistente** (`duos.ts`, `trios.ts`) → è UX. Rischio basso. Bug preso al review: `livingOf`.
 
-### FASE 2 — Agency in combattimento _(il cambiamento più impattante, ma più rischioso)_
+### ❌ FASE 2 — Leggibilità del combattimento _(TENTATA, BOCCIATA al playtest 2026-07-22)_
+- Costruito il **CenterMeter**: striscia a metà campo, modalità Economia (bilancia dei corpi) + Veleno
+  (corsa HP-vs-veleno). Pura UI, rischio motore zero. Spedito (master 086f5ba), poi **rimosso** (revert 46b3164).
+- **Verdetto del giocatore in mano:** non aggiunge valore. I cuori dell'Economia sono ridondanti col campo
+  (li vedi già dalle unità); la corsa-veleno non convince. Tagliato tutto.
+- **Lezione:** la leggibilità del combat *come sovraimpressione informativa* non è il buco. Il combat resta
+  spettatore; forse manca l'**agency** (decidere), non l'**informazione** (leggere). O il problema del combat
+  è più a monte (è troppo corto/deterministico per essere interessante da guardare, punto).
+
+### FASE 2.5 — Agency in combattimento _(il cambiamento più impattante, ma più rischioso — DA VALUTARE)_
 - 1 decisione ad alta posta per battaglia (target focus / attiva firma / spendi Lacrime al momento).
-- Rendere il replay leggibile come **corsa** (veleno accumulato vs HP nemico).
-- Tocca `simulate.ts`, il cuore deterministico → serve cura.
+- **Vincolo:** tocca `simulate.ts`, il cuore deterministico; la decisione DEVE entrare nel RunLog come
+  PlayerAction o rompe la parità anti-cheat (`endlessReplayParity`). O split del sim (resumable) o pre-commit.
+- **Aperto dopo il flop della Fase 2:** se il combat-spettatore non si salva con l'informazione, forse si salva
+  con la decisione — ma il rischio è alto. Alternativa da considerare PRIMA: il combat va reso più interessante
+  a monte (durata, varianza) invece che più leggibile/interattivo?
 
 ### FASE 3 — Ritmo emotivo
 - Abbassare `relic` filler weight, alzare eventi/altare.
