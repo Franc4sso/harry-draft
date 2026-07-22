@@ -55,10 +55,15 @@ Rischio motore **ZERO**. Tutto deriva da `Replay` (`buildReplay`) e dal `ReplayF
 - **"Sta per cadere"** = unità viva il cui HP scenderà a ≤0 nel prossimo colpo che la bersaglia; MVP-semplice:
   unità viva con HP sotto una soglia bassa (es. < 15% maxHp) → glow ☠. (Definizione esatta della soglia
   tarata sul componente reale.)
-- **Danno-veleno-per-turno** sul nemico agganciato: preferire il **valore reale del prossimo tick loggato**
-  (`entry.value` sul frame in cui quel nemico subisce il tick veleno) invece di ricalcolare la formula
-  (velenoMult/Cancrena sono engine-side → un ricalcolo diverge dal motore). Fallback se nessun tick ancora
-  visibile: formula `4*stacks + min(stacks,8)*0.005*maxHp` come stima (marcata come stima, non verità).
+- **Danno-veleno-per-turno** sul nemico agganciato: la formula `4*stacks + min(stacks,8)*0.005*maxHp`
+  come **stima** (marcata come tale, non verità del motore).
+  - _Nota di implementazione (scelta consapevole, 2026-07-22):_ la spec iniziale preferiva leggere il
+    **tick reale loggato** (`entry.value`) col fallback alla formula. In implementazione si è usata SOLO la
+    formula. Motivo: velenoMult (reliquie, ≥1) e Cancrena (×2 sotto 40% HP) sono engine-side e **solo
+    aumentano** il danno reale → la formula **sottostima sempre**, quindi "muore ~N turni" è un TETTO (la
+    morte arriva a N o prima, mai dopo). Con la label "stima" e il `~`, è onesto per un aiuto a colpo
+    d'occhio. Leggere il tick reale aggiungerebbe complessità (trovare il frame del prossimo tick di quel
+    nemico) per zero guadagno visibile → non fatto (YAGNI). Confermato dalla review finale come Minor accettabile.
 - **"Tra ~N turni"** = `ceil(HP_corrente / danno-veleno-per-turno)`; nasconderlo se il danno/turno è 0.
 
 ### 4c. Componente
