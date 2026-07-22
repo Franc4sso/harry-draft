@@ -296,6 +296,14 @@ Leggere i winRate. Il gate bot è archetype-blind per il PLAYER, ma i nemici car
 - Se un gate SCENDE sotto il suo floor → è un effetto REALE (nemico-valanga forte), NON un artefatto. Tarare `CARNEFICE_THRESHOLD_STEP`/`CAP` (reap.ts) verso il basso finché il nemico-valanga è minaccioso ma non ingiusto, ri-misurando. NON escludere i nemici (li vogliamo). NON abbassare l'assert alla cieca — se scende, è potere nemico reale da bilanciare.
 - Se `endlessReplayParity` è rosso → STOP (determinismo, va risolto prima di tutto).
 
+- [ ] **Step 2b: Sistemare i 4 test stale-premise (fallout Task 1 — "spietatezza rimossa")**
+
+Riaccendere spietatezza ha reso false 4 asserzioni che davano per morto l'archetipo (VERIFICATO in Task 1: sono premesse stale, non regressioni). Aggiornarle allo stato nuovo (spietatezza VIVA), NON indebolire:
+- `tests/data/synergies.test.ts` — asseriva `SYNERGIES.length === 1`; ora è 2. Aggiornare a 2, aggiornare il commento "nessuna sinergia di squadra" per riflettere che spietatezza (archetipo, come tossicita) è viva.
+- `tests/engine/esecuzione.test.ts` — ha un `describe('Spietatezza synergy (removed)', ...)` che asserisce che NON si attiva con 3 esecuzione. Ora si attiva (voluto). Riscrivere il blocco per asserire che SI attiva con 3 e non con 2 (o rimuoverlo se ridondante con carnefice.test.ts). Aggiornare il commento datato.
+- `tests/engine/themes.test.ts` — un test assume un solo tema derivato (veleno); ora c'è anche esecuzione. Aggiornare l'aspettativa al catalogo temi corretto (2 temi).
+- `tests/lib/affiliationChips.test.ts` — asseriva che `harry` (che ha tag esecuzione) non ha chip speciali; ora ha `syn:spietatezza`. Aggiornare l'aspettativa.
+
 - [ ] **Step 3: Estendere esecuzioneSweep per misurare la valanga**
 
 In `tests/engine/esecuzioneSweep.test.ts`, aggiungere una misura del nuovo sistema: con una policy che bias-a esecuzione (isExec), misurare se `spietatezza` si accende (spietatezzaRate ora VIVA, prima era 0/dead) e il livello di snowball raggiunto. Aggiornare i commenti datati 2026-07-22 per riflettere che spietatezza è di nuovo viva. Se il vecchio floor `execUptake` si muove per l'interazione, ri-ancorare al valore misurato reale con nota.
