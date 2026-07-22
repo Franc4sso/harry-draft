@@ -11,6 +11,7 @@ import { Hourglass } from 'lucide-react'
 import { InitiativeBar } from '@/components/battle/InitiativeBar'
 import { BattleArena } from '@/components/battle/BattleArena'
 import { ActionPanel } from '@/components/battle/ActionPanel'
+import { CenterMeter } from '@/components/battle/CenterMeter'
 import { BattleLog } from '@/components/battle/BattleLog'
 import { StatusLegend } from '@/components/battle/StatusLegend'
 import { BattleRecap } from '@/components/battle/BattleRecap'
@@ -168,7 +169,12 @@ export function BattleScreen({
           <BattleArena
             replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle}
             enemyLevel={enemyLevel} speed={r.speed} duos={activeDuos}
-            center={<ActionPanel entry={stickyEntry} units={replay.units} />}
+            center={
+              <div className="flex w-full flex-col items-center gap-2">
+                <CenterMeter frame={replay.frames[r.index] ?? replay.frames[replay.frames.length - 1]!} units={replay.units} playerSide="left" />
+                <ActionPanel entry={stickyEntry} units={replay.units} />
+              </div>
+            }
           />
         </div>
 
