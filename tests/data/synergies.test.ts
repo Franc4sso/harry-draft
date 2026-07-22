@@ -4,10 +4,16 @@ import { BOSSES } from '@/data/bosses'
 import { WIZARD_BY_ID } from '@/data/wizards'
 
 describe('synergies data', () => {
-  it('contiene solo Tossicità (stile veleno), nessuna sinergia di squadra', () => {
-    expect(SYNERGIES.length).toBe(1)
+  it('contiene solo sinergie di archetipo (tossicita, spietatezza), nessuna sinergia di squadra tradizionale', () => {
+    // I 9 team synergies (house/role/id-list) restano rimossi (2026-07-21). Spietatezza
+    // (archetipo Carnefice, tag:esecuzione) è stata VOLUTAMENTE riaccesa (2026-07-21/22,
+    // vedi Task 1 del piano Carnefice) come seconda sinergia di archetipo accanto a
+    // Tossicità (tag:veleno) — non è una regressione, è la nuova verità.
+    expect(SYNERGIES.length).toBe(2)
     expect(SYNERGIES[0]!.id).toBe('tossicita')
     expect(SYNERGIES[0]!.bonus).toEqual({ keywordMult: { veleno: 0.5 } })
+    expect(SYNERGIES[1]!.id).toBe('spietatezza')
+    expect(SYNERGIES[1]!.bonus).toEqual({ keywordMult: { esecuzione: 0.5 } })
   })
   it('group synergies reference existing wizards', () => {
     for (const s of SYNERGIES) {

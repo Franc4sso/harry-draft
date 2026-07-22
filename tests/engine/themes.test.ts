@@ -16,16 +16,24 @@ describe('theme catalog', () => {
     expect(pickTheme(rng2, [])!.id).toBe(t!.id)
   })
 
-  it('excluding every theme falls back to the full set (only one theme exists post-2026-07-21)', () => {
-    // THEMES was reduced to a single entry ('tag:veleno', derived from the sole remaining
-    // synergy Tossicità) when the 9 team synergies were removed. pickTheme's exclusion filter
-    // now always empties the pool, so its own documented fallback ("Falls back to the full set
-    // if exclusion empties the pool") is what's under test — excluding the only theme id still
-    // returns that same theme, not a different one.
+  it('has exactly the two archetype themes (tag:esecuzione, tag:veleno)', () => {
+    // THEMES was reduced to a single entry ('tag:veleno', from Tossicità) when the 9 team
+    // synergies were removed (2026-07-21). Spietatezza (tag:esecuzione) was then DELIBERATELY
+    // revived as a second archetype synergy (Carnefice Task 1, 2026-07-21/22), so THEMES now
+    // derives two theme ids — sorted by id (themes.ts), 'tag:esecuzione' sorts before 'tag:veleno'.
+    expect(THEMES.map(t => t.id)).toEqual(['tag:esecuzione', 'tag:veleno'])
+  })
+
+  it('excluding every theme falls back to the full set', () => {
+    // pickTheme's documented fallback ("Falls back to the full set if exclusion empties the
+    // pool") — excluding ALL theme ids empties the pool, so the result must still be non-null
+    // and drawn from THEMES (not necessarily the same id anymore, now that there are two).
     const t = pickTheme(createRng('s1').fork(7), [])
     expect(t).not.toBeNull()
-    const other = pickTheme(createRng('s1').fork(7), [t!.id])
-    expect(other!.id).toBe(t!.id)
+    const allIds = THEMES.map(x => x.id)
+    const other = pickTheme(createRng('s1').fork(7), allIds)
+    expect(other).not.toBeNull()
+    expect(allIds).toContain(other!.id)
   })
 
   it('themeStrength rises with area and with node kind, clamped to [0,1]', () => {

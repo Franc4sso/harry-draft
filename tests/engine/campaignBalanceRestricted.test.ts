@@ -212,6 +212,21 @@ describe('restricted starter pool is winnable (Reservation 1 gate)', () => {
     // re-deal can legitimately zero the count, so >=0 is the honest floor. The real gauge of
     // difficulty is the human playtest, not this bot (which drafts neither carriers, nor
     // conditionals it can't meet, nor jokers) — same player-only reasoning as above.
+    // Carnefice archetype verification (2026-07-22, Task 4): the archetype landed across
+    // 4 tasks — Spietatezza synergy revival + carnefice flag (Task 1), kill-site avalanche
+    // (+atk/+threshold on every carnefice kill, both sides — Task 2), Mietitore duo amplifier
+    // (Task 3). This bot is archetype-blind for the PLAYER (recruit/relic picks are pure
+    // powerOf, never synergy-aware — see the sweep files for the isExec/isVeleno bias
+    // pattern this harness does NOT use), but enemy-side carnefice can now appear via the
+    // auto-derived tag:esecuzione THEME (themes.ts), so this gate could legitimately have
+    // DROPPED if an enemy-carnefice avalanche made a themed squad meaningfully stronger.
+    // MEASURED (120 seeds, A/B against commit e567abb — the pre-Carnefice tip): winRate
+    // IDENTICAL at 0.0167 (2/120) before and after all 3 Carnefice tasks — the outcome set is
+    // bit-for-bit unchanged (not just the aggregate rate). No tuning to CARNEFICE_THRESHOLD_
+    // STEP/CAP (game/engine/duoEffects/reap.ts) was needed. Consistent with the low base rate
+    // (esecuzione theme picked probabilistically, then needs an actual execute-range kill to
+    // ever trigger the avalanche) — enemy-carnefice is present but not yet a dominant force at
+    // these seeds.
     expect(winRate).toBeGreaterThanOrEqual(0)
     expect(winRate).toBeLessThanOrEqual(1.0)
   })

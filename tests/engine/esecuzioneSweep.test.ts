@@ -64,6 +64,20 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 //   mechanics or the bot's (bot is relic-blind; winRate unmoved at 0.000 exactly as before). A true
 //   structural lockout of this archetype measures 0.000, not 0.050. Floor re-anchored 0.05→0.04,
 //   just under the new measured value, keeping clear headroom above the 0.000 break signal.
+// Post-Carnefice archetype (2026-07-22, Task 4 of the Carnefice plan — Spietatezza synergy revived,
+//   kill-site avalanche, Mietitore duo amplifier landed on top of the state above): winRate=0.000
+//   (unchanged) spietatezzaRate=0.092 (11/120, was 0.000 — spietatezza was ABSENT from SYNERGIES
+//   pre-revival, so this rate was structurally dead, not just low) execUptakeRate=0.150 (18/120, was
+//   0.050 — TRIPLED) medianTurns=5 maxTurns=23 (unchanged). A/B verified against commit e567abb (pre-
+//   Carnefice tip) with this exact seeded sweep. The uptake jump is real and expected: Spietatezza is
+//   now a SECOND execute source alongside the two relics (teamExecute's `spietatezza` branch, dead
+//   since the 2026-07-21 team-synergy purge, is live again) — 3+ esecuzione-tagged wizards on the team
+//   grants execute even with zero exec relics drafted, so execUptakeRate absorbs both channels. Floor
+//   (0.04) holds with wide headroom (0.150 vs 0.04); NOT re-anchored down since the archetype only got
+//   MORE draftable. spietatezzaRate is a new metric this task added (was previously unmeasurable/0 by
+//   construction) — no floor asserted on it directly since execUptakeRate already covers "is the
+//   archetype draftable" and campaignBalanceRestricted/campaignBalanceB (see those files' 2026-07-22
+//   Task 4 comments) confirm the enemy-carnefice avalanche does not move the real difficulty gates.
 //
 // Metric choice — IMPORTANT: there is NO total-damage assertion here. Execute is a damage
 // MULTIPLIER on the killing blow, not a discrete channel like poison's `dot` flag, so a

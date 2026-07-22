@@ -18,16 +18,23 @@ describe('affiliationChips', () => {
   })
   it('adds a special chip for the Tossicità origin synergy carrying its synergyId', () => {
     // Golden Trio (an id-list group synergy) was removed along with the other 8 team synergies
-    // (2026-07-21) — Tossicità (origin, tag:veleno) is the only synergy left that can produce a
-    // special chip. bellatrix carries the veleno tag (data/wizards.ts).
+    // (2026-07-21) — Tossicità (origin, tag:veleno) is one of two archetype synergies left that
+    // can produce a special chip (the other is Spietatezza, tag:esecuzione — see below).
+    // bellatrix carries the veleno tag (data/wizards.ts).
     const chips = affiliationChips(WIZARD_BY_ID['bellatrix']!)
     const tox = chips.find(c => c.kind === 'special' && c.synergyId === 'tossicita')
     expect(tox).toBeTruthy()
     expect(tox!.label).toBe('Tossicità')
   })
-  it('emits no special chip for a wizard matching no remaining synergy (harry has no veleno tag)', () => {
+  it('adds a special chip for the Spietatezza origin synergy (harry carries the esecuzione tag)', () => {
+    // Spietatezza (tag:esecuzione) was DELIBERATELY revived (Carnefice Task 1, 2026-07-21/22)
+    // as a second archetype synergy alongside Tossicità. harry carries the esecuzione tag
+    // (data/wizards.ts: tags: ['trio', 'da', 'esecuzione']), so he now gets this special chip
+    // — he no longer emits zero special chips.
     const chips = affiliationChips(WIZARD_BY_ID['harry']!)
-    expect(chips.filter(c => c.kind === 'special')).toHaveLength(0)
+    const spie = chips.find(c => c.kind === 'special' && c.synergyId === 'spietatezza')
+    expect(spie).toBeTruthy()
+    expect(spie!.label).toBe('Spietatezza')
   })
   it('does not emit a special chip for house/role-kind synergies', () => {
     const chips = affiliationChips(WIZARD_BY_ID['bellatrix']!)

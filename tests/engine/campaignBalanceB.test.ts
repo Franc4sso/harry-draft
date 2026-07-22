@@ -526,6 +526,11 @@ describe('campaign balance (new loop)', () => {
     // structural sanity check (winRate is a valid probability) rather than inventing a new
     // difficulty band without real playtest evidence, per this file's own standing rule that
     // the user's playtest — not this bot — is the authority on difficulty/balance decisions.
+    // Carnefice archetype verification (2026-07-22, Task 4 — see campaignBalanceRestricted.
+    // test.ts for the full writeup, identical methodology applied here). A/B against commit
+    // e567abb (pre-Carnefice tip), 120 seeds: winRate IDENTICAL at 0.0083 (1/120) before and
+    // after Tasks 1-3 (Spietatezza revival, kill-site avalanche, Mietitore amplifier). No
+    // CARNEFICE_THRESHOLD_STEP/CAP tuning needed — enemy-carnefice did not move this gate.
     expect(winRate).toBeGreaterThanOrEqual(0)
     expect(winRate).toBeLessThanOrEqual(1.0)
   })
@@ -587,6 +592,9 @@ describe('Muro wall — veleno is the counter', () => {
   // tracked. Same root cause and same out-of-scope-for-Task-1 conclusion as above (campaignB
   // enemy stats are tuned for a spell-optimizing bot that no longer exists here); relaxed to
   // structural sanity checks pending a real balance pass post Task 2/3.
+  // Carnefice archetype verification (2026-07-22, Task 4): A/B against e567abb (pre-Carnefice),
+  // 120 seeds: withVeleno 0.008→0.017 (+1 seed, noise), noVeleno flat at 0.008. Both smoke
+  // checks unaffected.
   it('veleno play stays viable against the wall (not softlocked)', () => {
     expect(wr(withVeleno)).toBeGreaterThanOrEqual(0)
   })
