@@ -232,7 +232,12 @@ Run: `npm run test -- tests/data/relicConversions.test.ts` → PASS.
 
 Run: `npm run test` → tutto verde (skip pre-esistente noto ok).
 Run: `npm run typecheck` → nessun errore.
-Se emerge un test di conteggio pool (relicCap/nodeCatalog/sweep) rotto dal −3, aggiornarlo al nuovo conteggio corretto — NON indebolire l'assert.
+
+**File rotti NOTI dalla conversione (scoperti nel Task 1, da sistemare qui se non già fatti):**
+- `tests/data/relicRedesign.test.ts` — asserisce la VECCHIA forma flat (es. `giratempo` ha `bonus.spd`). Va aggiornato alla nuova forma (carrier/drawback/condizionale) o rimosso se ridondante col nuovo `relicConversions.test.ts`. NON indebolire: se verifica un meccanismo utile, riscrivi l'assert alla forma nuova.
+- `tests/engine/endlessReplay.test.ts` (2 test) e `tests/functions/submitScore.test.ts` (1 test) — hanno snapshot hardcoded di un'offerta joker per un seed fisso; aggiungere `pensatoio` a `JOKER_RELIC_IDS` (pool 14→15) ha spostato gli indici. Ri-registrare gli snapshot col valore REALE del motore (l'implementer legge l'offerta reale per quel seed/nodo e aggiorna la costante — NON `vitest -u` alla cieca senza verificare che il nuovo valore sia corretto).
+- `tests/engine/campaignBalanceRestricted.test.ts` — GIÀ SISTEMATO prima del Task 2 (assert rilassato >0→>=0 con nota, commit 92d5f44). Verificare solo che resti verde, non ritoccare.
+Se emerge un ALTRO test di conteggio pool (relicCap/nodeCatalog/sweep) rotto dal −3, aggiornarlo al nuovo conteggio corretto — NON indebolire l'assert.
 
 - [ ] **Step 4: Balance gate (conferma, non taratura)**
 
