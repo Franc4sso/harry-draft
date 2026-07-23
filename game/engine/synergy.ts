@@ -37,6 +37,33 @@ export function detectSynergies(team: DraftedWizard[]): ActiveSynergy[] {
   return out
 }
 
+export interface SynergyProgress {
+  synergy: Synergy
+  have: number
+  need: number
+  active: boolean
+  memberIds: string[]
+}
+
+/** Progresso per-sinergia INCLUSO il conteggio parziale (2/3) — a differenza di membersFor/detectSynergies
+ *  che scartano il parziale. Pura, per UI (le Costellazioni). Replica la logica di conteggio di membersFor. */
+export function synergyProgress(team: DraftedWizard[]): SynergyProgress[] {
+  return SYNERGIES.map(syn => {
+    const req = syn.requires
+    const need = req.count ?? 3
+    const matched = req.ids && req.ids.length > 0
+      ? team.filter(d => req.ids!.includes(d.wizard.id))
+      : team.filter(d =>
+          (req.house ? d.wizard.house === req.house : true) &&
+          (req.role ? d.wizard.role === req.role : true) &&
+          (req.tag ? (d.wizard.tags ?? []).includes(req.tag) : true),
+        )
+    const have = matched.length
+    const needCount = req.ids ? req.ids.length : need
+    return { synergy: syn, have, need: needCount, active: have >= needCount, memberIds: matched.map(d => d.wizard.id) }
+  })
+}
+
 // Still exported: game/engine/combat/themes.ts uses this to derive each theme's
 // minCount (Tossicità needs 3 veleno-tagged members) for themed enemy team generation.
 export function synergyThreshold(syn: Synergy): number {
