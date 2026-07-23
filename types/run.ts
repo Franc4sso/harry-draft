@@ -63,7 +63,7 @@ export interface RunNode {
 export interface RunEvent {
   area: number
   nodeId: string
-  kind: 'recruit' | 'relic' | 'elite' | 'boss' | 'levelMilestone' | 'infirmary' | 'event' | 'spellForge' | 'shop' | 'altare'
+  kind: 'recruit' | 'relic' | 'elite' | 'boss' | 'levelMilestone' | 'infirmary' | 'event' | 'spellForge' | 'shop' | 'altare' | 'spellSwap'
   summary: string
 }
 
