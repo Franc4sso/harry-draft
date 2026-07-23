@@ -10,6 +10,7 @@ import { Parchment } from '@/components/ui/Parchment'
 import { Stagger, StaggerItem } from '@/components/ui/motion'
 import { powerOf } from '@/game/engine/combat/teamGen'
 import { DuoTracker } from '@/components/draft/DuoTracker'
+import { ArchetypeTracker } from '@/components/draft/ArchetypeTracker'
 import { displayName } from '@/lib/displayName'
 import { isDead } from '@/game/engine/roster'
 
@@ -162,6 +163,7 @@ export function RecruitScreen({
               <Parchment className="absolute inset-0" />
               <div className="relative">
                 <DuoTracker picks={baseTeam} considered={focus} relics={relics} prevTeam={full ? team : undefined} />
+                <ArchetypeTracker picks={baseTeam} considered={focus} className="mt-4" />
               </div>
             </Frame>
           </div>

@@ -5,6 +5,7 @@ import { useDraft } from '@/hooks/useDraft'
 import { STARTER_PICKS } from '@/game/engine/runEngine'
 import { SquadPanel } from '@/components/draft/SquadPanel'
 import { DuoTracker } from '@/components/draft/DuoTracker'
+import { ArchetypeTracker } from '@/components/draft/ArchetypeTracker'
 import { DraftCandidateCard } from '@/components/draft/DraftCandidateCard'
 import { Stagger, StaggerItem } from '@/components/ui/motion'
 import { Insegna } from '@/components/ui/Insegna'
@@ -74,6 +75,7 @@ export function DraftScreen({
             <Parchment className="absolute inset-0" />
             <div className="relative">
               <DuoTracker picks={picks} considered={considered} />
+              <ArchetypeTracker picks={picks} considered={considered} className="mt-4" />
             </div>
           </Frame>
         </aside>
