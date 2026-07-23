@@ -74,4 +74,13 @@ describe('WizardCardRow Duo affordance', () => {
     render(<WizardCardRow drafted={velenoDrafted()} />)
     expect(screen.queryByTestId('duo-ribbon')).toBeNull()
   })
+
+  it('esclude i tag-signal archetipo sulla Row (come la Column)', () => {
+    // Ernie è un Tank scudirigen: il taunt "Bersaglio" resta, la pill "Scudo/Rigen"
+    // (tag-signal archetipo, già raccontata altrove) sparisce.
+    const d = draftWizard(createRng(1), WIZARD_BY_ID['ernie']!)
+    render(<WizardCardRow drafted={d} />)
+    expect(screen.getByText('Bersaglio')).toBeInTheDocument()
+    expect(screen.queryByText('Scudo/Rigen')).not.toBeInTheDocument()
+  })
 })

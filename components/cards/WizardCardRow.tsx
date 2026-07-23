@@ -110,7 +110,7 @@ export function WizardCardRow({
             {displayName(drafted)}
             {drafted.shiny && <span aria-hidden className="ml-1 text-amber-300">✨</span>}
           </h3>
-          <DuoSignalMarks wizard={wizard} />
+          <DuoSignalMarks wizard={wizard} excludeArchetypeSignals />
         </div>
 
         {/* Persisted health (currentHp) — shown only for the real run roster (draft/recruit
