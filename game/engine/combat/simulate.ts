@@ -290,21 +290,33 @@ export function simulateBattle(
         const reason = explainTarget(actor, allies, enemies, spell)
         if (reason) entry.reason = reason
       }
-      // MURO VIVENTE: se il colpo ha innescato un riflesso (il Tank col muro = realTarget aveva
-      // scudo che ha assorbito), emetti una riga dedicata puntata sull'ATTACCANTE così il replay
-      // (che ricostruisce gli HP da entry.value su targetId) resta sincronizzato senza modifiche.
+      // MURO VIVENTE / BASTIONE: se il colpo ha innescato un riflesso (realTarget aveva scudo
+      // che ha assorbito), emetti una riga dedicata puntata sull'ATTACCANTE così il replay (che
+      // ricostruisce gli HP da entry.value su targetId) resta sincronizzato senza modifiche.
+      // Il riflettente è SEMPRE realTarget (chi aveva lo scudo), su QUALSIASI lato — il Duo
+      // Muro Vivente resta player-only (realTarget.side === 'left'), l'archetipo bastione può
+      // scattare anche su un nemico (realTarget.side === 'right'). Distinguo i due casi da
+      // realTarget.livingWall: se presente il colpo ha preso il ramo Duo (effects.ts lo fa
+      // vincere), altrimenti è l'archetipo puro (nessun duoId, action generica).
       const ref = entry._reflect
       if (ref) {
         delete entry._reflect   // transiente: non deve finire nel RunLog
-        pushLog({
-          turn, actorId: realTarget.wizard.id, actorSide: 'left', action: 'MuroVivente',
-          targetId: ref.unitId, targetSide: ref.side,
-          type: 'system', value: ref.amount, flags: ['duo'], duoId: 'muro-vivente',
-        })
-        // MVP: accredita il Tank col muro (come i tick veleno accreditano il poisoner, simulate.ts:381-383).
-        const k = `left:${realTarget.wizard.id}`
+        const isDuo = !!realTarget.livingWall && realTarget.side === 'left'
+        pushLog(isDuo
+          ? {
+              turn, actorId: realTarget.wizard.id, actorSide: 'left', action: 'MuroVivente',
+              targetId: ref.unitId, targetSide: ref.side,
+              type: 'system', value: ref.amount, flags: ['duo'], duoId: 'muro-vivente',
+            }
+          : {
+              turn, actorId: realTarget.wizard.id, actorSide: realTarget.side, action: 'Riflesso',
+              targetId: ref.unitId, targetSide: ref.side,
+              type: 'system', value: ref.amount, flags: [],
+            })
+        // MVP: accredita chi ha riflettuto (come i tick veleno accreditano il poisoner, simulate.ts:381-383).
+        const k = `${realTarget.side}:${realTarget.wizard.id}`
         score[k] = (score[k] ?? 0) + ref.amount
-        sync(actor)   // `actor` è l'attaccante nemico che ha subito il riflesso
+        sync(actor)   // `actor` è l'attaccante che ha subito il riflesso (può essere left o right)
       }
       // onHit: after an actor's spell CONNECTS against an ENEMY target. A dodged or
       // Protego-negated attack did not land, so its on-hit riders (poison/stun/weaken
