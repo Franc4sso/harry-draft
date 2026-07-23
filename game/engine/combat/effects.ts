@@ -82,22 +82,22 @@ export const EFFECT_HANDLERS: Record<EffectSpec['kind'], (ctx: EffectCtx, eff: E
     const residual = absorbDamage(ctx.target, dmg)
     // MURO VIVENTE / BASTIONE: chi ha lo scudo riflette una frazione del danno ASSORBITO dallo
     // scudo (non del colpo intero → si spegne quando lo scudo finisce). livingWall è il Duo
-    // (player-only, stamp.ts): resta non-letale finché Task 3 non lo rende letale. wallReflect è
-    // l'archetipo bastione: diffuso, non-letale, ENTRAMBI i lati (un nemico scudato riflette il
-    // danno del player). Il Duo vince quando entrambi sono presenti sullo stesso target. Emette
-    // il dato su ctx.reflect; la riga di log + score li fa il sim (simulate.ts), come
-    // recoil/cold-execute.
+    // (player-only, stamp.ts): amplificatore LETALE dell'archetipo (Task 3) — NESSUN cap, può
+    // portare l'attaccante a 0 HP o sotto. wallReflect è l'archetipo bastione: diffuso,
+    // non-letale, ENTRAMBI i lati (un nemico scudato riflette il danno del player). Il Duo vince
+    // quando entrambi sono presenti sullo stesso target. Emette il dato su ctx.reflect; la riga
+    // di log + score li fa il sim (simulate.ts). La morte dell'attaccante per riflesso letale è
+    // gestita dal sim esattamente come il recoil letale delle Magie Oscure (sync(actor) + KO-log
+    // + onDeath dopo il ramo `ref` in simulate.ts) — nessuna modifica al sim necessaria.
     const lw = ctx.target.livingWall
     const arch = ctx.target.wallReflect
     const absorbed = dmg - residual
     if (absorbed > 0 && ctx.actor.alive) {
       if (lw && ctx.target.side === 'left') {
-        if (ctx.actor.hp > 1) {
-          const reflect = Math.min(ctx.actor.hp - 1, Math.round(absorbed * lw.reflect))
-          if (reflect > 0) {
-            ctx.actor.hp -= reflect
-            ctx.reflect = { unitId: ctx.actor.wizard.id, side: ctx.actor.side, amount: reflect }
-          }
+        const reflect = Math.round(absorbed * lw.reflect)   // NIENTE cap → letale
+        if (reflect > 0) {
+          ctx.actor.hp -= reflect
+          ctx.reflect = { unitId: ctx.actor.wizard.id, side: ctx.actor.side, amount: reflect }
         }
       } else if (arch && ctx.actor.hp > 1) {
         const reflect = Math.min(ctx.actor.hp - 1, Math.round(absorbed * arch))

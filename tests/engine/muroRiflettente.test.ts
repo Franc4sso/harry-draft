@@ -142,6 +142,39 @@ describe('archetipo Muro Riflettente — wallReflect (riflesso diffuso, entrambi
   })
 })
 
+// Task 3: il Duo Muro Vivente diventa l'amplificatore LETALE dell'archetipo — toglie il cap
+// hp-1. L'archetipo puro (wallReflect) RESTA non-letale (Task 2, invariato).
+describe('Muro Vivente (Duo) è LETALE — distinto dall\'archetipo non-letale', () => {
+  it('un Tank con SOLO livingWall (Duo) riflette abbastanza da uccidere l\'attaccante (hp <= 0)', () => {
+    const tank = unit('tank', 'Tank', 'left'); tank.livingWall = { reflect: 0.9 }
+    const enemy = unit('enemy', 'Attaccante', 'right'); enemy.hp = 3; enemy.maxHp = 300
+    shielded(tank, 500)
+    const ctx: any = { rng: createRng('mv-lethal'), turn: 1, actor: enemy, target: tank, flags: [] }
+    EFFECT_HANDLERS.damage(ctx, { kind: 'damage', power: 1, canDodge: false } as any)
+    expect(enemy.hp).toBeLessThanOrEqual(0)
+  })
+
+  it('un Tank con SOLO wallReflect (archetipo) resta non-letale: l\'attaccante non scende sotto 1 HP', () => {
+    const wall = unit('wall', 'Tank', 'left'); wall.wallReflect = 0.9
+    const enemy = unit('enemy', 'Attaccante', 'right'); enemy.hp = 3; enemy.maxHp = 300
+    shielded(wall, 500)
+    const ctx: any = { rng: createRng('mv-lethal'), turn: 1, actor: enemy, target: wall, flags: [] }
+    EFFECT_HANDLERS.damage(ctx, { kind: 'damage', power: 1, canDodge: false } as any)
+    expect(enemy.hp).toBe(1)
+  })
+
+  it('priorità: Tank con SIA livingWall SIA wallReflect → vince il Duo letale (attaccante può morire)', () => {
+    const tank = unit('tank', 'Tank', 'left')
+    tank.livingWall = { reflect: 0.9 }
+    tank.wallReflect = 0.25
+    const enemy = unit('enemy', 'Attaccante', 'right'); enemy.hp = 3; enemy.maxHp = 300
+    shielded(tank, 500)
+    const ctx: any = { rng: createRng('mv-lethal'), turn: 1, actor: enemy, target: tank, flags: [] }
+    EFFECT_HANDLERS.damage(ctx, { kind: 'damage', power: 1, canDodge: false } as any)
+    expect(enemy.hp).toBeLessThanOrEqual(0)
+  })
+})
+
 // Builder pattern identico a tests/engine/duoEffects/muroVivente.test.ts / duoStress.test.ts.
 function draftedFrom(rng: Rng, id: string, spellId: string): DraftedWizard {
   const w = WIZARD_BY_ID[id]

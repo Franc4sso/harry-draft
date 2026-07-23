@@ -7,7 +7,7 @@ export function stampDuoFields(
 ): void {
   const has = (id: string) => duos.some(d => d.duo.id === id)
   if (has('cancrena')) for (const u of right) u.poisonAmp = { threshold: 0.4, mult: 2 }
-  if (has('muro-vivente')) for (const u of left) if (u.wizard.role === 'Tank') u.livingWall = { reflect: 0.4 }
+  if (has('muro-vivente')) for (const u of left) if (u.wizard.role === 'Tank') u.livingWall = { reflect: 0.5 }
   if (has('esecuzione-a-freddo')) {
     // Boss battles must stay hard: no true instakill on the climax boss, only bonus damage.
     const instakill = kind !== 'boss'

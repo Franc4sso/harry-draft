@@ -34,7 +34,7 @@ describe('Muro Vivente — stamp', () => {
     const tank = unit('tank', 'Tank', 'left')
     const carry = unit('carry', 'Attaccante', 'left')
     stampDuoFields([tank, carry], [], [muroDuo], 'normal')
-    expect(tank.livingWall).toEqual({ reflect: 0.4 })
+    expect(tank.livingWall).toEqual({ reflect: 0.5 })   // Task 3: bump 0.4→0.5 (Duo più forte, oltre al letale)
     expect(carry.livingWall).toBeUndefined()   // solo i Tank
   })
 
@@ -95,12 +95,12 @@ describe('Muro Vivente — riflesso (handler)', () => {
     expect(tank.hp).toBeLessThan(100)   // l'eccesso ha ferito il Tank
   })
 
-  it('è NON letale: lascia l\'attaccante ad almeno 1 HP', () => {
+  it('è LETALE (Task 3): può portare l\'attaccante a 0 HP o sotto, nessun cap hp-1', () => {
     const { tank, enemy } = setup(0.4, 3)   // enemy a 3 HP
     shielded(tank, 500)
     const ctx: any = { rng: createRng('mv'), turn: 1, actor: enemy, target: tank, flags: [] }
     EFFECT_HANDLERS.damage(ctx, { kind: 'damage', power: 1, canDodge: false } as any)
-    expect(enemy.hp).toBe(1)   // il riflesso non può uccidere
+    expect(enemy.hp).toBeLessThanOrEqual(0)   // il Duo può uccidere (amplificatore letale)
   })
 
   it('un Tank SENZA muro non riflette', () => {
