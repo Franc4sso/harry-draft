@@ -281,13 +281,10 @@ export function WizardCardColumn({
           </div>
         )}
 
-        {/* Named signals so the Combo value is explicit. taunt reads "Muro" (not "Tank")
+        {/* Named signals so the Combo value is explicit. taunt reads "Bersaglio" (not "Tank")
             to avoid echoing the crown/RoleBadge — see DuoSignalMarks.cardLabel. The 4 tag-signals
             (veleno/esecuzione/scudirigen/magieOscure) are excluded here since the archetype
-            ribbon above already shows the wizard's primary one — no redundant pill. For a
-            scudirigen Tank the ribbon's fantasy name is ALSO "Muro", so DuoSignalMarks further
-            drops the taunt pill for that case (see its excludeArchetypeSignals doc) — a Tank
-            without scudirigen still gets its taunt "Muro" pill since it has no ribbon. */}
+            ribbon above already shows the wizard's primary one — no redundant pill. */}
         <div className="mb-2"><DuoSignalMarks wizard={wizard} excludeArchetypeSignals /></div>
 
         {/* SPELL BLOCK — hero move. No type chip: the role-accent bar carries

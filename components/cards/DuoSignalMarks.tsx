@@ -11,9 +11,9 @@ const ARCHETYPE_SIGNAL_IDS = new Set<string>(Object.keys(ARCHETYPE_BY_TAG))
 
 /** Card label for a signal. Role-named signals (taunt='Tank'…) would just echo the card's
  *  own RoleBadge/crown, so on the card we name what the signal FEEDS instead of the role:
- *  taunt reads "Muro" (its Duo family), not "Tank". Tag signals keep their own name. */
+ *  taunt reads "Bersaglio" (draws enemy fire), not "Tank". Tag signals keep their own name. */
 const CARD_SIGNAL_LABEL: Partial<Record<DuoSignal, string>> = {
-  taunt: 'Muro',
+  taunt: 'Bersaglio',
 }
 function cardLabel(s: DuoSignal): string {
   return CARD_SIGNAL_LABEL[s] ?? SIGNAL_LABEL[s]
@@ -23,20 +23,15 @@ function cardLabel(s: DuoSignal): string {
  *  used by a shipped Duo). `compact` shows icon-only; otherwise the signal is named so a player
  *  reads WHY the wizard matters for Combos. `excludeArchetypeSignals` drops the 4 tag-signals
  *  (veleno/esecuzione/scudirigen/magieOscure) that a sibling archetype ribbon already shows,
- *  leaving only role-signals like taunt ("Muro"). When the wizard also carries the `scudirigen`
- *  tag, the ribbon's fantasy name for that tag IS "Muro" too (see ARCHETYPE_BY_TAG) — so the
- *  taunt pill's card label collides word-for-word with the ribbon. In that case we additionally
- *  drop `taunt` here so "Muro" appears exactly once (the ribbon). A Tank with no scudirigen tag
- *  has no ribbon, so the taunt pill is the only place "Muro" shows and must survive. */
+ *  leaving only role-signals like taunt ("Bersaglio"). */
 export function DuoSignalMarks({ wizard, compact = false, excludeArchetypeSignals = false }: {
   wizard: Wizard
   compact?: boolean
   excludeArchetypeSignals?: boolean
 }) {
   const allSignals = wizardDuoSignals(wizard)
-  const hasScudirigenRibbon = excludeArchetypeSignals && (wizard.tags ?? []).includes('scudirigen')
   const signals = excludeArchetypeSignals
-    ? allSignals.filter((s) => !ARCHETYPE_SIGNAL_IDS.has(s) && !(hasScudirigenRibbon && s === 'taunt'))
+    ? allSignals.filter((s) => !ARCHETYPE_SIGNAL_IDS.has(s))
     : allSignals
   if (signals.length === 0) return null
   return (

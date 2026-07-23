@@ -12,24 +12,21 @@ describe('DuoSignalMarks', () => {
     expect(screen.getByTestId('duo-signal-marks')).toBeInTheDocument()
     expect(screen.getByText('Veleno')).toBeInTheDocument()
   })
-  it('names the taunt signal "Muro" (not "Tank") so it does not echo the role badge', () => {
+  it('labels the taunt signal "Bersaglio" (not "Muro") so it never collides with the archetype', () => {
     render(<DuoSignalMarks wizard={wiz('Tank', [])} />)
-    expect(screen.getByText('Muro')).toBeInTheDocument()
-    expect(screen.queryByText('Tank')).toBeNull()
+    expect(screen.getByText('Bersaglio')).toBeInTheDocument()
+    expect(screen.queryByText('Muro')).not.toBeInTheDocument()
   })
+
   it('renders nothing for a plain attacker', () => {
     const { container } = render(<DuoSignalMarks wizard={wiz('Attaccante', [])} />)
     expect(container.querySelector('[data-testid="duo-signal-marks"]')).toBeNull()
   })
 
-  it('suppresses the taunt "Muro" pill when excludeArchetypeSignals AND the wizard is scudirigen (ribbon already says Muro)', () => {
-    const { container } = render(<DuoSignalMarks wizard={wiz('Tank', ['scudirigen'])} excludeArchetypeSignals />)
-    // scudirigen tag-signal excluded (ribbon owns it) AND taunt suppressed (would duplicate "Muro") → nothing left
-    expect(container.querySelector('[data-testid="duo-signal-marks"]')).toBeNull()
-  })
-
-  it('keeps the taunt "Muro" pill for a Tank without scudirigen even with excludeArchetypeSignals', () => {
-    render(<DuoSignalMarks wizard={wiz('Tank', [])} excludeArchetypeSignals />)
-    expect(screen.getByText('Muro')).toBeInTheDocument()
+  it('excludeArchetypeSignals drops the 4 tag-signals but keeps the taunt "Bersaglio" pill', () => {
+    render(<DuoSignalMarks wizard={wiz('Tank', ['scudirigen'])} excludeArchetypeSignals />)
+    // scudirigen tag-signal escluso (il nastro lo mostra); il taunt "Bersaglio" resta (nessuna collisione)
+    expect(screen.getByText('Bersaglio')).toBeInTheDocument()
+    expect(screen.queryByText('Muro')).not.toBeInTheDocument()
   })
 })
