@@ -14,6 +14,8 @@ const harry = () => draftWizard(createRng(1), WIZARD_BY_ID['harry']!)
 const draftedTank = () => draftWizard(createRng(1), WIZARD_BY_ID['mcgonagall']!)
 // Veleno-tagged fixture (feeds the Duo signal system) for the signal-marks/ribbon tests below.
 const velenoDrafted = () => draftWizard(createRng(1), WIZARD_BY_ID['pansy']!)
+// Muro (scudirigen) fixture for the archetype-ribbon test.
+const scudirigenDrafted = () => draftWizard(createRng(1), WIZARD_BY_ID['cedric']!)
 
 describe('WizardCardColumn (poster layout, the LIVE draft card)', () => {
   it('renders the role badge, spell block, name heading and all four stat labels', () => {
@@ -49,11 +51,48 @@ describe('WizardCardColumn (poster layout, the LIVE draft card)', () => {
     expect(screen.queryByTestId('synergy-nudge')).toBeNull()
   })
 
-  it('conveys the house via data-house and keeps the testId prop wired', () => {
+  it('conveys the house via data-house (now the inner wash, not the border) and keeps the testId prop wired', () => {
     const d = harry()
     const { container } = render(<WizardCardColumn drafted={d} testId="draft-card-0" />)
     expect(container.querySelector(`[data-house="${d.wizard.house}"]`)).not.toBeNull()
     expect(container.querySelector('[data-testid="draft-card-0"]')).not.toBeNull()
+  })
+
+  it('borders the card by rarity (tier), exposed via data-tier', () => {
+    const legendary = harry() // tier 1
+    const common = velenoDrafted() // tier 4
+    const { container: c1 } = render(<WizardCardColumn drafted={legendary} />)
+    const { container: c4 } = render(<WizardCardColumn drafted={common} />)
+    expect(c1.querySelector(`[data-tier="1"]`)).not.toBeNull()
+    expect(c4.querySelector(`[data-tier="4"]`)).not.toBeNull()
+  })
+
+  it('shows the shimmer sweep only on tier 1 (legendary) cards', () => {
+    const legendary = harry() // tier 1
+    const rare = draftedTank() // tier 2 (mcgonagall)
+    const { container: c1 } = render(<WizardCardColumn drafted={legendary} />)
+    const { container: c2 } = render(<WizardCardColumn drafted={rare} />)
+    expect(c1.querySelector('[data-testid="tier-shimmer"]')).not.toBeNull()
+    expect(c2.querySelector('[data-testid="tier-shimmer"]')).toBeNull()
+  })
+
+  it('shows an archetype ribbon with the fantasy name + glyph for a scudirigen (Muro) wizard', () => {
+    render(<WizardCardColumn drafted={scudirigenDrafted()} />)
+    const ribbon = screen.getByTestId('archetype-ribbon')
+    expect(ribbon).toHaveAttribute('data-archetype', 'scudirigen')
+    expect(ribbon).toHaveTextContent('Muro')
+  })
+
+  it('shows a "Magie Oscure" ribbon for a magieOscure-tagged wizard (narcissa: tags=[deatheater,magieOscure])', () => {
+    const narcissa = draftWizard(createRng(1), WIZARD_BY_ID['narcissa']!)
+    render(<WizardCardColumn drafted={narcissa} />)
+    const ribbon = screen.getByTestId('archetype-ribbon')
+    expect(ribbon).toHaveTextContent('Magie Oscure')
+  })
+
+  it('shows no archetype ribbon for a wizard with no archetype tags', () => {
+    render(<WizardCardColumn drafted={draftedTank()} />) // mcgonagall: tags=['order']
+    expect(screen.queryByTestId('archetype-ribbon')).toBeNull()
   })
 
   it('fires onClick when clickable (name click) and supports keyboard activation', async () => {
@@ -80,9 +119,18 @@ describe('WizardCardColumn (poster layout, the LIVE draft card)', () => {
     expect(screen.getByText(TRAIT_BY_ID['furia']!.name)).toBeInTheDocument()
   })
 
-  it('shows a Veleno signal mark for a veleno mage', () => {
-    render(<WizardCardColumn drafted={velenoDrafted()} />)
-    expect(screen.getByTestId('duo-signal-marks')).toBeInTheDocument()
+  it('does not repeat the Veleno archetype in DuoSignalMarks — the ribbon owns it now; the role signal (controllo) still shows', () => {
+    render(<WizardCardColumn drafted={velenoDrafted()} />) // pansy: role Controllo, tags=['veleno']
+    expect(screen.getByTestId('archetype-ribbon')).toHaveTextContent('Veleno')
+    const marks = screen.getByTestId('duo-signal-marks')
+    expect(within(marks).queryByText('Veleno')).toBeNull() // not duplicated in DuoSignalMarks
+    expect(marks).toBeInTheDocument() // role signal (controllo) remains
+  })
+
+  it('keeps the taunt (Muro) role-signal in DuoSignalMarks for a Tank with no archetype tag', () => {
+    render(<WizardCardColumn drafted={draftedTank()} />) // mcgonagall: Tank, tags=['order']
+    expect(screen.queryByTestId('archetype-ribbon')).toBeNull()
+    expect(screen.getByTestId('duo-signal-marks')).toHaveTextContent('Muro')
   })
 
   it('non mostra MAI il ribbon Duo sopra la card: la preview vive nel DuoTracker del rail', () => {

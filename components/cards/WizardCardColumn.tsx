@@ -1,8 +1,7 @@
 'use client'
 import { motion, useReducedMotion } from 'framer-motion'
 import type { DraftedWizard, Stat } from '@/types'
-import { cn, houseTheme } from '@/lib/theme'
-import { TierBadge } from './TierBadge'
+import { cn, houseTheme, tierFrame } from '@/lib/theme'
 import { RoleBadge } from './RoleBadge'
 import { AbilityPlate } from './AbilityPlate'
 import { DuoSignalMarks } from './DuoSignalMarks'
@@ -13,6 +12,16 @@ import { ROLE_ACCENT } from '@/lib/roleInfo'
 import { TRAIT_BY_ID } from '@/data/traits'
 import { abilityFor } from '@/lib/wizardAbilities'
 import { displayName } from '@/lib/displayName'
+import { ARCHETYPE_BY_TAG } from '@/lib/archetypes'
+
+/** Primary archetype for the card ribbon: the first of the wizard's tags that has an entry in
+ *  ARCHETYPE_BY_TAG (veleno/esecuzione/scudirigen/magieOscure). A wizard can carry more than one
+ *  archetype tag (e.g. Voldemort: esecuzione + magieOscure) — the mockup shows a single ribbon,
+ *  so we take the first match in tag order. `undefined` when no tag matches (no ribbon). */
+function primaryArchetype(tags: string[] | undefined) {
+  const tag = (tags ?? []).find((t): t is keyof typeof ARCHETYPE_BY_TAG => t in ARCHETYPE_BY_TAG)
+  return tag ? ARCHETYPE_BY_TAG[tag] : undefined
+}
 
 /**
  * Vertical "poster" card for the draft. Full-bleed portrait hero (role badge +
@@ -43,6 +52,7 @@ export function WizardCardColumn({
   const clickable = Boolean(onClick)
   const reduceMotion = useReducedMotion()
   const theme = houseTheme(wizard.house)
+  const frame = tierFrame(wizard.tier)
   const accent = ROLE_ACCENT[wizard.role]
   const effectChips = spellEffectChips(spell)
   const effectDetails = spellEffectDetails(spell)
@@ -50,6 +60,8 @@ export function WizardCardColumn({
   const shinyTrait = drafted.shiny ? TRAIT_BY_ID[drafted.shiny.traitId] : undefined
   const shinyGlow = drafted.shiny ? ', 0 0 22px rgba(255,200,80,0.55), inset 0 0 0 2px rgba(255,210,90,0.7)' : ''
   const ability = abilityFor(wizard.id)
+  const archetype = primaryArchetype(wizard.tags)
+  const isLegendary = wizard.tier === 1
 
   return (
     <motion.div
@@ -62,32 +74,61 @@ export function WizardCardColumn({
       tabIndex={clickable ? 0 : undefined}
       onKeyDown={clickable ? (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.() } } : undefined}
       data-house={wizard.house}
+      data-tier={wizard.tier}
       data-testid={testId}
       className={cn(
-        'wizard-col group relative flex h-full w-full select-none flex-col rounded-2xl text-white',
+        'wizard-col group relative flex h-full w-full select-none flex-col rounded-2xl p-[9px] text-white',
         clickable && 'cursor-pointer', className,
       )}
       style={{
-        // Object, not panel: gold double-bevel frame + house glow + deep drop.
-        background: `linear-gradient(180deg, ${theme.color}1f 0%, #130f22 42%, #0c0917 100%)`,
-        // House-colored double-bevel frame (reads the affiliation at a glance). Selected keeps a
-        // bright warm ring so the chosen state stays distinct from every house color.
+        // RARITY FRAME — the card's outer identity, by tier (ported from
+        // .superpowers/design/rarity-borders.html: pewter → brushed silver → amethyst → gilt).
+        // Padding = frame thickness, so the tier metal shows as a ring around the plate.
+        // Selected keeps a bright warm ring on top so the chosen state stays distinct from tier.
+        background: frame.background,
         boxShadow: selected
-          ? `0 0 0 1px rgba(0,0,0,0.7), 0 0 0 2px #f6ecc4, 0 0 0 3px rgba(0,0,0,0.8), 0 22px 46px -14px rgba(0,0,0,0.85), 0 0 30px -4px ${theme.glow}88${shinyGlow}`
-          : `0 0 0 1px rgba(0,0,0,0.7), 0 0 0 2px ${theme.color}, 0 0 0 3px rgba(0,0,0,0.8), 0 22px 46px -14px rgba(0,0,0,0.85), 0 0 34px -6px ${theme.glow}44${shinyGlow}`,
+          ? `${frame.boxShadow}, 0 0 0 2px #f6ecc4${shinyGlow}`
+          : `${frame.boxShadow}${shinyGlow}`,
       }}
     >
-      {/* Engraved inner hairline in the house color + faint highlight at the crown. */}
+      {/* Fine keyline just inside the metal frame, tinted by tier accent (mockup: .plate::before). */}
       <div
         aria-hidden
-        className="pointer-events-none absolute inset-0 z-20 rounded-2xl"
-        style={{ boxShadow: `inset 0 0 0 1px ${theme.color}59, inset 0 2px 0 rgba(255,255,255,0.05)` }}
+        className="pointer-events-none absolute inset-[11px] z-20 rounded-[14px]"
+        style={{ border: `1px solid ${frame.keyline}` }}
       />
+
+      {/* Shimmer — ONLY tier 1 (legendary), a slow diagonal gleam sweeping the gilded frame.
+          Respects prefers-reduced-motion: static gleam position, no animation (mockup: .t1 .shimmer). */}
+      {isLegendary && (
+        <div
+          aria-hidden
+          data-testid="tier-shimmer"
+          className="pointer-events-none absolute inset-0 z-30 overflow-hidden rounded-2xl"
+          style={{ mixBlendMode: 'screen' }}
+        >
+          <motion.div
+            className="absolute -inset-y-1/2 -inset-x-1/2"
+            style={{
+              background: 'linear-gradient(115deg, transparent 30%, rgba(255,255,255,0) 40%, rgba(255,251,235,.55) 50%, rgba(255,255,255,0) 60%, transparent 70%)',
+            }}
+            animate={reduceMotion ? undefined : { x: ['20%', '-20%'], y: ['-10%', '10%'] }}
+            transition={reduceMotion ? undefined : { duration: 5.5, ease: 'easeInOut', repeat: Infinity }}
+          />
+        </div>
+      )}
+
+      {/* PLATE — inner content, carries the house wash (soft radial tint from the top). Rarity
+          lives in the frame around it; house is now an ambient tint, not the border. */}
+      <div
+        className="relative z-10 flex h-full w-full flex-col overflow-hidden rounded-[14px]"
+        style={{ background: `radial-gradient(120% 90% at 50% -18%, ${theme.color}55 0%, transparent 62%), linear-gradient(180deg, #120d16 0%, #0c0810 100%)` }}
+      >
 
       {/* HERO — full-bleed portrait + role-accent wash + gradient + vignette.
           Image is clipped; the badges/title sit OVER it (outside the clip) so
           the card root can stay un-clipped for escaping tooltips/glows. */}
-      <div className="relative h-[248px] w-full shrink-0 overflow-hidden rounded-t-2xl">
+      <div className="relative h-[248px] w-full shrink-0 overflow-hidden">
         <PortraitImage id={wizard.id} house={wizard.house} alt={wizard.name} variant="card" />
         {/* role-accent wash, soft-light */}
         <div
@@ -102,13 +143,27 @@ export function WizardCardColumn({
         <div className="absolute left-3 top-3">
           <RoleBadge role={wizard.role} />
         </div>
-        <div className="absolute right-3 top-3 flex flex-col items-end gap-1">
-          <TierBadge tier={wizard.tier} />
+        <div className="absolute right-0 top-0 flex flex-col items-end gap-1">
+          {/* ARCHETYPE RIBBON — top-right banner, glyph + fantasy name, tinted by archetype
+              color (mockup: .ribbon). Shows the wizard's PRIMARY archetype tag only. */}
+          {archetype && (
+            <span
+              data-testid="archetype-ribbon"
+              data-archetype={wizard.tags?.find((t) => t in ARCHETYPE_BY_TAG)}
+              className="inline-flex items-center gap-1 rounded-bl-xl px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-wide text-white"
+              style={{
+                background: `linear-gradient(180deg, ${archetype.color}, ${archetype.color}99)`,
+                boxShadow: '0 3px 10px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.22)',
+              }}
+            >
+              <span aria-hidden>{archetype.glyph}</span> {archetype.name}
+            </span>
+          )}
           {drafted.corrotto && (
             <span
               data-testid="corrotto-badge"
               title="Corrotto — non curabile"
-              className="inline-flex items-center gap-1 rounded-full border border-purple-400/60 bg-purple-950/70 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-purple-200"
+              className="mr-3 mt-1 inline-flex items-center gap-1 rounded-full border border-purple-400/60 bg-purple-950/70 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-purple-200"
             >
               <span aria-hidden>☠</span> Corrotto — non curabile
             </span>
@@ -145,8 +200,10 @@ export function WizardCardColumn({
         )}
 
         {/* Named signals so the Combo value is explicit. taunt reads "Muro" (not "Tank")
-            to avoid echoing the crown/RoleBadge — see DuoSignalMarks.cardLabel. */}
-        <div className="mb-2"><DuoSignalMarks wizard={wizard} /></div>
+            to avoid echoing the crown/RoleBadge — see DuoSignalMarks.cardLabel. The 4 tag-signals
+            (veleno/esecuzione/scudirigen/magieOscure) are excluded here since the archetype
+            ribbon above already shows the wizard's primary one — no redundant pill. */}
+        <div className="mb-2"><DuoSignalMarks wizard={wizard} excludeArchetypeSignals /></div>
 
         {/* SPELL BLOCK — hero move. No type chip: the role-accent bar carries
             the "kind" cue instead. */}
@@ -197,6 +254,7 @@ export function WizardCardColumn({
             </div>
           ))}
         </div>
+      </div>
       </div>
     </motion.div>
   )
