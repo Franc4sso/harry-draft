@@ -27,6 +27,8 @@ export function registerSynergyTriggers(
   const tossicita = synergies.some(s => s.synergy.id === 'tossicita')
   const spietatezza = synergies.some(s => s.synergy.id === 'spietatezza')
   if (spietatezza) for (const u of units) u.carnefice = true
+  const bastione = synergies.some(s => s.synergy.id === 'bastione')
+  if (bastione) for (const u of units) u.wallReflect = 0.25
   if (!tossicita) return
   for (const u of units) {
     bus.onReactive('onHit', (ctx): EffectSpec[] =>

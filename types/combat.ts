@@ -89,6 +89,7 @@ export interface BattleUnit extends DraftedWizard {
   coldExecute?: { threshold: number; instakill: boolean } // ESECUZIONE A FREDDO (player attackers)
   reaper?: boolean                                   // MIETITORE (player units)
   carnefice?: boolean                                // SPIETATEZZA archetype (kill-snowball, both sides)
+  wallReflect?: number                               // BASTIONE archetype (diffuse non-lethal reflect, both sides)
 }
 
 export type LogFlag = 'crit' | 'dodge' | 'kill' | 'heal' | 'block' | 'stun' | 'dot' | 'pen' | 'shatter' | 'wait' | 'recoil' | 'revive' | 'duo'

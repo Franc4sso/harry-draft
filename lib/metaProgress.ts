@@ -5,10 +5,11 @@ import { grantCioccorane, unlockWizard, unlockRelic } from '@/lib/metaStore'
 import { MILESTONES, EARN, type UnlockTarget } from '@/data/unlocks'
 
 // Real named-synergy ids from data/synergies.ts. The TEAM synergies (goldenTrio,
-// weasley, order, deatheater, bastione, oscurita, marauder, da) were removed 2026-07-21.
-// The ARCHETYPE synergies survive: tossicita (veleno) and spietatezza (esecuzione,
-// revived 2026-07-22 as the Carnefice archetype base).
-const NAMED_SYNERGY_IDS = new Set(['tossicita', 'spietatezza'])
+// weasley, order, deatheater, oscurita, marauder, da) were removed 2026-07-21.
+// The ARCHETYPE synergies survive: tossicita (veleno), spietatezza (esecuzione,
+// revived 2026-07-22 as the Carnefice archetype base) and bastione (scudirigen,
+// revived 2026-07-23 as the Muro Riflettente archetype base).
+const NAMED_SYNERGY_IDS = new Set(['tossicita', 'spietatezza', 'bastione'])
 
 export interface RunEndSummary {
   outcome: 'win' | 'defeat'
