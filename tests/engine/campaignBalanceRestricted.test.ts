@@ -111,6 +111,15 @@ function runOne(seed: string, battleTurns?: number[], preferVeleno = false): 'wi
       s = resolveCurrent(s, { kind: 'skip' }, createRng(seed))
       s = { ...s, phase: 'map' }; continue
     }
+    // SpellSwap-node (2026-07-23): free "Cambia Magia" node — no cost, no cap, no life/relic
+    // impact. The bot declines exactly like the altare handler above: without this branch,
+    // an unhandled phase falls through to 'break' → instant 'defeat', a harness artifact,
+    // not a real difficulty change. 'skip' is a documented no-op for resolvers without a
+    // dedicated skip branch (see resolvers/types.ts + endlessReplay.ts comment).
+    if (s.phase === 'spellSwap-node') {
+      s = resolveCurrent(s, { kind: 'skip' }, createRng(seed))
+      s = { ...s, phase: 'map' }; continue
+    }
     break
   }
   return 'defeat'
