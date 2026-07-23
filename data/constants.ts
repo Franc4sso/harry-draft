@@ -608,7 +608,7 @@ defenseK: 0.5,
     // effect once already low) — not the live lever here. Il Muro's own budget/hpMult
     // (data/bosses.ts) was also softened 250/0.5→150/0.35 during the search; also flat, but
     // left at the softer value (harmless, consistent direction).
-    categoryWeights: { battle: 25, recruit: 10, relic: 45, event: 15, spellForge: 12, shop: 12 } as Record<'battle' | 'recruit' | 'relic' | 'event' | 'spellForge' | 'shop', number>,
+    categoryWeights: { battle: 25, recruit: 10, relic: 45, event: 15, spellForge: 12, spellSwap: 12, shop: 12 } as Record<'battle' | 'recruit' | 'relic' | 'event' | 'spellForge' | 'spellSwap' | 'shop', number>,
     recruitBiasBoost: 10,        // peso aggiunto a 'recruit' quando la squadra è incompleta
   },
   relics: {

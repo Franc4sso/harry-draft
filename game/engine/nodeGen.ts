@@ -7,7 +7,7 @@ export interface AreaBias {
   teamMax: number
 }
 
-type Filler = 'battle' | 'recruit' | 'relic' | 'event' | 'spellForge' | 'shop'
+type Filler = 'battle' | 'recruit' | 'relic' | 'event' | 'spellForge' | 'spellSwap' | 'shop'
 
 /** Flat list of (floor, idx) coordinates for the middle floors only. */
 interface Slot { floor: number; idx: number }
@@ -147,11 +147,11 @@ export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias,
 function pickFiller(rng: Rng, bias: AreaBias, endless = false): Filler {
   const cw = BALANCE.map.categoryWeights
   const recruitW = cw.recruit + (bias.teamSize < bias.teamMax ? BALANCE.map.recruitBiasBoost : 0)
-  let entries: [Filler, number][] = [['battle', cw.battle], ['recruit', recruitW], ['relic', cw.relic], ['event', cw.event], ['spellForge', cw.spellForge], ['shop', cw.shop]]
+  let entries: [Filler, number][] = [['battle', cw.battle], ['recruit', recruitW], ['relic', cw.relic], ['event', cw.event], ['spellForge', cw.spellForge], ['spellSwap', cw.spellSwap], ['shop', cw.shop]]
 
-  // In endless mode, exclude shop and spellForge by zeroing their weights
+  // In endless mode, exclude shop, spellForge and spellSwap by zeroing their weights
   if (endless) {
-    entries = entries.map(([cat, w]) => [cat, (cat === 'shop' || cat === 'spellForge') ? 0 : w])
+    entries = entries.map(([cat, w]) => [cat, (cat === 'shop' || cat === 'spellForge' || cat === 'spellSwap') ? 0 : w])
   }
 
   const total = entries.reduce((a, [, v]) => a + v, 0)
