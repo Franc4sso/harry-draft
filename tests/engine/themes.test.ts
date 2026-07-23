@@ -16,12 +16,14 @@ describe('theme catalog', () => {
     expect(pickTheme(rng2, [])!.id).toBe(t!.id)
   })
 
-  it('has exactly the two archetype themes (tag:esecuzione, tag:veleno)', () => {
+  it('has exactly the three archetype themes (tag:esecuzione, tag:scudirigen, tag:veleno)', () => {
     // THEMES was reduced to a single entry ('tag:veleno', from Tossicità) when the 9 team
     // synergies were removed (2026-07-21). Spietatezza (tag:esecuzione) was then DELIBERATELY
-    // revived as a second archetype synergy (Carnefice Task 1, 2026-07-21/22), so THEMES now
-    // derives two theme ids — sorted by id (themes.ts), 'tag:esecuzione' sorts before 'tag:veleno'.
-    expect(THEMES.map(t => t.id)).toEqual(['tag:esecuzione', 'tag:veleno'])
+    // revived as a second archetype synergy (Carnefice Task 1, 2026-07-21/22), and Bastione
+    // (tag:scudirigen) as a third (Muro Riflettente Task 1, 2026-07-23) — each derives a theme
+    // (poolSize >= 3 holds for all three). THEMES sorts by id (themes.ts): 'tag:esecuzione' <
+    // 'tag:scudirigen' < 'tag:veleno'.
+    expect(THEMES.map(t => t.id)).toEqual(['tag:esecuzione', 'tag:scudirigen', 'tag:veleno'])
   })
 
   it('excluding every theme falls back to the full set', () => {

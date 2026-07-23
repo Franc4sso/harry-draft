@@ -51,6 +51,19 @@ import type { RunNode, RunState, DraftedWizard } from '@/types'
 //   result unchanged). Same 1-seed-boundary-noise class as prior re-anchors. The "can win" floor is
 //   retired to a structural smoke check below; shieldUptakeRate/maxTurns archetype signals are
 //   unaffected and kept as real assertions.
+// Post-Bastione-revival (2026-07-23, Muro Riflettente Task 1 — the 'bastione' archetype
+//   synergy was DELIBERATELY revived, the twin of Spietatezza for the Carnefice; see
+//   synergies.ts/synergyTriggers.ts): winRate=0.025 bastioneRate=0.983 shieldUptakeRate=0.983
+//   medianTurns=5 maxTurns=25. bastioneRate went from 0 (dead — the synergy did not exist,
+//   only relics fed the shield) to 0.983 (this scudirigen-biased harness drafts >=3 tagged
+//   wizards in nearly every run, so Bastione activates). shieldUptakeRate rose in lockstep —
+//   with Bastione live, teamShieldConvert returns a rate from the synergy's +0.35 even when
+//   no shield relic is held (shieldConvert.ts:16). No lever change: both real assertions
+//   below (shieldUptake>0, maxTurns<turnCap) hold with wide margin; enemy-muro reflect did
+//   NOT move the two balance gates (A/B vs the pre-Muro tip 0fc5a94 measured campaignBalance
+//   Restricted 0.0167 and campaignBalanceB 0.0000 IDENTICAL before/after — the bot is
+//   archetype-blind for the PLAYER so it rarely fields the scudirigen enemy theme; same
+//   zero-gate-effect result as the Carnefice enemy avalanche).
 registerCoreResolvers()
 
 const SCUDI_RELICS = new Set(['egida-tassorosso', 'cuore-del-tasso'])
@@ -169,11 +182,14 @@ describe('favor-Scudi-Rigen viability sweep', () => {
     // RE-ANCHORED (2026-07-21, team-synergies removal): the 9 team synergies were
     // removed from the game (user-accepted design decision — the game is harder now,
     // see campaignBalanceRestricted's own retired-floor guard, winRate 0.0083 > 0).
-    // Without synergy-inflated teams, fewer runs survive long enough to draft AND
-    // proc both shield-conversion relics, so shieldUptakeRate dropped from >0.05 to
-    // ~0.042 (bastioneRate is 0 regardless — the shield mechanism is relic-driven, not
-    // Bastione-driven). This is pressure, not a shield-kit regression: nothing in the
-    // shield-conversion relic logic changed. The exact 0.05 floor is retired because it
+    // Without synergy-inflated teams, fewer runs survived long enough to draft AND
+    // proc both shield-conversion relics, so shieldUptakeRate dropped to ~0.042.
+    // UPDATE (2026-07-23, Bastione revival — Muro Riflettente Task 1): the 'bastione'
+    // synergy is ALIVE again, so shield conversion is once more synergy-driven (not only
+    // relic-driven): a 3-scudirigen team activates Bastione and teamShieldConvert returns
+    // its +0.35 with no relic (shieldConvert.ts:16). Re-measured: bastioneRate=0.983,
+    // shieldUptakeRate=0.983 (both were previously ~0/~0.042). This is a big draftability
+    // recovery, not a regression. The exact 0.05 floor stays retired because it
     // now measures game-wide difficulty pressure rather than kit viability, but a true
     // zero-uptake regression must still trip this test: `> 0` (the build fields the
     // shield conversion at least once across the 120-seed sweep) is a real, pressure-
