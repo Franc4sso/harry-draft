@@ -16,6 +16,9 @@ const draftedTank = () => draftWizard(createRng(1), WIZARD_BY_ID['mcgonagall']!)
 const velenoDrafted = () => draftWizard(createRng(1), WIZARD_BY_ID['pansy']!)
 // Muro (scudirigen) fixture for the archetype-ribbon test.
 const scudirigenDrafted = () => draftWizard(createRng(1), WIZARD_BY_ID['cedric']!)
+// Tank + scudirigen fixture (e.g. hagrid/ernie) — the double-"Muro" bug case: ribbon AND
+// taunt pill would both say "Muro" without the fix.
+const scudirigenTankDrafted = () => draftWizard(createRng(1), WIZARD_BY_ID['ernie']!)
 
 describe('WizardCardColumn (poster layout, the LIVE draft card)', () => {
   it('renders the role badge, spell block, name heading and all four stat labels', () => {
@@ -131,6 +134,20 @@ describe('WizardCardColumn (poster layout, the LIVE draft card)', () => {
     render(<WizardCardColumn drafted={draftedTank()} />) // mcgonagall: Tank, tags=['order']
     expect(screen.queryByTestId('archetype-ribbon')).toBeNull()
     expect(screen.getByTestId('duo-signal-marks')).toHaveTextContent('Muro')
+  })
+
+  it('shows "Muro" exactly once for a Tank+scudirigen wizard (ribbon only, taunt pill suppressed)', () => {
+    render(<WizardCardColumn drafted={scudirigenTankDrafted()} />) // ernie: Tank, tags=['scudirigen']
+    const ribbon = screen.getByTestId('archetype-ribbon')
+    expect(ribbon).toHaveTextContent('Muro')
+    expect(screen.getAllByText('Muro')).toHaveLength(1)
+  })
+
+  it('shows the ribbon Muro and no taunt pill for a scudirigen non-Tank (unchanged)', () => {
+    render(<WizardCardColumn drafted={scudirigenDrafted()} />) // cedric: Attaccante, tags=['scudirigen']
+    const ribbon = screen.getByTestId('archetype-ribbon')
+    expect(ribbon).toHaveTextContent('Muro')
+    expect(screen.queryByTestId('duo-signal-marks')).toBeNull()
   })
 
   it('non mostra MAI il ribbon Duo sopra la card: la preview vive nel DuoTracker del rail', () => {

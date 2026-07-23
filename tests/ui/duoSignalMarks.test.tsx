@@ -21,4 +21,15 @@ describe('DuoSignalMarks', () => {
     const { container } = render(<DuoSignalMarks wizard={wiz('Attaccante', [])} />)
     expect(container.querySelector('[data-testid="duo-signal-marks"]')).toBeNull()
   })
+
+  it('suppresses the taunt "Muro" pill when excludeArchetypeSignals AND the wizard is scudirigen (ribbon already says Muro)', () => {
+    const { container } = render(<DuoSignalMarks wizard={wiz('Tank', ['scudirigen'])} excludeArchetypeSignals />)
+    // scudirigen tag-signal excluded (ribbon owns it) AND taunt suppressed (would duplicate "Muro") → nothing left
+    expect(container.querySelector('[data-testid="duo-signal-marks"]')).toBeNull()
+  })
+
+  it('keeps the taunt "Muro" pill for a Tank without scudirigen even with excludeArchetypeSignals', () => {
+    render(<DuoSignalMarks wizard={wiz('Tank', [])} excludeArchetypeSignals />)
+    expect(screen.getByText('Muro')).toBeInTheDocument()
+  })
 })

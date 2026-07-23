@@ -23,14 +23,21 @@ function cardLabel(s: DuoSignal): string {
  *  used by a shipped Duo). `compact` shows icon-only; otherwise the signal is named so a player
  *  reads WHY the wizard matters for Combos. `excludeArchetypeSignals` drops the 4 tag-signals
  *  (veleno/esecuzione/scudirigen/magieOscure) that a sibling archetype ribbon already shows,
- *  leaving only role-signals like taunt ("Muro"). */
+ *  leaving only role-signals like taunt ("Muro"). When the wizard also carries the `scudirigen`
+ *  tag, the ribbon's fantasy name for that tag IS "Muro" too (see ARCHETYPE_BY_TAG) — so the
+ *  taunt pill's card label collides word-for-word with the ribbon. In that case we additionally
+ *  drop `taunt` here so "Muro" appears exactly once (the ribbon). A Tank with no scudirigen tag
+ *  has no ribbon, so the taunt pill is the only place "Muro" shows and must survive. */
 export function DuoSignalMarks({ wizard, compact = false, excludeArchetypeSignals = false }: {
   wizard: Wizard
   compact?: boolean
   excludeArchetypeSignals?: boolean
 }) {
   const allSignals = wizardDuoSignals(wizard)
-  const signals = excludeArchetypeSignals ? allSignals.filter((s) => !ARCHETYPE_SIGNAL_IDS.has(s)) : allSignals
+  const hasScudirigenRibbon = excludeArchetypeSignals && (wizard.tags ?? []).includes('scudirigen')
+  const signals = excludeArchetypeSignals
+    ? allSignals.filter((s) => !ARCHETYPE_SIGNAL_IDS.has(s) && !(hasScudirigenRibbon && s === 'taunt'))
+    : allSignals
   if (signals.length === 0) return null
   return (
     <div data-testid="duo-signal-marks" className="flex flex-wrap items-center gap-1.5">
