@@ -2,9 +2,12 @@
 
 _Data: 2026-07-23 · Dinamismo build + patto faustiano · Tipo: nuovo node-type + resolver + gate bilanciamento_
 
-Obiettivo di design: dare **libertà totale di build** (qualsiasi spell su qualsiasi mago) SENZA riaprire
-l'exploit dello spell-swap — trasformandolo in un **patto faustiano**: ogni cambio costa vita massima
-permanente. La libertà c'è piena; il prezzo, accumulandosi, impedisce di ottimizzare tutti i maghi.
+Obiettivo di design: dare **libertà totale di build** (qualsiasi spell su qualsiasi mago) — lo swap è
+**GRATIS**, nessun costo per il giocatore. La libertà del giocatore è la priorità; il bilanciamento si
+gestisce dietro le quinte (misurare l'exploit e, se serve, ri-alzare i nemici — MAI limitando lo swap).
+
+> DECISIONE UTENTE (2026-07-23): lo swap NON costa vita né altro. Scartata l'ipotesi "patto -maxHP".
+> Il freno al bilanciamento sta sui NEMICI, non sulle scelte del giocatore.
 
 ---
 
@@ -18,24 +21,25 @@ furono alzati a `[3,5,8]` apposta per combatterlo.
 
 **La causa dell'exploit NON era la casualità — era che lo swap era GRATIS e RIPETIBILE** (ottimizzi tutti).
 
-## 2. Soluzione — swap LIBERO governato da un COSTO (patto faustiano)
+## 2. Soluzione — swap LIBERO e GRATIS, bilanciamento sui nemici
 
-Il nodo lascia cambiare la magia di un mago con **qualsiasi spell** (nessun vincolo di ruolo — libertà
-piena). MA ogni swap costa **-maxHP permanente** al mago cambiato (riusa `sacrificeCost:{kind:'maxHp'}`).
+Il nodo lascia cambiare la magia di un mago con **qualsiasi spell** (nessun vincolo, nessun costo).
+Massima libertà del giocatore. Il bilanciamento NON grava sul giocatore: si gestisce misurando l'impatto
+e, SE l'exploit emerge, ri-alzando i NEMICI (i conteggi erano `[3,5,8]` proprio per questo, pre-rimozione).
 
-**Perché chiude l'exploit:** puoi swappare quanti maghi vuoi, ma ogni swap indebolisce permanentemente
-quel mago. Ottimizzare TUTTI i maghi sul danno massimo = indebolire tutta la squadra → autolesionista.
-Il costo che si accumula è il freno anti-convergenza. La libertà del singolo swap è totale; abusarne fa male.
+**Perché la libertà è la priorità (decisione utente):** un roguelite può tarare la difficoltà sui nemici
+invece che pedaggiare le scelte del giocatore. Lo swap gratis dà la fantasia piena "gioca come vuoi".
 
-**Coerenza col gioco:** è il patto faustiano (spina dorsale del Core Fun) applicato agli spell. "Vuoi dare
-avada al tuo tank? Paga con la sua vita." Un momento ad alta posta, non un nodo da ignorare. Il vincolo
-che rende la feature sicura è ANCHE ciò che la rende emozionante.
+**Trade-off ONESTO (rischio consapevole):** ri-alzare i nemici per assorbire l'exploit rende il gioco più
+duro per TUTTI — anche chi non usa lo swap subisce nemici tarati su chi lo abusa. L'utente accetta questo
+trade-off (libertà del giocatore > difficoltà uniforme). Documentato, non nascosto.
 
 ## 3. Decisioni di design (approvate)
 
-- **Libertà:** QUALSIASI spell su QUALSIASI mago. Nessun gate di ruolo. (Il costo è il freno, non la whitelist.)
-- **Costo:** `-maxHP permanente` al mago swappato (es. **-20 maxHP**, valore STIMA tarabile, come Calice/Corona all'Altare). Riusa `applySacrificeCost({kind:'maxHp', amount})` (`game/engine/sacrifice.ts`).
-- **Offerta:** 2 spell casuali (dal catalogo pieno, non per ruolo) — la casualità è sapore roguelite, ma NON è il meccanismo di sicurezza (lo è il costo). L'utente sceglie 1 dei 2 e il mago a cui darlo.
+- **Libertà:** QUALSIASI spell su QUALSIASI mago. Nessun gate di ruolo, **nessun costo**. Swap GRATIS.
+- **Costo:** NESSUNO. Lo swap non toglie vita, reliquie, né altro al giocatore.
+- **Offerta:** 2 spell casuali dal catalogo pieno. L'utente sceglie 1 dei 2 e il mago a cui darlo.
+- **Bilanciamento:** gestito sui NEMICI (misura worst-case → se sfonda, alza i conteggi/potere nemico), MAI limitando lo swap.
 - **Nodo:** nuovo tipo `spellSwap`, filler raro (peso ~12, come SpellForge). Gemello di SpellForge.
 - **Combat:** casta fedelmente lo spell assegnato (`selectSpell` ritorna `unit.spell`, zero modifiche motore).
 - **Firma-abilità:** resta (decoupled — keyed by wizard.id). Voldemort tiene Terrore, casta il nuovo spell.
@@ -51,33 +55,28 @@ che rende la feature sicura è ANCHE ciò che la rende emozionante.
 export const spellSwapResolver: NodeResolver = {
   id: 'spellSwap',
   enter: (state, node, rng) => {
-    // 2 spell casuali dal catalogo attacchi (esclusa eventualmente la firma del mago scelto).
-    // enter USA rng → preservare parità (come pickSpell brucia gen() ordinatamente, statRoll.ts:34).
-    return { offers: { swapSpells: pickTwoSpells(rng) }, isCombat: false }
+    // 2 spell casuali dal catalogo attacchi, deterministici dal nodo (pattern altareOffer).
+    return { offers: { swapSpells: swapOffer(state, node, rng).map(s => s.id) }, isCombat: false }
   },
-  resolve: (state, node, choice) => {
+  resolve: (state, node, choice, rng) => {
     if (choice.kind !== 'spell-swap') return state
     const target = state.team.find(d => d.wizard.id === choice.wizardId)
     if (!target) return state
-    // ANTI-CHEAT: choice.spellId deve essere una delle 2 offerte (non fidarsi del client).
-    // COSTO: applySacrificeCost({kind:'maxHp', amount:SWAP_MAXHP_COST}) sul mago target.
-    //   canPay verifica maxHp-amount>=1 → se non paga, no-op (non swappare).
-    const cost = { kind: 'maxHp', amount: SWAP_MAXHP_COST } as const
-    if (!canPaySacrifice(state, cost, choice.wizardId)) return state
+    const offered = swapOffer(state, node, rng).map(s => s.id)
+    if (!offered.includes(choice.spellId)) return state     // ANTI-CHEAT: solo tra i 2 offerti
     const base = SPELL_BY_ID[choice.spellId]
     if (!base) return state
-    const spell = scaledSpell(base, target.spellLevel)      // preserva spellLevel
-    let team = state.team.map(d => (d.wizard.id === choice.wizardId ? { ...d, spell } : d))
-    const paid = applySacrificeCost({ ...state, team }, cost, choice.wizardId)  // -maxHP permanente al target
+    const spell = scaledSpell(base, target.spellLevel ?? 1)  // preserva spellLevel. NESSUN COSTO.
+    const team = state.team.map(d => (d.wizard.id === choice.wizardId ? { ...d, spell } : d))
     const ev: RunEvent = { area: state.area ?? 0, nodeId: node.id, kind: 'spellSwap',
-      summary: `${target.wizard.name}: patto — nuova magia «${spell.name}» (-${SWAP_MAXHP_COST} vita max)` }
-    return { ...paid, log: [...(paid.log ?? []), ev] }
+      summary: `${target.wizard.name}: nuova magia «${spell.name}»` }
+    return { ...state, team, log: [...(state.log ?? []), ev] }
   },
 }
 ```
-NB (impl): verificare la firma reale di `applySacrificeCost`/`canPay` in `game/engine/sacrifice.ts` — il
-costo `maxHp` all'Altare colpisce "un mago a tua scelta"; qui il mago è il target dello swap (deterministico).
-`scaledSpell` — recuperare dalla logica esistente (vecchio primitivo `790478b^` o `upgradeWizardSpell`).
+NB (impl): NESSUN costo — via `sacrifice.ts` da questo resolver. `swapOffer` = pattern deterministico di
+`altareOffer` (fork con BASE 6000). `scaledSpell` — recuperare dalla logica esistente (`upgradeWizardSpell`
+di spellForge) o dal vecchio primitivo `790478b^`; con spellLevel 1 ≈ base.
 
 ### 4b. Il ResolverChoice kind (`game/engine/resolvers/types.ts`)
 Aggiungere `{ kind: 'spell-swap'; wizardId: string; spellId: string }` a `ResolverChoice`.
@@ -121,14 +120,15 @@ Default `skip` (come altare) — senò instant-defeat artefatto. E una misura wo
 - **Costo permanente:** dopo lo swap, il maxHP del mago è sceso e RESTA sceso (persiste nella run). Verificare.
 - **Parità replay (CRITICO):** `enter` usa rng → `endlessReplayParity` DEVE restare verde (nodo escluso da
   endless, ma verificare ogni parity test campagna). Se rosso → STOP.
-- **GATE DI SICUREZZA (OBBLIGATORIO prima del merge — la feature fu tolta PER questo):** misurare
+- **GATE DI MISURA (OBBLIGATORIO prima del merge — la feature fu tolta PER questo):** misurare
   `campaignBalanceRestricted`/`campaignBalanceB` con un bot handler che ABUSA lo swap nel worst-case
-  (swap-ottimizza il più possibile, ignorando il costo maxHP se il bot è miope, O tenendone conto se realistico).
-  - Se il winRate resta in banda → il costo-patto frena l'exploit anche nel worst-case. Ship.
-  - Se SFONDA il tetto (come il vecchio 0.475) → il costo non basta. Opzioni: (a) alzare il costo maxHP;
-    (b) costo scalabile crescente per swap; (c) ridurre la frequenza; (d) NON spedire e ripensare.
-    NON abbassare l'assert per far passare — l'exploit è reale se emerge.
-  - Con handler `skip` il gate non si muove ma NON misura l'exploit umano → la misura worst-case è OBBLIGATORIA a parte.
+  (ottimizza ogni mago sul suo spell a danno massimo). Lo swap è GRATIS → l'exploit può riemergere pieno.
+  - Se il winRate resta in banda → sicuro anche senza costo. Ship senza toccare i nemici.
+  - Se SFONDA il tetto (come il vecchio 0.475) → **ri-alzare i NEMICI** (conteggi verso `[3,5,8]`, o potere)
+    finché il worst-case rientra, ri-misurando. Questo è il freno scelto (sui nemici, non sullo swap).
+    Documentare la taratura. NON abbassare l'assert per far passare; NON aggiungere un costo allo swap (decisione utente).
+  - Con handler `skip` il gate normale non si muove ma NON misura l'exploit → la misura worst-case è OBBLIGATORIA a parte.
+  - **Trade-off documentato:** alzare i nemici rende il gioco più duro per tutti (rischio §8). Accettato dall'utente.
 
 ## 7. File toccati (previsti)
 
