@@ -45,6 +45,7 @@ export interface RunBController {
   currentEvent: CurrentEventView | null
   chooseEventOption: (optionId: string) => void
   chooseSpellUpgrade: (wizardId: string) => void
+  chooseSpellSwap: (wizardId: string, spellId: string) => void
   useConsumableRelic: (relicId: string) => void
   cioccorane: number
   buyShopItem: (slotId: string, opts?: { carrierId?: string; targetWizardId?: string; replaceRelicId?: string }) => void
@@ -147,6 +148,7 @@ export function useRunB(seed: string): RunBController {
     chooseRecruit: shared.chooseRecruit, skipRecruit: shared.skipRecruit, chooseRelic: shared.chooseRelic,
     buyAltare: shared.buyAltare, skipAltare: shared.skipAltare, ackInfirmary: shared.ackInfirmary,
     currentEvent: shared.currentEvent, chooseEventOption: shared.chooseEventOption, chooseSpellUpgrade: shared.chooseSpellUpgrade,
+    chooseSpellSwap: shared.chooseSpellSwap,
     useConsumableRelic: useConsumableRelicCb,
     cioccorane: profileRef.current.cioccorane,
     buyShopItem, rerollShop, leaveShop,

@@ -18,6 +18,7 @@ import { RecruitScreen } from './RecruitScreen'
 import { RelicNodeScreen } from './RelicNodeScreen'
 import { EventScreen } from './EventScreen'
 import { SpellForgeScreen } from './SpellForgeScreen'
+import { SpellSwapScreen } from './SpellSwapScreen'
 import { InfirmaryScreen } from './InfirmaryScreen'
 import { AreaClearedScreen } from './AreaClearedScreen'
 import { ShopScreen } from './ShopScreen'
@@ -28,6 +29,7 @@ import { RelicBar } from '@/components/relics/RelicBar'
 import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
 import { shopOffer } from '@/game/engine/resolvers/shop'
 import { altareOffer } from '@/game/engine/resolvers/altare'
+import { swapOffer } from '@/game/engine/resolvers/spellSwap'
 import { createRng } from '@/game/engine/rng'
 import { runSummary } from '@/lib/runSummary'
 import { displayName } from '@/lib/displayName'
@@ -66,6 +68,9 @@ export interface RunnerController {
   currentEvent: CurrentEventView | null
   chooseEventOption: (optionId: string) => void
   chooseSpellUpgrade: (wizardId: string) => void
+  /** Campaign-only, mirrors buyAltare's optionality — endless never generates 'spellSwap'
+   *  nodes (weight zeroed in nodeGen.ts), so EndlessController doesn't implement this. */
+  chooseSpellSwap?: (wizardId: string, spellId: string) => void
   useConsumableRelic: (relicId: string) => void
   cioccorane?: number
   buyShopItem?: (slotId: string, opts?: { carrierId?: string; targetWizardId?: string; replaceRelicId?: string }) => void
@@ -244,6 +249,19 @@ export function RunBRunner({
         return withTeamSidebar(
           <SpellForgeScreen team={c.run.team} onUpgrade={c.chooseSpellUpgrade} />,
         )
+
+      case 'spellSwap':
+        // Campaign-only: endless areas never generate spellSwap nodes (weight zeroed in
+        // nodeGen.ts when state.endless), so this view is unreachable in endless.
+        return c.chooseSpellSwap
+          ? withTeamSidebar(
+              <SpellSwapScreen
+                team={c.run.team}
+                offers={swapOffer(c.run, c.currentNode!, createRng(c.run.seed)).map(s => s.id)}
+                onConfirm={c.chooseSpellSwap}
+              />,
+            )
+          : null
 
       case 'infirmary':
         return withTeamSidebar(
