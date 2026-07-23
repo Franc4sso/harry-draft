@@ -91,7 +91,7 @@ export function WizardCardColumn({
           : `${frame.boxShadow}${shinyGlow}`,
       }}
     >
-      {/* Fine keyline just inside the metal frame, tinted by tier accent (mockup: .plate::before). */}
+      {/* Fine keyline just inside the metal frame, tinted by tier accent (mockup: .plate::after). */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-[11px] z-20 rounded-[14px]"
@@ -99,13 +99,21 @@ export function WizardCardColumn({
       />
 
       {/* Shimmer — ONLY tier 1 (legendary), a slow diagonal gleam sweeping the gilded frame.
-          Respects prefers-reduced-motion: static gleam position, no animation (mockup: .t1 .shimmer). */}
+          Masked to the ~9px frame ring (content-box XOR mask, mockup: .t1 .shimmer) so the gleam
+          travels the gold border only, not the portrait/name underneath.
+          Respects prefers-reduced-motion: static gleam position, no animation. */}
       {isLegendary && (
         <div
           aria-hidden
           data-testid="tier-shimmer"
           className="pointer-events-none absolute inset-0 z-30 overflow-hidden rounded-2xl"
-          style={{ mixBlendMode: 'screen' }}
+          style={{
+            mixBlendMode: 'screen',
+            WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+            WebkitMaskComposite: 'xor',
+            maskComposite: 'exclude',
+            padding: 9,
+          }}
         >
           <motion.div
             className="absolute -inset-y-1/2 -inset-x-1/2"
@@ -115,6 +123,80 @@ export function WizardCardColumn({
             animate={reduceMotion ? undefined : { x: ['20%', '-20%'], y: ['-10%', '10%'] }}
             transition={reduceMotion ? undefined : { duration: 5.5, ease: 'easeInOut', repeat: Infinity }}
           />
+        </div>
+      )}
+
+      {/* DECO — signature ornaments, gated strictly by tier (mockup: .deco). Static (no motion),
+          so they're unaffected by prefers-reduced-motion. No corner gems anywhere — rejected. */}
+      {isLegendary && (
+        <div aria-hidden className="pointer-events-none absolute inset-0 z-30">
+          {/* Crown — top-center, above the frame (mockup: .t1 .deco svg, top:-9px). */}
+          <svg
+            data-testid="tier-legendary-crown"
+            width="60"
+            height="26"
+            viewBox="0 0 60 26"
+            className="absolute left-1/2 -translate-x-1/2"
+            style={{ top: -9 }}
+          >
+            <defs>
+              <linearGradient id="wizardCardGold" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#fff6d6" />
+                <stop offset="55%" stopColor="#ffd34d" />
+                <stop offset="100%" stopColor="#a9741f" />
+              </linearGradient>
+              <radialGradient id="wizardCardGoldGem" cx="38%" cy="32%" r="72%">
+                <stop offset="0" stopColor="#fffbe6" />
+                <stop offset="40%" stopColor="#ffdf7a" />
+                <stop offset="100%" stopColor="#8a5a12" />
+              </radialGradient>
+            </defs>
+            {/* dark backing so the crown reads against the gold frame */}
+            <path d="M11 24 L18 8 L30 17 L42 8 L49 24 Z" fill="#1a1206" opacity={0.55} transform="translate(0 1.5)" />
+            <path d="M11 24 L18 8 L30 17 L42 8 L49 24 Z" fill="url(#wizardCardGold)" stroke="#fff6d6" strokeWidth={1} />
+            <circle cx={18} cy={8} r={2.2} fill="url(#wizardCardGoldGem)" stroke="#fff6d6" strokeWidth={0.5} />
+            <circle cx={42} cy={8} r={2.2} fill="url(#wizardCardGoldGem)" stroke="#fff6d6" strokeWidth={0.5} />
+            <circle cx={30} cy={17} r={2.8} fill="url(#wizardCardGoldGem)" stroke="#fff6d6" strokeWidth={0.6} />
+          </svg>
+        </div>
+      )}
+      {wizard.tier === 2 && (
+        <div aria-hidden className="pointer-events-none absolute inset-0 z-30" data-testid="tier-epic-filigree">
+          {/* Filigree flourishes — top & bottom center only (mockup: .t2 .deco svg). No corner gems. */}
+          <svg
+            width="88"
+            height="20"
+            viewBox="0 0 88 20"
+            className="absolute left-1/2 -translate-x-1/2"
+            style={{ top: -3 }}
+          >
+            <defs>
+              <linearGradient id="wizardCardAmsil" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stopColor="#efe6ff" />
+                <stop offset="1" stopColor="#a879e0" />
+              </linearGradient>
+            </defs>
+            <g fill="none" stroke="url(#wizardCardAmsil)" strokeWidth={1.4} strokeLinecap="round">
+              <path d="M44 15 C44 8, 38 6, 32 8 C26 10, 24 6, 22 3" />
+              <path d="M44 15 C44 8, 50 6, 56 8 C62 10, 64 6, 66 3" />
+              <path d="M32 8 C34 4, 30 3, 28 6" />
+              <path d="M56 8 C54 4, 58 3, 60 6" />
+            </g>
+          </svg>
+          <svg
+            width="88"
+            height="20"
+            viewBox="0 0 88 20"
+            className="absolute left-1/2 -translate-x-1/2"
+            style={{ bottom: -3, transform: 'translateX(-50%) rotate(180deg)' }}
+          >
+            <g fill="none" stroke="url(#wizardCardAmsil)" strokeWidth={1.4} strokeLinecap="round">
+              <path d="M44 15 C44 8, 38 6, 32 8 C26 10, 24 6, 22 3" />
+              <path d="M44 15 C44 8, 50 6, 56 8 C62 10, 64 6, 66 3" />
+              <path d="M32 8 C34 4, 30 3, 28 6" />
+              <path d="M56 8 C54 4, 58 3, 60 6" />
+            </g>
+          </svg>
         </div>
       )}
 
