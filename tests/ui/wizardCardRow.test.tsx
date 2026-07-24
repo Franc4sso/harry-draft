@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { WizardCardRow } from '@/components/cards/WizardCardRow'
 import { draftWizard } from '@/game/engine/statRoll'
@@ -36,11 +36,14 @@ describe('WizardCardRow', () => {
     expect(screen.getByLabelText(d.wizard.role)).toBeInTheDocument()
   })
 
-  it('shows a trait chip when the wizard is shiny', () => {
+  it('exposes the trait via the shiny foil tooltip, not a trait chip', () => {
     const base = harry()
     const shiny = { ...base, shiny: { traitId: 'furia' } }
     render(<WizardCardRow drafted={shiny} />)
-    expect(screen.getByText(TRAIT_BY_ID['furia']!.name)).toBeInTheDocument()
+    // La chip tratto blu è stata rimossa: il tratto vive ora nel tooltip del marcatore foil.
+    expect(screen.queryByTestId('trait-chip')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByTestId('shiny-foil'))
+    expect(screen.getByText(new RegExp(TRAIT_BY_ID['furia']!.name))).toBeInTheDocument()
   })
 
   it('shows no trait chip when the wizard is not shiny', () => {
