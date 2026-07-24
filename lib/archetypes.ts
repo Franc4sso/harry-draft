@@ -13,3 +13,11 @@ export const ARCHETYPE_EFFECT: Record<string, string> = {
   spietatezza: 'Valanga di uccisioni: ogni kill monta forza e soglia di esecuzione.',
   bastione:    'Muro riflettente: chi ha uno scudo rimanda il danno assorbito.',
 }
+
+/** Testo tooltip per il nastro/archetipo di un tag. Se il tag ha una sinergia (synergyId),
+ *  mostra l'effetto della Costellazione; altrimenti un fallback generico col nome fantasia. */
+export function archetypeTooltip(tag: keyof typeof ARCHETYPE_BY_TAG): string {
+  const meta = ARCHETYPE_BY_TAG[tag]
+  const effect = meta.synergyId ? ARCHETYPE_EFFECT[meta.synergyId] : undefined
+  return effect ?? `Archetipo: ${meta.name}`
+}

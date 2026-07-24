@@ -7,7 +7,7 @@ import type { Role } from '@/types'
  * are otherwise invisible engine logic.
  */
 export const ROLE_INFO: Record<Role, string> = {
-  Tank: 'Muro della squadra: i nemici lo attaccano per primo. Tanta vita e difesa, poco danno.',
+  Tank: 'Scudo della squadra: i nemici lo attaccano per primo. Tanta vita e difesa, poco danno.',
   Attaccante: 'Cannone di vetro: ignora parte della difesa nemica e si tuffa sui bersagli fragili. Tanto attacco, poca vita.',
   Controllo: 'Disturbatore: stordisce e rallenta. Scavalca la provocazione del Tank solo se riesce a stordirlo. Molto veloce.',
   Supporto: 'Sostegno: cura, scuda e pulisce i controlli dalla squadra. La tiene in piedi.',
