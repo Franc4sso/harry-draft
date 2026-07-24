@@ -8,7 +8,7 @@ import { DuoSignalMarks } from './DuoSignalMarks'
 import { CARD_STAT_MAX } from './cardStats'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { spellEffectChips, spellEffectDetails, formatSpellStats } from '@/lib/glossary'
-import { ROLE_ACCENT } from '@/lib/roleInfo'
+import { ROLE_ACCENT, roleTooltip } from '@/lib/roleInfo'
 import { TRAIT_BY_ID } from '@/data/traits'
 import { abilityFor } from '@/lib/wizardAbilities'
 import { displayName } from '@/lib/displayName'
@@ -224,7 +224,9 @@ export function WizardCardColumn({
         <div aria-hidden className="absolute inset-0" style={{ boxShadow: 'inset 0 0 100px 16px rgba(0,0,0,0.5)' }} />
 
         <div className="absolute left-3 top-3">
-          <RoleBadge role={wizard.role} />
+          <Tooltip label={`Ruolo ${wizard.role}`} content={roleTooltip(wizard.role)}>
+            <RoleBadge role={wizard.role} />
+          </Tooltip>
         </div>
         <div className="absolute right-0 top-0 flex flex-col items-end gap-1">
           {/* ARCHETYPE RIBBON — top-right banner, glyph + fantasy name, tinted by archetype

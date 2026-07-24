@@ -47,3 +47,15 @@ export const SIGNAL_HOWTO: Record<DuoSignal, string> = {
   scudirigen: '2 maghi Scudo/Rigen, oppure 1 reliquia scudo',
   magieOscure: '2 maghi Magie Oscure, oppure 1 reliquia magia oscura',
 }
+
+/** Cosa FA il segnale in battaglia (tooltip sulla pill della card). */
+export const SIGNAL_BLURB: Record<DuoSignal, string> = {
+  taunt: 'Bersaglio: i nemici lo attaccano per primo, proteggendo la squadra.',
+  attaccante: 'Attaccante: alto danno, ignora parte della difesa nemica.',
+  supporto: 'Supporto: cura, scuda e pulisce i controlli dalla squadra.',
+  controllo: 'Controllo: stordisce, silenzia e rallenta i nemici.',
+  veleno: 'Veleno: infligge danno nel tempo che si accumula.',
+  esecuzione: 'Esecuzione: colpisce più forte i bersagli quasi morti.',
+  scudirigen: 'Scudo/Rigen: genera scudi e rigenerazione per resistere.',
+  magieOscure: 'Magie Oscure: incantesimi potenti con un contraccolpo.',
+}

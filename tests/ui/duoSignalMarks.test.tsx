@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { DuoSignalMarks } from '@/components/cards/DuoSignalMarks'
+import { SIGNAL_BLURB } from '@/data/duos'
 import type { Wizard } from '@/types'
 
 const wiz = (role: string, tags: string[] = []): Wizard =>
@@ -28,5 +29,11 @@ describe('DuoSignalMarks', () => {
     // scudirigen tag-signal escluso (il nastro lo mostra); il taunt "Bersaglio" resta (nessuna collisione)
     expect(screen.getByText('Bersaglio')).toBeInTheDocument()
     expect(screen.queryByText('Muro')).not.toBeInTheDocument()
+  })
+
+  it('ogni pill segnale espone un tooltip con il suo effetto', () => {
+    render(<DuoSignalMarks wizard={wiz('Tank', [])} />)
+    fireEvent.click(screen.getByText('Bersaglio'))
+    expect(screen.getByText(SIGNAL_BLURB.taunt)).toBeInTheDocument()
   })
 })
