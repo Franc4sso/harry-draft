@@ -16,14 +16,17 @@ describe('theme catalog', () => {
     expect(pickTheme(rng2, [])!.id).toBe(t!.id)
   })
 
-  it('has exactly the three archetype themes (tag:esecuzione, tag:scudirigen, tag:veleno)', () => {
+  it('has exactly the four archetype themes (tag:esecuzione, tag:magieOscure, tag:scudirigen, tag:veleno)', () => {
     // THEMES was reduced to a single entry ('tag:veleno', from Tossicità) when the 9 team
     // synergies were removed (2026-07-21). Spietatezza (tag:esecuzione) was then DELIBERATELY
-    // revived as a second archetype synergy (Carnefice Task 1, 2026-07-21/22), and Bastione
-    // (tag:scudirigen) as a third (Muro Riflettente Task 1, 2026-07-23) — each derives a theme
-    // (poolSize >= 3 holds for all three). THEMES sorts by id (themes.ts): 'tag:esecuzione' <
+    // revived as a second archetype synergy (Carnefice Task 1, 2026-07-21/22), Bastione
+    // (tag:scudirigen) as a third (Muro Riflettente Task 1, 2026-07-23), and Oscurità
+    // (tag:magieOscure) as a fourth (Patto Oscuro, 2026-07-24) — each derives a theme
+    // (poolSize >= 3 holds for all four; magieOscure has 6 tagged wizards). Adding an archetype
+    // synergy AUTO-derives its enemy theme (intended, same as the sister archetypes). THEMES
+    // sorts by id via localeCompare (themes.ts): 'tag:esecuzione' < 'tag:magieOscure' <
     // 'tag:scudirigen' < 'tag:veleno'.
-    expect(THEMES.map(t => t.id)).toEqual(['tag:esecuzione', 'tag:scudirigen', 'tag:veleno'])
+    expect(THEMES.map(t => t.id)).toEqual(['tag:esecuzione', 'tag:magieOscure', 'tag:scudirigen', 'tag:veleno'])
   })
 
   it('excluding every theme falls back to the full set', () => {
