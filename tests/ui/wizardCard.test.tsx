@@ -131,17 +131,19 @@ describe('WizardCardColumn (poster layout, the LIVE draft card)', () => {
     expect(marks).toBeInTheDocument() // role signal (controllo) remains
   })
 
-  it('keeps the taunt (Muro) role-signal in DuoSignalMarks for a Tank with no archetype tag', () => {
+  it('keeps the taunt "Bersaglio" role-signal in DuoSignalMarks for a Tank with no archetype tag', () => {
     render(<WizardCardColumn drafted={draftedTank()} />) // mcgonagall: Tank, tags=['order']
     expect(screen.queryByTestId('archetype-ribbon')).toBeNull()
-    expect(screen.getByTestId('duo-signal-marks')).toHaveTextContent('Muro')
+    expect(screen.getByTestId('duo-signal-marks')).toHaveTextContent('Bersaglio')
   })
 
-  it('shows "Muro" exactly once for a Tank+scudirigen wizard (ribbon only, taunt pill suppressed)', () => {
+  it('shows "Muro" exactly once (the archetype ribbon) for a Tank+scudirigen wizard — the taunt pill now reads "Bersaglio"', () => {
     render(<WizardCardColumn drafted={scudirigenTankDrafted()} />) // ernie: Tank, tags=['scudirigen']
     const ribbon = screen.getByTestId('archetype-ribbon')
     expect(ribbon).toHaveTextContent('Muro')
+    // "Muro" appears only on the ribbon; the taunt pill is "Bersaglio" (no collision)
     expect(screen.getAllByText('Muro')).toHaveLength(1)
+    expect(screen.getByText('Bersaglio')).toBeInTheDocument()
   })
 
   it('shows the ribbon Muro and no taunt pill for a scudirigen non-Tank (unchanged)', () => {
