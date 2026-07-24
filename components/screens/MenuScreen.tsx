@@ -89,7 +89,16 @@ export function MenuScreen() {
   const [nudge, setNudge] = useState(false)
 
   useEffect(() => {
-    setHasSavedRun(loadRun() !== null)
+    const saved = loadRun()
+    // A finished run (win/defeat) is saved to storage by the last commit but is NOT
+    // resumable — "Continua" would just re-open the end screen. Drop the stale save
+    // so the menu offers a clean fresh start instead of a dead-end resume.
+    if (saved && (saved.phase === 'win' || saved.phase === 'defeat')) {
+      clearRun()
+      setHasSavedRun(false)
+    } else {
+      setHasSavedRun(saved !== null)
+    }
     setNudge(!(loadProfile().tutorialNudgeSeen))
   }, [])
 
@@ -104,6 +113,10 @@ export function MenuScreen() {
     router.push('/play')
   }
   const continua = () => router.push('/play')
+  const endless = () => {
+    dismissNudge()
+    router.push('/endless')
+  }
   const tutorial = () => {
     dismissNudge()
     router.push('/play?tutorial=1')
