@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { detectSynergies } from '@/game/engine/synergy'
 import { teamDarkMagic } from '@/game/engine/darkMagic'
 import { NAMED_SYNERGY_IDS } from '@/lib/metaProgress'
+import { ARCHETYPE_BY_TAG, ARCHETYPE_EFFECT, archetypeTooltip } from '@/lib/archetypes'
 import type { DraftedWizard } from '@/types'
 
 const dw = (id: string, tags: string[] = []): DraftedWizard =>
@@ -39,5 +40,17 @@ describe('oscurita è un archetipo nominato (meta-progress)', () => {
     expect(NAMED_SYNERGY_IDS.has('oscurita')).toBe(true)
     // sanity: le sorelle ci sono già
     expect(NAMED_SYNERGY_IDS.has('tossicita')).toBe(true)
+  })
+})
+
+describe('Costellazione Oscurità (archetypes.ts)', () => {
+  it('magieOscure ora ha synergyId oscurita', () => {
+    expect(ARCHETYPE_BY_TAG.magieOscure.synergyId).toBe('oscurita')
+  })
+  it('esiste il testo effetto per oscurita', () => {
+    expect(ARCHETYPE_EFFECT['oscurita']).toBeTruthy()
+  })
+  it('archetypeTooltip(magieOscure) ora mostra l\'effetto, non il fallback', () => {
+    expect(archetypeTooltip('magieOscure')).toBe(ARCHETYPE_EFFECT['oscurita'])
   })
 })

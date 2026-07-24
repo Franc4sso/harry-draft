@@ -13,13 +13,14 @@ const ARCH_META: Record<string, { name: string; glyph: string; color: string }> 
   tossicita:   { name: 'Veleno',    glyph: '☠', color: '#7ddc7d' },
   spietatezza: { name: 'Carnefice', glyph: '✖', color: '#ff8a7a' },
   bastione:    { name: 'Muro',      glyph: '⛨', color: '#7db7ff' },
+  oscurita:    { name: 'Magie Oscure', glyph: '☾', color: '#b98cff' },
 }
 
 /**
  * Tracker COMPATTO delle Costellazioni (archetipi tag): una riga per archetipo — pip×need,
  * have/need, stato (sopito/vicino/attivo) ed effetto quando attivo. Sorella del DuoTracker:
- * stesso header, stesso stile riga, stessa gestione di `considered`. Mostra solo i 3 archetipi
- * con sistema (Veleno/Carnefice/Muro) — Magie Oscure non ha ancora una sinergia (Patto Oscuro).
+ * stesso header, stesso stile riga, stessa gestione di `considered`. Mostra i 4 archetipi
+ * con sistema (Veleno/Carnefice/Muro/Magie Oscure — Patto Oscuro attivato 2026-07-24).
  */
 export function ArchetypeTracker({ picks, considered, className }: {
   picks: DraftedWizard[]
