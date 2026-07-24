@@ -8,10 +8,10 @@ describe('ARCHETYPE_BY_TAG', () => {
     expect(ARCHETYPE_BY_TAG.scudirigen.name).toBe('Muro')
     expect(ARCHETYPE_BY_TAG.magieOscure.name).toBe('Magie Oscure')
   })
-  it('magieOscure NON ha synergyId (no sinergia Oscurità); gli altri 3 sì', () => {
-    expect(ARCHETYPE_BY_TAG.magieOscure.synergyId).toBeUndefined()
+  it('tutti e 4 i tag hanno un synergyId (Patto Oscuro attivato 2026-07-24)', () => {
     expect(ARCHETYPE_BY_TAG.veleno.synergyId).toBe('tossicita')
     expect(ARCHETYPE_BY_TAG.esecuzione.synergyId).toBe('spietatezza')
     expect(ARCHETYPE_BY_TAG.scudirigen.synergyId).toBe('bastione')
+    expect(ARCHETYPE_BY_TAG.magieOscure.synergyId).toBe('oscurita')
   })
 })
