@@ -2,6 +2,7 @@
 import type { DraftedWizard } from '@/types'
 import { synergyProgress } from '@/game/engine/synergy'
 import { ARCHETYPE_EFFECT } from '@/lib/archetypes'
+import { Tooltip } from '@/components/ui/Tooltip'
 import { cn } from '@/lib/cn'
 
 // Stessa palette del DuoTracker: oro = attivo, verde = vicino/avanza, bianco fioco = sopito.
@@ -63,12 +64,17 @@ export function ArchetypeTracker({ picks, considered, className }: {
               }}
             >
               <div className="flex items-baseline justify-between gap-2">
-                <span
-                  className="text-[12px] font-semibold leading-tight"
-                  style={{ color: state === 'active' ? '#f3e6c4' : state === 'near' ? GREEN : 'rgba(255,255,255,0.6)' }}
+                <Tooltip
+                  label={`Costellazione ${meta.name}`}
+                  content={ARCHETYPE_EFFECT[p.synergy.id] ?? `Archetipo: ${meta.name}`}
                 >
-                  <span aria-hidden style={{ color: meta.color }}>{meta.glyph}</span> {meta.name}
-                </span>
+                  <span
+                    className="text-[12px] font-semibold leading-tight"
+                    style={{ color: state === 'active' ? '#f3e6c4' : state === 'near' ? GREEN : 'rgba(255,255,255,0.6)' }}
+                  >
+                    <span aria-hidden style={{ color: meta.color }}>{meta.glyph}</span> {meta.name}
+                  </span>
+                </Tooltip>
                 <span className="shrink-0 text-[10px] font-bold" style={{ color: state === 'active' ? GOLD : state === 'near' ? GREEN : 'rgba(255,255,255,0.4)' }}>
                   {p.have}/{p.need}
                 </span>

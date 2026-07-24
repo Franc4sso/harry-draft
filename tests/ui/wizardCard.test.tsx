@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest'
-import { render, screen, within } from '@testing-library/react'
+import { render, screen, within, fireEvent } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { WizardCardColumn } from '@/components/cards/WizardCardColumn'
 import { draftWizard } from '@/game/engine/statRoll'
@@ -8,6 +8,7 @@ import { WIZARD_BY_ID } from '@/data/wizards'
 import { TRAIT_BY_ID } from '@/data/traits'
 import { displayName } from '@/lib/displayName'
 import { abilityFor } from '@/lib/wizardAbilities'
+import { archetypeTooltip } from '@/lib/archetypes'
 
 const harry = () => draftWizard(createRng(1), WIZARD_BY_ID['harry']!)
 // Tank fixture (role === 'Tank') for the poster-layout render tests below.
@@ -153,5 +154,14 @@ describe('WizardCardColumn (poster layout, the LIVE draft card)', () => {
   it('non mostra MAI il ribbon Duo sopra la card: la preview vive nel DuoTracker del rail', () => {
     render(<WizardCardColumn drafted={velenoDrafted()} />)
     expect(screen.queryByTestId('duo-ribbon')).toBeNull()
+  })
+
+  it("il nastro archetipo espone un tooltip con l'effetto della Costellazione", () => {
+    // un mago Tank+scudirigen (ernie) mostra il nastro "Muro" con tooltip bastione.
+    render(<WizardCardColumn drafted={scudirigenTankDrafted()} />)
+    // apri il tooltip (il trigger è un button; il popover appare su click)
+    const ribbon = screen.getByTestId('archetype-ribbon')
+    fireEvent.click(ribbon)
+    expect(screen.getByText(archetypeTooltip('scudirigen'))).toBeInTheDocument()
   })
 })

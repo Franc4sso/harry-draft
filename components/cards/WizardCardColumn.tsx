@@ -12,7 +12,8 @@ import { ROLE_ACCENT } from '@/lib/roleInfo'
 import { TRAIT_BY_ID } from '@/data/traits'
 import { abilityFor } from '@/lib/wizardAbilities'
 import { displayName } from '@/lib/displayName'
-import { ARCHETYPE_BY_TAG } from '@/lib/archetypes'
+import { ARCHETYPE_BY_TAG, archetypeTooltip } from '@/lib/archetypes'
+import { Tooltip } from '@/components/ui/Tooltip'
 
 /** Primary archetype for the card ribbon: the first of the wizard's tags that has an entry in
  *  ARCHETYPE_BY_TAG (veleno/esecuzione/scudirigen/magieOscure). A wizard can carry more than one
@@ -228,19 +229,28 @@ export function WizardCardColumn({
         <div className="absolute right-0 top-0 flex flex-col items-end gap-1">
           {/* ARCHETYPE RIBBON — top-right banner, glyph + fantasy name, tinted by archetype
               color (mockup: .ribbon). Shows the wizard's PRIMARY archetype tag only. */}
-          {archetype && (
-            <span
-              data-testid="archetype-ribbon"
-              data-archetype={wizard.tags?.find((t) => t in ARCHETYPE_BY_TAG)}
-              className="inline-flex items-center gap-1 rounded-bl-xl px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-wide text-white"
-              style={{
-                background: `linear-gradient(180deg, ${archetype.color}, ${archetype.color}99)`,
-                boxShadow: '0 3px 10px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.22)',
-              }}
-            >
-              <span aria-hidden>{archetype.glyph}</span> {archetype.name}
-            </span>
-          )}
+          {archetype && (() => {
+            const tag = wizard.tags?.find((t): t is keyof typeof ARCHETYPE_BY_TAG => t in ARCHETYPE_BY_TAG)!
+            return (
+              <Tooltip
+                label={`Archetipo ${archetype.name}`}
+                content={archetypeTooltip(tag)}
+                triggerClassName="rounded-bl-xl"
+              >
+                <span
+                  data-testid="archetype-ribbon"
+                  data-archetype={tag}
+                  className="inline-flex items-center gap-1 rounded-bl-xl px-3 py-1.5 text-[10.5px] font-bold uppercase tracking-wide text-white"
+                  style={{
+                    background: `linear-gradient(180deg, ${archetype.color}, ${archetype.color}99)`,
+                    boxShadow: '0 3px 10px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.22)',
+                  }}
+                >
+                  <span aria-hidden>{archetype.glyph}</span> {archetype.name}
+                </span>
+              </Tooltip>
+            )
+          })()}
           {drafted.corrotto && (
             <span
               data-testid="corrotto-badge"
