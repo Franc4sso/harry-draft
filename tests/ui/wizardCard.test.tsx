@@ -116,11 +116,13 @@ describe('WizardCardColumn (poster layout, the LIVE draft card)', () => {
     expect(screen.queryByText(d.wizard.role)).not.toBeInTheDocument()
   })
 
-  it('shows a trait chip when the wizard is shiny', () => {
+  it('exposes the trait via the shiny foil tooltip, not a trait chip', () => {
     const base = harry()
     const shiny = { ...base, shiny: { traitId: 'furia' } }
     render(<WizardCardColumn drafted={shiny} />)
-    expect(screen.getByText(TRAIT_BY_ID['furia']!.name)).toBeInTheDocument()
+    expect(screen.queryByTestId('trait-chip')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByTestId('shiny-foil'))
+    expect(screen.getByText(new RegExp(TRAIT_BY_ID['furia']!.name))).toBeInTheDocument()
   })
 
   it('does not repeat the Veleno archetype in DuoSignalMarks — the ribbon owns it now; the role signal (controllo) still shows', () => {

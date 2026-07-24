@@ -271,23 +271,32 @@ export function WizardCardColumn({
             style={{ textShadow: '0 4px 20px rgba(0,0,0,0.85)' }}
           >
             {displayName(drafted)}
-            {drafted.shiny && <span aria-hidden className="ml-1 text-amber-300">✨</span>}
+            {drafted.shiny && shinyTrait && (
+              <Tooltip
+                label="Cimelio raro"
+                content={`${shinyTrait.name} — ${shinyTrait.desc}`}
+                triggerClassName="ml-1.5 inline-flex align-middle"
+              >
+                <span
+                  data-testid="shiny-foil"
+                  className="inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold"
+                  style={{
+                    color: '#3a2a08',
+                    background: 'linear-gradient(135deg, #ffe9a8, #d9a94a)',
+                    boxShadow: '0 0 8px rgba(255,205,90,0.7), inset 0 1px 0 rgba(255,255,255,0.6)',
+                  }}
+                  aria-hidden
+                >
+                  ✦
+                </span>
+              </Tooltip>
+            )}
           </h3>
         </div>
       </div>
 
       {/* BODY */}
       <div className="flex flex-1 flex-col p-3.5 pt-3">
-        {shinyTrait && (
-          <div className="mb-2.5 flex flex-wrap items-center gap-1">
-            <span
-              className="inline-flex items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold"
-              style={{ color: '#c4dff3', borderColor: 'rgba(100,160,220,0.5)', background: 'rgba(60,110,180,0.18)' }}
-            >
-              {shinyTrait.name}
-            </span>
-          </div>
-        )}
 
         {/* Named signals so the Combo value is explicit. taunt reads "Bersaglio" (not "Tank")
             to avoid echoing the crown/RoleBadge — see DuoSignalMarks.cardLabel. The 4 tag-signals

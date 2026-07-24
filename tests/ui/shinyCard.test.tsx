@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render, screen } from '@testing-library/react'
+import { render, screen, fireEvent } from '@testing-library/react'
 import { WizardCardRow } from '@/components/cards/WizardCardRow'
 import { WIZARD_BY_ID } from '@/data/wizards'
 import { fixedStats } from '@/game/engine/statRoll'
@@ -13,10 +13,14 @@ function dw(id: string, shiny?: { traitId: string }) {
 }
 
 describe('WizardCardRow shiny', () => {
-  it('shows the epithet name and the trait chip when shiny', () => {
+  it('shows the epithet name and exposes the trait via the shiny foil tooltip', () => {
     render(<WizardCardRow drafted={dw('harry', { traitId: 'furia' })} />)
     expect(screen.getByText('Harry Potter, il Furioso')).toBeInTheDocument()
-    expect(screen.getByText(TRAIT_BY_ID['furia']!.name)).toBeInTheDocument()
+    // nessuna pill tratto blu
+    expect(screen.queryByTestId('trait-chip')).not.toBeInTheDocument()
+    // il tratto è nel tooltip del marcatore foil
+    fireEvent.click(screen.getByTestId('shiny-foil'))
+    expect(screen.getByText(new RegExp(TRAIT_BY_ID['furia']!.name))).toBeInTheDocument()
   })
   it('shows the plain name and no trait chip when not shiny', () => {
     render(<WizardCardRow drafted={dw('harry')} />)

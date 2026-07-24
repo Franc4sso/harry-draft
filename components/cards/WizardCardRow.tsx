@@ -108,7 +108,26 @@ export function WizardCardRow({
         <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <h3 className="font-display text-[17px] leading-none">
             {displayName(drafted)}
-            {drafted.shiny && <span aria-hidden className="ml-1 text-amber-300">✨</span>}
+            {drafted.shiny && shinyTrait && (
+              <Tooltip
+                label="Cimelio raro"
+                content={`${shinyTrait.name} — ${shinyTrait.desc}`}
+                triggerClassName="ml-1.5 inline-flex align-middle"
+              >
+                <span
+                  data-testid="shiny-foil"
+                  className="inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold"
+                  style={{
+                    color: '#3a2a08',
+                    background: 'linear-gradient(135deg, #ffe9a8, #d9a94a)',
+                    boxShadow: '0 0 8px rgba(255,205,90,0.7), inset 0 1px 0 rgba(255,255,255,0.6)',
+                  }}
+                  aria-hidden
+                >
+                  ✦
+                </span>
+              </Tooltip>
+            )}
           </h3>
           <DuoSignalMarks wizard={wizard} excludeArchetypeSignals />
         </div>
@@ -144,23 +163,6 @@ export function WizardCardRow({
               >
                 <span aria-hidden className="text-amber-300">★</span>
                 {signature.name}
-              </span>
-            </Tooltip>
-          </div>
-        )}
-
-        {/* Shiny trait — only present when the wizard rolled shiny. */}
-        {shinyTrait && (
-          <div className="flex flex-wrap items-center gap-1">
-            <span className="text-[8px] font-bold uppercase tracking-[0.2em] text-sky-300/55">Tratto</span>
-            <Tooltip content={shinyTrait.desc}>
-              <span
-                data-testid="trait-chip"
-                className="inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold"
-                style={{ color: '#bcd9f5', borderColor: 'rgba(96,156,214,0.55)', background: 'rgba(40,92,162,0.22)' }}
-              >
-                <span aria-hidden className="text-sky-300">✦</span>
-                {shinyTrait.name}
               </span>
             </Tooltip>
           </div>
