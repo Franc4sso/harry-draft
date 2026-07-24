@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { detectSynergies } from '@/game/engine/synergy'
 import { teamDarkMagic } from '@/game/engine/darkMagic'
+import { NAMED_SYNERGY_IDS } from '@/lib/metaProgress'
 import type { DraftedWizard } from '@/types'
 
 const dw = (id: string, tags: string[] = []): DraftedWizard =>
@@ -30,5 +31,13 @@ describe('sinergia oscurita (archetipo Patto Oscuro)', () => {
     const syn = detectSynergies(two)
     const map = teamDarkMagic(two, [], syn)
     expect(map['a']).toBeUndefined()
+  })
+})
+
+describe('oscurita è un archetipo nominato (meta-progress)', () => {
+  it('oscurita sopravvive al filtro NAMED_SYNERGY_IDS come le sorelle', () => {
+    expect(NAMED_SYNERGY_IDS.has('oscurita')).toBe(true)
+    // sanity: le sorelle ci sono già
+    expect(NAMED_SYNERGY_IDS.has('tossicita')).toBe(true)
   })
 })
