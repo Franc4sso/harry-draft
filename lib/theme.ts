@@ -3,6 +3,10 @@ import { HOUSES } from '@/data/houses'
 
 export { cn } from './cn'
 
+/** Glow "foil" oro condiviso per i maghi shiny. UN solo layer coeso (niente doppioni).
+ *  Concatenato al boxShadow del frame card in Row e Column. */
+export const SHINY_FOIL = ', 0 0 20px rgba(255,200,80,0.5), inset 0 0 0 2px rgba(255,210,90,0.75)'
+
 export function houseTheme(house: House): { color: string; glow: string; gradient: string; ring: string } {
   const { color, glow } = HOUSES[house]
   return {

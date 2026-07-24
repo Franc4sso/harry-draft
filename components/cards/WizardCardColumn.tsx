@@ -1,7 +1,7 @@
 'use client'
 import { motion, useReducedMotion } from 'framer-motion'
 import type { DraftedWizard, Stat } from '@/types'
-import { cn, houseTheme, tierFrame } from '@/lib/theme'
+import { cn, houseTheme, tierFrame, SHINY_FOIL } from '@/lib/theme'
 import { RoleBadge } from './RoleBadge'
 import { AbilityPlate } from './AbilityPlate'
 import { DuoSignalMarks } from './DuoSignalMarks'
@@ -59,7 +59,7 @@ export function WizardCardColumn({
   const effectDetails = spellEffectDetails(spell)
   const spellStats = formatSpellStats(spell)
   const shinyTrait = drafted.shiny ? TRAIT_BY_ID[drafted.shiny.traitId] : undefined
-  const shinyGlow = drafted.shiny ? ', 0 0 22px rgba(255,200,80,0.55), inset 0 0 0 2px rgba(255,210,90,0.7)' : ''
+  const shinyGlow = drafted.shiny ? SHINY_FOIL : ''
   const ability = abilityFor(wizard.id)
   const archetype = primaryArchetype(wizard.tags)
   const isLegendary = wizard.tier === 1
@@ -274,10 +274,6 @@ export function WizardCardColumn({
             {drafted.shiny && <span aria-hidden className="ml-1 text-amber-300">✨</span>}
           </h3>
         </div>
-
-        {drafted.shiny && (
-          <div aria-hidden className="pointer-events-none absolute inset-0" style={{ boxShadow: 'inset 0 0 0 2px rgba(255,210,90,0.8), 0 0 18px rgba(255,200,80,0.5)' }} />
-        )}
       </div>
 
       {/* BODY */}

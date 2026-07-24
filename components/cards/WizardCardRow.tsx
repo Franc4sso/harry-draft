@@ -1,7 +1,7 @@
 'use client'
 import { motion } from 'framer-motion'
 import type { DraftedWizard, Stat } from '@/types'
-import { cn, houseTheme } from '@/lib/theme'
+import { cn, houseTheme, SHINY_FOIL } from '@/lib/theme'
 import { TierBadge } from './TierBadge'
 import { RoleIcon } from './RoleIcon'
 import { CARD_STAT_MAX } from './cardStats'
@@ -41,7 +41,7 @@ export function WizardCardRow({
   const effectDetails = spellEffectDetails(spell)
   const spellStats = formatSpellStats(spell)
   const shinyTrait = drafted.shiny ? TRAIT_BY_ID[drafted.shiny.traitId] : undefined
-  const shinyGlow = drafted.shiny ? ', 0 0 22px rgba(255,200,80,0.55), inset 0 0 0 2px rgba(255,210,90,0.7)' : ''
+  const shinyGlow = drafted.shiny ? SHINY_FOIL : ''
   const signature = SIGNATURE_BY_ID[wizard.id]
 
   return (
