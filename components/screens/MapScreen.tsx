@@ -104,8 +104,14 @@ export function MapScreen({
 }) {
   const reduce = useReducedMotion()
   const reachable = new Set(reachableIds)
+  // Endless mode passes no `areasTotal` (the run is infinite): show `∞` for the total
+  // rather than the old `?? 1` fallback, which rendered a nonsensical "Area 3 / 1".
+  // Mirrors AreaClearedScreen's undefined-total → ∞ convention.
   const header = (
-    <Insegna kicker={`Area ${(area ?? 0) + 1} / ${areasTotal ?? 1}`} title="Scegli il cammino" />
+    <Insegna
+      kicker={`Area ${(area ?? 0) + 1} / ${areasTotal !== undefined ? areasTotal : '∞'}`}
+      title="Scegli il cammino"
+    />
   )
 
   // Defensive: with no nodes there is nothing to wire (and the geometry below

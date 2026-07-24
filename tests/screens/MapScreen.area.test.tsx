@@ -18,4 +18,14 @@ describe('MapScreen with area-scoped ids', () => {
     await userEvent.click(screen.getByTestId(`node-${target.id}`))
     expect(onChoose).toHaveBeenCalledWith(target.id)
   }, 15000)
+
+  it('shows an infinite total (∞), never a bogus "/ 1", when no areasTotal is given (endless)', () => {
+    const map = generateArea(createRng('m').fork(4).fork(0), 'm', 2, { teamSize: 2, teamMax: 5 })
+    const entry = map.find(n => n.id.includes('n'))!
+    render(
+      <MapScreen map={map} currentNodeId={entry.id} reachableIds={entry.next} area={2} onChoose={vi.fn()} />,
+    )
+    expect(screen.getByText(/Area 3 \/ ∞/)).toBeInTheDocument()
+    expect(screen.queryByText(/Area 3 \/ 1/)).toBeNull()
+  })
 })
