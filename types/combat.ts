@@ -19,9 +19,6 @@ export interface DraftedWizard {
   /** Run progression (player wizards only; absent on enemy teams → treated as level 1). */
   level?: number
   exp?: number
-  /** Magic mastery earned at "Aumento Magia" nodes (player-only). Scales the equipped
-   *  spell's power/heal; absent = level 1 (no bonus). Carries across spell swaps. */
-  spellLevel?: number
   recruitedVia?: string
   growthChoices?: GrowthChoice[]
   /** Tag guadagnati a RUNTIME (es. il Marchio delle Spoglie della Vittoria), oltre a quelli

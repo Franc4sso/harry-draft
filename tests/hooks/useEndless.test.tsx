@@ -28,11 +28,7 @@ function draftStarters(seed: string): DraftedWizard[] {
  *  offered starters + reachable nodes. Combat auto-acks (deterministic — no
  *  choice). Recruit/relic nodes are skipped (a legal, non-cheating action per
  *  replayRun's exemption for {kind:'skip'}) to keep the walk simple and
- *  reviewable. Event nodes take the first offered choice. Infirmary auto-acks.
- *  spellForge nodes are avoided when an alternative reachable node exists
- *  (Task 5, not yet landed, is what excludes them from endless map gen; a real
- *  player CAN still encounter them today) — if genuinely unavoidable the test
- *  fails loudly rather than silently mis-recording, so a stuck seed is visible. */
+ *  reviewable. Event nodes take the first offered choice. Infirmary auto-acks. */
 function driveToWipeout(result: { current: ReturnType<typeof useEndless> }): string[] {
   const picked = draftStarters(result.current.run.seed)
   act(() => result.current.completeDraft(picked))
@@ -52,8 +48,7 @@ function driveToWipeout(result: { current: ReturnType<typeof useEndless> }): str
       // never special-cases 'victory', relying entirely on the next 'move' action).
       const options = result.current.reachable
       if (options.length === 0) throw new Error('no reachable nodes from a map/victory view')
-      const nonForge = options.filter(n => n.type !== 'spellForge')
-      const target = (nonForge.length > 0 ? nonForge : options)[0]!
+      const target = options[0]!
       act(() => result.current.chooseNode(target.id))
     } else if (view === 'battle') {
       act(() => result.current.commitBattle())
@@ -72,10 +67,6 @@ function driveToWipeout(result: { current: ReturnType<typeof useEndless> }): str
       if (!ev) throw new Error('event view with no currentEvent')
       const choice = ev.choices[0]!
       act(() => result.current.chooseEventOption(choice.id))
-    } else if (view === 'spellForge') {
-      const wizardId = result.current.run.team[0]?.wizard.id
-      if (!wizardId) throw new Error('spellForge view with empty team')
-      act(() => result.current.chooseSpellUpgrade(wizardId))
     } else if (view === 'area-cleared' || view === 'win') {
       act(() => result.current.advanceArea())
     } else {

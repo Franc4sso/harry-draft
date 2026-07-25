@@ -5,11 +5,11 @@ export type RunPhase =
   | 'menu' | 'draft' | 'team' | 'battle'
   | 'victory' | 'defeat' | 'win'
   // Fase 1 redesign (Plan B):
-  | 'house' | 'starter' | 'map' | 'recruit-node' | 'relic-node' | 'infirmary-node' | 'event-node' | 'spellForge-node' | 'area-cleared' | 'altare-node'
+  | 'house' | 'starter' | 'map' | 'recruit-node' | 'relic-node' | 'infirmary-node' | 'event-node' | 'area-cleared' | 'altare-node'
 
 export type RunNodeType =
   // Fase 1 — generati e risolti
-  | 'battle' | 'elite' | 'boss' | 'recruit' | 'relic' | 'infirmary' | 'spellForge'
+  | 'battle' | 'elite' | 'boss' | 'recruit' | 'relic' | 'infirmary'
   // Fasi 2-3 — catalogati ora, generati dopo
   | 'event' | 'commonRoom'
   | 'library' | 'potions' | 'forest'
@@ -59,7 +59,7 @@ export interface RunNode {
 export interface RunEvent {
   area: number
   nodeId: string
-  kind: 'recruit' | 'relic' | 'elite' | 'boss' | 'levelMilestone' | 'infirmary' | 'event' | 'spellForge' | 'altare'
+  kind: 'recruit' | 'relic' | 'elite' | 'boss' | 'levelMilestone' | 'infirmary' | 'event' | 'altare'
   /** 'spoglie': la Spoglia scelta dopo una vittoria normale (Marchio / Allenamento / Ristoro). */
   | 'spoglie'
   summary: string

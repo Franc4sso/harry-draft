@@ -16,12 +16,12 @@ function floorOf(id: string): number {
 const ICON: Record<RunNodeType, string> = {
   battle: '⚔️', elite: '☠️', boss: '👑', relic: '💎', event: '❓',
   recruit: '🧙', commonRoom: '🏠', library: '📚', potions: '🧪', forest: '🌲', infirmary: '🏥',
-  spellForge: '✨', altare: '🕯️',
+  altare: '🕯️',
 }
 const LABEL: Record<RunNodeType, string> = {
   battle: 'Battaglia', elite: 'Elite', boss: 'Boss', relic: 'Reliquia', event: 'Evento',
   recruit: 'Recluta', commonRoom: 'Sala Comune', library: 'Biblioteca',
-  potions: 'Pozioni', forest: 'Foresta', infirmary: 'Infermeria', spellForge: 'Aumento Magia',
+  potions: 'Pozioni', forest: 'Foresta', infirmary: 'Infermeria',
   altare: 'Altare Oscuro',
 }
 /** Per-type seal accent (ring + glow + ink tint). */
@@ -29,7 +29,7 @@ const ACCENT: Record<RunNodeType, string> = {
   battle: '#b08d57', elite: '#e0833a', boss: '#f5c451', relic: '#a78bfa',
   event: '#c78bf0', recruit: '#5fbf8a', commonRoom: '#6fb1c4',
   library: '#6fb1c4', potions: '#5fbf8a', forest: '#5fbf8a', infirmary: '#10b981',
-  spellForge: '#5ad1e0', altare: '#8b2f4f',
+  altare: '#8b2f4f',
 }
 
 /**

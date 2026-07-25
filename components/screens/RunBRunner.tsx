@@ -23,7 +23,6 @@ import { ResultScreen } from './ResultScreen'
 import { RecruitScreen } from './RecruitScreen'
 import { RelicNodeScreen } from './RelicNodeScreen'
 import { EventScreen } from './EventScreen'
-import { SpellForgeScreen } from './SpellForgeScreen'
 import { InfirmaryScreen } from './InfirmaryScreen'
 import { AreaClearedScreen } from './AreaClearedScreen'
 import { AltareScreen } from './AltareScreen'
@@ -74,7 +73,6 @@ export interface RunnerController {
   ackInfirmary: () => void
   currentEvent: CurrentEventView | null
   chooseEventOption: (optionId: string) => void
-  chooseSpellUpgrade: (wizardId: string) => void
   useConsumableRelic: (relicId: string) => void
   cioccorane?: number
   advanceArea: () => void
@@ -285,11 +283,6 @@ export function RunBRunner({
       case 'event':
         return withTeamSidebar(
           <EventScreen event={c.currentEvent!} onChoose={c.chooseEventOption} />,
-        )
-
-      case 'spellForge':
-        return withTeamSidebar(
-          <SpellForgeScreen team={c.run.team} onUpgrade={c.chooseSpellUpgrade} />,
         )
 
       case 'infirmary':
