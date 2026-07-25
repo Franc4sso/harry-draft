@@ -6,7 +6,7 @@ import { RELIC_RARITY_COLOR } from '@/lib/relicRarity'
 /** Shown when the player is at the relic cap (`BALANCE.relics.maxRelics`) and picks
  *  a new relic: forces an explicit choice — swap it for one of the `owned` relics
  *  (pastiglie, same rarity-tinted pill style as {@link RelicBar}) or reject the
- *  offer outright. Generic/pure — reused by the Shop and Altare Oscuro nodes. */
+ *  offer outright. Generic/pure — reused by the Relic and Altare Oscuro nodes. */
 export function RelicSwapPanel({
   incoming, owned, onSwap, onReject,
 }: {

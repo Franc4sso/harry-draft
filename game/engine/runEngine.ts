@@ -90,11 +90,11 @@ export function combatRngForNode(seed: string, nodeId: string): Rng {
  *  `true` on the incoming state for the endless entry path (useEndless's initialRun sets
  *  it before mount, and endlessReplay.ts sets it on startRunB's result before calling this)
  *  — campaign's startRunB/confirmDraftPicks path never sets it, so it's undefined/false
- *  there. Threading it into generateArea excludes shop/spellForge from endless area 0 too
- *  (every other endless area already gets this via advanceEndlessArea) — without it, the
- *  endless controller's missing shop handler soft-locks on the ~45% of area-0 maps that
- *  roll a shop node. Campaign's call is unaffected: state.endless is always falsy there, so
- *  this preserves byte-identical campaign area-0 generation. */
+ *  there. Threading it into generateArea excludes altare from endless area 0 too (every
+ *  other endless area already gets this via advanceEndlessArea) — without it, the endless
+ *  controller's missing altare handler would soft-lock area-0, since altare is guaranteed
+ *  once per area in campaign mode (Fase 3). Campaign's call is unaffected: state.endless is
+ *  always falsy there, so this preserves byte-identical campaign area-0 generation. */
 export function chooseStarters(state: RunState, house: House, starterIds: string[], _rng: Rng): RunState {
   const offer = starterOffer(state.seed, house)
   const starters = starterIds

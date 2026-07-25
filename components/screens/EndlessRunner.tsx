@@ -7,7 +7,7 @@ import { EndlessResult } from './EndlessResult'
 /** Endless-mode run screen. Reuses RunBRunner (and every node/battle/map view it
  *  drives) via the shared controller shape (components/screens/RunBRunner.tsx's
  *  RunnerController) — zero view rebuild for map/battle/recruit/relic/event/
- *  spellForge/infirmary/area-cleared. The draft phase now reuses the campaign
+ *  infirmary/area-cleared. The draft phase now reuses the campaign
  *  DraftScreen too (screen-draft, no house pick) — the anti-cheat replay
  *  (game/engine/endlessReplay.ts) drives the SAME seeded DraftSession and
  *  validates each recorded pick, so live play and replay stay in lockstep. The

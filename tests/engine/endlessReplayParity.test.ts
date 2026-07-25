@@ -75,7 +75,7 @@ function playAndRecord(seed: string): { playedScore: number; log: RunLog } {
   const { draftPicks, picks } = draftByPower(seed)
   const actions: PlayerAction[] = []
 
-  // endless:true must be set BEFORE confirmDraftPicks so area-0 excludes shop/spellForge —
+  // endless:true must be set BEFORE confirmDraftPicks so area-0 excludes altare —
   // mirrors replayRun's own reconstruction (game/engine/endlessReplay.ts).
   let s: RunState = confirmDraftPicks({ ...startRunB(seed), endless: true }, picks, createRng(seed))
 
@@ -241,7 +241,7 @@ function playAndRecordDuoBiased(seed: string): { playedScore: number; log: RunLo
   const actions: PlayerAction[] = []
   let sawRngDuoBattle = false
 
-  // endless:true must be set BEFORE confirmDraftPicks so area-0 excludes shop/spellForge —
+  // endless:true must be set BEFORE confirmDraftPicks so area-0 excludes altare —
   // mirrors replayRun's own reconstruction (game/engine/endlessReplay.ts).
   let s: RunState = confirmDraftPicks({ ...startRunB(seed), endless: true }, picks, createRng(seed))
 

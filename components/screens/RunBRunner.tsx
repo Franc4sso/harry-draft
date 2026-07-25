@@ -65,9 +65,8 @@ export interface RunnerController {
   chooseRecruit: (wizardId: string, replaceId?: string) => void
   skipRecruit: () => void
   chooseRelic: (relicId: string, assignedTo?: string, replaceRelicId?: string) => void
-  /** Altare Oscuro (P5): campaign-only, mirrors buyShopItem/leaveShop's optionality —
-   *  endless never generates 'altare' nodes (Task 6), so EndlessController doesn't
-   *  implement these. */
+  /** Altare Oscuro (P5): campaign-only, optional like chooseSpoil above — endless never
+   *  generates 'altare' nodes (Task 6), so EndlessController doesn't implement these. */
   buyAltare?: (relicId: string, costWizardId?: string, costRelicId?: string, carrierId?: string, replaceRelicId?: string) => void
   skipAltare?: () => void
   ackInfirmary: () => void
@@ -265,9 +264,9 @@ export function RunBRunner({
         )
 
       case 'altare':
-        // Campaign-only: altare nodes never generate in endless (Task 6 — mirrors shop's
-        // exclusion), so buyAltare/skipAltare are optional on RunnerController and this view
-        // is unreachable in endless.
+        // Campaign-only: altare nodes never generate in endless (Task 6), so
+        // buyAltare/skipAltare are optional on RunnerController and this view is
+        // unreachable in endless.
         return c.buyAltare && c.skipAltare
           ? withTeamSidebar(
               <AltareScreen

@@ -11,7 +11,10 @@ export const RUN_KEY_ENDLESS = 'harry:run:endless:v1'
 // v2: Fase 1 Polish changed the run schema (house/starter phases replaced by a
 // `draft` phase; map wiring + level fields). Bumping discards incompatible v1
 // runs so a stale save can't render an empty/broken screen.
-const VERSION = 2
+// v3: Onda 1.e (2026-07-25) removed the spellForge/spellSwap/shop node types from
+// RunNodeType/RunPhase. A v2 save can still reference one of those node ids on its
+// map, so bumping again discards pre-Onda-1.e runs for the same reason as v2 did.
+const VERSION = 3
 
 function ls(): Storage | null {
   return typeof localStorage !== 'undefined' ? localStorage : null

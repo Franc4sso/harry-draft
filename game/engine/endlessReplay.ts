@@ -60,7 +60,7 @@ export function replayRun(log: RunLog): { state: RunState; valid: boolean; reaso
   if (session.picks.length !== STARTER_PICKS) {
     return { state: null as unknown as RunState, valid: false, reason: 'incomplete draft' }
   }
-  // endless:true must be set BEFORE confirmDraftPicks so area-0 excludes spellForge (Task 1).
+  // endless:true must be set BEFORE confirmDraftPicks so area-0 excludes altare (Task 1).
   let s = confirmDraftPicks({ ...startRunB(log.seed), endless: true }, session.picks, rng)
 
   for (const a of log.actions) {
@@ -103,11 +103,11 @@ export function replayRun(log: RunLog): { state: RunState; valid: boolean; reaso
       //    therefore indistinguishable from a no-op by state-equality alone, so it must
       //    be trusted by choice kind, not inferred.
       //  - Everything else that no-ops (wrong choice kind for the node, or a
-      //    'relic-pick'/'recruit-pick'/'event-choice'/'spell-upgrade' whose
-      //    id/target isn't in that node's actual offer) is illegal and must be rejected.
-      //    'spell-upgrade' additionally never legitimately appears in an endless log at
-      //    all (no spellForge nodes in endless — Decision 2), so a no-op from it here is
-      //    illegal by construction too.
+      //    'relic-pick'/'recruit-pick'/'event-choice'/'altare-buy' whose id/target
+      //    isn't in that node's actual offer) is illegal and must be rejected.
+      //    'altare-buy' additionally never legitimately appears in an endless log at
+      //    all (altare is the sole node type excluded from endless — see
+      //    game/engine/nodeGen.ts), so a no-op from it here is illegal by construction too.
       if (checked.wasNoOp && a.choice.kind !== 'combat-ack' && a.choice.kind !== 'skip') {
         return { state: s, valid: false, reason: `illegal resolve choice: ${JSON.stringify(a)}` }
       }

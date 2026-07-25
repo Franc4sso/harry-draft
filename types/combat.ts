@@ -27,7 +27,7 @@ export interface DraftedWizard {
   grantedTags?: string[]
   /** P5 Corruzione: marchiato per sempre dall'aver equipaggiato una reliquia grantsDarkMagic.
    *  PERMANENTE (resta anche se la reliquia sparisce). Effetto: NON CURABILE — nessun
-   *  regen/cura in battaglia, niente Infermeria/shop-heal/healTeam. Eccezioni deliberate:
+   *  regen/cura in battaglia, niente Infermeria/healTeam. Eccezioni deliberate:
    *  recovery di fine area (clearAreaAndAdvance) e revive (Lacrime di Fenice). */
   corrotto?: true
 }

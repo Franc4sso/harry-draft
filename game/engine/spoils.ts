@@ -260,7 +260,7 @@ export function applySpoilChoice(state: RunState, offer: Spoil[], choice: SpoilC
  *  run, Onda 4). Sta qui — e non nel chiamante — perché il testo dipende dal TIPO di Spoglia,
  *  che è roba di questo modulo; l'area e il nodo li passa il chiamante, che è l'unico a
  *  saperli (vedi la nota in testa al file). Il nome del mago è `wizard.name`, come in ogni
- *  altro resolver che scrive nel log (recruit/spellForge/spellSwap). */
+ *  altro resolver che scrive nel log (recruit/altare). */
 export function spoilLogEvent(state: RunState, nodeId: string, spoil: Spoil, wizardId?: string): RunEvent {
   const name = state.team.find(d => d.wizard.id === wizardId)?.wizard.name
   const summary = spoil.kind === 'marchio'
