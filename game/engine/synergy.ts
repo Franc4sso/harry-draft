@@ -1,69 +1,32 @@
 import type { ActiveSynergy, DraftedWizard, Stats, Synergy } from '@/types'
 import { SYNERGIES } from '@/data/synergies'
-import { tagsOf } from '@/game/engine/roster'
+import { SIGNAL_TIERS, tier2Contributors } from '@/game/engine/duos'
 
-function membersFor(syn: Synergy, team: DraftedWizard[]): string[] | null {
-  const req = syn.requires
-  if (req.ids && req.ids.length > 0) {
-    const have = team.filter(d => req.ids!.includes(d.wizard.id))
-    return have.length === req.ids.length ? have.map(d => d.wizard.id) : null
-  }
-  const count = req.count ?? 3
-  const matched = team.filter(d =>
-    (req.house ? d.wizard.house === req.house : true) &&
-    (req.role ? d.wizard.role === req.role : true) &&
-    (req.tag ? tagsOf(d).includes(req.tag) : true),
-  )
-  return matched.length >= count ? matched.map(d => d.wizard.id) : null
-}
+/** Il grado 2 del segnale, indicizzato per l'id storico della sua ex-Sinergia. `SYNERGIES` è
+ *  la proiezione di `SIGNAL_TIERS`, quindi la corrispondenza è 1:1 e nello stesso ordine. */
+const TIER_BY_ID = new Map(SIGNAL_TIERS.map(t => [t.id, t]))
 
+/** I segnali arrivati al **grado 2** (3 maghi col tag), consegnati nel tipo di trasporto
+ *  storico `ActiveSynergy[]` che il motore già consuma. Soglia e contribuenti li decide una
+ *  sola funzione — `tier2Contributors` nel modello dei segnali (game/engine/duos.ts).
+ *  Le RELIQUIE non entrano qui: accendono il grado 1, mai il grado 2 (regola documentata in
+ *  duos.ts), ed è il motivo per cui questa funzione non prende `relics`. */
 export function detectSynergies(team: DraftedWizard[]): ActiveSynergy[] {
-  const all: ActiveSynergy[] = []
-  for (const syn of SYNERGIES) {
-    const members = membersFor(syn, team)
-    if (members) all.push({ synergy: syn, memberIds: members })
-  }
-  // Within a family, keep only the highest threshold that is active.
-  const bestByFamily = new Map<string, ActiveSynergy>()
   const out: ActiveSynergy[] = []
-  for (const a of all) {
-    const fam = a.synergy.family
-    if (!fam) { out.push(a); continue }
-    const cur = bestByFamily.get(fam)
-    if (!cur || synergyThreshold(a.synergy) > synergyThreshold(cur.synergy)) {
-      bestByFamily.set(fam, a)
-    }
+  for (const syn of SYNERGIES) {
+    const tier = TIER_BY_ID.get(syn.id)
+    if (!tier) continue
+    const members = tier2Contributors(tier, team)
+    if (members.length >= tier.need) out.push({ synergy: syn, memberIds: members.map(d => d.wizard.id) })
   }
-  out.push(...bestByFamily.values())
   return out
 }
 
-export interface SynergyProgress {
-  synergy: Synergy
-  have: number
-  need: number
-  active: boolean
-  memberIds: string[]
-}
-
-/** Progresso per-sinergia INCLUSO il conteggio parziale (2/3) — a differenza di membersFor/detectSynergies
- *  che scartano il parziale. Pura, per UI (le Costellazioni). Replica la logica di conteggio di membersFor. */
-export function synergyProgress(team: DraftedWizard[]): SynergyProgress[] {
-  return SYNERGIES.map(syn => {
-    const req = syn.requires
-    const need = req.count ?? 3
-    const matched = req.ids && req.ids.length > 0
-      ? team.filter(d => req.ids!.includes(d.wizard.id))
-      : team.filter(d =>
-          (req.house ? d.wizard.house === req.house : true) &&
-          (req.role ? d.wizard.role === req.role : true) &&
-          (req.tag ? tagsOf(d).includes(req.tag) : true),
-        )
-    const have = matched.length
-    const needCount = req.ids ? req.ids.length : need
-    return { synergy: syn, have, need: needCount, active: have >= needCount, memberIds: matched.map(d => d.wizard.id) }
-  })
-}
+// `synergyProgress` (progresso parziale 2/3 nel tipo `Synergy`) è stato RIMOSSO il 2026-07-25
+// con la Fase 2 del piano "Un solo asse": esisteva solo per l'ArchetypeTracker («Costellazioni»),
+// pannello ora fuso nel tracker unico. Il conteggio parziale per la UI si legge direttamente nel
+// modello dei segnali — `tier2Contributors` / `tier2Of` / `signalGrade` in game/engine/duos.ts —
+// senza passare dal tipo di trasporto storico.
 
 // Still exported: game/engine/combat/themes.ts uses this to derive each theme's
 // minCount (Tossicità needs 3 veleno-tagged members) for themed enemy team generation.

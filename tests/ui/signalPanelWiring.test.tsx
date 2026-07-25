@@ -5,19 +5,18 @@ import { RecruitScreen } from '@/components/screens/RecruitScreen'
 import { offerRecruits, recruitVia } from '@/game/engine/recruit'
 import { createRng } from '@/game/engine/rng'
 
-// Wiring-only tests: verify ArchetypeTracker ("Costellazioni") is mounted next to the
-// DuoTracker in both the draft and recruit screens. The tracker's own logic (states,
-// active/near, effects) is unit-tested in tests/ui/archetypeTracker.test.tsx (Task 3);
-// here we only need proof the component is actually rendered in-screen.
-describe('ArchetypeTracker wiring', () => {
-  it('is mounted in DraftScreen next to the DuoTracker', () => {
+// Wiring-only: dal 2026-07-25 (piano "Un solo asse", Fase 2) draft e recluta montano UN SOLO
+// pannello — il tracker unico — al posto della coppia DuoTracker + ArchetypeTracker. Qui si
+// verifica solo che sia montato e che il secondo pannello NON esista più; la sua logica
+// (gradi, anteprima 2→3, perdite) è testata in tests/ui/duoTracker.test.tsx.
+describe('pannello unico segnali+combo — wiring', () => {
+  it('DraftScreen monta il tracker unico e nessun pannello Costellazioni separato', () => {
     const { container } = render(<DraftScreen seed="arch-wire-1" onComplete={() => {}} />)
     expect(container.querySelector('[data-testid="draft-duo-tracker"]')).not.toBeNull()
-    expect(container.querySelector('[data-testid="draft-archetype-tracker"]')).not.toBeNull()
-    expect(container.querySelector('[data-arch="tossicita"]')).not.toBeNull()
+    expect(container.querySelector('[data-testid="draft-archetype-tracker"]')).toBeNull()
   })
 
-  it('is mounted in RecruitScreen next to the DuoTracker', () => {
+  it('RecruitScreen monta il tracker unico, col registro dei segnali della squadra', () => {
     const team = offerRecruits(createRng(1), { exclude: new Set() })
       .slice(0, 2)
       .map(d => recruitVia(d, 'iniziale', 1))
@@ -27,7 +26,8 @@ describe('ArchetypeTracker wiring', () => {
       <RecruitScreen offer={offer} team={team} teamMax={5} onPick={onPick} relics={[]} />,
     )
     expect(container.querySelector('[data-testid="draft-duo-tracker"]')).not.toBeNull()
-    expect(container.querySelector('[data-testid="draft-archetype-tracker"]')).not.toBeNull()
-    expect(container.querySelector('[data-arch="tossicita"]')).not.toBeNull()
+    expect(container.querySelector('[data-testid="draft-archetype-tracker"]')).toBeNull()
+    // Una squadra vera tocca sempre almeno un segnale (ogni mago ha un ruolo).
+    expect(container.querySelector('[data-testid="signal-ledger"]')).not.toBeNull()
   })
 })

@@ -82,8 +82,10 @@ Principio: **non aggiungo un sistema finché non ne ho tolto uno.**
 - **1.a (IN CORSO) — Le Spoglie della Vittoria.** Ripara D1+D2: dopo ogni vittoria, una scelta
   che muove i segnali Duo. È il primo verbo restituito al giocatore.
   → piano: `2026-07-25-spoglie-vittoria-plan.md`
-- 1.b — Fondere le Sinergie nei Duo (D3): un asse, una soglia, un payoff.
-- 1.c — Rimuovere i Trii di Casata (D3). Le Case restano colore, non meccanica.
+- **1.b (FATTA, Fase 1)** — Sinergie fuse nel segnale Duo come **grado 2** (2 maghi = acceso,
+  3 = potenziato). Un asse, una barra, due gradi. Resta la Fase 2: un solo pannello nel draft.
+- ~~1.c — Rimuovere i Trii di Casata~~ — **ANNULLATA dall'utente (2026-07-25).** I Trii restano,
+  e le Case restano una **meccanica di squadra**, non solo colore. Questa voce non è più un todo.
 - 1.d — Potare le firme a ~15 percepibili (D4).
 - 1.e — Rimuovere spellForge / spellSwap / shop come tipi di nodo (D5).
 - 1.f — Potare le reliquie di statistiche piatte.

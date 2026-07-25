@@ -1,13 +1,20 @@
-import type { Synergy } from '@/types'
+import type { Keyword, Synergy } from '@/types'
+import { SIGNAL_TIERS } from '@/game/engine/duos'
 
-// Tossicità NON è una sinergia di squadra: è uno "stile d'attacco veleno". Resta l'unico
-// elemento di SYNERGIES perché il motore (simulate/tossicitaTrigger) la rileva via
-// detectSynergies per applicare il keywordMult veleno e il trigger on-hit. Tutte le altre
-// sinergie di squadra (Golden Trio, Mangiamorte, ecc.) sono state rimosse (2026-07-21):
-// l'unico sistema di team-building è Combo Duo + Trio di casata (game/engine/trios.ts).
-export const SYNERGIES: Synergy[] = [
-  { id: 'tossicita', name: 'Tossicità', kind: 'origin', requires: { tag: 'veleno', count: 3 }, bonus: { keywordMult: { veleno: 0.5 } } },
-  { id: 'spietatezza', name: 'Spietatezza', kind: 'origin', requires: { tag: 'esecuzione', count: 3 }, bonus: { keywordMult: { esecuzione: 0.5 } } },
-  { id: 'bastione', name: 'Bastione', kind: 'origin', requires: { tag: 'scudirigen', count: 3 }, bonus: { keywordMult: { scudo: 0.5 } } },
-  { id: 'oscurita', name: 'Oscurità', kind: 'origin', requires: { tag: 'magieOscure', count: 3 }, bonus: { keywordMult: { magieOscure: 0.5 } } },
-]
+// NON è più un sistema a sé. Dal 2026-07-25 (piano "Un solo asse", Fase 1) le quattro
+// "Sinergie" di archetipo sono il **grado 2 dei segnali Duo** — un solo asse per parola chiave,
+// due scaglioni: 2 maghi/1 reliquia = acceso (abilita i Duo), 3 maghi = potenziato (+50%).
+//
+// Soglia e bonus vivono in UN SOLO posto: `SIGNAL_TIERS` in game/engine/duos.ts. Questo array
+// ne è la PROIEZIONE nel tipo `Synergy`, che sopravvive solo come **mezzo di trasporto** verso
+// il motore (keywordDamageMult, teamExecute, teamShieldConvert, teamDarkMagic,
+// registerSynergyTriggers, applyBonuses/simulate) — lo stesso canale su cui viaggia anche la
+// sinergia sintetica dei boss (`exclusiveSynergy` in data/bosses.ts). Non aggiungere voci qui:
+// un nuovo grado 2 si dichiara in SIGNAL_TIERS.
+export const SYNERGIES: Synergy[] = SIGNAL_TIERS.map(t => ({
+  id: t.id,
+  name: t.name,
+  kind: 'origin' as const,
+  requires: { tag: t.tag, count: t.need },
+  bonus: { keywordMult: { [t.keyword]: t.mult } as Partial<Record<Keyword, number>> },
+}))

@@ -5,7 +5,6 @@ import { useDraft } from '@/hooks/useDraft'
 import { STARTER_PICKS } from '@/game/engine/runEngine'
 import { SquadPanel } from '@/components/draft/SquadPanel'
 import { DuoTracker } from '@/components/draft/DuoTracker'
-import { ArchetypeTracker } from '@/components/draft/ArchetypeTracker'
 import { DraftCandidateCard } from '@/components/draft/DraftCandidateCard'
 import { Stagger, StaggerItem } from '@/components/ui/motion'
 import { Insegna } from '@/components/ui/Insegna'
@@ -116,10 +115,9 @@ export function DraftScreen({
           <Frame variant="panel" className="sticky top-28 max-h-[calc(100dvh-8rem)] overflow-y-auto [scrollbar-gutter:stable]" innerClassName="relative p-3">
             <Parchment className="absolute inset-0" />
             <div className="relative">
-              {/* Combo Duo in evidenza (guidano la build, scattano in battaglia); le
-                  Costellazioni d'archetipo — bonus passivi — restano sotto, subordinate. */}
+              {/* UN SOLO pannello (piano "Un solo asse", Fase 2): i segnali col loro grado
+                  — l'ex tracker delle Costellazioni — e le combo che accendono. */}
               <DuoTracker picks={picks} considered={considered} />
-              <ArchetypeTracker picks={picks} considered={considered} className="mt-4" />
             </div>
           </Frame>
         </aside>

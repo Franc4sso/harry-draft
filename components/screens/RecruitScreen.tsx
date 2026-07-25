@@ -10,7 +10,6 @@ import { Parchment } from '@/components/ui/Parchment'
 import { Stagger, StaggerItem } from '@/components/ui/motion'
 import { powerOf } from '@/game/engine/combat/teamGen'
 import { DuoTracker } from '@/components/draft/DuoTracker'
-import { ArchetypeTracker } from '@/components/draft/ArchetypeTracker'
 import { displayName } from '@/lib/displayName'
 import { isDead } from '@/game/engine/roster'
 
@@ -162,8 +161,9 @@ export function RecruitScreen({
             <Frame variant="panel" innerClassName="relative p-3">
               <Parchment className="absolute inset-0" />
               <div className="relative">
+                {/* Stesso pannello unico del draft: segnali col grado + combo che accendono.
+                    Con `prevTeam` dice anche cosa lo swap SPEGNE (combo, segnali e Trio). */}
                 <DuoTracker picks={baseTeam} considered={focus} relics={relics} prevTeam={full ? team : undefined} />
-                <ArchetypeTracker picks={baseTeam} considered={focus} className="mt-4" />
               </div>
             </Frame>
           </div>

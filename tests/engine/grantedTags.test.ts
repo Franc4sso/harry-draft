@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import type { ActiveRelic, DraftedWizard, Role, Wizard } from '@/types'
 import { tagsOf } from '@/game/engine/roster'
-import { signalActive, signalCount, duoProgress, detectDuos } from '@/game/engine/duos'
-import { detectSynergies, synergyProgress } from '@/game/engine/synergy'
+import { signalActive, signalCount, signalGrade, duoProgress, detectDuos, tier2Contributors, tier2Of } from '@/game/engine/duos'
+import { detectSynergies } from '@/game/engine/synergy'
 import { keywordDamageMult } from '@/game/engine/relics'
 import { teamDarkMagic } from '@/game/engine/darkMagic'
 import { teamAlwaysHit } from '@/game/engine/alwaysHit'
@@ -122,11 +122,16 @@ describe('un tag concesso conta per sinergie e keywordMult', () => {
     expect(detectSynergies(team2Nativi).map(s => s.synergy.id)).not.toContain('tossicita')
   })
 
-  it('synergyProgress conta il concesso nel have', () => {
-    const p = synergyProgress(team2Nativi1Concesso).find(x => x.synergy.id === 'tossicita')!
-    expect(p.have).toBe(3)
-    expect(p.active).toBe(true)
-    expect(p.memberIds).toContain('v3')
+  // Ex-`synergyProgress` (rimossa con la Fase 2 del piano "Un solo asse"): il conteggio
+  // parziale che alimenta la barra "2/3" del pannello vive ora nel modello dei segnali.
+  it('il conteggio del grado 2 include il tag concesso', () => {
+    const tier = tier2Of('veleno')!
+    const members = tier2Contributors(tier, team2Nativi1Concesso)
+    expect(members).toHaveLength(3)
+    expect(members.map(d => d.wizard.id)).toContain('v3')
+    expect(signalGrade('veleno', team2Nativi1Concesso, NO_RELICS)).toBe(2)
+    expect(tier2Contributors(tier, team2Nativi)).toHaveLength(2)
+    expect(signalGrade('veleno', team2Nativi, NO_RELICS)).toBe(1)
   })
 
   it('keywordDamageMult sale grazie al tag concesso', () => {
