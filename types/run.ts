@@ -5,13 +5,13 @@ export type RunPhase =
   | 'menu' | 'draft' | 'team' | 'battle'
   | 'victory' | 'defeat' | 'win'
   // Fase 1 redesign (Plan B):
-  | 'house' | 'starter' | 'map' | 'recruit-node' | 'relic-node' | 'infirmary-node' | 'event-node' | 'spellForge-node' | 'spellSwap-node' | 'shop-node' | 'area-cleared' | 'altare-node'
+  | 'house' | 'starter' | 'map' | 'recruit-node' | 'relic-node' | 'infirmary-node' | 'event-node' | 'spellForge-node' | 'spellSwap-node' | 'area-cleared' | 'altare-node'
 
 export type RunNodeType =
   // Fase 1 — generati e risolti
   | 'battle' | 'elite' | 'boss' | 'recruit' | 'relic' | 'infirmary' | 'spellForge' | 'spellSwap'
   // Fasi 2-3 — catalogati ora, generati dopo
-  | 'shop' | 'event' | 'commonRoom'
+  | 'event' | 'commonRoom'
   | 'library' | 'potions' | 'forest'
   | 'altare'
 
@@ -53,17 +53,13 @@ export interface RunNode {
   battle?: NodeBattle
   /** Telegraph data derived from `battle` (combat nodes only). */
   preview?: NodePreview
-  /** Shop node: slot ids already purchased at this node (greyed as sold). */
-  shopBought?: string[]
-  /** Shop node: how many times the relic stock has been rerolled (feeds the offer salt). */
-  shopReroll?: number
 }
 
 /** Narrative log entry — seeds the Fase 4 end-of-run story screen. */
 export interface RunEvent {
   area: number
   nodeId: string
-  kind: 'recruit' | 'relic' | 'elite' | 'boss' | 'levelMilestone' | 'infirmary' | 'event' | 'spellForge' | 'shop' | 'altare' | 'spellSwap'
+  kind: 'recruit' | 'relic' | 'elite' | 'boss' | 'levelMilestone' | 'infirmary' | 'event' | 'spellForge' | 'altare' | 'spellSwap'
   /** 'spoglie': la Spoglia scelta dopo una vittoria normale (Marchio / Allenamento / Ristoro). */
   | 'spoglie'
   summary: string

@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { infirmaryResolver } from '@/game/engine/resolvers/infirmary'
-import { shopResolver } from '@/game/engine/resolvers/shop'
 import { applyEventEffects } from '@/game/engine/events'
 import { clearAreaAndAdvance, useConsumableRelic } from '@/game/engine/runEngine'
 import { createDraftPool } from '@/game/engine/draft'
@@ -28,20 +27,6 @@ describe('Corrotto fuori battaglia', () => {
     const s = stateWith(3)
     const node: RunNode = { id: 'inf-0', type: 'infirmary', next: [] }
     const out = infirmaryResolver.resolve(s, node, { kind: 'combat-ack' }, createRng('x'))
-    const corrotto = out.team.find(d => d.corrotto)!
-    expect(corrotto.currentHp).toBe(10)
-    for (const d of out.team.filter(d => !d.corrotto)) {
-      expect(d.currentHp).toBe(d.maxHp)
-    }
-  })
-
-  it('shop heal non cura il corrotto', () => {
-    const s0 = stateWith(3)
-    // Wound the healthy members too, so the heal branch has visible work to do.
-    const s = { ...s0, team: s0.team.map(d => (d.corrotto ? d : { ...d, currentHp: 1 })) }
-    const node: RunNode = { id: 'a0f1n0', type: 'shop', next: [] }
-    const state = { ...s, map: [node], currentNodeId: node.id, area: 0 }
-    const out = shopResolver.resolve(state, node, { kind: 'shop-buy', slotId: 'heal' }, createRng('s'))
     const corrotto = out.team.find(d => d.corrotto)!
     expect(corrotto.currentHp).toBe(10)
     for (const d of out.team.filter(d => !d.corrotto)) {

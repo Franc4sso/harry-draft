@@ -29,7 +29,7 @@ function draftStarters(seed: string): DraftedWizard[] {
  *  choice). Recruit/relic nodes are skipped (a legal, non-cheating action per
  *  replayRun's exemption for {kind:'skip'}) to keep the walk simple and
  *  reviewable. Event nodes take the first offered choice. Infirmary auto-acks.
- *  Shop/spellForge nodes are avoided when an alternative reachable node exists
+ *  spellForge nodes are avoided when an alternative reachable node exists
  *  (Task 5, not yet landed, is what excludes them from endless map gen; a real
  *  player CAN still encounter them today) — if genuinely unavoidable the test
  *  fails loudly rather than silently mis-recording, so a stuck seed is visible. */
@@ -52,8 +52,8 @@ function driveToWipeout(result: { current: ReturnType<typeof useEndless> }): str
       // never special-cases 'victory', relying entirely on the next 'move' action).
       const options = result.current.reachable
       if (options.length === 0) throw new Error('no reachable nodes from a map/victory view')
-      const nonShop = options.filter(n => n.type !== 'shop' && n.type !== 'spellForge')
-      const target = (nonShop.length > 0 ? nonShop : options)[0]!
+      const nonForge = options.filter(n => n.type !== 'spellForge')
+      const target = (nonForge.length > 0 ? nonForge : options)[0]!
       act(() => result.current.chooseNode(target.id))
     } else if (view === 'battle') {
       act(() => result.current.commitBattle())
@@ -78,10 +78,6 @@ function driveToWipeout(result: { current: ReturnType<typeof useEndless> }): str
       act(() => result.current.chooseSpellUpgrade(wizardId))
     } else if (view === 'area-cleared' || view === 'win') {
       act(() => result.current.advanceArea())
-    } else if (view === 'shop') {
-      // Should be unreachable given the nonShop routing above, but guard defensively
-      // rather than spin forever if a seed truly has no alternative.
-      throw new Error('walk entered a shop node despite avoidance routing')
     } else {
       throw new Error(`unhandled view in driveToWipeout: ${view}`)
     }

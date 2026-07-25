@@ -626,12 +626,6 @@ defenseK: 0.5,
       'epica': 6,
     } as Record<RelicRarity, number>,
   },
-  shop: {
-    relicByRarity: { 'comune': 25, 'non-comune': 45, 'rara': 75, 'epica': 120 } as Record<import('@/types').Relic['rarity'], number>,
-    heal: 35,
-    removeWizard: 20,
-    reroll: 15,
-  },
   leveling: {
     autoGrowthPct: 0.07,        // yardstick: avg per-level growth = growthBudgetPerLevel × 0.25 (avg weight)
                                 // MUST track growthBudgetPerLevel×0.25: 0.28×0.25=0.07. Update together.

@@ -14,7 +14,6 @@ import { infirmaryResolver } from './resolvers/infirmary'
 import { eventResolver } from './resolvers/event'
 import { spellForgeResolver } from './resolvers/spellForge'
 import { spellSwapResolver } from './resolvers/spellSwap'
-import { shopResolver } from './resolvers/shop'
 import { altareResolver } from './resolvers/altare'
 import { registerResolver, resolverFor } from './resolvers'
 import type { ResolverChoice } from './resolvers/types'
@@ -43,7 +42,6 @@ export function registerCoreResolvers(): void {
   registerResolver(eventResolver)                  // id 'event'
   registerResolver(spellForgeResolver)             // id 'spellForge'
   registerResolver(spellSwapResolver)              // id 'spellSwap'
-  registerResolver(shopResolver)                   // id 'shop'
   registerResolver(altareResolver)                 // id 'altare'
   registered = true
 }
@@ -123,7 +121,7 @@ export function reachable(state: RunState): RunNode[] {
 const phaseForNode = (t: RunNode['type']): RunState['phase'] =>
   t === 'recruit' ? 'recruit-node' : t === 'relic' ? 'relic-node' : t === 'infirmary' ? 'infirmary-node' :
   t === 'event' ? 'event-node' : t === 'spellForge' ? 'spellForge-node' : t === 'spellSwap' ? 'spellSwap-node' :
-  t === 'shop' ? 'shop-node' : t === 'altare' ? 'altare-node' : 'battle'
+  t === 'altare' ? 'altare-node' : 'battle'
 
 export function moveTo(state: RunState, nodeId: string): RunState {
   const cur = state.map?.find(n => n.id === state.currentNodeId)
@@ -188,21 +186,6 @@ export function useConsumableRelic(state: RunState, relicId: string): RunState {
   const relics = state.relics.filter(a => a.relic.id !== relicId)
   const activeSynergies = detectSynergies(livingOf(team))
   return { ...state, team, relics, activeSynergies }
-}
-
-/** Leave a shop: mark the current node resolved and return to the map. */
-export function leaveShop(state: RunState): RunState {
-  const map = state.map!.map(n => (n.id === state.currentNodeId ? { ...n, resolved: true } : n))
-  return { ...state, map, phase: 'map' }
-}
-
-/** Reroll a shop's relic stock: bump the reroll counter (feeds shopOffer's salt) and free the
- *  relic slots so they can be bought again. Heal/removeWizard purchases stay recorded. Pure. */
-export function rerollShop(state: RunState): RunState {
-  const map = state.map!.map(n => (n.id === state.currentNodeId
-    ? { ...n, shopReroll: (n.shopReroll ?? 0) + 1, shopBought: (n.shopBought ?? []).filter(id => !id.startsWith('relic-')) }
-    : n))
-  return { ...state, map }
 }
 
 /** Called after a non-boss victory acknowledged, or after a boss win to roll the next area. */

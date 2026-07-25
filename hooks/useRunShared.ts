@@ -19,7 +19,7 @@ registerCoreResolvers()
 
 export type RunSharedView =
   | 'draft' | 'map' | 'battle' | 'victory'
-  | 'recruit' | 'relic' | 'infirmary' | 'event' | 'spellForge' | 'spellSwap' | 'shop' | 'altare' | 'area-cleared' | 'win' | 'defeat'
+  | 'recruit' | 'relic' | 'infirmary' | 'event' | 'spellForge' | 'spellSwap' | 'altare' | 'area-cleared' | 'win' | 'defeat'
 
 export interface EventChoiceView { id: string; label: string; enabled: boolean; reason?: string }
 export interface CurrentEventView { id: string; title: string; text: string; choices: EventChoiceView[] }
@@ -36,7 +36,6 @@ export const viewForPhase = (p: RunState['phase']): RunSharedView => {
     case 'event-node': return 'event'
     case 'spellForge-node': return 'spellForge'
     case 'spellSwap-node': return 'spellSwap'
-    case 'shop-node': return 'shop'
     case 'altare-node': return 'altare'
     case 'area-cleared': return 'area-cleared'
     case 'win': return 'win'
@@ -206,8 +205,8 @@ export function useRunShared(opts: UseRunSharedOpts): RunSharedController {
   }, [commit])
 
   // Altare Oscuro (P5 — Economia del Sacrificio): buy pays its (concretized) sacrificeCost
-  // in the SAME resolve call (see altareResolver.resolve) — no separate wallet step like
-  // the shop, the cost IS the price. 'skip' walks away with the node still marked resolved
+  // in the SAME resolve call (see altareResolver.resolve) — the cost IS the price, no
+  // separate wallet step. 'skip' walks away with the node still marked resolved
   // (see markResolved in resolveCurrentImpl), mirroring skipRecruit.
   const buyAltare = useCallback((relicId: string, costWizardId?: string, costRelicId?: string, carrierId?: string, replaceRelicId?: string) => {
     const next = resolveCurrent(

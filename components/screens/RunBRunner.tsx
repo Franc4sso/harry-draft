@@ -27,13 +27,11 @@ import { SpellForgeScreen } from './SpellForgeScreen'
 import { SpellSwapScreen } from './SpellSwapScreen'
 import { InfirmaryScreen } from './InfirmaryScreen'
 import { AreaClearedScreen } from './AreaClearedScreen'
-import { ShopScreen } from './ShopScreen'
 import { AltareScreen } from './AltareScreen'
 import { TeamSynergyBar } from '@/components/run/TeamSynergyBar'
 import { DuoToast } from '@/components/run/DuoToast'
 import { RelicBar } from '@/components/relics/RelicBar'
 import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
-import { shopOffer } from '@/game/engine/resolvers/shop'
 import { altareOffer } from '@/game/engine/resolvers/altare'
 import { swapOffer } from '@/game/engine/resolvers/spellSwap'
 import { createRng } from '@/game/engine/rng'
@@ -46,10 +44,10 @@ import { parseAreaNodeId } from '@/game/engine/map'
 
 /** Structural subset of {@link RunBController} (campaign) / {@link EndlessController}
  *  (endless) that RunBRunner actually drives. Fields that only campaign phases ever
- *  reach ('draft', 'shop', 'win') are optional here — EndlessController doesn't
- *  implement them because endless never produces those views (endless's draft/house
- *  pick happens in EndlessRunner BEFORE RunBRunner mounts; endless areas exclude shop
- *  nodes; endless never sets phase:'win', see game/engine/endless.ts advanceEndlessArea).
+ *  reach ('draft', 'win') are optional here — EndlessController doesn't implement them
+ *  because endless never produces those views (endless's draft/house pick happens in
+ *  EndlessRunner BEFORE RunBRunner mounts; endless never sets phase:'win', see
+ *  game/engine/endless.ts advanceEndlessArea).
  *  Both concrete controllers satisfy this structurally — no runtime adapter needed. */
 export interface RunnerController {
   run: RunState; view: RunSharedView
@@ -63,8 +61,8 @@ export interface RunnerController {
   chooseNode: (nodeId: string) => void
   commitBattle: () => void
   acknowledgeVictory: () => void
-  /** Le Spoglie della Vittoria: campagna-only, come buyAltare/leaveShop. L'endless non le
-   *  implementa (§6 del piano: ri-simula le run per l'anti-cheat) e senza questa callback la
+  /** Le Spoglie della Vittoria: campagna-only, come buyAltare. L'endless non le implementa
+   *  (§6 del piano: ri-simula le run per l'anti-cheat) e senza questa callback la
    *  VictoryScreen resta il vecchio "Prosegui". */
   chooseSpoil?: (choice: SpoilChoice) => void
   chooseRecruit: (wizardId: string, replaceId?: string) => void
@@ -84,9 +82,6 @@ export interface RunnerController {
   chooseSpellSwap?: (wizardId: string, spellId: string) => void
   useConsumableRelic: (relicId: string) => void
   cioccorane?: number
-  buyShopItem?: (slotId: string, opts?: { carrierId?: string; targetWizardId?: string; replaceRelicId?: string }) => void
-  rerollShop?: () => void
-  leaveShop?: () => void
   advanceArea: () => void
   restart?: () => void
   runReward?: RunBController['runReward']
@@ -319,24 +314,6 @@ export function RunBRunner({
         return withTeamSidebar(
           <InfirmaryScreen team={c.run.team} onContinue={c.ackInfirmary} />,
         )
-
-      case 'shop':
-        // Campaign-only: endless areas never generate shop nodes (Decision 2 — excluded
-        // from generateArea when state.endless), so this view is unreachable in endless.
-        return c.buyShopItem && c.rerollShop && c.leaveShop
-          ? withTeamSidebar(
-              <ShopScreen
-                stock={shopOffer(c.run, c.currentNode!, createRng(c.run.seed))}
-                bought={c.currentNode?.shopBought ?? []}
-                cioccorane={c.cioccorane ?? 0}
-                team={c.run.team}
-                relics={c.run.relics}
-                onBuy={c.buyShopItem}
-                onReroll={c.rerollShop}
-                onLeave={c.leaveShop}
-              />,
-            )
-          : null
 
       case 'area-cleared':
         return (
