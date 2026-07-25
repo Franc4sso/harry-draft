@@ -123,6 +123,12 @@ Al calore alto: micro-freeze della timeline GSAP sull'impatto (~40–90ms, scala
 `intensity`) + lieve dip di timescale. **Deve stare dentro il `budgetMs` del frame**
 (`PixiArena.tsx:124`) così non desincronizza il replay. A `intensity=0` è assente.
 
+**Decisione (confermata):** l'hit-stop è **implementato ma SPENTO di default** dietro una
+costante (`HEAT.hitStopMax = 0` di default). Il crescendo di base regge su bloom + peso +
+slow-mo; l'hit-stop è la ciliegina, da accendere e validare a occhio nel lab al primo
+playtest — non è nella base "sempre-on". Il dip di slow-mo resta attivo (più sicuro del
+freeze in un replay a velocità variabile).
+
 ## Leggibilità e sicurezza
 - **Reduced-motion**: se non monta lo stage (prefers-reduced-motion) → nessun crescendo,
   nessun room-heat animato. Comportamento invariato per chi riduce il movimento.
