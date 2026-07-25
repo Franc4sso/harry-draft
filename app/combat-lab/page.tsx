@@ -12,6 +12,7 @@ import { SPELLS as GAME_SPELLS } from '@/data/spells'
 import { createPixiStage, type PixiStage } from '@/lib/vfx/PixiStage'
 import { createAudio, type AudioBus } from '@/lib/vfx/audio'
 import { choreograph } from '@/lib/vfx/choreograph'
+import { HEAT, HEAT_ZERO, heatNext, heatAmp, type HeatState } from '@/lib/vfx/crescendo'
 import { spellVfxFor } from '@/lib/vfx/spellVfx'
 
 const LMAX = 120
@@ -36,6 +37,17 @@ const EMOJI: Record<string, string> = {
   expecto: '🦌', aegis: '🔰',
 }
 const TYPE_ORDER: LogEntry['type'][] = ['Attacco', 'Controllo', 'Cura', 'Difesa']
+
+/** Scenario "Streak": la catena che il crescendo esiste per servire — crit → Duo → esecuzione,
+ *  poi due frame fiacchi per vedere la stanza raffreddarsi. Il banco di taratura dei pesi. */
+const STREAK: LogEntry[] = [
+  E({ action: 'Stupeficium', type: 'Attacco', value: 22 }),
+  E({ action: 'Sectumsempra', type: 'Attacco', value: 38, flags: ['crit'] }),
+  E({ action: 'Confringo', type: 'Attacco', value: 52, flags: ['crit', 'duo'] }),
+  E({ action: 'Avada Kedavra', type: 'Attacco', value: 130, flags: ['crit', 'kill'] }),
+  E({ action: 'Stupeficium', type: 'Attacco', value: 18, flags: ['dodge'] }),
+  E({ action: 'Stupeficium', type: 'Attacco', value: 0, flags: ['wait'] }),
+]
 const SHOWCASE = ['stupeficium', 'sectumsempra', 'incendio', 'avada', 'bombarda', 'glacius', 'serpensortia', 'crucio', 'protego', 'expecto', 'vulnera']
 
 function entryFromSpell(sp: Spell, crit: boolean): LogEntry {
@@ -72,6 +84,10 @@ export default function CombatLab() {
   const [audioOn, setAudioOn] = useState(false)
   const [crit, setCrit] = useState(false)
   const [ready, setReady] = useState(false)
+  // Crescendo: lo stato del calore vive in un ref (serve SUBITO dentro `fire`, prima del render)
+  // e in uno state solo per la lettura numerica a schermo.
+  const heatRef = useRef<HeatState>(HEAT_ZERO)
+  const [heat, setHeat] = useState(0)
   const evKey = useRef(0)
 
   useEffect(() => {
@@ -159,18 +175,31 @@ export default function CombatLab() {
     const stage = stageRef.current
     if (!stage) return
     setTurn((t) => t + 1)
+    // Avanza il calore con lo stesso passo puro che usa il replay, così quel che si tara qui
+    // è esattamente quel che si vedrà in partita.
+    const next = heatNext(heatRef.current, entry)
+    heatRef.current = next
+    setHeat(next.heat)
     const from = entry.actorSide ? centerOf(entry.actorSide) : null
     const to = entry.targetSide ? centerOf(entry.targetSide) : null
     const tier = spellVfxFor(entry.action)?.tier ?? 1
     const budgetMs = tier >= 3 ? 2000 : tier >= 2 ? 1500 : 1100
-    choreograph(stage, { entry, from, to, budgetMs, reduced, audio: audioOn ? audioRef.current : null, onImpact: (side, kind) => handleImpact(entry, side, kind), onScreen })
+    choreograph(stage, { entry, from, to, budgetMs, intensity: next.heat, reduced, audio: audioOn ? audioRef.current : null, onImpact: (side, kind) => handleImpact(entry, side, kind), onScreen })
   }, [centerOf, reduced, audioOn, handleImpact, onScreen])
 
-  const reset = useCallback(() => { setHp({ left: LMAX, right: RMAX }); setLog([]); setCallout(null) }, [])
+  const reset = useCallback(() => {
+    setHp({ left: LMAX, right: RMAX }); setLog([]); setCallout(null)
+    heatRef.current = HEAT_ZERO; setHeat(0)
+  }, [])
   const playAll = useCallback(() => {
     reset()
     const list = SHOWCASE.map((id) => GAME_SPELLS.find((s) => s.id === id)).filter((s): s is Spell => !!s)
     list.forEach((sp, i) => setTimeout(() => fire(entryFromSpell(sp, false)), i * 1300))
+  }, [fire, reset])
+
+  const playStreak = useCallback(() => {
+    reset()
+    STREAK.forEach((e, i) => setTimeout(() => fire(e), i * 1150))
   }, [fire, reset])
 
   const activeSide: Side = turn % 2 === 0 ? 'left' : 'right'
@@ -222,6 +251,27 @@ export default function CombatLab() {
             <div key={callout.key} className="labAnim pointer-events-none absolute left-1/2 top-[40%] z-[11] font-serif text-5xl font-bold uppercase tracking-[0.12em]" style={{ color: callout.tone, textShadow: `0 0 30px ${callout.tone}, 0 4px 12px rgba(0,0,0,.8)`, animation: reduced ? undefined : 'labCallout 1.3s cubic-bezier(.22,1,.36,1)', transform: 'translate(-50%,-50%)' }}>{callout.text}</div>
           )}
 
+          {/* calore della stanza (crescendo) — sotto tutto, opacità guidata dall'intensità */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-[1]"
+            style={{
+              background: 'radial-gradient(120% 95% at 50% 60%, rgba(255,138,58,0.85), rgba(224,90,74,0.35) 45%, transparent 74%)',
+              mixBlendMode: 'screen',
+              opacity: reduced ? 0 : heatAmp(heat).room,
+              transition: 'opacity 700ms cubic-bezier(.33,1,.68,1)',
+            }}
+          />
+
+          {/* lettura numerica del calore — solo nel lab, per tarare pesi e decay */}
+          <div className="absolute right-3 top-3 z-10 flex items-center gap-2 rounded-full border border-[#caa24a]/25 bg-black/60 px-3 py-1.5 font-mono text-[10px] text-[#c9b998] backdrop-blur-sm">
+            <span className="uppercase tracking-[0.2em] text-[#caa24a]">Calore</span>
+            <span className="w-24 overflow-hidden rounded-full bg-white/10" style={{ height: 5 }}>
+              <span className="block h-full rounded-full" style={{ width: `${heat * 100}%`, background: 'linear-gradient(90deg,#caa24a,#ff8a3a,#e05a4a)', transition: 'width 400ms ease-out' }} />
+            </span>
+            <span data-heat-readout className="tabular-nums text-[#f3ead6]">{heat.toFixed(3)}</span>
+          </div>
+
           {/* full-screen ultimate colour wash (tier-3) */}
           <div ref={screenRef} aria-hidden className="pointer-events-none absolute inset-0 z-[8] opacity-0" style={{ mixBlendMode: 'screen' }} />
 
@@ -254,6 +304,8 @@ export default function CombatLab() {
           <button onClick={() => fire(E({ action: 'Stupeficium', type: 'Attacco', value: 20, flags: ['dodge'] }))} disabled={!ready} className="rounded-lg border border-[#8ec9ff]/30 bg-black/25 px-3 py-1.5 text-[12.5px] transition hover:border-[#8ec9ff]/60 disabled:opacity-40">💨 Schiva</button>
           <button onClick={() => fire(E({ action: 'Stupeficium', type: 'Attacco', value: 20, flags: ['block'] }))} disabled={!ready} className="rounded-lg border border-[#8ec9ff]/30 bg-black/25 px-3 py-1.5 text-[12.5px] transition hover:border-[#8ec9ff]/60 disabled:opacity-40">🛡️ Parato</button>
           <button onClick={() => fire(E({ action: 'Avada Kedavra', type: 'Attacco', value: 130, flags: ['crit', 'kill'] }))} disabled={!ready} className="rounded-lg border border-[#e05a4a]/40 bg-black/25 px-3 py-1.5 text-[12.5px] transition hover:border-[#e05a4a]/70 disabled:opacity-40">⚰️ Esecuzione</button>
+          <button onClick={playStreak} disabled={!ready} className="rounded-lg border border-[#ff8a3a]/50 bg-black/25 px-3 py-1.5 text-[12.5px] transition hover:border-[#ff8a3a] disabled:opacity-40" title="crit → Duo → esecuzione, poi due frame fiacchi: il crescendo che sale e si raffredda">🔥 Streak (crescendo)</button>
+          {HEAT.hitStopMax === 0 && <span className="self-center font-mono text-[10px] text-[#c9b998]/50">hit-stop spento (HEAT.hitStopMax = 0)</span>}
         </div>
 
         {/* tutte le mosse reali, per tipo */}

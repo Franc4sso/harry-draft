@@ -45,12 +45,15 @@ export function fxBloomPulse(ctx: FxCtx, at: number, amount: number, dur: number
  * A brief scene-wide dim behind the impact — implies slow-motion on a crit/kill
  * WITHOUT touching time or moving the camera. Added behind everything so sparks pop.
  */
-export function fxSlowmo(ctx: FxCtx, at: number): void {
+export function fxSlowmo(ctx: FxCtx, at: number, depth = 1): void {
   const { w, h } = ctx.stage.size()
   const v = new Graphics().rect(0, 0, w, h).fill({ color: 0x0a0612, alpha: 1 })
   v.alpha = 0
   ctx.stage.fx.addChildAt(v, 0)
-  ctx.tl.to(v, { alpha: 0.42, duration: 0.12, ease: 'power2.out' }, at)
+  // `depth` è il dip del crescendo: più la battaglia è incandescente, più il mondo si spegne
+  // attorno al colpo. Clampato per non arrivare mai a coprire l'arena.
+  const peak = 0.42 * Math.min(1.35, Math.max(0, depth))
+  ctx.tl.to(v, { alpha: peak, duration: 0.12, ease: 'power2.out' }, at)
   ctx.tl.to(v, { alpha: 0, duration: 0.6, ease: 'power2.out', onComplete: () => v.destroy() }, at + 0.14)
 }
 

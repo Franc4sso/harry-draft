@@ -4,6 +4,7 @@ import { useReducedMotion } from 'framer-motion'
 import type { LogEntry } from '@/types'
 import { createPixiStage, type PixiStage } from '@/lib/vfx/PixiStage'
 import { choreograph } from '@/lib/vfx/choreograph'
+import { heatAmp } from '@/lib/vfx/crescendo'
 import { spellVfxFor } from '@/lib/vfx/spellVfx'
 
 /**
@@ -18,16 +19,19 @@ import { spellVfxFor } from '@/lib/vfx/spellVfx'
  * actual wizard card toward its actual target — never a stale/lagged prop.
  */
 export function PixiArena({
-  entry, frameKey, speed,
+  entry, frameKey, speed, intensity = 0,
 }: {
   entry: LogEntry | null
   frameKey: number
   speed: number
+  /** Calore del combattimento 0..1 (crescendo). Default 0 = scena identica a prima. */
+  intensity?: number
 }) {
   const reduced = !!useReducedMotion()
   const mountRef = useRef<HTMLDivElement>(null)
   const screenRef = useRef<HTMLDivElement>(null)
   const tintRef = useRef<HTMLDivElement>(null)
+  const roomRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<PixiStage | null>(null)
   const lastFiredRef = useRef(0)
   // Active GSAP timelines, killed on unmount so none keep ticking on destroyed Pixi objects.
@@ -37,8 +41,20 @@ export function PixiArena({
   // to depend on (and re-fire for) entry/speed changing mid-frame.
   const entryRef = useRef(entry)
   const speedRef = useRef(speed)
+  const intensityRef = useRef(intensity)
   entryRef.current = entry
   speedRef.current = speed
+  intensityRef.current = intensity
+
+  // CALORE DELLA STANZA — ciò che rende il crescendo visibile anche TRA un colpo e l'altro:
+  // un alone caldo che sale con la streak e si spegne nei frame fiacchi. Guidato per stile
+  // (non per re-render) così il layer resta fuori dal ciclo di React, e tenuto sotto 0.12 di
+  // opacità: HP, log, callout, barra iniziativa e numeri di danno non devono MAI sbiadire.
+  useEffect(() => {
+    const el = roomRef.current
+    if (!el) return
+    el.style.opacity = reduced ? '0' : String(heatAmp(intensity).room)
+  }, [intensity, reduced])
 
   useEffect(() => {
     if (reduced) return
@@ -74,11 +90,11 @@ export function PixiArena({
   // Gentle reactive lighting: the room catches a soft tint of the spell's colour and lets it
   // go — eases in ~0.3s, out ~0.6s, peak opacity 0.10, NEVER a flash. Deliberately quieter than
   // the tier-3 `onScreen` wash (which is reserved for ultimates and skips this).
-  const onTint = (color: number) => {
+  const onTint = (color: number, amount: number) => {
     const el = tintRef.current
     if (!el || reduced || typeof el.animate !== 'function') return // no-op where WAAPI is absent (jsdom)
     el.style.background = `radial-gradient(120% 100% at 50% 52%, #${color.toString(16).padStart(6, '0')}, transparent 76%)`
-    el.animate([{ opacity: 0 }, { opacity: 0.1, offset: 0.33 }, { opacity: 0.1, offset: 0.5 }, { opacity: 0 }], { duration: 900, easing: 'ease-in-out' })
+    el.animate([{ opacity: 0 }, { opacity: amount, offset: 0.33 }, { opacity: amount, offset: 0.5 }, { opacity: 0 }], { duration: 900, easing: 'ease-in-out' })
   }
 
   useEffect(() => {
@@ -90,8 +106,9 @@ export function PixiArena({
     // Gentle reactive tint — a DOM overlay, so it plays even where WebGL is unavailable.
     // Skip basic attacks (keeps the room from tinting on every jab) and tier-3 spells (they
     // already cast the bright `onScreen` wash).
+    const amp = heatAmp(intensityRef.current)
     const cfg = spellVfxFor(entry.action)
-    if (cfg && !cfg.screen && entry.action.trim().toLowerCase() !== 'colpo base') onTint(cfg.color.glow)
+    if (cfg && !cfg.screen && entry.action.trim().toLowerCase() !== 'colpo base') onTint(cfg.color.glow, Math.min(0.2, 0.1 * amp.tint))
 
     const stage = stageRef.current
     const mount = mountRef.current
@@ -122,7 +139,7 @@ export function PixiArena({
 
     const speed = speedRef.current
     const budgetMs = Math.max(700, Math.round(1200 / speed))
-    const tl = choreograph(stage, { entry, from, to, budgetMs, reduced, audio: null, onScreen })
+    const tl = choreograph(stage, { entry, from, to, budgetMs, intensity: intensityRef.current, reduced, audio: null, onScreen })
     if (tl) {
       const set = activeTls.current
       set.add(tl)
@@ -133,6 +150,18 @@ export function PixiArena({
 
   return (
     <>
+      {/* calore della stanza — sotto tutto, opacità guidata dal crescendo (max 0.12) */}
+      <div
+        ref={roomRef}
+        aria-hidden
+        data-room-heat
+        className="pointer-events-none absolute inset-0 z-[2] opacity-0"
+        style={{
+          background: 'radial-gradient(120% 95% at 50% 60%, rgba(255,138,58,0.85), rgba(224,90,74,0.35) 45%, transparent 74%)',
+          mixBlendMode: 'screen',
+          transition: 'opacity 700ms cubic-bezier(.33,1,.68,1)',
+        }}
+      />
       <div ref={mountRef} className="pointer-events-none absolute inset-0 z-[5]" />
       <div ref={tintRef} aria-hidden className="pointer-events-none absolute inset-0 z-[3] opacity-0" style={{ mixBlendMode: 'screen' }} />
       <div ref={screenRef} aria-hidden className="pointer-events-none absolute inset-0 z-[4] opacity-0" style={{ mixBlendMode: 'screen' }} />

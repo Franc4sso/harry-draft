@@ -6,6 +6,7 @@ import { vfxColor } from './palette'
 import * as FX from './effects'
 import * as Screen from './screen'
 import { spellVfxFor, defaultConfig, runFlourish } from './spellVfx'
+import { heatAmp } from './crescendo'
 
 /** Optional audio bus (Howler). Kept structural so choreograph doesn't hard-depend on it. */
 export interface AudioLike {
@@ -20,6 +21,9 @@ export interface ChoreoOpts {
   to?: { x: number; y: number } | null
   /** Time budget for this event (ms) — the whole timeline is compressed to fit. */
   budgetMs: number
+  /** Calore della battaglia 0..1 (crescendo). Default 0 = comportamento identico a prima:
+   *  amplifica i layer già presenti, non ne accende di nuovi. */
+  intensity?: number
   reduced?: boolean
   audio?: AudioLike | null
   /** DOM-side reaction hook (bust squash/flash) fired at impact — keeps unit recoil out of Pixi. */
@@ -60,15 +64,22 @@ export function choreograph(stage: PixiStage, o: ChoreoOpts): gsap.core.Timeline
   const at = (time: number, fn: () => void) => { tl.add(fn, time) }
   let nominal = 0.9
 
+  // Crescendo: scala i parametri che questa funzione già applica. Mai gating — solo ampiezza.
+  const amp = heatAmp(o.intensity ?? 0)
+  const bloom = (n: number) => n * amp.bloom
+  const burst = (n: number) => Math.min(PARTICLE_CAP, Math.round(n * amp.particles))
+  // Il dim "slow-mo" entra anche senza crit/kill quando la stanza è incandescente.
+  const dimAt = (t: number) => { if (amp.dim > 0) FX.fxSlowmo(ctx, t, 0.6 + amp.dim * 0.75) }
+
   if (cfg.kind === 'heal' && to) {
     runFlourish(ctx, cfg.impact, 0, to.x, to.y, cfg.color, { dir, power, crit })
-    if (tier >= 2) { Screen.fxGodrays(ctx, 0.1, 0.6, 0.4); FX.fxBloomPulse(ctx, 0.1, 0.8, 0.5) }
+    if (tier >= 2) { Screen.fxGodrays(ctx, 0.1, 0.6, 0.4); FX.fxBloomPulse(ctx, 0.1, bloom(0.8), 0.5) }
     at(0.15, () => { o.audio?.play(cfg.audioHit ?? 'heal'); o.onImpact?.(side, 'heal') })
     nominal = tier >= 2 ? 1.2 : 1.05
   } else if (cfg.kind === 'self' && to) {
     if (cfg.sigil !== false) FX.fxSigil(ctx, 0, to.x, to.y, cfg.color, tier >= 3 ? 0.42 : 0.3)
     const flourAt = cfg.sigil !== false ? 0.2 : 0.05
-    FX.fxBloomPulse(ctx, flourAt, tier >= 3 ? 1.4 : 0.7, 0.45)
+    FX.fxBloomPulse(ctx, flourAt, bloom(tier >= 3 ? 1.4 : 0.7), 0.45)
     runFlourish(ctx, cfg.impact, flourAt, to.x, to.y, cfg.color, { dir, power, crit })
     if (tier >= 3) {
       Screen.fxGodrays(ctx, flourAt, 0.8, 0.55)
@@ -93,13 +104,16 @@ export function choreograph(stage: PixiStage, o: ChoreoOpts): gsap.core.Timeline
 
       if (block) {
         FX.fxHexBarrier(ctx, impactAt, to.x, to.y, vfxColor('shield'))
-        FX.fxBloomPulse(ctx, impactAt, 0.7, 0.4)
+        FX.fxBloomPulse(ctx, impactAt, bloom(0.7), 0.4)
         at(impactAt, () => { o.audio?.play('shield'); o.onImpact?.(side, 'block') })
       } else {
-        if (crit || kill) FX.fxSlowmo(ctx, impactAt)
-        FX.fxBloomPulse(ctx, impactAt, crit || kill || tier >= 3 ? 1.6 : tier >= 2 ? 1.0 : 0.7, 0.5)
+        if (crit || kill) FX.fxSlowmo(ctx, impactAt, 1 + amp.dim * 0.35)
+        else dimAt(impactAt)
+        FX.fxBloomPulse(ctx, impactAt, bloom(crit || kill || tier >= 3 ? 1.6 : tier >= 2 ? 1.0 : 0.7), 0.5)
         runFlourish(ctx, cfg.impact, impactAt, to.x, to.y, cfg.color, { dir, power, crit })
-        FX.fxPhysicsBurst(ctx, impactAt, to.x, to.y, cfg.color.spark, tier >= 2 ? 18 : 10, { speed: 270, gravity: 520 })
+        FX.fxPhysicsBurst(ctx, impactAt, to.x, to.y, cfg.color.spark, burst(tier >= 2 ? 18 : 10), { speed: 270, gravity: 520 })
+        // Anello d'urto del crescendo: compare solo quando la battaglia è calda, e cresce con essa.
+        if (amp.dim > 0) FX.fxShockwave(ctx, impactAt, to.x, to.y, cfg.color, 2.2 * amp.shock, 2)
         if (tier >= 2) Screen.fxZoomPunch(ctx, impactAt, to.x, to.y, tier >= 3 ? 0.62 : 0.42)
         if (tier >= 3) {
           Screen.fxGodrays(ctx, impactAt, 0.7, 0.5)
@@ -115,10 +129,22 @@ export function choreograph(stage: PixiStage, o: ChoreoOpts): gsap.core.Timeline
     return null
   }
 
+  // Hit-stop: micro-freeze sull'impatto, tenuto DENTRO il budget del frame (entra in `nominal`,
+  // quindi la compressione qui sotto lo assorbe e il replay non desincronizza).
+  // Spento di default — `HEAT.hitStopMax` è 0. Vedi `crescendo.ts`.
+  if (amp.hitStopMs > 0 && tl.duration() > 0) {
+    const hold = amp.hitStopMs / 1000
+    tl.to({}, { duration: hold }, tl.duration())
+    nominal += hold
+  }
+
   const budgetSec = Math.max(0.4, o.budgetMs / 1000)
   tl.timeScale(Math.max(0.55, nominal / budgetSec))
   return tl
 }
+
+/** Tetto duro sulle particelle di un burst: il crescendo non può far collassare il frame rate. */
+const PARTICLE_CAP = 34
 
 function reactionKind(entry: LogEntry): 'hit' | 'crit' | 'heal' | 'block' | 'dodge' {
   if (entry.flags.includes('heal')) return 'heal'

@@ -27,7 +27,7 @@ const EMPTY_EFFECTS: ActiveEffect[] = []
  * defender. Statuses are derived per frame; HP comes from the current frame.
  */
 export function BattleArena({
-  replay, hp, entry, frameKey = 0, leftTitle = 'La tua squadra', rightTitle = 'Avversari', center, enemyLevel = 1, speed = 1, duos = [],
+  replay, hp, entry, frameKey = 0, leftTitle = 'La tua squadra', rightTitle = 'Avversari', center, enemyLevel = 1, speed = 1, duos = [], intensity = 0,
 }: {
   replay: Replay
   hp: Record<string, number>
@@ -42,6 +42,8 @@ export function BattleArena({
   speed?: number
   /** Duo attivi del giocatore in questa battaglia (player-only). */
   duos?: ActiveDuo[]
+  /** Crescendo: calore del combattimento 0..1, amplifica i layer cinematici. Vedi `lib/vfx/crescendo.ts`. */
+  intensity?: number
 }) {
   // Una riga di sistema marchiata da un Duo non ha un vero "attore che agisce": MIASMA la attribuisce
   // al CADAVERE che contagia (giusto nel log, ma in arena accenderebbe l'aura "sta agendo" su un morto),
@@ -165,7 +167,7 @@ export function BattleArena({
         <h3 className="text-xs uppercase tracking-widest text-white/40">{rightTitle}</h3>
       </section>
 
-      <PixiArena entry={entry} frameKey={frameKey} speed={speed} />
+      <PixiArena entry={entry} frameKey={frameKey} speed={speed} intensity={intensity} />
       <Callout entry={entry} frameKey={frameKey} appliedControl={appliedControl} duoName={duoName} />
     </div>
   )

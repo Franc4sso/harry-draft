@@ -167,7 +167,7 @@ export function BattleScreen({
         <div className="flex flex-col items-center gap-3 min-w-0">
           <BattleArena
             replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle}
-            enemyLevel={enemyLevel} speed={r.speed} duos={activeDuos}
+            enemyLevel={enemyLevel} speed={r.speed} duos={activeDuos} intensity={r.intensity}
             center={<ActionPanel entry={stickyEntry} units={replay.units} />}
           />
         </div>

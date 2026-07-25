@@ -1,7 +1,7 @@
 # Crescendo di combattimento — calore a streak (design)
 
 **Data:** 2026-07-25
-**Stato:** design approvato, pronto per il piano d'implementazione
+**Stato:** IMPLEMENTATO (2026-07-25) — vedi §Stato dell'implementazione in fondo. Manca il playtest.
 **Pilastro:** WOW P8 — dramma. "Il combattimento deve essere la parte più bella."
 
 ## Obiettivo
@@ -168,6 +168,35 @@ valori di default nella spec sopra; rifinitura nel lab.
 - Pavimento ad arco del combattimento (approccio B scartato).
 - Audio reattivo al calore (l'audio in-game è comunque un altro blocco, oggi `null`).
 - Nuovi filtri WebGL costosi: si riusano quelli montati.
+
+## Stato dell'implementazione (2026-07-25)
+
+Tutto lo scope base è a posto. Suite intera verde (1672 test), typecheck pulito.
+
+| Unità | File | Nota |
+|---|---|---|
+| Core puro | `lib/vfx/crescendo.ts` (nuovo) | `HEAT`, `heatNext`, `heatAt`, `heatSeries`, `heatAmp` |
+| Unit test | `tests/lib/crescendo.test.ts` (nuovo) | 18 test: streak, lull, clamp, determinismo, coerenza API, mapping |
+| Replay | `hooks/useBattleReplay.ts` | espone `intensity`; `heatSeries` in `useMemo` → O(n) per replay, non O(n²) |
+| Coreografia | `lib/vfx/choreograph.ts` | `intensity?: number` (default 0); scala bloom, particelle (cap 34), dim, shockwave |
+| Dim scalabile | `lib/vfx/effects.ts` | `fxSlowmo(ctx, at, depth)` — terzo parametro opzionale |
+| Scena | `PixiArena` → `BattleArena` → `BattleScreen` | passa `intensity`; tint amplificato (cap 0.2) |
+| Calore stanza | `PixiArena.tsx` | overlay `data-room-heat`, opacità = `0.12·i²`, pilotata per stile (niente re-render) |
+| Lab | `app/combat-lab/page.tsx` | scenario **🔥 Streak** + lettura numerica `data-heat-readout` |
+
+**Verifica visiva fatta** (Playwright su `/combat-lab`, scenario Streak): la curva misurata a schermo è
+`0 → 0.463 → 1.000 → 1.000 → 0.384`, esattamente i valori del modello. All'apice la stanza è accesa,
+particelle e bloom crescono, i busti restano **negli stessi pixel** del frame calmo (zero camera shake),
+HP/log/callout/iniziativa/numeri restano leggibili. Due frame fiacchi riportano la stanza al buio.
+
+**Scelte d'implementazione che la spec non fissava:**
+- `heatAmp.room` è **quadratico** (`0.12·i²`), non lineare: la stanza si accende tardi, solo verso l'apice.
+- `heatAmp.dim` entra solo sopra `i≈0.45`, così uno scambio calmo non si sporca di dim.
+- L'anello d'urto del crescendo compare **solo** a calore alto (è additivo, non sostituisce nulla).
+- L'hit-stop entra in `nominal` prima della compressione a `budgetMs` → non può sforare il frame.
+
+**Aperto:** il playtest dell'utente sui pesi (`decay`, kill/duo/crit, contributo di `value`) e la
+decisione se accendere l'hit-stop (`HEAT.hitStopMax`, oggi `0`). Il banco è il lab.
 
 ## Punti d'aggancio noti (dal codice, verificati)
 - `LogEntry`/`LogFlag`: `types/combat.ts:95-120`.

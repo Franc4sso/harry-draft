@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import type { LogEntry } from '@/types'
 import type { Replay, ReplayFrame } from '@/game/engine/combat/replay'
 import { firstDuoFireFrames } from '@/game/engine/combat/replay'
+import { heatSeries } from '@/lib/vfx/crescendo'
 
 export const REPLAY_SPEEDS = [1, 2, 4] as const
 export type ReplaySpeed = (typeof REPLAY_SPEEDS)[number]
@@ -72,6 +73,9 @@ export interface BattleReplayController {
   entry: LogEntry | null
   /** Turn number of the current frame (0 before any action has played). */
   currentTurn: number
+  /** Calore del combattimento a questo frame, 0..1 — vedi `lib/vfx/crescendo.ts`. Funzione pura
+   *  del log (robusta a seek/rewind), così la scena non deve ricalcolarlo e non può divergere. */
+  intensity: number
   playing: boolean
   done: boolean
   modalReady: boolean
@@ -136,6 +140,10 @@ export function useBattleReplay(
   // condivisa): ritmo e annuncio devono concordare sul PRIMO scatto di ogni Duo.
   const firstDuoFire = useMemo(() => firstDuoFireFrames(replay.frames), [replay.frames])
 
+  // Il calore di OGNI frame in una sola passata: il fold è O(n), rifarlo a ogni render (o a ogni
+  // seek) sarebbe O(n²). Azzerato per costruzione a ogni battaglia — l'array è per-replay.
+  const heat = useMemo(() => heatSeries(replay.frames.map(f => f.entry ?? null)), [replay.frames])
+
   useEffect(() => {
     if (!playing || done) return
     // Dwell longer on the frame just revealed if it's a big moment, shorter if it's a
@@ -189,6 +197,7 @@ export function useBattleReplay(
     hp: frame.hp,
     entry: frame.entry,
     currentTurn,
+    intensity: heat[Math.min(index, total - 1)] ?? 0,
     playing,
     done,
     modalReady,
