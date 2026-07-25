@@ -45,7 +45,6 @@ export interface RunBController {
   currentEvent: CurrentEventView | null
   chooseEventOption: (optionId: string) => void
   chooseSpellUpgrade: (wizardId: string) => void
-  chooseSpellSwap: (wizardId: string, spellId: string) => void
   useConsumableRelic: (relicId: string) => void
   cioccorane: number
   advanceArea: () => void
@@ -98,7 +97,7 @@ export function useRunB(seed: string): RunBController {
    *  validare i punteggi, quindi una scelta a metà run è superficie anti-cheat che non apriamo).
    *  L'offerta NON viaggia dalla UI: si RIGENERA qui dal seed+nodo con lo stesso
    *  `spoilsRngForNode` che ha prodotto quella mostrata, e `applySpoilChoice` accetta solo id
-   *  che le appartengono — stesso pattern anti-fiducia di `chooseSpellSwap`.
+   *  che le appartengono.
    *  Poi registra la scelta nel `log` (Fase B ha lasciato di proposito la riga al chiamante). */
   const chooseSpoil = useCallback((choice: SpoilChoice) => {
     const cur = runRef.current
@@ -139,7 +138,6 @@ export function useRunB(seed: string): RunBController {
     chooseRecruit: shared.chooseRecruit, skipRecruit: shared.skipRecruit, chooseRelic: shared.chooseRelic,
     buyAltare: shared.buyAltare, skipAltare: shared.skipAltare, ackInfirmary: shared.ackInfirmary,
     currentEvent: shared.currentEvent, chooseEventOption: shared.chooseEventOption, chooseSpellUpgrade: shared.chooseSpellUpgrade,
-    chooseSpellSwap: shared.chooseSpellSwap,
     useConsumableRelic: useConsumableRelicCb,
     cioccorane: profileRef.current.cioccorane,
     advanceArea, restart,

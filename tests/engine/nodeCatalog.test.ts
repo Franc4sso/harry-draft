@@ -19,7 +19,7 @@ describe('node catalog', () => {
     expect(nodeKind('infirmary').isCombat).toBe(false)
   })
   it('phase1Types returns exactly the generated Fase-1 categories', () => {
-    expect(new Set(phase1Types())).toEqual(new Set(['battle', 'elite', 'boss', 'recruit', 'relic', 'infirmary', 'spellForge', 'spellSwap']))
+    expect(new Set(phase1Types())).toEqual(new Set(['battle', 'elite', 'boss', 'recruit', 'relic', 'infirmary', 'spellForge']))
   })
   it('every catalog entry is self-consistent (key matches type)', () => {
     for (const [key, kind] of Object.entries(NODE_CATALOG)) {

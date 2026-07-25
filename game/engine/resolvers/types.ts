@@ -7,12 +7,11 @@ export type ResolverChoice =
   | { kind: 'event-choice'; optionId: string }
   | { kind: 'spell-upgrade'; wizardId: string }
   | { kind: 'altare-buy'; relicId: string; costWizardId?: string; costRelicId?: string; carrierId?: string; replaceRelicId?: string }
-  | { kind: 'spell-swap'; wizardId: string; spellId: string }
   | { kind: 'combat-ack' }
   | { kind: 'skip' }
 
 export interface ResolverEntry {
-  offers: { wizardIds?: string[]; relicIds?: string[]; swapSpells?: string[] }
+  offers: { wizardIds?: string[]; relicIds?: string[] }
   isCombat: boolean
   /** Present for 'event' nodes: the picked event's display summary. */
   event?: { id: string; title: string; text: string; choices: { id: string; label: string }[] }

@@ -19,7 +19,7 @@ registerCoreResolvers()
 
 export type RunSharedView =
   | 'draft' | 'map' | 'battle' | 'victory'
-  | 'recruit' | 'relic' | 'infirmary' | 'event' | 'spellForge' | 'spellSwap' | 'altare' | 'area-cleared' | 'win' | 'defeat'
+  | 'recruit' | 'relic' | 'infirmary' | 'event' | 'spellForge' | 'altare' | 'area-cleared' | 'win' | 'defeat'
 
 export interface EventChoiceView { id: string; label: string; enabled: boolean; reason?: string }
 export interface CurrentEventView { id: string; title: string; text: string; choices: EventChoiceView[] }
@@ -35,7 +35,6 @@ export const viewForPhase = (p: RunState['phase']): RunSharedView => {
     case 'infirmary-node': return 'infirmary'
     case 'event-node': return 'event'
     case 'spellForge-node': return 'spellForge'
-    case 'spellSwap-node': return 'spellSwap'
     case 'altare-node': return 'altare'
     case 'area-cleared': return 'area-cleared'
     case 'win': return 'win'
@@ -110,7 +109,6 @@ export interface RunSharedController {
   currentEvent: CurrentEventView | null
   chooseEventOption: (optionId: string) => void
   chooseSpellUpgrade: (wizardId: string) => void
-  chooseSpellSwap: (wizardId: string, spellId: string) => void
   /** Duo ids newly added to `profile.codex.duosSeen` by the LAST `chooseNode` call (empty
    *  the rest of the time). Set only when that call entered battle. The battle intro reads
    *  this to render `DuoToast` — see `components/screens/RunBRunner.tsx`'s 'battle' case. */
@@ -263,11 +261,6 @@ export function useRunShared(opts: UseRunSharedOpts): RunSharedController {
     commit({ ...next, phase: 'map' }, 'map') // non-combat node: straight back to map
   }, [commit])
 
-  const chooseSpellSwap = useCallback((wizardId: string, spellId: string) => {
-    const next = resolveCurrent(runRef.current, { kind: 'spell-swap', wizardId, spellId }, createRng(runRef.current.seed))
-    commit({ ...next, phase: 'map' }, 'map') // non-combat node: straight back to map
-  }, [commit])
-
   const reachable = useMemo(() => engineReachable(run), [run])
   const currentNode = run.map?.find(n => n.id === run.currentNodeId)
 
@@ -275,7 +268,7 @@ export function useRunShared(opts: UseRunSharedOpts): RunSharedController {
     run, view, battle, lastFallen, runRef, commit, setBattle, setLastFallen,
     reachable, currentNode,
     chooseNode, commitBattle, chooseRecruit, skipRecruit, chooseRelic, buyAltare, skipAltare, ackInfirmary,
-    currentEvent, chooseEventOption, chooseSpellUpgrade, chooseSpellSwap,
+    currentEvent, chooseEventOption, chooseSpellUpgrade,
     newlyDiscoveredDuoIds,
   }
 }
