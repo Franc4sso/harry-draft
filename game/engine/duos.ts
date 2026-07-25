@@ -1,6 +1,6 @@
 import type { ActiveDuo, ActiveRelic, DraftedWizard, Duo, DuoProgress, DuoSignal, SignalCount, Wizard } from '@/types'
 import { DUOS } from '@/data/duos'
-import { livingOf } from '@/game/engine/roster'
+import { livingOf, tagsOf } from '@/game/engine/roster'
 
 const ROLE_OF: Partial<Record<DuoSignal, string>> = {
   attaccante: 'Attaccante', supporto: 'Supporto', controllo: 'Controllo',
@@ -25,7 +25,7 @@ export function signalActive(sig: DuoSignal, team: DraftedWizard[], relics: Acti
   const role = ROLE_OF[sig]
   if (role) return team.filter(d => d.wizard.role === role).length >= 2
   const tag = TAG_OF[sig]!
-  const comp = team.filter(d => (d.wizard.tags ?? []).includes(tag)).length >= 2
+  const comp = team.filter(d => tagsOf(d).includes(tag)).length >= 2
   return comp || relics.some(({ relic }) => relicLightsTag(sig, relic))
 }
 
@@ -46,7 +46,7 @@ export function signalCount(sig: DuoSignal, team: DraftedWizard[], relics: Activ
     return { have: 2, need: 2, byRelic: true }
   }
   const tag = TAG_OF[sig]!
-  return { have: team.filter(d => (d.wizard.tags ?? []).includes(tag)).length, need: 2, byRelic: false }
+  return { have: team.filter(d => tagsOf(d).includes(tag)).length, need: 2, byRelic: false }
 }
 
 export function litSignals(team: DraftedWizard[], relics: ActiveRelic[]): Set<DuoSignal> {
@@ -76,12 +76,18 @@ const TAG_SIGNALS: DuoSignal[] = ['veleno', 'esecuzione', 'scudirigen', 'magieOs
 /** The Duo signals that appear in at least one shipped Duo. */
 export const DUO_SIGNALS_IN_USE: ReadonlySet<DuoSignal> = new Set(DUOS.flatMap(d => d.signals))
 
-/** A wizard's Duo signals that feed a SHIPPED Duo (role-signal if in use, + its Duo-family tags). */
-export function wizardDuoSignals(wizard: Wizard): DuoSignal[] {
+/** A wizard's Duo signals that feed a SHIPPED Duo (role-signal if in use, + its Duo-family tags).
+ *  Il ruolo viene sempre dal `Wizard`; i TAG arrivano da `effectiveTags` quando il chiamante ne
+ *  ha di migliori. Chi ha in mano un `DraftedWizard` DEVE passare `tagsOf(d)`: altrimenti la
+ *  card mostra solo i tag nativi e un mago marchiato (Spoglie della Vittoria) non fa vedere il
+ *  segnale che ha appena ricevuto — la UI direbbe una cosa e il motore un'altra (§4 del piano).
+ *  Senza il secondo argomento il comportamento resta quello storico (soli tag nativi), così i
+ *  contesti che hanno davvero solo un `Wizard` di catalogo (codex/collezione) restano validi. */
+export function wizardDuoSignals(wizard: Wizard, effectiveTags?: string[]): DuoSignal[] {
   const out: DuoSignal[] = []
   const roleSig = ROLE_SIGNAL[wizard.role]
   if (roleSig && DUO_SIGNALS_IN_USE.has(roleSig)) out.push(roleSig)
-  const tags = wizard.tags ?? []
+  const tags = effectiveTags ?? wizard.tags ?? []
   for (const t of TAG_SIGNALS) if (tags.includes(t) && DUO_SIGNALS_IN_USE.has(t)) out.push(t)
   return out
 }

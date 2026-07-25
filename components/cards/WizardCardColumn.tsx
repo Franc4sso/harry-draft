@@ -5,6 +5,7 @@ import { cn, houseTheme, tierFrame, SHINY_FOIL } from '@/lib/theme'
 import { RoleBadge } from './RoleBadge'
 import { AbilityPlate } from './AbilityPlate'
 import { DuoSignalMarks } from './DuoSignalMarks'
+import { MarchioMarks } from './MarchioMarks'
 import { CARD_STAT_MAX } from './cardStats'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { spellEffectChips, spellEffectDetails, formatSpellStats } from '@/lib/glossary'
@@ -14,6 +15,7 @@ import { abilityFor } from '@/lib/wizardAbilities'
 import { displayName } from '@/lib/displayName'
 import { ARCHETYPE_BY_TAG, archetypeTooltip } from '@/lib/archetypes'
 import { Tooltip } from '@/components/ui/Tooltip'
+import { tagsOf } from '@/game/engine/roster'
 
 /** Primary archetype for the card ribbon: the first of the wizard's tags that has an entry in
  *  ARCHETYPE_BY_TAG (veleno/esecuzione/scudirigen/magieOscure). A wizard can carry more than one
@@ -61,7 +63,10 @@ export function WizardCardColumn({
   const shinyTrait = drafted.shiny ? TRAIT_BY_ID[drafted.shiny.traitId] : undefined
   const shinyGlow = drafted.shiny ? SHINY_FOIL : ''
   const ability = abilityFor(wizard.id)
-  const archetype = primaryArchetype(wizard.tags)
+  // Tag EFFETTIVI (nativi + Marchi concessi dalle Spoglie): la card deve mostrare quello che il
+  // MOTORE conta (vedi `tagsOf`), altrimenti un mago marchiato non farebbe vedere il segnale.
+  const effectiveTags = tagsOf(drafted)
+  const archetype = primaryArchetype(effectiveTags)
   const isLegendary = wizard.tier === 1
 
   return (
@@ -232,7 +237,7 @@ export function WizardCardColumn({
           {/* ARCHETYPE RIBBON — top-right banner, glyph + fantasy name, tinted by archetype
               color (mockup: .ribbon). Shows the wizard's PRIMARY archetype tag only. */}
           {archetype && (() => {
-            const tag = wizard.tags?.find((t): t is keyof typeof ARCHETYPE_BY_TAG => t in ARCHETYPE_BY_TAG)!
+            const tag = effectiveTags.find((t): t is keyof typeof ARCHETYPE_BY_TAG => t in ARCHETYPE_BY_TAG)!
             return (
               <Tooltip
                 label={`Archetipo ${archetype.name}`}
@@ -253,6 +258,10 @@ export function WizardCardColumn({
               </Tooltip>
             )
           })()}
+          {/* MARCHI — i segnali guadagnati dopo una vittoria. Sotto il nastro perché il nastro
+              mostra un solo archetipo (il primo): senza questi, un Marchio su un mago che ha
+              già un archetipo nativo resterebbe invisibile. */}
+          <MarchioMarks drafted={drafted} className="mr-3 mt-1 justify-end" />
           {drafted.corrotto && (
             <span
               data-testid="corrotto-badge"
@@ -302,7 +311,7 @@ export function WizardCardColumn({
             to avoid echoing the crown/RoleBadge — see DuoSignalMarks.cardLabel. The 4 tag-signals
             (veleno/esecuzione/scudirigen/magieOscure) are excluded here since the archetype
             ribbon above already shows the wizard's primary one — no redundant pill. */}
-        <div className="mb-2"><DuoSignalMarks wizard={wizard} excludeArchetypeSignals /></div>
+        <div className="mb-2"><DuoSignalMarks wizard={wizard} tags={effectiveTags} excludeArchetypeSignals /></div>
 
         {/* SPELL BLOCK — hero move. No type chip: the role-accent bar carries
             the "kind" cue instead. */}

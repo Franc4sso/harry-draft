@@ -9,6 +9,7 @@ import { createRng } from '@/game/engine/rng'
 import { powerOf } from '@/game/engine/combat/teamGen'
 import { isDead } from '@/game/engine/roster'
 import { BALANCE } from '@/data/constants'
+import { botApplySpoils } from './botSpoils'
 import type { RunNode, RunState } from '@/types'
 
 // Register at module scope (idempotent): the greedy runs below are evaluated in
@@ -337,6 +338,20 @@ import type { RunNode, RunState } from '@/types'
 // somewhat more often than this bot). categoryWeights/recruitBiasBoost/normalEnemyCount/
 // enemyCountByArea are now ALL floor-sensitive: any future balance change must re-measure
 // both campaignBalanceB and campaignBalanceRestricted.
+// *** SPOGLIE DELLA VITTORIA — MISURA Fase D (2026-07-25) ***
+// Il bot ora SCEGLIE le Spoglie dopo ogni battaglia normale vinta (policy condivisa in
+// tests/engine/botSpoils.ts, agganciata nel ramo 'victory' di runOne). Misura A/B sugli
+// STESSI 120 seed, nessuna costante di bilanciamento toccata:
+//   campaignBalanceB overall : PRIMA 0.0000 (0/120) → DOPO 0.0000 (0/120)  [invariato]
+//   muro veleno withVeleno   : PRIMA 0.017 (2/120)  → DOPO 0.017 (2/120)   [invariato]
+//   muro veleno noVeleno     : PRIMA 0.000          → DOPO 0.000           [invariato]
+// PERCHÉ il delta è zero (strumentazione su questi 120 seed, non congettura): questo bot
+// muore alla PRIMA battaglia in 119/120 run — 121 combattimenti totali, 5 vinti, e solo 2 di
+// quelle vittorie erano su un nodo 'battle' (le uniche che offrono Spoglie). Con 2 offerte in
+// 120 run (1 Allenamento, 1 Ristoro) la feature NON PUÒ muovere questa metrica: l'harness a
+// pool intero è pinnato a zero da prima delle Spoglie (vedi la nota "MEASURED REGRESSION
+// 2026-07-11"), quindi qui la policy è una GARANZIA DI COPERTURA per il futuro, non una misura.
+// La misura vera sta in campaignBalanceRestricted (53 Spoglie scelte su 120 run) — vedi lì.
 registerCoreResolvers()
 
 // Near-optimal ("upper-bound") player policy. A pure recruit/relic-first greedy is
@@ -422,7 +437,12 @@ function runOne(seed: string, battleTurns?: number[], preferVeleno = false): 'wi
       s = { ...s, phase: 'map' }; continue
     }
     if (s.phase === 'area-cleared') { s = clearAreaAndAdvance(s, createRng(seed)); continue }
-    if (s.phase === 'victory') { s = { ...s, phase: 'map' }; continue }
+    // Spoglie della Vittoria (2026-07-25, Fase D): dopo ogni battaglia NORMALE vinta il
+    // giocatore sceglie 1 di 3 carte. Il percorso reale passa da hooks/useRunB.ts, che questo
+    // harness non attraversa: senza `botApplySpoils` il bot non sceglierebbe mai nulla e la
+    // misura sottostimerebbe il potere del giocatore (la lezione degli "scaling joker").
+    // La policy — e la soglia di vita del Ristoro — vivono in tests/engine/botSpoils.ts.
+    if (s.phase === 'victory') { s = { ...botApplySpoils(s, node), phase: 'map' }; continue }
     if (s.phase === 'event-node') {
       const entry = eventResolver.enter(s, node, createRng(seed))
       const optionId = entry.event!.choices[0]!.id

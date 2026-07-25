@@ -19,6 +19,7 @@ import { STARTER_WIZARDS, STARTER_RELICS, type UnlockTarget } from '@/data/unloc
 import { setDraftPoolRestriction } from '@/game/engine/draft'
 import { setRelicPoolRestriction } from '@/game/engine/relics'
 import { useRunShared, type RunSharedView, type CurrentEventView } from './useRunShared'
+import { applySpoilChoice, rollSpoils, spoilLogEvent, spoilsRngForNode, type SpoilChoice } from '@/game/engine/spoils'
 
 export type RunBView = RunSharedView
 
@@ -36,6 +37,7 @@ export interface RunBController {
   chooseNode: (nodeId: string) => void
   commitBattle: () => void
   acknowledgeVictory: () => void
+  chooseSpoil: (choice: SpoilChoice) => void
   chooseRecruit: (wizardId: string, replaceId?: string) => void
   skipRecruit: () => void
   chooseRelic: (relicId: string, assignedTo?: string, replaceRelicId?: string) => void
@@ -97,6 +99,25 @@ export function useRunB(seed: string): RunBController {
 
   const acknowledgeVictory = useCallback(() => { commit({ ...runRef.current, phase: 'map' }, 'map') }, [commit, runRef])
 
+  /** LE SPOGLIE DELLA VITTORIA (solo campagna — §6 del piano: l'endless ri-simula le run per
+   *  validare i punteggi, quindi una scelta a metà run è superficie anti-cheat che non apriamo).
+   *  L'offerta NON viaggia dalla UI: si RIGENERA qui dal seed+nodo con lo stesso
+   *  `spoilsRngForNode` che ha prodotto quella mostrata, e `applySpoilChoice` accetta solo id
+   *  che le appartengono — stesso pattern anti-fiducia di `buyShopItem`/`chooseSpellSwap`.
+   *  Poi registra la scelta nel `log` (Fase B ha lasciato di proposito la riga al chiamante). */
+  const chooseSpoil = useCallback((choice: SpoilChoice) => {
+    const cur = runRef.current
+    const node = cur.map?.find(n => n.id === cur.currentNodeId)
+    if (!node) return
+    const offer = rollSpoils(cur, spoilsRngForNode(cur.seed, node.id))
+    const spoil = offer.find(s => s.id === choice.spoilId)
+    if (!spoil) { commit({ ...cur, phase: 'map' }, 'map'); return }
+    const applied = applySpoilChoice(cur, offer, choice)
+    // Il log si scrive sullo stato GIÀ applicato: il nome del bersaglio si legge lì.
+    const ev = spoilLogEvent(applied, node.id, spoil, choice.wizardId)
+    commit({ ...applied, log: [...(applied.log ?? []), ev], phase: 'map' }, 'map')
+  }, [commit, runRef])
+
   const buyShopItem = useCallback((slotId: string, opts?: { carrierId?: string; targetWizardId?: string; replaceRelicId?: string }) => {
     const node = runRef.current.map!.find(n => n.id === runRef.current.currentNodeId)!
     const slot = shopOffer(runRef.current, node, createRng(runRef.current.seed)).slots.find(s => s.id === slotId)
@@ -144,7 +165,7 @@ export function useRunB(seed: string): RunBController {
   return {
     run, view, battle, reachable: shared.reachable, currentNode: shared.currentNode,
     area: run.area ?? 0, areasTotal: BALANCE.map.areas, lastFallen, newlyDiscoveredDuoIds, runReward,
-    completeDraft, chooseNode: shared.chooseNode, commitBattle: shared.commitBattle, acknowledgeVictory,
+    completeDraft, chooseNode: shared.chooseNode, commitBattle: shared.commitBattle, acknowledgeVictory, chooseSpoil,
     chooseRecruit: shared.chooseRecruit, skipRecruit: shared.skipRecruit, chooseRelic: shared.chooseRelic,
     buyAltare: shared.buyAltare, skipAltare: shared.skipAltare, ackInfirmary: shared.ackInfirmary,
     currentEvent: shared.currentEvent, chooseEventOption: shared.chooseEventOption, chooseSpellUpgrade: shared.chooseSpellUpgrade,

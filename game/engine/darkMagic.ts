@@ -1,5 +1,6 @@
 import type { ActiveRelic, ActiveSynergy, DraftedWizard } from '@/types'
 import { keywordDamageMult, relicMatchesCondition } from './relics'
+import { tagsOf } from './roster'
 
 /** Per-wizard Magie Oscure map. The Oscurità synergy gives `bonus` (recoil 0) to every
  *  magieOscure-tagged wizard; an assigned Marchio Nero adds bonus + recoil to its carrier only.
@@ -12,7 +13,7 @@ export function teamDarkMagic(
   // 1. synergy: every dark caster gets the base bonus (no recoil)
   if (synBonus > 0) {
     for (const dw of team) {
-      if ((dw.wizard.tags ?? []).includes('magieOscure')) {
+      if (tagsOf(dw).includes('magieOscure')) {
         map[dw.wizard.id] = { bonus: synBonus, recoil: 0 }
       }
     }

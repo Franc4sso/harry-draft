@@ -24,6 +24,10 @@ export interface DraftedWizard {
   spellLevel?: number
   recruitedVia?: string
   growthChoices?: GrowthChoice[]
+  /** Tag guadagnati a RUNTIME (es. il Marchio delle Spoglie della Vittoria), oltre a quelli
+   *  nativi del `Wizard`. Un tag concesso deve contare ESATTAMENTE come uno nativo: non
+   *  leggere mai `wizard.tags` da solo su un DraftedWizard — usa `tagsOf` (game/engine/roster.ts). */
+  grantedTags?: string[]
   /** P5 Corruzione: marchiato per sempre dall'aver equipaggiato una reliquia grantsDarkMagic.
    *  PERMANENTE (resta anche se la reliquia sparisce). Effetto: NON CURABILE — nessun
    *  regen/cura in battaglia, niente Infermeria/shop-heal/healTeam. Eccezioni deliberate:

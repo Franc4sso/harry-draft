@@ -10,8 +10,30 @@ import { powerOf } from '@/game/engine/combat/teamGen'
 import { isDead } from '@/game/engine/roster'
 import { setDraftPoolRestriction } from '@/game/engine/draft'
 import { STARTER_WIZARDS } from '@/data/unlocks'
+import { botApplySpoils } from './botSpoils'
 import type { RunNode, RunState } from '@/types'
 
+// *** SPOGLIE DELLA VITTORIA — MISURA Fase D (2026-07-25) ***
+// Questo è il gate REALE (pool ristretto = quello che il giocatore pesca davvero), quindi è qui
+// che la misura conta. Il bot ora sceglie 1 delle 3 Spoglie dopo ogni battaglia normale vinta
+// (policy in tests/engine/botSpoils.ts). A/B sugli STESSI 120 seed, nessuna costante di
+// bilanciamento toccata, nessuna asserzione allentata:
+//   winRate: PRIMA 0.0167 (2/120) → DOPO 0.0167 (2/120) — e sono gli STESSI due seed
+//            (run-68, run-101): l'insieme degli esiti è identico bit-per-bit.
+// La feature NON è invisibile al bot (questo era il punto della fase): su 120 run il bot vince
+// 53 battaglie normali e sceglie 53 Spoglie —
+//   29 Marchi che ACCENDONO un segnale (esecuzione), 14 Allenamenti, 5 Ristori,
+//    5 Marchi che COMPLETANO un Duo (3 Muro Vivente, 1 Cancrena, 1 Mietitore): tutte e 5 le
+//      offerte contenenti un completamento sono state prese, la regola keyword-aware funziona.
+// Effetto misurato: reale ma piccolo, e sotto la granularità di 1 seed su 120 —
+//   combattimenti vinti 140 → 143, nodi risolti 350 → 354,
+//   profondità massima raggiunta: area0 94→94, area1 13→12, area2 13→14.
+// LETTURA ONESTA: le Spoglie spostano il potere del giocatore verso l'alto, ma su questo proxy
+// il guadagno arriva TARDI (servono vittorie normali per accumularle) mentre le sconfitte si
+// concentrano prima; non basta a ribaltare una run. Nessuna ritaratura fatta — Fase D del piano
+// osserva e riporta, decide l'utente (memoria "difficulty-validated-harder-is-good": non
+// ammorbidire). Se in futuro si volesse un proxy più sensibile, la metrica utile qui NON è il
+// winRate (pinnato a 2/120 da prima delle Spoglie) ma la profondità raggiunta.
 registerCoreResolvers()
 
 // Near-optimal ("upper-bound") player policy. A pure recruit/relic-first greedy is
@@ -94,7 +116,10 @@ function runOne(seed: string, battleTurns?: number[], preferVeleno = false): 'wi
       s = { ...s, phase: 'map' }; continue
     }
     if (s.phase === 'area-cleared') { s = clearAreaAndAdvance(s, createRng(seed)); continue }
-    if (s.phase === 'victory') { s = { ...s, phase: 'map' }; continue }
+    // Spoglie della Vittoria (2026-07-25, Fase D): stesso gancio di campagnBalanceB — il bot
+    // sceglie 1 delle 3 carte offerte dopo ogni battaglia normale vinta, con la policy
+    // condivisa di tests/engine/botSpoils.ts (senza di essa l'harness ignorerebbe la feature).
+    if (s.phase === 'victory') { s = { ...botApplySpoils(s, node), phase: 'map' }; continue }
     if (s.phase === 'event-node') {
       const entry = eventResolver.enter(s, node, createRng(seed))
       const optionId = entry.event!.choices[0]!.id

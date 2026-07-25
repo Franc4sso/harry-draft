@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest'
 import { saveRun, loadRun, clearRun, RUN_KEY } from '@/lib/runStore'
+import { tagsOf } from '@/game/engine/roster'
 import type { RunState } from '@/types'
 
 // jsdom provides localStorage in vitest's default environment; if not, shim it.
@@ -38,5 +39,28 @@ describe('runStore', () => {
     saveRun(sample)
     clearRun()
     expect(loadRun()).toBeNull()
+  })
+
+  // §3a delle Spoglie della Vittoria: i Marchi vivono in `DraftedWizard.grantedTags`. Se non
+  // sopravvivessero al giro salva→carica, ricaricare la pagina cancellerebbe le scelte di
+  // vittoria del giocatore (e spegnerebbe i Duo che aveva acceso). Il test lo DIMOSTRA invece
+  // di darlo per scontato dal fatto che saveRun serializza tutto lo stato.
+  it('round-trips grantedTags (i Marchi) e i tag nativi insieme', () => {
+    const conMarchio: RunState = {
+      ...sample,
+      team: [{
+        wizard: { id: 'bruto', name: 'Bruto', house: 'Grifondoro', role: 'Tank', tier: 1, gender: 'm',
+          ranges: { hp: [100, 100], atk: [20, 20], def: [0, 0], spd: [10, 10] }, spellPool: ['base_attack'],
+          tags: ['esecuzione'] },
+        stats: { hp: 100, atk: 20, def: 0, spd: 10 }, maxHp: 100, currentHp: 80, level: 2,
+        spell: { id: 'base_attack', name: 'Attacco', type: 'Attacco', power: 10 },
+        grantedTags: ['veleno'],
+      }] as unknown as RunState['team'],
+    }
+    saveRun(conMarchio)
+    const back = loadRun()!
+    expect(back).toEqual(conMarchio)
+    expect(back.team[0]!.grantedTags).toEqual(['veleno'])
+    expect(tagsOf(back.team[0]!)).toEqual(['esecuzione', 'veleno'])
   })
 })

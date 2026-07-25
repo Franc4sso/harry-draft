@@ -9,6 +9,8 @@ import { StatCell, STAT_CELLS } from './statCells'
 import { Chip } from '@/components/ui/Chip'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { DuoSignalMarks } from './DuoSignalMarks'
+import { MarchioMarks } from './MarchioMarks'
+import { tagsOf } from '@/game/engine/roster'
 import { spellTypeChip, spellEffectChips, spellEffectDetails, formatSpellStats } from '@/lib/glossary'
 import { roleTooltip } from '@/lib/roleInfo'
 import { Tooltip } from '@/components/ui/Tooltip'
@@ -129,7 +131,8 @@ export function WizardCardRow({
               </Tooltip>
             )}
           </h3>
-          <DuoSignalMarks wizard={wizard} excludeArchetypeSignals />
+          <DuoSignalMarks wizard={wizard} tags={tagsOf(drafted)} excludeArchetypeSignals />
+          <MarchioMarks drafted={drafted} />
         </div>
 
         {/* Persisted health (currentHp) — shown only for the real run roster (draft/recruit

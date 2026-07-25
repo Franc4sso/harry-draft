@@ -37,6 +37,7 @@ import { shopOffer } from '@/game/engine/resolvers/shop'
 import { altareOffer } from '@/game/engine/resolvers/altare'
 import { swapOffer } from '@/game/engine/resolvers/spellSwap'
 import { createRng } from '@/game/engine/rng'
+import { rollSpoils, spoilsRngForNode, type SpoilChoice } from '@/game/engine/spoils'
 import { runSummary } from '@/lib/runSummary'
 import { displayName } from '@/lib/displayName'
 import { BOSSES } from '@/data/bosses'
@@ -62,6 +63,10 @@ export interface RunnerController {
   chooseNode: (nodeId: string) => void
   commitBattle: () => void
   acknowledgeVictory: () => void
+  /** Le Spoglie della Vittoria: campagna-only, come buyAltare/leaveShop. L'endless non le
+   *  implementa (§6 del piano: ri-simula le run per l'anti-cheat) e senza questa callback la
+   *  VictoryScreen resta il vecchio "Prosegui". */
+  chooseSpoil?: (choice: SpoilChoice) => void
   chooseRecruit: (wizardId: string, replaceId?: string) => void
   skipRecruit: () => void
   chooseRelic: (relicId: string, assignedTo?: string, replaceRelicId?: string) => void
@@ -220,10 +225,18 @@ export function RunBRunner({
           nameById[d.wizard.id] = displayName(d)
         }
         const mvpName = nameById[b.result.mvpId] ?? b.result.mvpId
-        const { floor } = parseAreaNodeId(c.currentNode!.id)
+        const node = c.currentNode!
+        const { floor } = parseAreaNodeId(node.id)
         const battleNumber = floor + 1
         const enemyCount = BALANCE.map.floorsPerArea - 1
         const bossNext = floor === BALANCE.map.floorsPerArea - 2
+        // LE SPOGLIE — solo dopo una battaglia NORMALE di campagna: élite e boss hanno già le
+        // loro ricompense (§5 del piano), e l'endless non passa `chooseSpoil` (§6). L'offerta
+        // si genera dal seed+nodo, quindi ri-renderizzare non la cambia mai; il controller la
+        // rigenera identica quando applica la scelta.
+        const spoils = c.chooseSpoil && node.type === 'battle'
+          ? rollSpoils(c.run, spoilsRngForNode(c.run.seed, node.id))
+          : undefined
         return (
           <VictoryScreen
             result={b.result}
@@ -233,6 +246,9 @@ export function RunBRunner({
             bossNext={bossNext}
             fallenNames={c.lastFallen}
             onNext={c.acknowledgeVictory}
+            spoils={spoils}
+            team={c.run.team}
+            onChooseSpoil={c.chooseSpoil}
           />
         )
       }

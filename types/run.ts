@@ -64,6 +64,8 @@ export interface RunEvent {
   area: number
   nodeId: string
   kind: 'recruit' | 'relic' | 'elite' | 'boss' | 'levelMilestone' | 'infirmary' | 'event' | 'spellForge' | 'shop' | 'altare' | 'spellSwap'
+  /** 'spoglie': la Spoglia scelta dopo una vittoria normale (Marchio / Allenamento / Ristoro). */
+  | 'spoglie'
   summary: string
 }
 

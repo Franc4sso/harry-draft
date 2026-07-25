@@ -25,12 +25,15 @@ function cardLabel(s: DuoSignal): string {
  *  reads WHY the wizard matters for Combos. `excludeArchetypeSignals` drops the 4 tag-signals
  *  (veleno/esecuzione/scudirigen/magieOscure) that a sibling archetype ribbon already shows,
  *  leaving only role-signals like taunt ("Bersaglio"). */
-export function DuoSignalMarks({ wizard, compact = false, excludeArchetypeSignals = false }: {
+export function DuoSignalMarks({ wizard, tags, compact = false, excludeArchetypeSignals = false }: {
   wizard: Wizard
+  /** Tag EFFETTIVI (nativi + concessi): chi ha un `DraftedWizard` passa `tagsOf(d)`, così il
+   *  Marchio delle Spoglie si vede anche qui. Omesso ⇒ soli tag nativi del catalogo. */
+  tags?: string[]
   compact?: boolean
   excludeArchetypeSignals?: boolean
 }) {
-  const allSignals = wizardDuoSignals(wizard)
+  const allSignals = wizardDuoSignals(wizard, tags)
   const signals = excludeArchetypeSignals
     ? allSignals.filter((s) => !ARCHETYPE_SIGNAL_IDS.has(s))
     : allSignals

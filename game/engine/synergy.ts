@@ -1,5 +1,6 @@
 import type { ActiveSynergy, DraftedWizard, Stats, Synergy } from '@/types'
 import { SYNERGIES } from '@/data/synergies'
+import { tagsOf } from '@/game/engine/roster'
 
 function membersFor(syn: Synergy, team: DraftedWizard[]): string[] | null {
   const req = syn.requires
@@ -11,7 +12,7 @@ function membersFor(syn: Synergy, team: DraftedWizard[]): string[] | null {
   const matched = team.filter(d =>
     (req.house ? d.wizard.house === req.house : true) &&
     (req.role ? d.wizard.role === req.role : true) &&
-    (req.tag ? (d.wizard.tags ?? []).includes(req.tag) : true),
+    (req.tag ? tagsOf(d).includes(req.tag) : true),
   )
   return matched.length >= count ? matched.map(d => d.wizard.id) : null
 }
@@ -56,7 +57,7 @@ export function synergyProgress(team: DraftedWizard[]): SynergyProgress[] {
       : team.filter(d =>
           (req.house ? d.wizard.house === req.house : true) &&
           (req.role ? d.wizard.role === req.role : true) &&
-          (req.tag ? (d.wizard.tags ?? []).includes(req.tag) : true),
+          (req.tag ? tagsOf(d).includes(req.tag) : true),
         )
     const have = matched.length
     const needCount = req.ids ? req.ids.length : need
