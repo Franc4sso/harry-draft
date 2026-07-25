@@ -608,7 +608,11 @@ defenseK: 0.5,
     // effect once already low) — not the live lever here. Il Muro's own budget/hpMult
     // (data/bosses.ts) was also softened 250/0.5→150/0.35 during the search; also flat, but
     // left at the softer value (harmless, consistent direction).
-    categoryWeights: { battle: 25, recruit: 10, relic: 45, event: 15, spellForge: 12, spellSwap: 12, shop: 12 } as Record<'battle' | 'recruit' | 'relic' | 'event' | 'spellForge' | 'spellSwap' | 'shop', number>,
+    // Onda 1.e (2026-07-25): spellForge/spellSwap/shop rimossi dal gioco — erano il 27% del
+    // peso filler (36 su 131) e tre menù nati per rimpiazzare il loadout tolto. I punti NON
+    // sono stati redistribuiti: le proporzioni fra i quattro filler superstiti sono identiche
+    // a prima, così la misura dice davvero quanto costa toglierli.
+    categoryWeights: { battle: 25, recruit: 10, relic: 45, event: 15 } as Record<'battle' | 'recruit' | 'relic' | 'event', number>,
     recruitBiasBoost: 10,        // peso aggiunto a 'recruit' quando la squadra è incompleta
   },
   relics: {

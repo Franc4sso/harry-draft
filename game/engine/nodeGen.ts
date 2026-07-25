@@ -7,7 +7,7 @@ export interface AreaBias {
   teamMax: number
 }
 
-type Filler = 'battle' | 'recruit' | 'relic' | 'event' | 'spellForge' | 'spellSwap' | 'shop'
+type Filler = 'battle' | 'recruit' | 'relic' | 'event'
 
 /** Flat list of (floor, idx) coordinates for the middle floors only. */
 interface Slot { floor: number; idx: number }
@@ -28,7 +28,8 @@ interface Slot { floor: number; idx: number }
  * would place a 2nd recruit in the same area becomes a battle instead. Remaining
  * middle nodes are weighted fillers (battle/recruit/relic), with a (now small) recruit
  * bias when the team is incomplete.
- * In endless mode, shop, spellForge, and altare nodes are excluded entirely.
+ * In endless mode, l'altare è escluso (unico tipo ancora escluso: i tre nodi-menù sono
+ * stati rimossi dal gioco — Onda 1.e, 2026-07-25).
  */
 export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias, endless = false): RunNodeType[][] {
   if (widths.length < 3) throw new Error(`area needs >=3 floors, got ${widths.length}`)
@@ -83,9 +84,9 @@ export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias,
   // 3b. Fase 3 (2026-07-22) — Altare Oscuro: OGNI area (campaign) piazza ESATTAMENTE
   //     UNO su uno slot libero — garantito (era ~30%, scelta utente 2026-07-15,
   //     superata). Sempre evitabile perché ogni floor medio è largo 3. Escluso in
-  //     endless: il controller endless non ha un handler altare (stesso motivo
-  //     dell'esclusione shop/spellForge) e il corto-circuito `!endless` NON consuma
-  //     alcun roll rng → gli stream rng endless restano identici a prima.
+  //     endless: il controller endless non ha un handler altare (come già per i
+  //     nodi-menù, ora rimossi) e il corto-circuito `!endless` NON consuma alcun roll
+  //     rng → gli stream rng endless restano identici a prima.
   if (!endless) {
     const pool = free()
     if (pool.length > 0) {
@@ -104,7 +105,7 @@ export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias,
   //    all-filler-same case (e.g. 3-wide floor rolling battle/battle/battle).
   let recruitCount = 0
   const rollFiller = (): Filler => {
-    const cat = pickFiller(rng, bias, endless)
+    const cat = pickFiller(rng, bias)
     if (cat === 'recruit') {
       if (recruitCount >= 1) return 'battle'
       recruitCount++
@@ -144,15 +145,10 @@ export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias,
   return cats
 }
 
-function pickFiller(rng: Rng, bias: AreaBias, endless = false): Filler {
+function pickFiller(rng: Rng, bias: AreaBias): Filler {
   const cw = BALANCE.map.categoryWeights
   const recruitW = cw.recruit + (bias.teamSize < bias.teamMax ? BALANCE.map.recruitBiasBoost : 0)
-  let entries: [Filler, number][] = [['battle', cw.battle], ['recruit', recruitW], ['relic', cw.relic], ['event', cw.event], ['spellForge', cw.spellForge], ['spellSwap', cw.spellSwap], ['shop', cw.shop]]
-
-  // In endless mode, exclude shop, spellForge and spellSwap by zeroing their weights
-  if (endless) {
-    entries = entries.map(([cat, w]) => [cat, (cat === 'shop' || cat === 'spellForge' || cat === 'spellSwap') ? 0 : w])
-  }
+  const entries: [Filler, number][] = [['battle', cw.battle], ['recruit', recruitW], ['relic', cw.relic], ['event', cw.event]]
 
   const total = entries.reduce((a, [, v]) => a + v, 0)
   let roll = rng.next() * total
