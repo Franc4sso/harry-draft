@@ -88,9 +88,11 @@ Principio: **non aggiungo un sistema finché non ne ho tolto uno.**
   e le Case restano una **meccanica di squadra**, non solo colore. Questa voce non è più un todo.
 - 1.d — Potare le firme a ~15 percepibili (D4).
 - **1.e (FATTA, 2026-07-25)** — Rimuovere spellForge / spellSwap / shop come tipi di nodo (D5).
-  Commit `c3cde39`..`9a0e12d` (Task 1-5) + referto di misura (Task 6, questo commit): la
-  profondità raggiunta NON è calata — è salita (94/12/14 → 87/8/25 sull'area0/1/2 di
-  `campaignBalanceRestricted`); nessuna ritaratura fatta, decide l'utente.
+  Commit `c3cde39`..`9a0e12d` (Task 1-5) + referto di misura (Task 6, questo commit): i numeri
+  grezzi salgono (94/12/14 → 87/8/25 sull'area0/1/2 di `campaignBalanceRestricted`), ma il
+  baseline PRIMA risale a un'harness senza handler shop/spellForge (stessa lacuna dell'altare)
+  quindi NON è misurabile con questo strumento — vedi la lettura onesta nell'harness; nessuna
+  ritaratura fatta.
   → piano: `.superpowers/sdd/2026-07-25-onda-1e-togliere-i-nodi-menu/`
 - 1.f — Potare le reliquie di statistiche piatte.
 

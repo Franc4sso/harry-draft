@@ -37,25 +37,46 @@ import type { RunNode, RunState } from '@/types'
 //
 // *** ONDA 1.e — MISURA (2026-07-25) ***
 // I Task 1-5 hanno tolto tre tipi di nodo-menu dalla mappa: spellForge (Aumento Magia),
-// spellSwap (Cambia Magia, già rimosso l'11-07) e shop (Negozio). categoryWeights NON è
+// spellSwap (il NODO — il *loadout* swap-magia era già sparito l'11-07 con "UN MAGO, UNA
+// MAGIA", cosa diversa dal nodo mappa tolto qui) e shop (Negozio). categoryWeights NON è
 // stato ridistribuito a compensazione: i pesi assoluti di battle/recruit/relic/event sono
 // rimasti identici (25/10/45/15) — è sparito solo il denominatore dei tre menù (36 punti su
-// 131), quindi ogni categoria superstite pesa relativamente di più (relic passa dal 34% al
-// 47% del totale). Stessi 120 seed di sempre, nessuna costante di bilanciamento toccata,
-// nessuna asserzione allentata — solo strumentazione permanente aggiunta (vedi `RunMetrics`
-// sotto e il console.log nel describe block):
+// 131), quindi ogni categoria superstite pesa relativamente di più (relic passerebbe dal 34%
+// al 47% del totale — IPOTESI, non misurata da questo A/B, vedi sotto). Stessi 120 seed di
+// sempre, nessuna costante di bilanciamento toccata, nessuna asserzione allentata — solo
+// strumentazione permanente aggiunta (vedi `RunMetrics` sotto e il console.log nel describe
+// block):
 //   PRIMA (baseline sopra, con i tre nodi-menu ancora nel gioco): winRate 0.0167 (2/120,
 //     seed run-68/run-101), 143 battaglie normali vinte, 354 nodi risolti,
 //     profondità raggiunta area0/area1/area2 = 94/12/14.
 //   DOPO (Task 1-5, questo branch): winRate 0.0417 (5/120), 98 battaglie normali vinte,
 //     551 nodi risolti, profondità raggiunta area0/area1/area2 = 87/8/25.
-// LETTURA ONESTA: la profondità NON è calata — è SALITA, e parecchio: le run che arrivano
-// fino in fondo all'area2 sono quasi raddoppiate (14→25) e il winRate è più che raddoppiato
-// (0.0167→0.0417). Togliere i tre nodi-menu ha reso il gioco più facile, non più difficile,
-// probabilmente perché relic (potere permanente, niente combattimento extra) ha ereditato una
-// quota relativa molto più grande del peso liberato, non ricompensato da alcuna ritaratura —
-// non perché il giocatore abbia perso potenza. Nessuna ritaratura fatta qui: la decisione se
-// e come compensare (ridistribuire i pesi, o lasciare così) è dell'utente.
+// LETTURA ONESTA — NON MISURABILE CON QUESTO STRUMENTO, non "il gioco è più facile": i due
+// lati del confronto non sono comparabili, per due ragioni indipendenti.
+// (1) Il numero PRIMA viene da una strumentazione manuale precedente, non riproducibile qui
+//     e non garantita condividere le definizioni di `RunMetrics` sopra: il segnale che
+//     qualcosa non torna è che le battaglie normali vinte sono CALATE (143→98) mentre i nodi
+//     risolti sono SALITI (354→551). Sotto la spiegazione "relic pesa di più" ci si
+//     aspetterebbe l'opposto — battle passa dal 19% al 26% del peso filler e le run arrivano
+//     più a fondo, quindi le battaglie normali vinte dovrebbero SALIRE, non calare di un
+//     terzo — un'altra spia che i due lati non condividono la stessa definizione di conteggio.
+// (2) Più grave: a `c45b5a1` (il commit del baseline PRIMA) né questa harness né
+//     `campaignBalanceB` avevano un branch per `shop-node`/`spellForge-node` nel loro
+//     dispatch — degli originali tre nodi-menu, solo `spellSwap-node` era gestito (era stato
+//     aggiunto il 2026-07-23). Una run che pescava uno shop o uno spellForge cadeva nel
+//     `break` finale sotto e tornava `'defeat'`, ESATTAMENTE l'artefatto già documentato due
+//     volte in questo file — per l'altare (0.0833→0.0583 nell'A/B pre-fix) e per l'event-node
+//     prima del 2026-07-04: un buco dell'harness, non una vera perdita di difficoltà. shop e
+//     spellForge insieme erano 24 punti su 131 del peso filler, ampiamente abbastanza da
+//     spiegare da soli un salto di winRate di questa grandezza. Il numero PRIMA misura quindi,
+//     almeno in parte, "quanto spesso il bot moriva per un buco dell'harness sui nodi-menu",
+//     non "quanto era difficile il gioco con i nodi-menu davvero nel gioco": la misura
+//     confonde "nodi tolti dal gioco" con "artefatto tolto dal bot".
+// Verdetto onesto: questo harness non può dire se togliere i tre nodi-menu abbia reso il
+// gioco più facile o più difficile. Nessuna ritaratura fatta né da fare su questo segnale —
+// in particolare l'ipotesi "relic ha ereditato una quota di peso più grande" (34%→47%) resta
+// solo un'ipotesi non misurata, non una spiegazione verificata, e NON va usata per decidere
+// di ribilanciare `categoryWeights`.
 registerCoreResolvers()
 
 // Near-optimal ("upper-bound") player policy. A pure recruit/relic-first greedy is

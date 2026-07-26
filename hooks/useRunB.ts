@@ -10,7 +10,7 @@ import { randomSeed } from '@/lib/seed'
 import { loadRun, clearRun } from '@/lib/runStore'
 import { BALANCE } from '@/data/constants'
 import type { ActiveBattleB } from './useRunB.combat'
-import { loadProfile, saveProfile, markSeen, spendCioccorane } from '@/lib/metaStore'
+import { loadProfile, saveProfile, markSeen } from '@/lib/metaStore'
 import type { MetaProfile } from '@/lib/metaStore'
 import { buildRunEndSummary, recordRunEnd } from '@/lib/metaProgress'
 import { STARTER_WIZARDS, STARTER_RELICS, type UnlockTarget } from '@/data/unlocks'
@@ -45,7 +45,6 @@ export interface RunBController {
   currentEvent: CurrentEventView | null
   chooseEventOption: (optionId: string) => void
   useConsumableRelic: (relicId: string) => void
-  cioccorane: number
   advanceArea: () => void
   restart: () => void
 }
@@ -138,7 +137,6 @@ export function useRunB(seed: string): RunBController {
     buyAltare: shared.buyAltare, skipAltare: shared.skipAltare, ackInfirmary: shared.ackInfirmary,
     currentEvent: shared.currentEvent, chooseEventOption: shared.chooseEventOption,
     useConsumableRelic: useConsumableRelicCb,
-    cioccorane: profileRef.current.cioccorane,
     advanceArea, restart,
   }
 }

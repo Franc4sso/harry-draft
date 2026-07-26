@@ -73,7 +73,6 @@ export interface RunnerController {
   currentEvent: CurrentEventView | null
   chooseEventOption: (optionId: string) => void
   useConsumableRelic: (relicId: string) => void
-  cioccorane?: number
   advanceArea: () => void
   restart?: () => void
   runReward?: RunBController['runReward']

@@ -28,8 +28,8 @@ interface Slot { floor: number; idx: number }
  * would place a 2nd recruit in the same area becomes a battle instead. Remaining
  * middle nodes are weighted fillers (battle/recruit/relic), with a (now small) recruit
  * bias when the team is incomplete.
- * In endless mode, l'altare è escluso (unico tipo ancora escluso: i tre nodi-menù sono
- * stati rimossi dal gioco — Onda 1.e, 2026-07-25).
+ * In endless mode, the altare is excluded (the only type still excluded: the three
+ * menu-nodes have been removed from the game entirely — Onda 1.e, 2026-07-25).
  */
 export function assignAreaCategories(rng: Rng, widths: number[], bias: AreaBias, endless = false): RunNodeType[][] {
   if (widths.length < 3) throw new Error(`area needs >=3 floors, got ${widths.length}`)
