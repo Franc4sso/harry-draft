@@ -12,9 +12,6 @@ import { combatResolver } from './resolvers/combat'
 import { recruitResolver, relicResolver } from './resolvers/recruit'
 import { infirmaryResolver } from './resolvers/infirmary'
 import { eventResolver } from './resolvers/event'
-import { spellForgeResolver } from './resolvers/spellForge'
-import { spellSwapResolver } from './resolvers/spellSwap'
-import { shopResolver } from './resolvers/shop'
 import { altareResolver } from './resolvers/altare'
 import { registerResolver, resolverFor } from './resolvers'
 import type { ResolverChoice } from './resolvers/types'
@@ -41,9 +38,6 @@ export function registerCoreResolvers(): void {
   registerResolver(relicResolver)                  // id 'relic'
   registerResolver(infirmaryResolver)              // id 'infirmary'
   registerResolver(eventResolver)                  // id 'event'
-  registerResolver(spellForgeResolver)             // id 'spellForge'
-  registerResolver(spellSwapResolver)              // id 'spellSwap'
-  registerResolver(shopResolver)                   // id 'shop'
   registerResolver(altareResolver)                 // id 'altare'
   registered = true
 }
@@ -96,11 +90,11 @@ export function combatRngForNode(seed: string, nodeId: string): Rng {
  *  `true` on the incoming state for the endless entry path (useEndless's initialRun sets
  *  it before mount, and endlessReplay.ts sets it on startRunB's result before calling this)
  *  — campaign's startRunB/confirmDraftPicks path never sets it, so it's undefined/false
- *  there. Threading it into generateArea excludes shop/spellForge from endless area 0 too
- *  (every other endless area already gets this via advanceEndlessArea) — without it, the
- *  endless controller's missing shop handler soft-locks on the ~45% of area-0 maps that
- *  roll a shop node. Campaign's call is unaffected: state.endless is always falsy there, so
- *  this preserves byte-identical campaign area-0 generation. */
+ *  there. Threading it into generateArea excludes altare from endless area 0 too (every
+ *  other endless area already gets this via advanceEndlessArea) — without it, the endless
+ *  controller's missing altare handler would soft-lock area-0, since altare is guaranteed
+ *  once per area in campaign mode (Fase 3). Campaign's call is unaffected: state.endless is
+ *  always falsy there, so this preserves byte-identical campaign area-0 generation. */
 export function chooseStarters(state: RunState, house: House, starterIds: string[], _rng: Rng): RunState {
   const offer = starterOffer(state.seed, house)
   const starters = starterIds
@@ -122,8 +116,8 @@ export function reachable(state: RunState): RunNode[] {
 
 const phaseForNode = (t: RunNode['type']): RunState['phase'] =>
   t === 'recruit' ? 'recruit-node' : t === 'relic' ? 'relic-node' : t === 'infirmary' ? 'infirmary-node' :
-  t === 'event' ? 'event-node' : t === 'spellForge' ? 'spellForge-node' : t === 'spellSwap' ? 'spellSwap-node' :
-  t === 'shop' ? 'shop-node' : t === 'altare' ? 'altare-node' : 'battle'
+  t === 'event' ? 'event-node' :
+  t === 'altare' ? 'altare-node' : 'battle'
 
 export function moveTo(state: RunState, nodeId: string): RunState {
   const cur = state.map?.find(n => n.id === state.currentNodeId)
@@ -188,21 +182,6 @@ export function useConsumableRelic(state: RunState, relicId: string): RunState {
   const relics = state.relics.filter(a => a.relic.id !== relicId)
   const activeSynergies = detectSynergies(livingOf(team))
   return { ...state, team, relics, activeSynergies }
-}
-
-/** Leave a shop: mark the current node resolved and return to the map. */
-export function leaveShop(state: RunState): RunState {
-  const map = state.map!.map(n => (n.id === state.currentNodeId ? { ...n, resolved: true } : n))
-  return { ...state, map, phase: 'map' }
-}
-
-/** Reroll a shop's relic stock: bump the reroll counter (feeds shopOffer's salt) and free the
- *  relic slots so they can be bought again. Heal/removeWizard purchases stay recorded. Pure. */
-export function rerollShop(state: RunState): RunState {
-  const map = state.map!.map(n => (n.id === state.currentNodeId
-    ? { ...n, shopReroll: (n.shopReroll ?? 0) + 1, shopBought: (n.shopBought ?? []).filter(id => !id.startsWith('relic-')) }
-    : n))
-  return { ...state, map }
 }
 
 /** Called after a non-boss victory acknowledged, or after a boss win to roll the next area. */

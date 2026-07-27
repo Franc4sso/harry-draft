@@ -5,7 +5,8 @@ import { offerSacrifices, addRelicWithChoice } from '../relics'
 import { canPay, applySacrificeCost, corruptOnAssign, type SacrificeCost } from '../sacrifice'
 import type { NodeResolver } from './types'
 
-/** Deterministica per (seed, node id) — salt 5000 (recruit 1000 / relic 2000 / event 3000 / shop 4000). */
+/** Deterministica per (seed, node id) — salt 5000 (recruit 1000 / relic 2000 / event 3000 /
+ *  4000 riservato a shop, ora rimosso — slot ritirato, non riassegnato). */
 export function altareOffer(state: RunState, node: RunNode, rng: Rng): Relic[] {
   const { area, floor, idx } = parseAreaNodeId(node.id)
   const r = rng.fork(5000 + area * 100 + floor * 10 + idx)

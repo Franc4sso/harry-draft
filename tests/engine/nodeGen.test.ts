@@ -60,7 +60,7 @@ describe('assignAreaCategories', () => {
     expect(a).toEqual(b)
   })
   it('only emits Fase-1 categories', () => {
-    const allowed = new Set(['battle', 'elite', 'boss', 'recruit', 'relic', 'infirmary', 'altare', 'event', 'shop', 'spellForge'])
+    const allowed = new Set(['battle', 'elite', 'boss', 'recruit', 'relic', 'infirmary', 'altare', 'event'])
     const cats = flat(assignAreaCategories(createRng(4), widths(), bias))
     expect(cats.every(c => allowed.has(c))).toBe(true)
   })
@@ -80,5 +80,17 @@ describe('assignAreaCategories', () => {
   it('throws on bad widths array', () => {
     expect(() => assignAreaCategories(createRng(1), [1, 1], { teamSize: 5, teamMax: 5 })).toThrow()
     expect(() => assignAreaCategories(createRng(1), [2, 3, 1], { teamSize: 5, teamMax: 5 })).toThrow(/width 1/)
+  })
+  it('non genera mai nodi-menù (spellForge/spellSwap/shop) — Onda 1.e', () => {
+    const banned = new Set(['spellForge', 'spellSwap', 'shop'])
+    for (let seed = 0; seed < 200; seed++) {
+      const rng = createRng(`nodegen-menu-${seed}`)
+      const cats = assignAreaCategories(rng, [1, 3, 3, 3, 1], { teamSize: 3, teamMax: 5 })
+      for (const floor of cats) {
+        for (const c of floor) {
+          expect(banned.has(c)).toBe(false)
+        }
+      }
+    }
   })
 })

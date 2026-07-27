@@ -390,15 +390,24 @@ function isVeleno(dw: { wizard: { tags?: string[] } }): boolean {
 // spell-swap system itself was removed ("UN MAGO, UNA MAGIA" Task 1) — every wizard now
 // fights with a single fixed spell, so there is no alternative to switch onto and no
 // exploit left to model. The bot below fights with each wizard's default spell only.
-function runOne(seed: string, battleTurns?: number[], preferVeleno = false): 'win' | 'defeat' {
+// *** ONDA 1.e — MISURA instrumentation (2026-07-25) *** Minimal, purely-additive counters
+// (never touch policy/seeds/N): nodesResolved (every resolveCurrent call — a "node" in the
+// player-facing sense), normalBattlesWon (node.type==='battle', not elite/boss, that ends in
+// 'victory'), finalAreas (one push per run of the RunState.area the run ended on — 0/1/2 —
+// which is exactly "how deep did this run get", since clearAreaAndAdvance only advances area
+// on a boss win and never decrements it). See campaignBalanceRestricted.test.ts's header
+// comment for how these are aggregated into the per-area depth distribution.
+interface RunMetrics { nodesResolved: number; normalBattlesWon: number; finalAreas: number[] }
+
+function runOne(seed: string, battleTurns?: number[], preferVeleno = false, metrics?: RunMetrics): 'win' | 'defeat' {
   let s = startRunB(seed)
   const offer = starterOffer(seed, 'Grifondoro')
   const starters = [...offer].sort((a, b) => powerOf(b) - powerOf(a)).slice(0, 3).map(d => d.wizard.id)
   s = chooseStarters(s, 'Grifondoro', starters, createRng(seed))
   let guard = 0
   while (guard++ < 200) {
-    if (s.phase === 'win') return 'win'
-    if (s.phase === 'defeat') return 'defeat'
+    if (s.phase === 'win') { metrics?.finalAreas.push(s.area ?? 0); return 'win' }
+    if (s.phase === 'defeat') { metrics?.finalAreas.push(s.area ?? 0); return 'defeat' }
     if (s.phase === 'map') { s = moveTo(s, pickNode(s).id); continue }
     const node = s.map!.find(n => n.id === s.currentNodeId)!
     const rng = createRng(seed).fork(2).fork(s.area ?? 0)
@@ -410,7 +419,12 @@ function runOne(seed: string, battleTurns?: number[], preferVeleno = false): 'wi
         const reviveRelic = s.relics.find(a => a.relic.active === 'revive')
         if (reviveRelic) s = useConsumableRelic(s, reviveRelic.relic.id)
       }
+      const isNormalBattle = node.type === 'battle'
       s = resolveCurrent(s, { kind: 'combat-ack' }, rng)
+      if (metrics) {
+        metrics.nodesResolved++
+        if (isNormalBattle && s.phase === 'victory') metrics.normalBattlesWon++
+      }
       if (battleTurns && s.lastBattle) battleTurns.push(s.lastBattle.turns)
       continue
     }
@@ -423,6 +437,7 @@ function runOne(seed: string, battleTurns?: number[], preferVeleno = false): 'wi
       const full = s.team.length >= (s.teamMax ?? 5)
       const replaceId = full ? [...s.team].sort((a, b) => powerOf(a) - powerOf(b))[0]!.wizard.id : undefined
       s = resolveCurrent(s, { kind: 'recruit-pick', wizardId: best.wizard.id, replaceId }, createRng(seed))
+      if (metrics) metrics.nodesResolved++
       s = { ...s, phase: 'map' }; continue
     }
     if (s.phase === 'relic-node') {
@@ -430,10 +445,12 @@ function runOne(seed: string, battleTurns?: number[], preferVeleno = false): 'wi
       const velenoRelic = off.find(r => (r.keywords ?? []).includes('veleno'))
       const chosen = preferVeleno ? (velenoRelic ?? off[0]!) : off[0]!
       s = resolveCurrent(s, { kind: 'relic-pick', relicId: chosen.id }, createRng(seed))
+      if (metrics) metrics.nodesResolved++
       s = { ...s, phase: 'map' }; continue
     }
     if (s.phase === 'infirmary-node') {
       s = resolveCurrent(s, { kind: 'combat-ack' }, createRng(seed))
+      if (metrics) metrics.nodesResolved++
       s = { ...s, phase: 'map' }; continue
     }
     if (s.phase === 'area-cleared') { s = clearAreaAndAdvance(s, createRng(seed)); continue }
@@ -447,6 +464,7 @@ function runOne(seed: string, battleTurns?: number[], preferVeleno = false): 'wi
       const entry = eventResolver.enter(s, node, createRng(seed))
       const optionId = entry.event!.choices[0]!.id
       s = resolveCurrent(s, { kind: 'event-choice', optionId }, createRng(seed))
+      if (metrics) metrics.nodesResolved++
       s = { ...s, phase: 'map' }; continue
     }
     // Altare-node (2026-07-15, P5 Task 10): bot declines every sacrifice — walk in,
@@ -454,29 +472,28 @@ function runOne(seed: string, battleTurns?: number[], preferVeleno = false): 'wi
     // comment for the harness-gap story (unhandled altare = instant defeat artifact).
     if (s.phase === 'altare-node') {
       s = resolveCurrent(s, { kind: 'skip' }, createRng(seed))
-      s = { ...s, phase: 'map' }; continue
-    }
-    // SpellSwap-node (2026-07-23): free "Cambia Magia" node — no cost, no cap, no life/relic
-    // impact. The bot declines exactly like the altare handler above: without this branch,
-    // an unhandled phase falls through to 'break' → instant 'defeat', a harness artifact,
-    // not a real difficulty change. 'skip' is a documented no-op for resolvers without a
-    // dedicated skip branch (see resolvers/types.ts + endlessReplay.ts comment).
-    if (s.phase === 'spellSwap-node') {
-      s = resolveCurrent(s, { kind: 'skip' }, createRng(seed))
+      if (metrics) metrics.nodesResolved++
       s = { ...s, phase: 'map' }; continue
     }
     break
   }
+  metrics?.finalAreas.push(s.area ?? 0)
   return 'defeat'
 }
 
 describe('campaign balance (new loop)', () => {
   const N = 120
-  const outcomes = Array.from({ length: N }, (_, i) => runOne(`run-${i}`))
+  const metrics: RunMetrics = { nodesResolved: 0, normalBattlesWon: 0, finalAreas: [] }
+  const outcomes = Array.from({ length: N }, (_, i) => runOne(`run-${i}`, undefined, false, metrics))
   const winRate = outcomes.filter(o => o === 'win').length / N
+  // Depth reached per area = how many of the N runs ENDED (won or lost) with that area as
+  // their final RunState.area. Sums to N by construction (every run ends in exactly one area).
+  const depthByArea = [0, 1, 2].map(a => metrics.finalAreas.filter(x => x === a).length)
 
   // eslint-disable-next-line no-console
   console.log(`[campaignBalanceB overall] winRate=${winRate.toFixed(4)}`)
+  // eslint-disable-next-line no-console
+  console.log(`[campaignBalanceB overall] normalBattlesWon=${metrics.normalBattlesWon} nodesResolved=${metrics.nodesResolved} maxDepthByArea(area0/1/2)=${depthByArea.join('/')}`)
 
   it('is winnable but not trivial for a near-optimal player (full-roster reference only)', () => {
     // *** Bot upgraded to competent play 2026-07-04 (heals/infirmary/revive) — it is

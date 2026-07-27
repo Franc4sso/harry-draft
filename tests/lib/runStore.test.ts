@@ -35,6 +35,18 @@ describe('runStore', () => {
     localStorage.setItem(RUN_KEY, JSON.stringify({ version: 999, state: sample }))
     expect(loadRun()).toBeNull()
   })
+  // Onda 1.e (2026-07-25): RunNodeType/RunPhase lost the spellForge/spellSwap/shop
+  // members. A run saved before this change (schema v2) can still point at one of
+  // those now-nonexistent node types, so v2 saves must be discarded on resume rather
+  // than rendering an empty/broken screen — VERSION bumped 2 -> 3 for exactly this
+  // reason (see the comment above the VERSION const). RUN_KEY_ENDLESS shares the same
+  // VERSION, so this also covers endless saves invalidating correctly.
+  it('rejects a pre-Onda-1.e v2 payload and accepts a v3 payload', () => {
+    localStorage.setItem(RUN_KEY, JSON.stringify({ version: 2, state: sample }))
+    expect(loadRun()).toBeNull()
+    localStorage.setItem(RUN_KEY, JSON.stringify({ version: 3, state: sample }))
+    expect(loadRun()).toEqual(sample)
+  })
   it('clearRun removes the saved run', () => {
     saveRun(sample)
     clearRun()

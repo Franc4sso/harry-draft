@@ -23,19 +23,14 @@ import { ResultScreen } from './ResultScreen'
 import { RecruitScreen } from './RecruitScreen'
 import { RelicNodeScreen } from './RelicNodeScreen'
 import { EventScreen } from './EventScreen'
-import { SpellForgeScreen } from './SpellForgeScreen'
-import { SpellSwapScreen } from './SpellSwapScreen'
 import { InfirmaryScreen } from './InfirmaryScreen'
 import { AreaClearedScreen } from './AreaClearedScreen'
-import { ShopScreen } from './ShopScreen'
 import { AltareScreen } from './AltareScreen'
 import { TeamSynergyBar } from '@/components/run/TeamSynergyBar'
 import { DuoToast } from '@/components/run/DuoToast'
 import { RelicBar } from '@/components/relics/RelicBar'
 import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
-import { shopOffer } from '@/game/engine/resolvers/shop'
 import { altareOffer } from '@/game/engine/resolvers/altare'
-import { swapOffer } from '@/game/engine/resolvers/spellSwap'
 import { createRng } from '@/game/engine/rng'
 import { rollSpoils, spoilsRngForNode, type SpoilChoice } from '@/game/engine/spoils'
 import { runSummary } from '@/lib/runSummary'
@@ -46,10 +41,10 @@ import { parseAreaNodeId } from '@/game/engine/map'
 
 /** Structural subset of {@link RunBController} (campaign) / {@link EndlessController}
  *  (endless) that RunBRunner actually drives. Fields that only campaign phases ever
- *  reach ('draft', 'shop', 'win') are optional here — EndlessController doesn't
- *  implement them because endless never produces those views (endless's draft/house
- *  pick happens in EndlessRunner BEFORE RunBRunner mounts; endless areas exclude shop
- *  nodes; endless never sets phase:'win', see game/engine/endless.ts advanceEndlessArea).
+ *  reach ('draft', 'win') are optional here — EndlessController doesn't implement them
+ *  because endless never produces those views (endless's draft/house pick happens in
+ *  EndlessRunner BEFORE RunBRunner mounts; endless never sets phase:'win', see
+ *  game/engine/endless.ts advanceEndlessArea).
  *  Both concrete controllers satisfy this structurally — no runtime adapter needed. */
 export interface RunnerController {
   run: RunState; view: RunSharedView
@@ -63,30 +58,21 @@ export interface RunnerController {
   chooseNode: (nodeId: string) => void
   commitBattle: () => void
   acknowledgeVictory: () => void
-  /** Le Spoglie della Vittoria: campagna-only, come buyAltare/leaveShop. L'endless non le
-   *  implementa (§6 del piano: ri-simula le run per l'anti-cheat) e senza questa callback la
+  /** Le Spoglie della Vittoria: campagna-only, come buyAltare. L'endless non le implementa
+   *  (§6 del piano: ri-simula le run per l'anti-cheat) e senza questa callback la
    *  VictoryScreen resta il vecchio "Prosegui". */
   chooseSpoil?: (choice: SpoilChoice) => void
   chooseRecruit: (wizardId: string, replaceId?: string) => void
   skipRecruit: () => void
   chooseRelic: (relicId: string, assignedTo?: string, replaceRelicId?: string) => void
-  /** Altare Oscuro (P5): campaign-only, mirrors buyShopItem/leaveShop's optionality —
-   *  endless never generates 'altare' nodes (Task 6), so EndlessController doesn't
-   *  implement these. */
+  /** Altare Oscuro (P5): campaign-only, optional like chooseSpoil above — endless never
+   *  generates 'altare' nodes (Task 6), so EndlessController doesn't implement these. */
   buyAltare?: (relicId: string, costWizardId?: string, costRelicId?: string, carrierId?: string, replaceRelicId?: string) => void
   skipAltare?: () => void
   ackInfirmary: () => void
   currentEvent: CurrentEventView | null
   chooseEventOption: (optionId: string) => void
-  chooseSpellUpgrade: (wizardId: string) => void
-  /** Campaign-only, mirrors buyAltare's optionality — endless never generates 'spellSwap'
-   *  nodes (weight zeroed in nodeGen.ts), so EndlessController doesn't implement this. */
-  chooseSpellSwap?: (wizardId: string, spellId: string) => void
   useConsumableRelic: (relicId: string) => void
-  cioccorane?: number
-  buyShopItem?: (slotId: string, opts?: { carrierId?: string; targetWizardId?: string; replaceRelicId?: string }) => void
-  rerollShop?: () => void
-  leaveShop?: () => void
   advanceArea: () => void
   restart?: () => void
   runReward?: RunBController['runReward']
@@ -277,9 +263,9 @@ export function RunBRunner({
         )
 
       case 'altare':
-        // Campaign-only: altare nodes never generate in endless (Task 6 — mirrors shop's
-        // exclusion), so buyAltare/skipAltare are optional on RunnerController and this view
-        // is unreachable in endless.
+        // Campaign-only: altare nodes never generate in endless (Task 6), so
+        // buyAltare/skipAltare are optional on RunnerController and this view is
+        // unreachable in endless.
         return c.buyAltare && c.skipAltare
           ? withTeamSidebar(
               <AltareScreen
@@ -297,46 +283,10 @@ export function RunBRunner({
           <EventScreen event={c.currentEvent!} onChoose={c.chooseEventOption} />,
         )
 
-      case 'spellForge':
-        return withTeamSidebar(
-          <SpellForgeScreen team={c.run.team} onUpgrade={c.chooseSpellUpgrade} />,
-        )
-
-      case 'spellSwap':
-        // Campaign-only: endless areas never generate spellSwap nodes (weight zeroed in
-        // nodeGen.ts when state.endless), so this view is unreachable in endless.
-        return c.chooseSpellSwap
-          ? withTeamSidebar(
-              <SpellSwapScreen
-                team={c.run.team}
-                offers={swapOffer(c.run, c.currentNode!, createRng(c.run.seed)).map(s => s.id)}
-                onConfirm={c.chooseSpellSwap}
-              />,
-            )
-          : null
-
       case 'infirmary':
         return withTeamSidebar(
           <InfirmaryScreen team={c.run.team} onContinue={c.ackInfirmary} />,
         )
-
-      case 'shop':
-        // Campaign-only: endless areas never generate shop nodes (Decision 2 — excluded
-        // from generateArea when state.endless), so this view is unreachable in endless.
-        return c.buyShopItem && c.rerollShop && c.leaveShop
-          ? withTeamSidebar(
-              <ShopScreen
-                stock={shopOffer(c.run, c.currentNode!, createRng(c.run.seed))}
-                bought={c.currentNode?.shopBought ?? []}
-                cioccorane={c.cioccorane ?? 0}
-                team={c.run.team}
-                relics={c.run.relics}
-                onBuy={c.buyShopItem}
-                onReroll={c.rerollShop}
-                onLeave={c.leaveShop}
-              />,
-            )
-          : null
 
       case 'area-cleared':
         return (

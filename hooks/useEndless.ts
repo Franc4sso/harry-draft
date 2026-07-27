@@ -34,7 +34,6 @@ export interface EndlessController {
   ackInfirmary: () => void
   currentEvent: CurrentEventView | null
   chooseEventOption: (optionId: string) => void
-  chooseSpellUpgrade: (wizardId: string) => void
   useConsumableRelic: (relicId: string) => void
   advanceArea: () => void
   getChallengeCode: () => string
@@ -126,11 +125,6 @@ export function useEndless(seed: string): EndlessController {
     shared.chooseEventOption(optionId)
   }, [shared])
 
-  const chooseSpellUpgrade = useCallback((wizardId: string) => {
-    actionsRef.current.push({ t: 'resolve', choice: { kind: 'spell-upgrade', wizardId } })
-    shared.chooseSpellUpgrade(wizardId)
-  }, [shared])
-
   const useConsumableRelicCb = useCallback((relicId: string) => {
     actionsRef.current.push({ t: 'use-consumable', relicId })
     commit(useConsumableRelicEngine(runRef.current, relicId))
@@ -159,7 +153,7 @@ export function useEndless(seed: string): EndlessController {
     completeDraft,
     chooseNode, commitBattle, acknowledgeVictory,
     chooseRecruit, skipRecruit, chooseRelic, ackInfirmary,
-    currentEvent: shared.currentEvent, chooseEventOption, chooseSpellUpgrade,
+    currentEvent: shared.currentEvent, chooseEventOption,
     useConsumableRelic: useConsumableRelicCb,
     advanceArea,
     getChallengeCode,

@@ -259,8 +259,9 @@ export function applySpoilChoice(state: RunState, offer: Spoil[], choice: SpoilC
 /** La riga di racconto della scelta, per il `log` della run (alimenta il resoconto di fine
  *  run, Onda 4). Sta qui — e non nel chiamante — perché il testo dipende dal TIPO di Spoglia,
  *  che è roba di questo modulo; l'area e il nodo li passa il chiamante, che è l'unico a
- *  saperli (vedi la nota in testa al file). Il nome del mago è `wizard.name`, come in ogni
- *  altro resolver che scrive nel log (recruit/spellForge/spellSwap). */
+ *  saperli (vedi la nota in testa al file). Il nome del mago è `wizard.name`, come nell'unico
+ *  altro resolver che nomina un mago nel proprio log summary (recruit — altare logga solo
+ *  `relic.name`, mai un mago: game/engine/resolvers/altare.ts). */
 export function spoilLogEvent(state: RunState, nodeId: string, spoil: Spoil, wizardId?: string): RunEvent {
   const name = state.team.find(d => d.wizard.id === wizardId)?.wizard.name
   const summary = spoil.kind === 'marchio'

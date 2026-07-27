@@ -41,7 +41,7 @@ function controllerAt(nodeType: RunNodeType, opts: { withSpoils: boolean }): Run
     reachable: [], currentNode: node, lastFallen: [],
     chooseNode: noop, commitBattle: noop, acknowledgeVictory: noop,
     chooseRecruit: noop, skipRecruit: noop, chooseRelic: noop, ackInfirmary: noop,
-    currentEvent: null, chooseEventOption: noop, chooseSpellUpgrade: noop,
+    currentEvent: null, chooseEventOption: noop,
     useConsumableRelic: noop, advanceArea: noop,
     ...(opts.withSpoils ? { chooseSpoil: noop } : {}),
   }
