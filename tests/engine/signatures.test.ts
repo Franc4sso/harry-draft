@@ -58,18 +58,28 @@ import { STATUS_BY_ID } from '@/data/statuses'
 import type { HookCtx } from '@/types'
 
 describe('signature catalog integrity', () => {
-  it('has exactly one signature per wizard, ids matching', () => {
-    expect(SIGNATURES).toHaveLength(WIZARDS.length)
-    for (const w of WIZARDS) expect(SIGNATURE_BY_ID[w.id], `missing signature for ${w.id}`).toBeDefined()
+  // Onda 1.d (2026-07-27): il catalogo NON e' piu' "una firma per mago" — e' stato potato
+  // a 15 firme su 60 maghi (spec: docs/superpowers/specs/2026-07-27-onda-1d-potare-le-firme.md).
+  // L'invariante che resta e' piu' debole ma e' quello vero: nessuna firma orfana, e al
+  // massimo una per mago. Il conteggio esatto e la lista dei 15 sono in
+  // tests/data/signatures.catalog.test.ts.
+  it('nessuna firma orfana, e al massimo una per mago', () => {
     for (const s of SIGNATURES) expect(WIZARDS.some(w => w.id === s.id), `orphan signature ${s.id}`).toBe(true)
+    const ids = SIGNATURES.map(s => s.id)
+    expect(new Set(ids).size, 'un mago non puo\' avere due firme').toBe(ids.length)
   })
 
-  it('tier-1 signatures carry 2 triggers; everyone has at least 1', () => {
-    for (const w of WIZARDS) {
-      const sig = SIGNATURE_BY_ID[w.id]!
-      expect(sig.triggers.length, `${w.id} trigger count`).toBeGreaterThanOrEqual(1)
-      if (w.tier === 1) expect(sig.triggers.length, `${w.id} is tier 1`).toBe(2)
+  it('le firme di tier 1 portano 2 trigger; ogni firma ne ha almeno 1', () => {
+    // Itera sulle FIRME, non sui maghi: la maggior parte dei maghi ora non ne ha nessuna.
+    // I 3 maghi di tier 1 tengono tutti la loro firma, quindi la regola dei 2 trigger e'
+    // ancora coperta davvero.
+    for (const sig of SIGNATURES) {
+      expect(sig.triggers.length, `${sig.id} trigger count`).toBeGreaterThanOrEqual(1)
+      const tier = WIZARDS.find(w => w.id === sig.id)!.tier
+      if (tier === 1) expect(sig.triggers.length, `${sig.id} is tier 1`).toBe(2)
     }
+    const tier1WithSig = SIGNATURES.filter(s => WIZARDS.find(w => w.id === s.id)!.tier === 1)
+    expect(tier1WithSig, 'tutti e 3 i tier 1 tengono la firma').toHaveLength(3)
   })
 
   it('a signature whose text says "avvelen…" applies veleno, not burn (theme↔mechanic match)', () => {

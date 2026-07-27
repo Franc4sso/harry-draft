@@ -31,9 +31,20 @@ describe('Magie Oscure counter-web', () => {
   const nuker = () => [mk('voldemort', { hp: 400, atk: 28, def: 20, spd: 40 }, 'avada')]
 
   it('BEATS a squishy (amplified nuke closes a target a plain cast leaves alive)', () => {
-    const squishy = [mk('draco', { hp: 370, atk: 28, def: 25, spd: 35 }, 'avada')]
-    const plain = simulateBattle(nuker(), squishy, createRng('dark5'))
-    const withMarchio = simulateBattle(nuker(), squishy, createRng('dark5'), { leftRelics: marchioOn('voldemort') })
+    // RE-TARATO (2026-07-27, Onda 1.d — potatura delle firme): lo squishy e' draco, che ha
+    // perso la firma 'Tocco Velenoso' (clone piu' debole del veleno di snape). Senza quel
+    // veleno draco fa meno danno, quindi la BASELINE si e' rotta: il nuker chiudeva il
+    // match anche SENZA il Marchio (plain='left'), e un test in cui la baseline gia' vince
+    // non dimostra piu' niente. Ri-sweepato hp∈[400..700] × def∈[25,30,35] × 30 seed: 23
+    // configurazioni ristabiliscono la relazione. Scelta la minima a def=25 INVARIATO —
+    // hp 370→460, seed dark5→dark0 — cioe' si irrobustisce lo squishy quanto basta a
+    // rimettere la baseline dalla parte giusta. Il fatto misurato (il Marchio +50%
+    // ribalta un match che il lancio nudo non chiude) e' esattamente quello di prima.
+    // NB: draco ora non ha firma, quindi il fixture non dipende piu' da nessuna firma
+    // sul lato bersaglio.
+    const squishy = [mk('draco', { hp: 460, atk: 28, def: 25, spd: 35 }, 'avada')]
+    const plain = simulateBattle(nuker(), squishy, createRng('dark0'))
+    const withMarchio = simulateBattle(nuker(), squishy, createRng('dark0'), { leftRelics: marchioOn('voldemort') })
     expect(plain.winner).toBe('right')        // baseline: nuke doesn't quite close
     expect(withMarchio.winner).toBe('left')   // amplify flips it
   })

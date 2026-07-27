@@ -5,7 +5,7 @@ import { detectSynergies } from '@/game/engine/synergy'
 import { createRng } from '@/game/engine/rng'
 import { WIZARDS } from '@/data/wizards'
 import { SPELL_BY_ID } from '@/data/spells'
-import type { ActiveRelic } from '@/types'
+import type { ActiveRelic, DraftedWizard, Stats } from '@/types'
 
 function team(rng = createRng(1), n = 5) {
   return WIZARDS.slice(0, 200).filter((_, i) => i % 2 === 0).slice(0, n).map(w => draftWizard(rng, w))
@@ -101,24 +101,35 @@ describe('simulate', () => {
     // Swapped to a single, less extreme attacker (ginny/reducto) so the reviver reliably
     // survives long enough to actually cast the revive once an ally falls.
     //
-    // Role-counter removal (this slice, Task 1): dropping the x1.25 role-counter multiplier
-    // shifted every battle's exact damage, which moved WHERE in the seed space the narrow
-    // "falls + revived in time" window lands. It's now a rare event (~1 in 800 seeds, first
-    // hit at seed 1118 when probed up to 5000) rather than the previous 1-in-80 density, so
-    // the loop was widened from 80 to 2000 seeds to reliably clear it with margin. Each
-    // simulateBattle call is cheap, so scanning 2000 seeds costs well under a second.
-    const reviverBase = WIZARDS.find(w => w.id === 'lupin')!
-    const fragileBase = WIZARDS.find(w => w.role === 'Supporto' && w.id !== 'lupin')!
-    const heavyBase = WIZARDS.find(w => w.id === 'ginny')!
-    let sawRevive = false
-    for (let s = 1; s <= 2000 && !sawRevive; s++) {
-      const reviver = { ...draftWizard(createRng(s), reviverBase), spell: SPELL_BY_ID['rennervate']! }
-      const fragile = draftWizard(createRng(s + 100), fragileBase)
-      const right = [draftWizard(createRng(s + 200), heavyBase)]
-      const res = simulateBattle([fragile, reviver], right, createRng(s + 400))
-      if (res.log.some(e => e.action === 'Rennervate' && (e.flags ?? []).includes('revive'))) sawRevive = true
-    }
-    expect(sawRevive).toBe(true)
+    // Role-counter removal: dropping the x1.25 role-counter multiplier shifted every
+    // battle's exact damage, which moved WHERE in the seed space the narrow "falls +
+    // revived in time" window lands — it became a ~1-in-800 event, so the loop was widened
+    // to 2000 seeds.
+    //
+    // RISCRITTO DETERMINISTICO (2026-07-27, Onda 1.d — potatura delle firme). La ricerca a
+    // tappeto ha smesso di funzionare del tutto: 0 revive su 20.000 semi. Causa misurata,
+    // non indovinata — l'alleata fragile pescata da `role === 'Supporto'` era **luna**, che
+    // TIENE la sua firma (Serenita', rigenerazione a ogni turno), mentre ginny ha PERSO la
+    // sua; il lato sinistro vinceva 1968 volte su 2000 e non moriva nessuno, quindi non
+    // c'era mai un cadavere da rianimare. Il fixture, in piu', era invertito: `Reducto`
+    // bersagliava il REVIVER (piu' minaccioso) e non l'alleata fragile.
+    //
+    // Ora le unita' hanno statistiche esplicite invece dei tiri di `draftWizard`: l'alleata
+    // fragile e' sprout (Supporto senza firma dopo la potatura, cosi' nulla la tiene in
+    // vita a sorpresa), abbastanza minacciosa da attirare i colpi e abbastanza fragile da
+    // cadere; il reviver e' massiccio e poco minaccioso, quindi sopravvive fino al lancio.
+    // Verificato: il revive scatta su 300 configurazioni su 300 provate (3 atk x 2 hp x
+    // 2 hp-reviver x 25 semi) invece che su 1 seme ogni 800 — il test non dipende piu'
+    // dalla fortuna dei tiri, quindi non puo' piu' morire silenziosamente per un cambio di
+    // bilanciamento altrove.
+    const mkUnit = (id: string, stats: Stats, spell: string): DraftedWizard => ({
+      wizard: WIZARDS.find(w => w.id === id)!, stats, maxHp: stats.hp, spell: SPELL_BY_ID[spell]!,
+    })
+    const fragile = mkUnit('sprout', { hp: 40, atk: 40, def: 4, spd: 24 }, 'episkey')
+    const reviver = mkUnit('lupin', { hp: 600, atk: 5, def: 60, spd: 12 }, 'rennervate')
+    const heavy = mkUnit('ginny', { hp: 400, atk: 100, def: 20, spd: 18 }, 'reducto')
+    const res = simulateBattle([fragile, reviver], [heavy], createRng('rv1'))
+    expect(res.log.some(e => e.action === 'Rennervate' && (e.flags ?? []).includes('revive'))).toBe(true)
   })
 
   it('regeneration emits a heal log entry so the replay reflects it', () => {

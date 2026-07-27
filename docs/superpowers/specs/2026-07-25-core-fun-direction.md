@@ -86,7 +86,16 @@ Principio: **non aggiungo un sistema finché non ne ho tolto uno.**
   3 = potenziato). Un asse, una barra, due gradi. Resta la Fase 2: un solo pannello nel draft.
 - ~~1.c — Rimuovere i Trii di Casata~~ — **ANNULLATA dall'utente (2026-07-25).** I Trii restano,
   e le Case restano una **meccanica di squadra**, non solo colore. Questa voce non è più un todo.
-- 1.d — Potare le firme a ~15 percepibili (D4).
+- **1.d (FATTA, 2026-07-27)** — Firme potate da **60 a 15** (D4). Forma scelta dall'utente:
+  *~15 maghi con firma, gli altri puliti* (niente keyword condivise, niente ritaratura verso
+  l'alto dei Tier 4), con criterio di **distintività sparsa su tutti i tier** — non allineata
+  al tier, così che la targa oro voglia dire *"questo fa una cosa strana"* e non *"questo è
+  raro"*. Tier 1 3/3 · Tier 2 6/10 · Tier 3 6/20 · **Tier 4 0/27**. Tutti e 60 i maghi restano
+  nel gioco: Duo/Trii/Sinergie leggono tag+ruolo e non sono toccati.
+  Misura A/B: il bot va **un filo meglio** (`normalBattlesWon` 98→116) ma l'archetipo
+  **Scudi-Rigen perde il 24-34% di profondità** — si appoggiava alle firme `-10%` dei
+  Tassorosso di Tier 4. Nessuna ritaratura; decide il playtest.
+  → spec: `2026-07-27-onda-1d-potare-le-firme.md`
 - **1.e (FATTA, 2026-07-25)** — Rimuovere spellForge / spellSwap / shop come tipi di nodo (D5).
   Commit `c3cde39`..`9a0e12d` (Task 1-5) + referto di misura (Task 6, questo commit): i numeri
   grezzi salgono (94/12/14 → 87/8/25 sull'area0/1/2 di `campaignBalanceRestricted`), ma il

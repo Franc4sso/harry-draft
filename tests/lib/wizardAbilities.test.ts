@@ -4,27 +4,37 @@ import { abilityFor } from '@/lib/wizardAbilities'
 import { epithetFor } from '@/lib/wizardEpithet'
 import { SIGNATURE_BY_ID } from '@/data/signatures'
 
+/**
+ * Onda 1.d (2026-07-27): dopo la potatura del catalogo a 15 firme, `abilityFor` torna
+ * `undefined` per un mago senza firma invece di inventare un ripiego per-ruolo.
+ * L'assenza ha un solo modo di essere rappresentata, e la carta-poster salta la targa oro:
+ * se ogni carta mostrasse comunque una targa, la rarita' della targa — cioe' tutto il
+ * valore di questa onda — sarebbe distrutta.
+ */
 describe('wizardAbilities', () => {
-  it('every wizard resolves to a personal ability (name + blurb)', () => {
-    for (const w of WIZARDS) {
-      const a = abilityFor(w.id)
-      expect(a.name, w.id).toBeTruthy()
-      expect(a.blurb, w.id).toBeTruthy()
-    }
-  })
-
-  it('the ability is the wizard signature when present', () => {
+  it('torna la firma del mago quando c\'e\'', () => {
     const withSig = WIZARDS.find(w => SIGNATURE_BY_ID[w.id])!
     const sig = SIGNATURE_BY_ID[withSig.id]!
     expect(abilityFor(withSig.id)).toEqual({ name: sig.name, blurb: sig.desc })
   })
 
-  it('abilityFor never throws for an unknown id (role/plain fallback)', () => {
-    expect(() => abilityFor('__nope__')).not.toThrow()
-    expect(abilityFor('__nope__').name).toBeTruthy()
+  it('torna undefined per un mago senza firma (niente ripiego inventato)', () => {
+    const withoutSig = WIZARDS.find(w => !SIGNATURE_BY_ID[w.id])!
+    expect(abilityFor(withoutSig.id)).toBeUndefined()
   })
 
-  it('every wizard has an epithet', () => {
+  it('esattamente 15 maghi su 60 hanno un\'abilita\' da mostrare', () => {
+    const withAbility = WIZARDS.filter(w => abilityFor(w.id))
+    expect(withAbility).toHaveLength(15)
+    expect(WIZARDS).toHaveLength(60)
+  })
+
+  it('non lancia su un id sconosciuto', () => {
+    expect(() => abilityFor('__nope__')).not.toThrow()
+    expect(abilityFor('__nope__')).toBeUndefined()
+  })
+
+  it('ogni mago ha comunque un epiteto (non dipende dalle firme)', () => {
     for (const w of WIZARDS) expect(epithetFor(w.id), w.id).toBeTruthy()
   })
 })
