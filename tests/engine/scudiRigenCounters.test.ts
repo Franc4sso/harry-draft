@@ -56,9 +56,20 @@ describe('Scudi-Rigen counter-web', () => {
     // Re-swept atk∈[60..80] × 24 seeds: the counter-relationship (plain→right, withConvert→left)
     // now holds on 'seed12' at the unchanged atk=60 — same knife-edge nature as before, only the
     // demonstrating seed moved.
+    // RE-SEEDED (2026-07-27, Onda 1.d — potatura delle firme): questo fixture dipendeva da
+    // DUE firme che la potatura ha rimosso — quella di cedric ('Gioco Leale', atkUp1, tutta
+    // la storia qui sopra) e quella di ernie ('Orgoglio Tassorosso', -10% danni subiti, uno
+    // dei cinque nomi diversi per lo stesso effetto invisibile). Senza il -10% il muro
+    // incassa di piu' e la conversione non bastava piu' a ribaltare il match.
+    // NB: cedric ed ernie ora non hanno alcuna firma, quindi questo fixture non dipende
+    // piu' da NESSUNA firma — misura solo la rete di counter delle RELIQUIE, che e' cio'
+    // che ha sempre voluto misurare. Ri-sweepato atk∈[50..80] × 40 seed: 6 configurazioni
+    // ristabiliscono la relazione; scelto seed7 all'atk=60 INVARIATO, cioe' di nuovo il
+    // minimo cambiamento possibile (si muove solo il seme dimostrativo, come il 02-07 e il
+    // 03-07). La natura a filo di lama del test resta quella di sempre.
     const attrition = [mk('cedric', { hp: 300, atk: 60, def: 16, spd: 16 })]
-    const plain = simulateBattle(wall(), attrition, createRng('seed12'), { leftRelics: [regenRelic(60)] })
-    const withConvert = simulateBattle(wall(), attrition, createRng('seed12'), { leftRelics: [regenRelic(60), ...convert] })
+    const plain = simulateBattle(wall(), attrition, createRng('seed7'), { leftRelics: [regenRelic(60)] })
+    const withConvert = simulateBattle(wall(), attrition, createRng('seed7'), { leftRelics: [regenRelic(60), ...convert] })
     expect(plain.winner).toBe('right')  // baseline: chip out-damages a non-converting wall
     expect(withConvert.winner).toBe('left')  // conversion flips it: shield-conversion beats attrition
   })

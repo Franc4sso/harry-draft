@@ -350,7 +350,11 @@ export function WizardCardColumn({
           </div>
         </div>
 
-        <AbilityPlate name={ability.name} blurb={ability.blurb} />
+        {/* Onda 1.d: solo 15 maghi su 60 hanno una firma. Su tutti gli altri la targa oro
+            NON viene renderizzata — niente placeholder, niente testo di ruolo (il ruolo e'
+            gia' sul RoleBadge). E' la rarita' della targa a dirle "questo mago fa una cosa
+            strana"; riempirla sempre la renderebbe di nuovo rumore. */}
+        {ability && <AbilityPlate name={ability.name} blurb={ability.blurb} />}
 
         {/* Stats pinned to the bottom (mt-auto) so cards are the same height regardless
             of spell/ability text length — homogeneous row. */}

@@ -13,6 +13,37 @@ import { STARTER_WIZARDS } from '@/data/unlocks'
 import { botApplySpoils } from './botSpoils'
 import type { RunNode, RunState } from '@/types'
 
+// *** ONDA 1.d — POTATURA DELLE FIRME: MISURA A/B (2026-07-27) ***
+// Catalogo firme potato da 60 a 15 (spec: docs/superpowers/specs/2026-07-27-onda-1d-potare-le-firme.md).
+// A/B sugli STESSI 120 seed, stesso commit-base, nessuna costante toccata, nessuna asserzione
+// allentata. A differenza dell'Onda 1.e il confronto E' PULITO: qui non si tocca nessun tipo di
+// nodo, quindi le due harness hanno esattamente le stesse definizioni di conteggio su entrambi i
+// lati (era proprio quella lacuna a rendere non comparabile il baseline dell'Onda 1.e).
+//
+//                              PRIMA (60 firme)   DOPO (15 firme)
+//   Restricted winRate              0.0417            0.0500
+//   Restricted normalBattlesWon         98               116
+//   Restricted nodesResolved           551               594
+//   Restricted maxDepth a0/1/2      87/8/25          83/11/26
+//   campaignBalanceB winRate        0.0000            0.0000
+//   campaignBalanceB maxDepth       116/2/2           116/2/2  (identico)
+//
+// LETTURA ONESTA. Il winRate NON ha risoluzione utile qui (0.0417 = 5 run su 120, 0.0500 = 6:
+// +1 seme e' rumore, e su campaignBalanceB e' 0.0000 su entrambi i lati, cioe' zero risoluzione
+// per costruzione). Il segnale con risoluzione e' normalBattlesWon: 98 -> 116, +18%. Direzione:
+// il gioco si e' fatto LEGGERMENTE PIU' FACILE per il bot. Meccanismo plausibile, NON verificato:
+// le firme valgono per entrambi gli schieramenti (simulate.ts, registerSignatures(bus,[...L,...R]))
+// e i nemici pescano piu' spesso dal roster comune di Tier 3/4 — cioe' proprio le 45 firme tolte —
+// mentre il player pesca tier-weighted e tiene i suoi maghi per tutta la run. Resta un'ipotesi.
+//
+// ⚠️ SEGNALE OPPOSTO, da non nascondere: tests/engine/scudiRigenSweep.test.ts misura il contrario
+// per l'archetipo Scudi-Rigen (profondita' -24%/-34%, winRate 0.008 -> 0.000) perche' quell'archetipo
+// si appoggiava alle firme -10% danni subiti dei Tassorosso di Tier 4. Le due cose convivono: il
+// gioco generico e' un filo piu' facile, un archetipo specifico e' piu' debole.
+//
+// NESSUNA RITARATURA fatta, in nessuna delle due direzioni. Vale la regola di progetto: il bot non
+// e' un giudice di difficolta', decide il playtest.
+
 // *** SPOGLIE DELLA VITTORIA — MISURA Fase D (2026-07-25) ***
 // Questo è il gate REALE (pool ristretto = quello che il giocatore pesca davvero), quindi è qui
 // che la misura conta. Il bot ora sceglie 1 delle 3 Spoglie dopo ogni battaglia normale vinta

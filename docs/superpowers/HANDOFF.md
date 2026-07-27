@@ -271,6 +271,38 @@ Ordine ~cronologico, tutto committato+pushato:
 - **Cap di livello RIMOSSO**: i maghi del giocatore salgono oltre il 10 (`gainLevels`/`levelFromExp`). `levelMax=10` resta solo per i NEMICI + boss finale.
 - **Onda 1.e — via i tre nodi-menu** (2026-07-25): spellForge (Aumento Magia), spellSwap (il nodo — il *loadout* swap-magia era già sparito l'11-07 con "UN MAGO, UNA MAGIA", cosa diversa) e shop (Negozio) tolti da `RunNodeType`/mappa/UI — erano workaround nati per rimpiazzare il loadout tolto, non il loadout stesso. `categoryWeights` NON ridistribuito (stessi pesi assoluti battle/recruit/relic/event, sparito solo il denominatore dei tre menù) — misura A/B in testa a `tests/engine/campaignBalanceRestricted.test.ts`: i numeri grezzi salgono (94/12/14 → 87/8/25 sull'area0/1/2) ma il baseline PRIMA risale a un'harness senza handler per shop/spellForge (stessa lacuna già nota per l'altare, `break`→`'defeat'`), quindi il confronto NON è pulito — vedi la lettura onesta nel commento dell'harness, nessuna ritaratura fatta. ⚠️ **`lib/runStore.ts` VERSION 2→3**: scarta qualsiasi run di campagna/endless IN CORSO salvata prima di questo lavoro (un v2 save può referenziare id-nodo di un tipo ormai inesistente) — profilo, Cioccorane e sblocchi NON sono toccati (vivono altrove), solo la run in corso.
 
+- **Onda 1.d — le firme potate da 60 a 15** (2026-07-27): `data/signatures.ts` conteneva 60 firme
+  che si riducevano a ~12 meccaniche ripetute — 27 maghi di Tier 4 con effetti ±10% (invisibili in
+  un gioco che si GUARDA), un clone **esatto** (`goyle`/`crabbe` = "Stazza", stesso nome e stesso
+  `-10%`), `-10% danni subiti` sotto **5** nomi diversi e `+10% danni` sotto **3**. Regola di
+  sopravvivenza: resta solo chi produce a schermo qualcosa di **nominabile** (uno stato applicato,
+  un turno saltato, uno scaling che si vede). Scelta per **distintività**, NON per tier: Tier 1 3/3
+  · Tier 2 6/10 · Tier 3 6/20 · **Tier 4 0/27**. I 15: dumbledore, voldemort, harry, snape,
+  bellatrix, mcgonagall, lupin, kingsley, fleur, hermione, cho, molly, neville, luna, tonks.
+  - **TUTTI E 60 I MAGHI RESTANO** (`data/wizards.ts` intatto): un mago "pulito" tiene nome,
+    ritratto, casata, ruolo, tag, magia, statistiche. **Duo/Trii/Sinergie non sono toccati** —
+    leggono `tag`+`ruolo`, mai le firme. Il pool del tag `veleno` è invariato (6 maghi).
+  - **UI**: `abilityFor()` ora torna `undefined` (via il ripiego per-ruolo) e la carta-poster
+    **non rende la targa oro** sui maghi senza firma — è la rarità della targa a darle significato.
+    `WizardCardRow` era già dietro `{signature && …}`.
+  - **Scoperta**: `snape` e `draco` NON hanno il tag `veleno` — il loro veleno era solo firma.
+    Dopo la potatura l'unica firma che avvelena è quella di snape, ma draco e lucius avvelenano
+    ancora lanciando `serpensortia` (spellPool intatto): l'archetipo regge.
+  - ⚠️ **BILANCIAMENTO, due segnali opposti, entrambi misurati.** `campaignBalanceRestricted`:
+    `normalBattlesWon` **98→116** (+18%, il winRate 0.0417→0.0500 è +1 seme = rumore) → il gioco
+    è **un filo più facile per il bot**, plausibilmente perché le firme valgono per entrambi gli
+    schieramenti e i nemici pescano dal roster comune di Tier 3/4. MA `scudiRigenSweep`:
+    profondità **−24%/−34%**, winRate 0.008→0.000 → l'archetipo **Scudi-Rigen è più debole**, si
+    appoggiava alle firme `-10%` dei Tassorosso di Tier 4. **Nessuna ritaratura** in nessuna
+    direzione: decide il playtest. Il gate `winRate > 0` di quello sweep aveva esaurito la
+    risoluzione (poggiava su 1 vittoria su 120) ed è stato **ri-espresso** (combatte + supera
+    l'area 0), non svuotato.
+  - Fixture ri-tarate e **giustificate per iscritto** nei rispettivi test: `scudiRigenCounters`
+    (seed12→seed7, atk invariato), `magieOscureCounters` (squishy hp 370→460, seed dark5→dark0),
+    e il test del rianimatore in `simulate.test.ts` riscritto **deterministico** (scansionava 2000
+    semi e ne trovava 0 su 20.000: l'alleata fragile era luna, che tiene la firma di rigenerazione,
+    e non moriva più nessuno — ora il revive scatta su 300 configurazioni su 300).
+
 ## PROSSIMO — da fare
 
 1. **PLAYTEST (priorità)** — il bot di bilanciamento NON capisce i counter né sceglie le magie come un umano, quindi il giudizio è tuo:

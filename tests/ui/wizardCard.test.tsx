@@ -31,12 +31,15 @@ describe('WizardCardColumn (poster layout, the LIVE draft card)', () => {
     for (const k of ['HP', 'ATT', 'DIF', 'VEL']) expect(screen.getByText(k)).toBeInTheDocument()
   })
 
+  // NB: draftedTank() e' mcgonagall, uno dei 15 maghi che TENGONO la firma dopo la
+  // potatura dell'Onda 1.d — quindi questi due test misurano ancora esattamente cio' che
+  // misuravano prima (il `!` gestisce solo il tipo, ora nullabile).
   it('shows the ability plate with the wizard Signature (name + blurb)', () => {
     const d = draftedTank()
     render(<WizardCardColumn drafted={d} />)
     const plate = screen.getByTestId('ability-plate')
     expect(plate).toHaveTextContent(/Abilità personale/i)
-    const { name, blurb } = abilityFor(d.wizard.id)
+    const { name, blurb } = abilityFor(d.wizard.id)!
     expect(within(plate).getByText(name)).toBeInTheDocument()
     expect(within(plate).getByText(blurb)).toBeInTheDocument()
   })
@@ -44,9 +47,20 @@ describe('WizardCardColumn (poster layout, the LIVE draft card)', () => {
   it('does not show a duplicate signature pill at the top of the card', () => {
     const d = draftedTank()
     render(<WizardCardColumn drafted={d} />)
-    const { name } = abilityFor(d.wizard.id)
+    const { name } = abilityFor(d.wizard.id)!
     // The signature name now lives only in the gold ability plate.
     expect(screen.getAllByText(name)).toHaveLength(1)
+  })
+
+  it('Onda 1.d: nessuna targa oro sui maghi senza firma (niente placeholder di ruolo)', () => {
+    // ernie ha perso la firma con la potatura ("Orgoglio Tassorosso", -10% danni: uno dei
+    // cinque nomi diversi per lo stesso effetto invisibile). La carta deve saltare il
+    // blocco, non riempirlo col ruolo: e' la rarita' della targa a darle significato.
+    const d = scudirigenTankDrafted()
+    expect(abilityFor(d.wizard.id)).toBeUndefined()
+    render(<WizardCardColumn drafted={d} />)
+    expect(screen.queryByTestId('ability-plate')).toBeNull()
+    expect(screen.queryByText(/Abilità personale/i)).toBeNull()
   })
 
   it('never shows the synergy nudge — it was removed (meant nothing to the player)', () => {

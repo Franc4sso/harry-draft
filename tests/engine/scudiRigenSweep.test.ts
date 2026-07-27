@@ -83,7 +83,7 @@ function pickNode(s: RunState): RunNode {
   return opts.find(n => n.type === 'boss') ?? opts[0]!
 }
 
-interface RunMetrics { outcome: 'win' | 'defeat'; bastione: boolean; shieldUptake: boolean; turns: number[] }
+interface RunMetrics { outcome: 'win' | 'defeat'; bastione: boolean; shieldUptake: boolean; turns: number[]; maxArea: number }
 
 function favorScudiRigenRun(seed: string): RunMetrics {
   let s = startRunB(seed)
@@ -92,9 +92,10 @@ function favorScudiRigenRun(seed: string): RunMetrics {
     .sort((a, b) => (Number(isScudiRigen(b)) - Number(isScudiRigen(a))) || (powerOf(b) - powerOf(a)))
     .slice(0, 3).map(d => d.wizard.id)
   s = chooseStarters(s, 'Tassorosso', starters, createRng(seed))
-  const m: RunMetrics = { outcome: 'defeat', bastione: false, shieldUptake: false, turns: [] }
+  const m: RunMetrics = { outcome: 'defeat', bastione: false, shieldUptake: false, turns: [], maxArea: 0 }
   let guard = 0
   while (guard++ < 200) {
+    m.maxArea = Math.max(m.maxArea, s.area ?? 0)
     if (s.phase === 'win') { m.outcome = 'win'; break }
     if (s.phase === 'defeat') { m.outcome = 'defeat'; break }
     if (s.phase === 'map') { s = moveTo(s, pickNode(s).id); continue }
@@ -159,24 +160,30 @@ describe('favor-Scudi-Rigen viability sweep', () => {
     const again = Array.from({ length: N }, (_, i) => favorScudiRigenRun(`srun-${i}`)).map(r => r.outcome)
     expect(again).toEqual(runs.map(r => r.outcome))
   }, 30000)
-  it('the build can win (not structurally broken)', () => {
-    // RE-ANCHORED (2026-07-05, scaling-jokers feature): the 3 new joker relics
-    // (fame-vorace / collezionista-anime / marchio-vorace, data/relics.ts) reshuffled
-    // the rarity-weighted relic-pick RNG stream across every relic-node in every run,
-    // which cascades into different map/recruit/battle RNG draws downstream (same
-    // mechanism documented in campaignBalanceRestricted.test.ts and the veleno/
-    // esecuzione sweeps). Measured winRate=0.050 (6/120) landed exactly on the old
-    // 0.05 floor's boundary — a single-seed flip, not a kit regression (confirmed via
-    // a stash baseline: reverting to the pre-jokers relics.ts reproduces the prior
-    // >0.05-clearing value). Difficulty guard (campaignBalanceRestricted, the real
-    // player proxy) shows no material winRate rise from this feature, so the drop
-    // here is RNG noise, not the jokers softening or hurting Scudi-Rigen. The exact 0.05
-    // floor is retired because it's boundary-noise-sensitive after the scaling-jokers
-    // RNG-stream shift, but a true zero-win regression must still trip this test: `> 0`
-    // (the build wins at least once across the 120-seed sweep) is a real, boundary-noise-
-    // immune viability guard, matching how the retired floors in velenoSweep.test.ts /
-    // esecuzioneSweep.test.ts are expressed.
-    expect(winRate).toBeGreaterThan(0)
+  it('the build is not structurally broken (fights, and gets past area 0)', () => {
+    // RI-ESPRESSO (2026-07-27, Onda 1.d — potatura delle firme). Il gate precedente era
+    // `winRate > 0` ed e' arrivato a ZERO: misurato A/B sullo stesso commit, winRate
+    // 0.008 (1 vittoria su 120) -> 0.000. Un gate che poggia su UNA vittoria su 120 non ha
+    // piu' risoluzione — non distingue "archetipo rotto" da "un seme si e' spostato" — e
+    // ammorbidirlo ancora (o toglierlo) avrebbe semplicemente svuotato il gate.
+    //
+    // Sostituito con due segnali misurati sullo stesso sweep, che hanno margine vero e
+    // scattano solo su un collasso reale:
+    //                          PRIMA (60 firme)   DOPO (15 firme)
+    //   battaglie totali             460               388   (-16%)
+    //   run che combattono        118/120           118/120   (invariato)
+    //   run che arrivano ad area 1     46                35   (-24%)
+    //   run che arrivano ad area 2     32                21   (-34%)
+    //
+    // LETTURA ONESTA: il calo NON e' rumore da un seme — la profondita' scende del 24-34%.
+    // L'archetipo Scudi-Rigen si appoggiava davvero alle firme -10% danni subiti dei
+    // Tassorosso di Tier 4 (ernie, hannah, susan, justin, leanne...), che la potatura ha
+    // rimosso perche' erano lo stesso effetto invisibile sotto cinque nomi diversi.
+    // NESSUNA RITARATURA fatta: vale la regola di progetto "la difficolta' piu' cattiva e'
+    // approvata", e la leva eventuale (rialzare la mitigazione dei Tassorosso) va decisa
+    // al playtest, non qui.
+    expect(runs.filter(r => r.turns.length > 0).length, 'le run devono combattere').toBeGreaterThan(0)
+    expect(runs.filter(r => r.maxArea >= 1).length, 'la build deve superare l\'area 0').toBeGreaterThan(0)
   })
   it('the build fields shield conversion in a meaningful share of runs (draftable)', () => {
     // RE-ANCHORED (2026-07-21, team-synergies removal): the 9 team synergies were

@@ -1,13 +1,17 @@
 import { SIGNATURE_BY_ID } from '@/data/signatures'
-import { WIZARD_BY_ID } from '@/data/wizards'
-import { ROLE_INFO } from '@/lib/roleInfo'
 
-/** A wizard's personal ability for the card's gold plate. Reuses the wizard's Signature
- *  (name + desc) — every wizard has one. Fallback (defensive; no wizard needs it today):
- *  derive a generic name/blurb from the role so the plate is never empty. */
-export function abilityFor(id: string): { name: string; blurb: string } {
+/** L'abilita' personale del mago per la targa oro della carta — cioe' la sua Signature.
+ *
+ *  Onda 1.d (2026-07-27): il catalogo e' stato potato da 60 a 15 firme, quindi la maggior
+ *  parte dei maghi NON ha piu' un'abilita' e questa funzione torna `undefined`. Prima
+ *  esisteva un ripiego per-ruolo che riempiva la targa con il nome del ruolo: e' stato
+ *  rimosso di proposito. Se ogni carta mostrasse comunque una targa, la rarita' della targa
+ *  — cioe' tutto il valore della potatura — sarebbe distrutta. Il ruolo, del resto, e' gia'
+ *  sul RoleBadge: ripeterlo nella targa era anche una duplicazione.
+ *
+ *  Chi consuma questa funzione deve gestire l'assenza saltando il blocco (vedi
+ *  `WizardCardColumn`), non sostituendola con un placeholder. */
+export function abilityFor(id: string): { name: string; blurb: string } | undefined {
   const sig = SIGNATURE_BY_ID[id]
-  if (sig) return { name: sig.name, blurb: sig.desc }
-  const role = WIZARD_BY_ID[id]?.role
-  return { name: role ?? 'Abilità', blurb: role ? ROLE_INFO[role] : 'Nessuna abilità speciale.' }
+  return sig ? { name: sig.name, blurb: sig.desc } : undefined
 }
