@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { RELICS, RELIC_BY_ID } from '@/data/relics'
+import { RELICS, RELIC_BY_ID, RULE_BREAKING_RELIC_IDS } from '@/data/relics'
 
 describe('relics data', () => {
   it('has at least 16 relics with unique ids', () => {
@@ -51,6 +51,49 @@ describe('relics data', () => {
   })
   it('exposes a lookup map', () => {
     expect(RELIC_BY_ID[RELICS[0]!.id]).toBe(RELICS[0])
+  })
+})
+
+// Onda 1.f (2026-07-28) — "ogni reliquia una decisione, non un numero".
+// Il quartetto di ruolo (stemma-attaccanti / egida-tank / fiala-supporto / sfera-controllo)
+// era la STESSA frase scritta quattro volte con quattro numeri diversi: "+X stat se hai >=N
+// del ruolo Y". Nessuna aveva un riferimento nel codice fuori da data/relics.ts, nessuna era
+// nel pool starter — il giocatore le incontrava solo comprandole o addosso ai nemici.
+// Tagliate. `furia-iniziale` e' caduta con loro: stava in RULE_BREAKING_RELIC_IDS (il pool
+// premio degli eventi "?") ma era `bonus:{atk:18}` piatto, e la sua desc prometteva un buff
+// a inizio battaglia che il dato non implementava — una promessa "rompi-regole" tradita, con
+// l'effetto promesso gia' presente identico in assalto-d-apertura.
+describe('Onda 1.f — nessuna reliquia e\' solo un numero condizionato dal ruolo', () => {
+  const CUT_IDS = [
+    'stemma-attaccanti', 'egida-tank', 'fiala-supporto', 'sfera-controllo', 'furia-iniziale',
+  ]
+
+  it('le 5 reliquie-numero tagliate non esistono piu\'', () => {
+    for (const id of CUT_IDS) expect(RELIC_BY_ID[id], `${id} e' tornata nel pool`).toBeUndefined()
+  })
+
+  it('nessuna reliquia sopravvissuta e\' un puro +stat condizionato dal ruolo', () => {
+    // Guard anti-ricrescita. NON vieta `condition.role` in assoluto: una reliquia
+    // condizionata dal ruolo che FA qualcosa (keyword, trigger, grant, scaling...) resta
+    // legittima. Vieta la forma vuota: condizione di ruolo + solo numeri.
+    const pureStat = RELICS.filter(r =>
+      r.condition?.role &&
+      !r.keywords?.length && !r.triggers?.length && !r.keywordMult &&
+      !r.grantsExecute && !r.grantsShieldConvert && !r.grantsDarkMagic && !r.grantsAlwaysHit &&
+      !r.active && !r.scaling && !r.conditional && !r.carrierBonus && !r.sacrificeCost,
+    )
+    expect(pureStat.map(r => r.id), 'reliquie-numero di ruolo ricresciute').toEqual([])
+  })
+
+  it('il pool rompi-regole non contiene piu\' una reliquia dal bonus piatto', () => {
+    expect(RULE_BREAKING_RELIC_IDS).not.toContain('furia-iniziale')
+    for (const id of RULE_BREAKING_RELIC_IDS) {
+      const r = RELIC_BY_ID[id]!
+      const soloNumeri = !!r.bonus &&
+        !r.triggers?.length && !r.keywordMult && !r.grantsDarkMagic && !r.grantsExecute &&
+        !r.grantsShieldConvert && !r.grantsAlwaysHit && !r.active && !r.scaling && !r.conditional
+      expect(soloNumeri, `${id} e' un +stat piatto travestito da rompi-regole`).toBe(false)
+    }
   })
 })
 

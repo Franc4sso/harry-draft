@@ -142,6 +142,14 @@ describe('replayRun', () => {
     // is one of the three). Picked index 0 at each, same convention as the original
     // recording. Final score re-measured at 1875 (unchanged — these relics don't move
     // scoreForEndlessRun for this fight sequence).
+    // RE-RECORDED 2026-07-28 (Onda 1.f, reliquie-numero): cutting the 4 role-conditional
+    // relics + furia-iniziale shrank offerRelics' pool, re-dealing the two NON-joker relic
+    // nodes (the joker node a2f3n1 is untouched — JOKER_RELIC_IDS didn't change). Measured
+    // the same way (replay the exact prefix, then relicOffer with the node's real rng fork):
+    // a1f3n1 -> ["sigillo-carnefice","pugnale-bellatrix","giratempo"], a2f2n0 ->
+    // ["medaglione-serpeverde","ricordatutto","mappa-malandrino"], a2f3n1 -> unchanged
+    // ["fame-vorace","pensatoio","sete-di-sangue"]. Index 0 at each, same convention.
+    // Final score re-measured at 1875 — still unchanged.
     const log: RunLog = {
       v: 1,
       engine: ENGINE_VERSION,
@@ -161,13 +169,13 @@ describe('replayRun', () => {
         { t: 'move', nodeId: 'a1f2n0' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
         { t: 'move', nodeId: 'a1f3n1' },
-        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'boccino-doro' } },
+        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'sigillo-carnefice' } },
         { t: 'move', nodeId: 'a1f4n0' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
         { t: 'move', nodeId: 'a2f1n1' },
         { t: 'resolve', choice: { kind: 'combat-ack' } },
         { t: 'move', nodeId: 'a2f2n0' },
-        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'coppa-tassorosso' } },
+        { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'medaglione-serpeverde' } },
         { t: 'move', nodeId: 'a2f3n1' },
         { t: 'resolve', choice: { kind: 'relic-pick', relicId: 'fame-vorace' } },
         { t: 'move', nodeId: 'a2f4n0' },
