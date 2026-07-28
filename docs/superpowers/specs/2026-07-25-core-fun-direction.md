@@ -103,7 +103,16 @@ Principio: **non aggiungo un sistema finché non ne ho tolto uno.**
   quindi NON è misurabile con questo strumento — vedi la lettura onesta nell'harness; nessuna
   ritaratura fatta.
   → piano: `.superpowers/sdd/2026-07-25-onda-1e-togliere-i-nodi-menu/`
-- 1.f — Potare le reliquie di statistiche piatte.
+- **1.f (FATTA, 2026-07-28)** — Potate le reliquie che sono solo un numero. Pool 47→42: via il
+  quartetto condizionato per RUOLO (`stemma-attaccanti`/`egida-tank`/`fiala-supporto`/
+  `sfera-controllo` — la stessa frase quattro volte, zero riferimenti nel codice, fuori dal pool
+  starter) più `furia-iniziale` (+18 atk piatto che stava nel pool "rompi-regole" con una desc che
+  prometteva un trigger mai implementato). Le 3 condizionate per CASA **restano**: le premia il Trio.
+  Gate `RULE_BREAKING_RELIC_IDS >= 3` abbassato onestamente a 2 invece di gonfiare il pool.
+  Misura A/B: winRate 0.0500→0.0583 su 120 semi, con battaglie vinte 116→111 — segnali discordi a
+  bassa risoluzione, cioè **ri-distribuzione dei semi, non difficoltà**; nessuna ritaratura.
+  Ri-registrate le 2 fixture di replay (parità replay tenuta, punteggio 1875 invariato).
+  → spec: `2026-07-28-onda-1f-reliquie-numero.md`
 
 **Gate onesto:** dopo l'Onda 1 il gioco deve essere **più divertente con meno roba dentro**.
 Se non lo è, il core non è il Duo e questa direzione va rimessa in discussione.

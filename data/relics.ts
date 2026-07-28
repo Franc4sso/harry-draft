@@ -13,11 +13,11 @@ export const RELICS: Relic[] = [
   { id: 'medaglione-serpeverde', name: 'Medaglione di Serpeverde', desc: '+24 Attacco se hai almeno 3 Serpeverde.', rarity: 'non-comune', bonus: { atk: 24 }, condition: { house: 'Serpeverde', count: 3 } },
   { id: 'diadema-corvonero', name: 'Diadema di Corvonero', desc: '+22 Velocità se hai almeno 3 Corvonero.', rarity: 'non-comune', bonus: { spd: 22 }, condition: { house: 'Corvonero', count: 3 } },
   { id: 'coppa-tassorosso', name: 'Coppa di Tassorosso', desc: 'Rigenerazione +14 se hai almeno 3 Tassorosso.', rarity: 'non-comune', bonus: { regen: 14 }, condition: { house: 'Tassorosso', count: 3 } },
-  // Rare — condizionali per ruolo / forti
-  { id: 'stemma-attaccanti', name: "Stendardo d'Assalto", desc: '+18 Attacco se hai almeno 3 Attaccanti.', rarity: 'rara', bonus: { atk: 18 }, condition: { role: 'Attaccante', count: 3 } },
-  { id: 'egida-tank', name: 'Egida del Guardiano', desc: '+24 Difesa se hai almeno 3 Tank.', rarity: 'rara', bonus: { def: 24 }, condition: { role: 'Tank', count: 3 } },
-  { id: 'fiala-supporto', name: 'Calice del Guaritore', desc: 'Rigenerazione +16 se hai almeno 2 Supporti.', rarity: 'rara', bonus: { regen: 16 }, condition: { role: 'Supporto', count: 2 } },
-  { id: 'sfera-controllo', name: 'Sfera del Dominio', desc: '+16 Velocità se hai almeno 2 Controllo.', rarity: 'rara', bonus: { spd: 16 }, condition: { role: 'Controllo', count: 2 } },
+  // Onda 1.f (2026-07-28): tagliato qui il quartetto condizionato per RUOLO
+  // (stemma-attaccanti / egida-tank / fiala-supporto / sfera-controllo). Erano la stessa
+  // frase quattro volte — "+X stat se hai >=N del ruolo Y" — senza una decisione dentro.
+  // Le tre condizionate per CASA restano: quelle il Trio di Casata le premia.
+  // Rara — rischio/ricompensa
   { id: 'pensatoio', name: 'Pensatoio', desc: '+35 Attacco a tutta la squadra, ma -18 Difesa. Rivivere la battaglia rende più aggressivi e più esposti.', rarity: 'rara', bonus: { atk: 35 }, drawback: { def: -18 } },
   // Epiche — passive forti
   { id: 'bacchetta-sambuco', name: 'Bacchetta di Sambuco', desc: '+20% a tutte le statistiche se hai almeno 3 Grifondoro. La Bacchetta serve solo un maestro degno.', rarity: 'epica', bonus: { allPct: 0.20 }, condition: { house: 'Grifondoro', count: 3 } },
@@ -40,7 +40,6 @@ export const RELICS: Relic[] = [
   { id: 'lacrime-fenice', name: 'Lacrime di Fenice', desc: 'Usa una volta: riporta in vita tutti i maghi caduti con la vita piena.', rarity: 'epica', active: 'revive' },
   // Rule-breaking pool (event rewards) — reuse existing hooks only.
   { id: 'zanna-vorace', name: 'Zanna Vorace', desc: 'Ogni colpo della squadra avvelena il nemico con 2 dosi invece di 1.', rarity: 'epica', keywords: ['veleno'], triggers: [{ hook: 'onHit', effects: [{ kind: 'applyStatus', target: 'enemy', statusId: 'veleno' }, { kind: 'applyStatus', target: 'enemy', statusId: 'veleno' }] }] },
-  { id: 'furia-iniziale', name: 'Furia Iniziale', desc: 'A inizio battaglia, tutta la squadra guadagna +18 Attacco.', rarity: 'epica', bonus: { atk: 18 } },
   { id: 'patto-di-sangue', name: 'Patto di Sangue', desc: 'Assegna a un mago: i suoi colpi infliggono +60% danni, ma subisce un contraccolpo pari al 25% del danno inflitto.', rarity: 'epica', assignable: true, grantsDarkMagic: { bonus: 0.6, recoil: 0.25 } },
   // Scaling jokers — grow a stat with runCounter (kills), reset each run.
   // Caps sized to keep escalating across a WHOLE run (~15-25 kills), not saturate in
@@ -156,7 +155,12 @@ export const RELIC_BY_ID: Record<string, Relic> = Object.fromEntries(
   RELICS.map(r => [r.id, r]),
 )
 
-export const RULE_BREAKING_RELIC_IDS: string[] = ['zanna-vorace', 'furia-iniziale', 'patto-di-sangue']
+// Premi degli eventi "?": roba che rompe una regola, non roba forte. Erano 3, ma
+// `furia-iniziale` (+18 atk piatto, con una desc che prometteva un buff a inizio battaglia
+// mai implementato) non rompeva nessuna regola: tagliata in Onda 1.f. Restano DUE veri
+// rompi-regole, e il gate del test e' sceso a 2 di conseguenza — meglio due promesse
+// mantenute che tre di cui una riciclata da un'altra reliquia (assalto-d-apertura).
+export const RULE_BREAKING_RELIC_IDS: string[] = ['zanna-vorace', 'patto-di-sangue']
 export const SCALING_RELIC_IDS: string[] = ['fame-vorace', 'collezionista-anime', 'marchio-vorace']
 export const JOKER_RELIC_IDS: string[] = [
   'fame-vorace', 'collezionista-anime', 'marchio-vorace',
