@@ -144,12 +144,16 @@ export function RunBRunner({
         initial={reduce ? false : { opacity: 0, x: -18 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
-        className="flex w-72 shrink-0 flex-col gap-3 overflow-y-auto [scrollbar-gutter:stable]"
+        // `min-h-0` + il blocco squadra che prende l'altezza residua: la sidebar
+        // non deve scorrere INTERA (sposterebbe anche le reliquie), sono le combo
+        // dentro il blocco a scorrere nel loro spazio.
+        className="flex min-h-0 w-72 shrink-0 flex-col gap-3 [scrollbar-gutter:stable]"
       >
         <TeamSynergyBar
           team={c.run.team}
           relics={c.run.relics}
           orientation="vertical"
+          className="min-h-0 flex-1"
         />
         <Frame variant="panel" innerClassName="p-3" className="[&>.frame-inner]:!overflow-visible">
           <span className="font-display text-[10px] font-semibold uppercase tracking-[0.18em] text-white/45">Reliquie</span>

@@ -4,6 +4,7 @@ import { DuoPanel } from '@/components/run/DuoPanel'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { Chip } from '@/components/ui/Chip'
 import { houseTheme } from '@/lib/theme'
+import { cn } from '@/lib/cn'
 import { displayName } from '@/lib/displayName'
 import { spellTypeChip } from '@/lib/glossary'
 
@@ -84,19 +85,26 @@ function MemberRow({ m }: { m: DraftedWizard }) {
 /** Sidebar verticale (mappa/recruit/reliquia): squadra sempre visibile in alto — è lo stato
  *  che il giocatore legge di continuo — il pannello Combo Duo è l'unico contenuto sotto,
  *  senza struttura a tab. */
-function VerticalBar({ team, relics }: {
+function VerticalBar({ team, relics, className }: {
   team: DraftedWizard[]
   relics: ActiveRelic[]
+  className?: string
 }) {
   return (
+    // I MAGHI hanno la precedenza sullo spazio, le combo si adattano.
+    // Prima erano due blocchi liberi nello stesso contenitore: il pannello combo
+    // cresceva finché voleva (misurato: 794px in una sidebar da 744) e schiacciava
+    // i maghi, che restavano minuscoli. Ora la lista dei maghi si stampa alla sua
+    // altezza naturale (`shrink-0`) e le combo prendono quel che resta, scorrendo
+    // al proprio interno invece di spingere fuori.
     <div
       data-testid="team-synergy-bar"
-      className="flex w-full flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3"
+      className={cn('flex h-full min-h-0 w-full flex-col gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3', className)}
     >
-      <div className="flex flex-col gap-2">
+      <div className="flex shrink-0 flex-col gap-2">
         {team.map((m) => <MemberRow key={m.wizard.id} m={m} />)}
       </div>
-      <div className="border-t border-white/10 pt-2.5">
+      <div className="min-h-0 flex-1 overflow-y-auto border-t border-white/10 pt-2.5 [scrollbar-gutter:stable]">
         <DuoPanel team={team} relics={relics} frameless />
       </div>
     </div>
@@ -113,16 +121,19 @@ function VerticalBar({ team, relics }: {
  * display, no swap selector (a wizard's spell is fixed).
  */
 export function TeamSynergyBar({
-  team, relics = [], orientation = 'horizontal',
+  team, relics = [], orientation = 'horizontal', className,
 }: {
   team: DraftedWizard[]
   /** Active relics — only used to compute the Duo panel (vertical orientation). Optional
    *  and defaults to none so existing (non-Duo-aware) call sites/tests are unaffected. */
   relics?: ActiveRelic[]
   orientation?: 'horizontal' | 'vertical'
+  /** Passata alla sola variante verticale, dove la sidebar le assegna l'altezza
+   *  residua (`min-h-0 flex-1`) così le combo scorrono senza schiacciare i maghi. */
+  className?: string
 }) {
   if (orientation === 'vertical') {
-    return <VerticalBar team={team} relics={relics} />
+    return <VerticalBar team={team} relics={relics} className={className} />
   }
 
   return (

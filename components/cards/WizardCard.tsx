@@ -6,6 +6,8 @@ import { ROLE_ACCENT } from '@/lib/roleInfo'
 import { ARCHETYPE_BY_TAG, archetypeTooltip, primaryArchetype } from '@/lib/archetypes'
 import { tagsOf } from '@/game/engine/roster'
 import { SpellLine } from './parts/SpellLine'
+import { spellHeadline } from '@/lib/spellText'
+import { SPELL_TYPE_META } from '@/lib/glossary'
 import { StatBand } from './parts/StatBand'
 import { AbilitySeal } from './parts/AbilitySeal'
 import { RarityPips } from './parts/RarityPips'
@@ -53,6 +55,10 @@ export function WizardCard({
   const effectiveTags = tagsOf(drafted)
   const archetype = primaryArchetype(effectiveTags)
   const archetypeTag = effectiveTags.find((t): t is keyof typeof ARCHETYPE_BY_TAG => t in ARCHETYPE_BY_TAG)
+  // Valore e colore della magia: in densità `row` la SpellLine non c'è (troppo alta
+  // per una riga da 62px), ma il dato serve lo stesso nell'anteprima dei nemici.
+  const head = spellHeadline(spell)
+  const spellAccent = SPELL_TYPE_META[spell.type].color
   const shinyTrait = drafted.shiny ? TRAIT_BY_ID[drafted.shiny.traitId] : undefined
   const isRow = density === 'row'
   const fillPortrait = portraitHeight === 'fill'
@@ -218,6 +224,27 @@ export function WizardCard({
                   {wizard.role}
                 </span>
               </span>
+            </div>
+            {/* Magia e archetipo anche in riga: è l'anteprima con cui il giocatore
+                decide se entrare in un nodo battaglia, e sapere solo nome e vita di
+                un nemico non basta — serve cosa LANCIA e a che archetipo appartiene.
+                Una riga sola, il valore prima del nome come sulla carta piena. */}
+            <div className="flex items-baseline gap-1.5 text-[9px] leading-none">
+              <span className="shrink-0 font-black tabular-nums" style={{ color: spellAccent }}>
+                {head.value}
+              </span>
+              <span className="min-w-0 flex-1 truncate font-display text-[10px] font-bold text-white/85">
+                {spell.name}
+              </span>
+              {archetype && (
+                <span
+                  data-testid="row-archetype"
+                  title={archetypeTag ? archetypeTooltip(archetypeTag) : undefined}
+                  className="shrink-0 rounded border border-white/20 bg-white/5 px-1 py-px text-[7px] font-extrabold uppercase tracking-[.08em] text-[#dbe9ff]"
+                >
+                  {archetype.glyph} {archetype.name}
+                </span>
+              )}
             </div>
             <MarchioMarks drafted={drafted} />
             {drafted.corrotto && (
