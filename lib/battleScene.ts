@@ -3,7 +3,7 @@ import type { ActiveEffect, LogEntry } from '@/types'
 
 export type SceneKind =
   | 'hit' | 'crit' | 'dodge' | 'block' | 'pen' | 'heal' | 'kill' | 'revive'
-  | 'skip' | 'dot' | 'regen' | 'fatigue' | 'purify' | 'recoil'
+  | 'skip' | 'dot' | 'regen' | 'fatigue' | 'purify' | 'recoil' | 'shatter'
   | 'duo-miasma' | 'duo-muro' | 'duo-untore' | 'cooldown' | 'relic' | 'none'
 
 export interface SceneEvent {
@@ -40,15 +40,16 @@ const BY_ACTION: Record<string, { kind: SceneKind; word?: string }> = {
 /** Flag → scena, in ordine di PRECEDENZA: un colpo che uccide è una morte, non
  *  un critico, anche se porta entrambi i flag. */
 const BY_FLAG: Array<[string, SceneKind, string | undefined]> = [
-  ['kill',   'kill',   'K.O.'],
-  ['revive', 'revive', 'RIANIMATO'],
-  ['dodge',  'dodge',  'SCHIVA'],
-  ['block',  'block',  undefined],
-  ['recoil', 'recoil', 'CONTRACCOLPO'],
-  ['pen',    'pen',    'ARMATURA FORATA'],
-  ['crit',   'crit',   'CRITICO'],
-  ['dot',    'dot',    undefined],
-  ['heal',   'heal',   undefined],
+  ['kill',    'kill',    'K.O.'],
+  ['revive',  'revive',  'RIANIMATO'],
+  ['dodge',   'dodge',   'SCHIVA'],
+  ['block',   'block',   undefined],
+  ['recoil',  'recoil',  'CONTRACCOLPO'],
+  ['pen',     'pen',     'ARMATURA FORATA'],
+  ['shatter', 'shatter', 'SCUDO INFRANTO'],
+  ['crit',    'crit',    'CRITICO'],
+  ['dot',     'dot',     undefined],
+  ['heal',    'heal',    undefined],
 ]
 
 function kindsOf(list: ActiveEffect[] | undefined): string[] {

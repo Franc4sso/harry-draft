@@ -28,6 +28,12 @@ describe('sceneEventOf — ogni evento del motore ha una scena', () => {
     expect(sceneEventOf(frame(entry({ flags: ['recoil'] }))).kind).toBe('recoil')
   })
 
+  it('lo scudo infranto è una scena propria, con precedenza sul critico', () => {
+    const e = sceneEventOf(frame(entry({ flags: ['shatter', 'crit'], value: 40 })))
+    expect(e.kind).toBe('shatter')
+    expect(e.word).toBe('SCUDO INFRANTO')
+  })
+
   it('la cura e la rianimazione sono scene distinte', () => {
     expect(sceneEventOf(frame(entry({ flags: ['heal'], value: 28 }))).kind).toBe('heal')
     expect(sceneEventOf(frame(entry({ flags: ['revive'] }))).kind).toBe('revive')
