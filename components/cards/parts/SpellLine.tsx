@@ -40,7 +40,27 @@ export function SpellLine({ spell, compact }: { spell: Spell; compact?: boolean 
       </span>
 
       <span className="min-w-0 flex-1">
-        <span className="block break-words font-display text-[13px] font-extrabold leading-tight text-white">
+        {/* `compact` (battaglia — densità `combat`, l'unico chiamante che passa
+            `compact`: la densità `row` non usa affatto SpellLine, ha il proprio
+            rendering troncato) fissa il nome a UNA riga (`truncate`). Senza
+            limite, `break-words` lasciava un nome lungo (es. "Vulnera
+            Sanentur") andare a capo su due righe mentre uno corto restava su
+            una sola: l'altezza della carta diventava dipendente dal roster, e
+            in battaglia (sei carte, budget fisso) questo faceva crescere
+            l'arena oltre la sua quota calcolata da flex per certe squadre e
+            non per altre. `full` (pesca/reclutamento, non compact) resta
+            invariata: lì la carta è già alta abbastanza e mostra anche il
+            verbo dell'incantesimo, quindi andare a capo non cambia la sua
+            altezza rispetto alle altre carte affiancate. Il nome intero resta
+            comunque leggibile altrove: nella carta piena e nel tooltip. */}
+        <span
+          className={
+            compact
+              ? 'block truncate font-display text-[13px] font-extrabold leading-tight text-white'
+              : 'block break-words font-display text-[13px] font-extrabold leading-tight text-white'
+          }
+          title={compact ? spell.name : undefined}
+        >
           {spell.name}
         </span>
         {!compact && verb && (
