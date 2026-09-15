@@ -8,8 +8,6 @@ import { DuoTracker } from '@/components/draft/DuoTracker'
 import { WizardCard } from '@/components/cards/WizardCard'
 import { Stagger, StaggerItem } from '@/components/ui/motion'
 import { Insegna } from '@/components/ui/Insegna'
-import { Frame } from '@/components/ui/Frame'
-import { Parchment } from '@/components/ui/Parchment'
 
 /** Fixed-offer draft: a single non-regenerating screen over a pre-built curated
  *  list (tutorial mode's `tutorialStarterOffer`) instead of the RNG-driven,
@@ -74,11 +72,14 @@ export function DraftScreen({
   if (done) return <main className="flex-1" />
 
   return (
-    <main data-testid="draft-screen" className="flex-1 w-full">
+    // `flex-col` + `min-h-0`: la griglia sotto prende l'altezza RESIDUA invece di
+    // fermarsi al contenuto. Senza, con la carta nuova (433px invece di 592) sotto
+    // le carte restavano ~270px di fascia nera vuota.
+    <main data-testid="draft-screen" className="flex w-full flex-1 flex-col">
       {/* Sticky header: ONE row — title (with the pick count folded into its kicker) +
           the squad rail alongside it — instead of the old 3-line stack (kicker line,
           title, a redundant duplicate "Pesca N/3" line, squad panel below): that stack
-          measured 147px, this row ~50px, freeing space for portraitHeight=280 cards. */}
+          measured 147px, this row ~50px, freeing space for taller card portraits. */}
       {/* z-[60] keeps the sticky header above card chip tooltips (z-50) — without it,
           a tooltip on a top-row wizard paints over the header. */}
       <header className="sticky top-0 z-[60] flex items-center justify-between gap-4 border-b border-white/10 bg-[rgba(10,8,19,0.9)] px-4 py-2 backdrop-blur">
@@ -92,7 +93,7 @@ export function DraftScreen({
         rail. Single-column stack on mobile (candidates first, combo below).
       */}
       <div
-        className="mx-auto grid max-w-[1340px] grid-cols-1 items-start gap-4 px-4 md:grid-cols-[repeat(3,1fr)_402px]"
+        className="mx-auto grid min-h-0 w-full max-w-[1340px] flex-1 grid-cols-1 items-stretch gap-4 px-4 py-4 md:grid-cols-[repeat(3,1fr)_402px]"
         onPointerLeave={() => setConsidered(null)}
       >
         {/* Re-key by pick count so each new hand cascades in again. */}
@@ -103,7 +104,7 @@ export function DraftScreen({
                 <WizardCard
                   drafted={c}
                   density="full"
-                  portraitHeight={280}
+                  portraitHeight="fill"
                   className="h-full w-full"
                   testId={`draft-pick-${i}`}
                   onClick={() => { setConsidered(null); pick(i) }}
@@ -115,14 +116,16 @@ export function DraftScreen({
 
         {/* Combo panel: fourth column, top- and bottom-aligned with the cards
             (items-start on the grid + h-full here) instead of a sticky right rail. */}
-        <Frame variant="panel" className="h-full overflow-y-auto [scrollbar-gutter:stable]" innerClassName="relative h-full p-3">
-          <Parchment className="absolute inset-0" />
-          <div className="relative">
-            {/* UN SOLO pannello (piano "Un solo asse", Fase 2): i segnali col loro grado
-                — l'ex tracker delle Costellazioni — e le combo che accendono. */}
-            <DuoTracker picks={picks} considered={considered} />
-          </div>
-        </Frame>
+        {/* Combo panel: fourth column, top- and bottom-aligned with the cards.
+            Bordo sottile e lastra scura come la carta nuova: la cornice dorata con
+            pergamena (Frame + Parchment) apparteneva al vecchio linguaggio, quello
+            che l'utente ha chiesto di rendere sobrio — lasciarla qui avrebbe fatto
+            gridare il pannello accanto a tre carte volutamente quiete. */}
+        <div className="h-full overflow-y-auto rounded-[15px] border border-white/10 bg-[#0c0a17] p-3 [scrollbar-gutter:stable]">
+          {/* UN SOLO pannello (piano "Un solo asse", Fase 2): i segnali col loro grado
+              — l'ex tracker delle Costellazioni — e le combo che accendono. */}
+          <DuoTracker picks={picks} considered={considered} />
+        </div>
       </div>
 
       <p className="py-3 text-center text-[10px] uppercase tracking-widest text-white/30">seed: {seed}</p>

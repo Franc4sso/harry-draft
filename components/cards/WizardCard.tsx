@@ -35,7 +35,9 @@ export function WizardCard({
   onClick?: () => void
   className?: string
   testId?: string
-  portraitHeight?: number
+  /** Altezza del ritratto in px, oppure 'fill' per prendere lo spazio residuo
+   *  quando la carta è stirata da una griglia. */
+  portraitHeight?: number | 'fill'
 }) {
   const { wizard, stats, spell } = drafted
   const frame = tierFrame(wizard.tier as Tier)
@@ -43,7 +45,8 @@ export function WizardCard({
   const accent = ROLE_ACCENT[wizard.role]
   const archetype = primaryArchetype(tagsOf(drafted))
   const isRow = density === 'row'
-  const portH = portraitHeight ?? PORTRAIT[density]
+  const fillPortrait = portraitHeight === 'fill'
+  const portH = typeof portraitHeight === 'number' ? portraitHeight : PORTRAIT[density]
   const hpPct = currentHp !== undefined ? Math.max(0, Math.min(100, (currentHp / stats.hp) * 100)) : 100
 
   return (
@@ -62,10 +65,17 @@ export function WizardCard({
       <div className={`relative flex flex-1 overflow-hidden rounded-[14px] ${isRow ? 'flex-row items-stretch' : 'flex-col'}`}
            style={{ background: 'linear-gradient(180deg,#141223,#0c0a17)' }}>
 
-        {/* RITRATTO */}
+        {/* RITRATTO — con `portraitHeight="fill"` prende tutta l'altezza che avanza
+            invece di una misura fissa. Serve dove la carta è stirata dalla griglia
+            (la pesca): senza, la carta si allungava ma il contenuto no, e restava un
+            vuoto fra la magia e le statistiche. Il ritratto è la parte che l'utente
+            ha chiesto di tenere grande, quindi è quella che cresce. */}
         <div
-          className={`relative shrink-0 ${isRow ? 'w-[54px]' : ''}`}
-          style={{ height: isRow ? undefined : portH, background: 'linear-gradient(160deg,#2f3557,#1a1f36)' }}
+          className={`relative ${fillPortrait ? 'min-h-0 flex-1' : 'shrink-0'} ${isRow ? 'w-[54px]' : ''}`}
+          style={{
+            height: isRow || fillPortrait ? undefined : portH,
+            background: 'linear-gradient(160deg,#2f3557,#1a1f36)',
+          }}
         >
           <span aria-hidden className="absolute inset-0"
             style={{ background: 'radial-gradient(118% 84% at 50% 34%, transparent 48%, rgba(6,4,12,.7) 100%)' }} />
