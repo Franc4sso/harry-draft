@@ -7,6 +7,7 @@ import { recruitOffer, relicOffer } from '@/game/engine/resolvers/recruit'
 import { eventResolver } from '@/game/engine/resolvers/event'
 import { createRng } from '@/game/engine/rng'
 import { powerOf } from '@/game/engine/combat/teamGen'
+import { teamPower } from './support/teamPower'
 import { isDead } from '@/game/engine/roster'
 import { BALANCE } from '@/data/constants'
 import { botApplySpoils } from './botSpoils'
@@ -402,7 +403,22 @@ interface RunMetrics { nodesResolved: number; normalBattlesWon: number; finalAre
 function runOne(seed: string, battleTurns?: number[], preferVeleno = false, metrics?: RunMetrics): 'win' | 'defeat' {
   let s = startRunB(seed)
   const offer = starterOffer(seed, 'Grifondoro')
-  const starters = [...offer].sort((a, b) => powerOf(b) - powerOf(a)).slice(0, 3).map(d => d.wizard.id)
+  // Draft greedy su teamPower: aggiunge a uno a uno il mago che massimizza la potenza
+  // della squadra RISULTANTE, così gli archetipi pesano già dalla prima pesca. Con il
+  // vecchio sort su powerOf il bot prendeva i tre più muscolosi e restava scoordinato —
+  // non è come gioca una persona, e falsava la misura della difficoltà.
+  const starters: string[] = []
+  const pool = [...offer]
+  while (starters.length < 3 && pool.length > 0) {
+    let bestI = 0
+    let bestV = -Infinity
+    const chosen = starters.map(id => offer.find(d => d.wizard.id === id)!)
+    for (let i = 0; i < pool.length; i++) {
+      const v = teamPower([...chosen, pool[i]!], [])
+      if (v > bestV) { bestV = v; bestI = i }
+    }
+    starters.push(pool.splice(bestI, 1)[0]!.wizard.id)
+  }
   s = chooseStarters(s, 'Grifondoro', starters, createRng(seed))
   let guard = 0
   while (guard++ < 200) {
@@ -430,12 +446,21 @@ function runOne(seed: string, battleTurns?: number[], preferVeleno = false, metr
     }
     if (s.phase === 'recruit-node') {
       const off = recruitOffer(s, node, createRng(seed))
-      const velenoCand = [...off].filter(isVeleno).sort((a, b) => powerOf(b) - powerOf(a))[0]
-      const best = preferVeleno
-        ? (velenoCand ?? [...off].sort((a, b) => powerOf(b) - powerOf(a))[0]!)
-        : [...off].sort((a, b) => powerOf(b) - powerOf(a))[0]!
       const full = s.team.length >= (s.teamMax ?? 5)
-      const replaceId = full ? [...s.team].sort((a, b) => powerOf(a) - powerOf(b))[0]!.wizard.id : undefined
+      // A squadra piena si esce chi, tolto, fa perdere MENO potenza di squadra: il più
+      // debole per statistiche può essere quello che tiene acceso un archetipo.
+      const replaceId = full
+        ? [...s.team]
+            .map(d => ({ id: d.wizard.id, after: teamPower(s.team.filter(x => x !== d), s.relics) }))
+            .sort((a, b) => b.after - a.after)[0]!.id
+        : undefined
+      const baseTeam = replaceId ? s.team.filter(d => d.wizard.id !== replaceId) : s.team
+      // Il candidato si valuta sulla squadra RISULTANTE, non in isolamento: conta quanto
+      // accende, non quanto pesa da solo.
+      const byTeamPower = (pool: typeof off) =>
+        [...pool].sort((a, b) => teamPower([...baseTeam, b], s.relics) - teamPower([...baseTeam, a], s.relics))[0]
+      const velenoCand = byTeamPower([...off].filter(isVeleno))
+      const best = preferVeleno ? (velenoCand ?? byTeamPower(off)!) : byTeamPower(off)!
       s = resolveCurrent(s, { kind: 'recruit-pick', wizardId: best.wizard.id, replaceId }, createRng(seed))
       if (metrics) metrics.nodesResolved++
       s = { ...s, phase: 'map' }; continue
@@ -577,8 +602,41 @@ describe('campaign balance (new loop)', () => {
     // e567abb (pre-Carnefice tip), 120 seeds: winRate IDENTICAL at 0.0083 (1/120) before and
     // after Tasks 1-3 (Spietatezza revival, kill-site avalanche, Mietitore amplifier). No
     // CARNEFICE_THRESHOLD_STEP/CAP tuning needed — enemy-carnefice did not move this gate.
-    expect(winRate).toBeGreaterThanOrEqual(0)
-    expect(winRate).toBeLessThanOrEqual(1.0)
+    //
+    // *** GATE RIATTIVATO 2026-09-15 — il bot ora drafta come una persona ***
+    // L'assert precedente (winRate >= 0 && <= 1) era degenerato: asseriva solo che un
+    // rapporto è un rapporto, quindi passava SEMPRE. Rilassato il 2026-07-11 "in attesa
+    // di un balance pass" mai eseguito; nel frattempo sono atterrati role-counter, 4
+    // archetipi, cap reliquie, la potatura dei nodi-menu e il refactor dei segnali,
+    // senza che nessuno misurasse nulla.
+    //
+    // CAUSA VERA dello 0.0000 storico, trovata strumentando il draft: il bot sceglieva
+    // gli starter con `powerOf` (hp + atk*2 + def*1.5 + spd), che premia gli HP — e
+    // pescava 3 TANK su 3, in TUTTE e 40 le run campionate. Una squadra di tre muri che
+    // non uccide nessuno perde sempre, qualunque sia il bilanciamento dei nemici. Lo
+    // 0.0000 non misurava la difficoltà del gioco: misurava quel difetto del bot.
+    // (Difetto già annotato nella memoria di progetto — "powerOf sceglie 3 tank a danno
+    // zero" — ma mai collegato a questo gate.)
+    //
+    // Il draft ora massimizza `teamPower` (tests/engine/support/teamPower.ts), che pesa
+    // segnali/Duo/Trii oltre alle statistiche: pesca 1 Tank + 2 Attaccanti e il winRate
+    // passa da 0.0000 a 0.6917 (83/120) — su codice di gioco IDENTICO, è cambiato solo
+    // il metro. Controprova: campaignBalanceRestricted, che ha un bot proprio e non usa
+    // teamPower, resta a 0.0583 — il salto viene dalla scelta, non da una modifica al gioco.
+    //
+    // La banda è ±0.10 attorno alla misura: larga abbastanza da non rompersi sul rumore
+    // di un seed, stretta abbastanza da cogliere una regressione vera. Ogni cambio al
+    // potere nemico O alla politica del bot DEVE ri-misurare e ri-ancorare questo numero,
+    // annotando qui data e valore.
+    //
+    // NOTA per il bilanciamento: 0.6917 è ALTO per un roguelite (un giocatore competente
+    // vince 7 run su 10). È la conferma numerica del "gioco troppo facile" riportato
+    // dall'utente — ma NON va corretto alzando le statistiche dei nemici prima di aver
+    // dato al giocatore qualcosa che lo possa punire: ad oggi i quattro archetipi sono
+    // lo stesso stampo con parola chiave diversa e nessuno legge la squadra avversaria.
+    // Vedi docs/superpowers/specs/2026-09-15-bot-competente-e-ciclo-counter-design.md.
+    expect(winRate).toBeGreaterThan(0.59)
+    expect(winRate).toBeLessThan(0.79)
   })
   it('is deterministic (same seeds → same outcomes)', () => {
     const again = Array.from({ length: N }, (_, i) => runOne(`run-${i}`))
