@@ -287,6 +287,35 @@ export function DuoTracker({ picks, considered, relics = [], prevTeam, className
         </>
       )}
 
+      {/* Le combo che NON hai e che il candidato sotto il mouse non muove restano
+          fuori dalla lista: elencarne sei grigie ogni volta è rumore, non
+          informazione — il giocatore non può farci nulla in questo momento.
+          Restano un CONTATORE (i pallini qui sotto), così sai che esistono e
+          quante te ne mancano; ricompaiono da sole appena una recluta le sfiora. */}
+      {(() => {
+        const dormant = sorted.filter(p => {
+          const st = stateOf(p)
+          return st === 'locked'
+            && !completes.has(p.duo.id) && !advances.has(p.duo.id)
+            && !breaks.has(p.duo.id) && !regresses.has(p.duo.id)
+        })
+        if (dormant.length === 0) return null
+        return (
+          <p
+            data-testid="duo-dormant-count"
+            title={dormant.map(p => p.duo.name).join(' · ')}
+            className="mb-2 flex items-center gap-1.5 text-[10px] text-white/35"
+          >
+            <span className="flex gap-[3px]" aria-hidden>
+              {dormant.map(p => (
+                <span key={p.duo.id} className="block h-[5px] w-[5px] rounded-full bg-white/25" />
+              ))}
+            </span>
+            altre {dormant.length} combo da scoprire
+          </p>
+        )
+      })()}
+
       <ul className="space-y-1.5">
         {sorted.map((p) => {
           const st = stateOf(p)
@@ -294,6 +323,8 @@ export function DuoTracker({ picks, considered, relics = [], prevTeam, className
           const steps = advances.has(p.duo.id)
           const broke = breaks.has(p.duo.id)
           const regressed = regresses.has(p.duo.id)
+          // Dormiente e non toccata dal candidato: già contata nei pallini sopra.
+          if (st === 'locked' && !lights && !steps && !broke && !regressed) return null
           const badge = broke ? 'si spegne'
             : lights ? 'si attiva'
             : st === 'active' ? 'attiva'

@@ -46,8 +46,14 @@ describe('RecruitScreen', () => {
     const onPick = vi.fn()
     const { container } = render(<RecruitScreen offer={offer} team={team} teamMax={5} onPick={onPick} relics={[]} />)
     expect(screen.getByTestId('draft-duo-tracker')).toBeInTheDocument()
-    // Tutte e 6 le combo compaiono in forma compatta.
-    expect(container.querySelectorAll('[data-testid="draft-duo-tracker"] [data-duo]').length).toBe(6)
+    // 2026-09-15: prima asseriva tutte e 6 le combo in lista. Ora le dormienti
+    // (quelle che la squadra non tocca e che nessun candidato muove) stanno in un
+    // contatore: in lista restano solo quelle vive. Il tracker c'è, e mostra
+    // o delle righe o il contatore — mai sei righe grigie.
+    const rows = container.querySelectorAll('[data-testid="draft-duo-tracker"] [data-duo]').length
+    const counter = container.querySelector('[data-testid="duo-dormant-count"]')
+    expect(rows + (counter ? 1 : 0)).toBeGreaterThan(0)
+    expect(rows).toBeLessThan(6)
   })
 
   it('renders candidates as WizardCard (the same card used everywhere), like the draft', () => {

@@ -121,7 +121,13 @@ export function DraftScreen({
             pergamena (Frame + Parchment) apparteneva al vecchio linguaggio, quello
             che l'utente ha chiesto di rendere sobrio — lasciarla qui avrebbe fatto
             gridare il pannello accanto a tre carte volutamente quiete. */}
-        <div className="h-full overflow-y-auto rounded-[15px] border border-white/10 bg-[#0c0a17] p-3 [scrollbar-gutter:stable]">
+        {/* `min-h-0`: dentro una griglia `items-stretch`, `h-full` NON impone un
+            tetto — la riga si allarga col contenuto. Passando il mouse su un mago
+            che accende una combo, il riquadro della combo si apriva, il pannello
+            cresceva e la PAGINA passava da 768 a 807px: compariva la barra di
+            scorrimento e la schermata "saltava" sotto il cursore. Con `min-h-0`
+            il pannello resta nel suo spazio e scorre dentro di sé. */}
+        <div className="h-full min-h-0 overflow-y-auto rounded-[15px] border border-white/10 bg-[#0c0a17] p-3 [scrollbar-gutter:stable]">
           {/* UN SOLO pannello (piano "Un solo asse", Fase 2): i segnali col loro grado
               — l'ex tracker delle Costellazioni — e le combo che accendono. */}
           <DuoTracker picks={picks} considered={considered} />

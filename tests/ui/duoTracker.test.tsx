@@ -7,11 +7,17 @@ const mage = (id: string, role: string, tags: string[] = [], house = 'Grifondoro
   ({ wizard: { id, name: id, house, role, tags }, level: 1, stats: {}, maxHp: 100 }) as any
 
 describe('DuoTracker (draft rail)', () => {
-  it('mostra TUTTE e 6 le combo in forma compatta, anche a squadra vuota', () => {
+  // 2026-09-15, su richiesta dell'utente: a squadra vuota le sei combo NON si
+  // elencano più. Vederne sei grigie che non si possono accendere è rumore, non
+  // informazione. Restano un contatore a pallini, e tornano in lista appena una
+  // recluta le sfiora (vedi i test "si attiva"/"avanza" qui sotto).
+  it('a squadra vuota non elenca le combo: le conta e basta', () => {
     const { container } = render(<DuoTracker picks={[]} />)
     for (const d of DUOS) {
-      expect(container.querySelector(`[data-duo="${d.id}"]`)).not.toBeNull()
+      expect(container.querySelector(`[data-duo="${d.id}"]`)).toBeNull()
     }
+    const count = screen.getByTestId('duo-dormant-count')
+    expect(count).toHaveTextContent(`altre ${DUOS.length} combo da scoprire`)
     expect(screen.getByTestId('draft-duo-tracker')).toBeInTheDocument()
   })
 
@@ -47,11 +53,12 @@ describe('DuoTracker (draft rail)', () => {
     expect(veleno).toHaveTextContent('✓') // 2/2 col candidato
   })
 
-  it('senza candidato, una combo lontana resta compatta: niente descrizione', () => {
+  // Prima asseriva che una combo lontana restasse in lista, solo compatta. Dal
+  // 2026-09-15 esce del tutto finché nessun candidato la muove: sta nel contatore.
+  it('senza candidato, una combo lontana non è in lista', () => {
     const { container } = render(<DuoTracker picks={[]} />)
-    const row = container.querySelector('[data-duo="mietitore"]')!
-    expect(row).toHaveAttribute('data-state', 'locked')
-    expect(row).not.toHaveTextContent(/carnefice/i)
+    expect(container.querySelector('[data-duo="mietitore"]')).toBeNull()
+    expect(screen.getByTestId('duo-dormant-count')).toBeInTheDocument()
   })
 })
 
