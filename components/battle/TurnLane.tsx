@@ -1,0 +1,165 @@
+'use client'
+import { useMemo } from 'react'
+import { motion, useReducedMotion } from 'framer-motion'
+import type { Replay } from '@/game/engine/combat/replay'
+import { initiativeAt, initiativeOrder } from '@/lib/initiative'
+import { cn } from '@/lib/theme'
+import { PortraitImage } from '@/components/ui/PortraitImage'
+
+const SLOT_WIDTH = 76
+/** How many upcoming actors to pull from `initiativeAt` beyond the current one.
+ *  The mockup ("La corsia sa il futuro") shows the lane scrolling several turns
+ *  ahead; `initiativeAt`'s own default (5) is tuned for the compact InitiativeBar
+ *  rail, so the lane asks for more without touching that default. */
+const UPCOMING_COUNT = 7
+
+/**
+ * The "corsia del tempo": who acts next, and with which spell — the thing the
+ * player could not see before. A skipped turn (stun/freeze) used to be a blank
+ * frame; here the badge is visible on the slot BEFORE it happens, because the
+ * order comes from `initiativeAt`'s scan of the replay's own future frames
+ * (ground truth), not a recomputed spd sort — the lane's whole promise is "this
+ * is what the engine will actually do next."
+ *
+ * Status reads (stun/freeze → will skip, silence → "colpo base") come from the
+ * CURRENT frame's `statusEffects`: an upcoming actor's status doesn't change
+ * between now and their turn (no other action resolves in between that could
+ * clear/refresh it before they act), so the current frame is the correct,
+ * and only available, source for "will this status still be active then".
+ *
+ * Slots key on `pos - nowOffset + i`, an ever-increasing position derived from
+ * the "now" slot's absolute index in `initiativeOrder` — NOT on their index
+ * within the visible window. That's what makes the slide real motion rather
+ * than a remount: as `index` advances by one action, every slot's key shifts
+ * up by exactly one, so React keeps the same DOM nodes and `translateX`
+ * animates an actual displacement — matching the mockup's `.track` transform,
+ * which shifts the whole row instead of re-laying-out each slot from scratch.
+ */
+export function TurnLane({ replay, index, className }: { replay: Replay; index: number; className?: string }) {
+  const reduce = useReducedMotion()
+  const frame = replay.frames[index] ?? replay.frames[replay.frames.length - 1]
+  const statusEffects = frame?.statusEffects ?? {}
+
+  const byKey = useMemo(() => Object.fromEntries(replay.units.map(u => [u.key, u])), [replay])
+  const order = useMemo(() => initiativeOrder(replay), [replay])
+
+  // `initiativeAt` is the lane's ground truth for "who acts next": it scans the
+  // replay's own future frames rather than re-deriving a predicted order, so it
+  // can never disagree with what the engine actually does (unlike a recomputed
+  // spd sort). Before the first real action (the initial full-HP frame, index
+  // 0) nothing has happened yet and `initiativeAt(replay, 0)` correctly reports
+  // `current: null, upcoming: []` there (its own documented contract — see
+  // lib/initiative.ts) — so the lane instead asks it at the first REAL action
+  // frame, which is the turn it will report as current the moment that frame
+  // lands. This still reads the same ground truth, just one frame ahead of
+  // "nothing has happened yet".
+  const firstRealIndex = useMemo(
+    () => replay.frames.findIndex(f => f.entry && f.entry.type !== 'system' && f.entry.actorSide),
+    [replay],
+  )
+  const effectiveIndex = index >= firstRealIndex && firstRealIndex >= 0 ? index : firstRealIndex
+  const { current, upcoming } = initiativeAt(replay, Math.max(0, effectiveIndex), UPCOMING_COUNT)
+  const nowKey = current ?? order[0]?.key ?? null
+
+  // Absolute position of the "now" slot within the full order, so slot keys
+  // stay stable across renders (real sliding, not a remount) — see file doc.
+  const pos = useMemo(() => order.findIndex(s => s.key === nowKey), [order, nowKey])
+  const startPos = Math.max(0, pos - 1)
+  const nowOffset = pos < 0 ? 0 : pos - startPos // index within `sequence` of the "now" slot (0 or 1)
+
+  const sequence = useMemo(() => {
+    if (pos < 0) return []
+    const past = startPos < pos ? [order[startPos]!] : []
+    const rest = [{ key: nowKey!, turn: order[pos]!.turn }, ...upcoming.map(k => ({ key: k, turn: -1 }))]
+    return [...past, ...rest]
+  }, [order, pos, startPos, nowKey, upcoming])
+
+  return (
+    <div
+      data-testid="turn-lane"
+      className={cn('relative h-32 overflow-hidden rounded-[13px] border border-amber-300/25', className)}
+      style={{ background: 'linear-gradient(90deg, rgba(202,162,74,.12), rgba(16,13,28,.74) 32%)' }}
+    >
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-0 top-0 bottom-0 z-[2] w-24"
+        style={{ background: 'linear-gradient(90deg, rgba(202,162,74,.16), transparent)' }}
+      />
+      <motion.div
+        className="absolute left-5 top-4 flex items-start"
+        initial={false}
+        animate={{ x: -startPos * SLOT_WIDTH }}
+        transition={reduce ? { duration: 0 } : { duration: 0.58, ease: [0.22, 1, 0.36, 1] }}
+      >
+        {sequence.map((slot, i) => {
+          const u = byKey[slot.key]
+          if (!u) return null
+          const isNow = i === nowOffset
+          const isPast = i < nowOffset
+          const key = slot.key
+          const effects = statusEffects[key] ?? []
+          const willSkip = effects.some(e => (e.statusId ?? e.kind) === 'stun' || (e.statusId ?? e.kind) === 'freeze')
+          const skipKind = effects.find(e => (e.statusId ?? e.kind) === 'stun')
+            ? 'stun'
+            : effects.find(e => (e.statusId ?? e.kind) === 'freeze')
+              ? 'freeze'
+              : null
+          const silenced = effects.some(e => (e.statusId ?? e.kind) === 'silence')
+          const mine = u.side === 'left'
+          const avatarSize = isNow ? 50 : 40
+          const ring = mine ? 'rgba(124,220,125,.4)' : 'rgba(240,114,114,.45)'
+
+          return (
+            <div
+              key={pos - nowOffset + i}
+              data-testid="lane-slot"
+              data-unit={key}
+              data-now={isNow ? 'true' : 'false'}
+              className="flex flex-col items-center gap-1.5"
+              style={{ width: SLOT_WIDTH, flex: `0 0 ${SLOT_WIDTH}px`, opacity: isPast ? 0.22 : 1, transition: reduce ? undefined : 'opacity 0.4s' }}
+            >
+              <div
+                className="relative overflow-hidden rounded-full"
+                style={{
+                  width: avatarSize,
+                  height: avatarSize,
+                  border: `2px solid ${ring}`,
+                  transition: reduce ? undefined : 'all 0.42s cubic-bezier(.22,1,.36,1)',
+                }}
+              >
+                <PortraitImage id={u.id} house={u.house} alt={u.name} variant="bust" />
+                {willSkip && (
+                  <span
+                    data-testid="lane-skip"
+                    data-kind={skipKind ?? 'stun'}
+                    title="salterà il turno"
+                    className="absolute -right-1 -top-1 flex h-[15px] w-[15px] items-center justify-center rounded-full text-[9px] font-black leading-none text-[#0a0814]"
+                    style={{ background: skipKind === 'freeze' ? '#7dd3ff' : '#f0d48a' }}
+                  >
+                    {skipKind === 'freeze' ? '❄' : '✦'}
+                  </span>
+                )}
+              </div>
+              <span
+                className={cn(
+                  'truncate text-[8.5px] font-extrabold leading-none',
+                  isNow ? 'text-amber-100' : 'text-white/35',
+                )}
+              >
+                {u.name}
+              </span>
+              <span
+                className={cn(
+                  'truncate text-[8px] font-semibold leading-none',
+                  isNow ? 'text-amber-300' : 'text-white/[.24]',
+                )}
+              >
+                {silenced ? 'colpo base' : u.spell.name}
+              </span>
+            </div>
+          )
+        })}
+      </motion.div>
+    </div>
+  )
+}

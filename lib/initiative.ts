@@ -26,13 +26,15 @@ export function initiativeOrder(replay: Replay): InitiativeSlot[] {
 
 /**
  * For the frame at `index` (the action index used by useBattleReplay, where 0
- * is the initial full-HP frame), returns the current actor and the next up-to-5
- * distinct upcoming actors. Frames whose entry is system/actorless contribute
- * no `current`.
+ * is the initial full-HP frame), returns the current actor and the next up-to-`count`
+ * distinct upcoming actors (default 5, matching the original InitiativeBar-era
+ * contract — callers that don't pass `count` see unchanged behavior). Frames
+ * whose entry is system/actorless contribute no `current`.
  */
 export function initiativeAt(
   replay: Replay,
   index: number,
+  count = 5,
 ): { current: string | null; upcoming: string[] } {
   const frame = replay.frames[index]
   const e = frame?.entry
@@ -40,7 +42,7 @@ export function initiativeAt(
 
   const upcoming: string[] = []
   if (current) {
-    for (let i = index + 1; i < replay.frames.length && upcoming.length < 5; i++) {
+    for (let i = index + 1; i < replay.frames.length && upcoming.length < count; i++) {
       const fe = replay.frames[i]!.entry
       if (!fe || fe.type === 'system' || !fe.actorSide) continue
       const key = unitKey(fe.actorSide, fe.actorId)
