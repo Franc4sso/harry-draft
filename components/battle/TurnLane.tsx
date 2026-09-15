@@ -2,7 +2,7 @@
 import { useMemo } from 'react'
 import { motion, useReducedMotion } from 'framer-motion'
 import type { Replay } from '@/game/engine/combat/replay'
-import { initiativeAt, initiativeOrder } from '@/lib/initiative'
+import { initiativeAt, initiativeOrder, lastRealActorAt } from '@/lib/initiative'
 import { cn } from '@/lib/theme'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 
@@ -46,20 +46,39 @@ export function TurnLane({ replay, index, className }: { replay: Replay; index: 
   // `initiativeAt` is the lane's ground truth for "who acts next": it scans the
   // replay's own future frames rather than re-deriving a predicted order, so it
   // can never disagree with what the engine actually does (unlike a recomputed
-  // spd sort). Before the first real action (the initial full-HP frame, index
-  // 0) nothing has happened yet and `initiativeAt(replay, 0)` correctly reports
-  // `current: null, upcoming: []` there (its own documented contract — see
-  // lib/initiative.ts) — so the lane instead asks it at the first REAL action
-  // frame, which is the turn it will report as current the moment that frame
-  // lands. This still reads the same ground truth, just one frame ahead of
-  // "nothing has happened yet".
+  // spd sort). It only reports a non-null `current` (and therefore a non-empty
+  // `upcoming`) when `index` itself lands on a real (non-system, actor-bearing)
+  // frame — so it needs redirecting to the nearest real frame in TWO distinct
+  // situations, which must not be conflated:
+  //  (a) `index` precedes the first real action (the initial full-HP frame) —
+  //      nothing has happened yet, so preview the first turn the engine will
+  //      report as current the moment that frame lands: `firstRealIndex`.
+  //  (b) `index` IS a genuine mid-battle system frame (KO narration,
+  //      "Ricarica", a stun-skip announcement — everything `type: 'system'`).
+  //      Someone HAS already acted here, and system frames — including the
+  //      skip itself — are exactly the case this lane exists to make legible.
+  //      Redirecting to `firstRealIndex` (or worse, `order[0]`) here would
+  //      show the battle's first-ever actor, a stranger unrelated to frame
+  //      `index`'s actual state. The established fix in this codebase for
+  //      "stick through system frames" is `lastRealActorAt` (already used by
+  //      InitiativeBar/BattleArena for the same problem); redirecting to that
+  //      SAME frame keeps `initiativeAt`'s `upcoming` scan anchored there too,
+  //      not just its `current`.
   const firstRealIndex = useMemo(
     () => replay.frames.findIndex(f => f.entry && f.entry.type !== 'system' && f.entry.actorSide),
     [replay],
   )
-  const effectiveIndex = index >= firstRealIndex && firstRealIndex >= 0 ? index : firstRealIndex
+  const lastRealIndex = useMemo(() => {
+    for (let i = Math.min(index, replay.frames.length - 1); i >= 0; i--) {
+      const e = replay.frames[i]?.entry
+      if (e && e.type !== 'system' && e.actorSide) return i
+    }
+    return -1
+  }, [replay, index])
+  const effectiveIndex =
+    firstRealIndex < 0 ? -1 : index < firstRealIndex ? firstRealIndex : lastRealIndex >= 0 ? lastRealIndex : firstRealIndex
   const { current, upcoming } = initiativeAt(replay, Math.max(0, effectiveIndex), UPCOMING_COUNT)
-  const nowKey = current ?? order[0]?.key ?? null
+  const nowKey = current ?? lastRealActorAt(replay, index) ?? order[0]?.key ?? null
 
   // Absolute position of the "now" slot within the full order, so slot keys
   // stay stable across renders (real sliding, not a remount) — see file doc.

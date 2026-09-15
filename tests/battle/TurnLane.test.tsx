@@ -7,6 +7,7 @@ import { detectSynergies } from '@/game/engine/synergy'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
 import { WIZARDS } from '@/data/wizards'
+import { lastRealActorAt } from '@/lib/initiative'
 
 const team = (ids: string[]) =>
   ids.map(id => draftWizard(createRng(`lane-${id}`), WIZARDS.find(w => w.id === id)!, false))
@@ -65,5 +66,34 @@ describe('TurnLane', () => {
     }
     render(<TurnLane replay={patched as never} index={0} />)
     expect(screen.getByText(/colpo base/i)).toBeInTheDocument()
+  })
+
+  it('su un frame di sistema a metà battaglia, "adesso" resta chi ha agito per ultimo (non il primo della battaglia)', () => {
+    const replay = fixture()
+    // Find a genuine mid-battle system frame: one that comes strictly after
+    // at least one real action (so it's not the pre-battle case) and is
+    // itself system/actorless. A skipped turn, a KO narration, a "Ricarica" —
+    // all land here, and making exactly this case legible is the point of
+    // the lane: it must not jump to a stranger when one fires.
+    const firstReal = replay.frames.findIndex(f => f.entry && f.entry.type !== 'system' && f.entry.actorSide)
+    const systemIndex = replay.frames.findIndex(
+      (f, i) => i > firstReal && (!f.entry || f.entry.type === 'system' || !f.entry.actorSide),
+    )
+    expect(systemIndex).toBeGreaterThan(firstReal) // fixture actually has one to test against
+
+    const expected = lastRealActorAt(replay, systemIndex)
+    expect(expected).not.toBeNull()
+
+    render(<TurnLane replay={replay} index={systemIndex} />)
+    const nowSlots = screen.getAllByTestId('lane-slot').filter(s => s.dataset.now === 'true')
+    expect(nowSlots).toHaveLength(1)
+    expect(nowSlots[0]).toHaveAttribute('data-unit', expected)
+    // The regression this guards against: falling back to the battle's very
+    // first actor instead of the one who last really acted.
+    const firstEntry = replay.frames[firstReal]!.entry!
+    const battleFirstActor = `${firstEntry.actorSide}:${firstEntry.actorId}`
+    if (battleFirstActor !== expected) {
+      expect(nowSlots[0]).not.toHaveAttribute('data-unit', battleFirstActor)
+    }
   })
 })
