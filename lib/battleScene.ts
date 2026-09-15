@@ -1,5 +1,5 @@
 import type { ReplayFrame } from '@/game/engine/combat/replay'
-import type { ActiveEffect, LogEntry } from '@/types'
+import type { ActiveEffect, LogEntry, LogFlag } from '@/types'
 
 export type SceneKind =
   | 'hit' | 'crit' | 'dodge' | 'block' | 'pen' | 'heal' | 'kill' | 'revive'
@@ -28,6 +28,15 @@ const BY_ACTION: Record<string, { kind: SceneKind; word?: string }> = {
   Fatica:        { kind: 'fatigue',     word: 'SFINIMENTO' },
   Purificazione: { kind: 'purify',      word: 'PURIFICATO' },
   Rigenera:      { kind: 'regen' },
+  // game/engine/status.ts:184 logs the per-turn `regen` status tick as action
+  // `def?.name ?? 'Rigenerazione'` — the only status with `tickHeal` is `regen`
+  // (data/statuses.ts:25, name: 'Rigenerazione'), so this action name is always
+  // reachable in practice, not just a defensive fallback. Without this entry it
+  // fell through to BY_FLAG's generic `heal` (normal-size number, no tick
+  // styling) — visually indistinguishable from a one-off reactive heal. Mapping
+  // it to 'regen' gives it the same small tick-up numeral as Fatica's 'dot',
+  // which is the correct read for a recurring per-turn effect either way.
+  Rigenerazione: { kind: 'regen' },
   Miasma:        { kind: 'duo-miasma',  word: 'MIASMA' },
   MuroVivente:   { kind: 'duo-muro',    word: 'MURO VIVENTE' },
   Riflesso:      { kind: 'duo-muro',    word: 'RIFLESSO' },
@@ -38,8 +47,15 @@ const BY_ACTION: Record<string, { kind: SceneKind; word?: string }> = {
 }
 
 /** Flag → scena, in ordine di PRECEDENZA: un colpo che uccide è una morte, non
- *  un critico, anche se porta entrambi i flag. */
-const BY_FLAG: Array<[string, SceneKind, string | undefined]> = [
+ *  un critico, anche se porta entrambi i flag.
+ *
+ *  `dot` e `heal` restano qui perché coprono i tick generici (veleno, cure
+ *  reattive) che NON passano da BY_ACTION. Ma il motore attacca proprio questi
+ *  due flag anche a `Fatica` e `Rigenera` (system actions con la loro scena
+ *  dedicata, 'fatigue'/'regen'): sceneEventOf controlla BY_ACTION PRIMA di
+ *  questo loop così un'azione nota vince sempre sul flag generico, invece di
+ *  essere inghiottita da 'dot'/'heal' e perdere la sua parola (SFINIMENTO). */
+const BY_FLAG: Array<[LogFlag, SceneKind, string | undefined]> = [
   ['kill',    'kill',    'K.O.'],
   ['revive',  'revive',  'RIANIMATO'],
   ['dodge',   'dodge',   'SCHIVA'],
@@ -92,11 +108,24 @@ export function sceneEventOf(frame: ReplayFrame, prev?: ReplayFrame): SceneEvent
     gained, lost,
   }
 
-  for (const [flag, kind, word] of BY_FLAG) {
-    if (e.flags.includes(flag as never)) return { ...base, kind, word }
-  }
+  // BY_ACTION first: a known system action (Fatica, Rigenera, the three Duo
+  // actions, Stordito, KO, …) always wins over a generic BY_FLAG match, even
+  // though the engine tags several of these actions with a flag BY_FLAG also
+  // knows (Fatica→['dot'], Rigenera→['heal']). Checking BY_ACTION second used
+  // to let those two flags swallow the action before its own scene/word was
+  // ever considered, so Fatica rendered as a plain 'dot' tick with no
+  // SFINIMENTO word. Checking BY_ACTION first does not change any
+  // already-correct case: `stun` and `duo` are deliberately absent from
+  // BY_FLAG (Stordito/Miasma/MuroVivente/Riflesso/Untore always fell through
+  // to BY_ACTION already), and KO's flags (['kill'] or ['kill','duo']) map to
+  // 'kill' either way BY_ACTION and BY_FLAG agree, so a killing Duo action
+  // still reads as 'kill', never as its Duo word.
   const byAction = BY_ACTION[e.action]
   if (byAction) return { ...base, kind: byAction.kind, word: byAction.word }
+
+  for (const [flag, kind, word] of BY_FLAG) {
+    if (e.flags.includes(flag)) return { ...base, kind, word }
+  }
 
   return { ...base, kind: 'hit' }
 }

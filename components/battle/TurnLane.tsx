@@ -186,7 +186,7 @@ export function TurnLane({ replay, index, className }: { replay: Replay; index: 
                   isNow ? 'text-amber-300' : 'text-white/[.24]',
                 )}
               >
-                {silenced ? 'colpo base' : u.spell.name}
+                {silenced ? 'Colpo Base' : u.spell.name}
               </span>
             </div>
           )
