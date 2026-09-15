@@ -161,11 +161,17 @@ export function BattleArena({
           className="relative shrink-0 transition-opacity duration-200"
           style={{ opacity: anyAction && !involved ? 0.45 : 1 }}
         >
+          {/* Il lato si legge dal COLORE della cornice: senza, le sei carte sono
+              identiche e in mezzo a uno scontro bisogna ricordare quale fila è
+              quale. Rosso i nemici, verde i tuoi — gli stessi colori che il gioco
+              usa già per i danni inflitti e subiti. Sovrascrive il filo di rarità
+              solo qui, in battaglia, dove sapere chi è chi conta più del tier. */}
           <WizardCard
             drafted={drafted}
             density="combat"
             currentHp={Math.max(0, hp[u.key] ?? 0)}
             portraitHeight={portraitHeight}
+            style={{ background: mirrored ? 'rgba(240,114,114,.42)' : 'rgba(124,220,125,.34)' }}
             className={cn(
               dead && 'grayscale opacity-60',
               acting && 'ring-2 ring-[#7cfc9b] shadow-[0_0_22px_rgba(124,252,155,0.55)]',

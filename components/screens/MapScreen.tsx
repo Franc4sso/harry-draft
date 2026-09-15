@@ -22,6 +22,24 @@ const LABEL: Record<RunNodeType, string> = {
   potions: 'Pozioni', forest: 'Foresta', infirmary: 'Infermeria',
   altare: 'Altare Oscuro',
 }
+/** Cosa OTTIENI entrando: è l'informazione su cui si sceglie una strada.
+ *  I nodi di combattimento non compaiono qui perché mostrano la squadra nemica
+ *  vera al loro posto — quella è già la risposta migliore a «cosa mi aspetta». */
+const REWARD: Record<RunNodeType, string> = {
+  battle: 'Uno scontro. Vincendo, la squadra sale di livello.',
+  elite: 'Uno scontro duro. Vale il doppio dei livelli.',
+  boss: 'Il guardiano dell\'area. Batterlo apre la strada.',
+  relic: 'Tre reliquie fra cui scegliere. Nessuno scontro.',
+  event: 'Un bivio da risolvere. Nessuno scontro.',
+  recruit: 'Tre maghi fra cui scegliere. Nessuno scontro.',
+  infirmary: 'Tutta la squadra torna in forze.',
+  altare: 'Una reliquia potente, al suo prezzo.',
+  commonRoom: 'Una sosta alla Sala Comune.',
+  library: 'Sapere antico dalla Biblioteca.',
+  potions: 'Un intruglio dal laboratorio di Pozioni.',
+  forest: 'Un sentiero nella Foresta Proibita.',
+}
+
 /** Per-type seal accent (ring + glow + ink tint). */
 const ACCENT: Record<RunNodeType, string> = {
   battle: '#b08d57', elite: '#e0833a', boss: '#f5c451', relic: '#a78bfa',
@@ -40,7 +58,7 @@ const MINI_TOP_PAD = 18
 const MINI_HEIGHT = 120
 
 export function MapScreen({
-  map, currentNodeId, reachableIds, onChoose, area, areasTotal, noRecruits, team,
+  map, currentNodeId, reachableIds, onChoose, area, areasTotal, noRecruits,
 }: {
   map: RunNode[]
   currentNodeId: string
@@ -52,9 +70,11 @@ export function MapScreen({
    *  no-ops the pick, see recruitResolver), but they must LOOK dead — barred + a
    *  reason — so the player doesn't wander in expecting a live recruit offer. */
   noRecruits?: boolean
-  /** Roster shown as the bottom "barra squadra" (Mappa C). Optional so callers
-   *  that don't have a team handy (or existing tests) keep working — the bar is
-   *  simply omitted when absent. */
+  /** Accettato ma non renderizzato: la squadra è già la sidebar sinistra che
+   *  RunBRunner monta accanto alla mappa, e mostrarla due volte sulla stessa
+   *  schermata rubava altezza ai riquadri di scelta. Il prop resta nel contratto
+   *  perché i chiamanti lo passano già e perché una vista senza sidebar (o un
+   *  test) potrebbe volerlo di nuovo. */
   team?: DraftedWizard[]
 }) {
   const reduce = useReducedMotion()
@@ -233,10 +253,13 @@ export function MapScreen({
                   ))}
                 </div>
               ) : (
-                <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2 text-center">
-                  <span className="emboss text-4xl opacity-60" aria-hidden>{ICON[n.type]}</span>
-                  <span className="text-xs text-white/45">
-                    {blocked ? 'Non disponibile in questa run' : `Un nodo ${LABEL[n.type].toLowerCase()} ti aspetta.`}
+                // Un nodo senza nemici non ha niente da elencare, ma dire «un nodo
+                // reliquia ti aspetta» ripete solo l'etichetta già scritta sopra.
+                // Qui va detto cosa OTTIENI: è l'informazione su cui si sceglie.
+                <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-3 text-center">
+                  <span className="emboss text-5xl opacity-50" aria-hidden>{ICON[n.type]}</span>
+                  <span className="max-w-[24ch] text-[13px] leading-snug text-white/60">
+                    {blocked ? 'Non disponibile in questa run' : REWARD[n.type]}
                   </span>
                 </div>
               )}
@@ -254,18 +277,12 @@ export function MapScreen({
         })}
       </div>
 
-      {/* In fondo, la barra squadra — carte-riga, stessa densità degli alleati
-          nelle anteprime nemici. */}
-      {team && team.length > 0 && (
-        <div className="shrink-0">
-          <p className="mb-1 text-[10px] uppercase tracking-widest text-white/35">La tua squadra</p>
-          <div className="flex flex-wrap gap-2">
-            {team.map(m => (
-              <WizardCard key={m.wizard.id} drafted={m} density="row" currentHp={m.currentHp} className="max-w-xs flex-1" />
-            ))}
-          </div>
-        </div>
-      )}
+      {/* NIENTE barra squadra qui: RunBRunner monta già la squadra come sidebar
+          sinistra da 288px accanto alla mappa, con più dettaglio di quanto possa
+          darne una riga in fondo. Mostrarla due volte sulla stessa schermata era
+          una ripetizione che rubava altezza ai riquadri di scelta — che è dove
+          il giocatore guarda davvero. Il prop `team` resta nel contratto per i
+          chiamanti che non hanno la sidebar (e per i test). */}
 
       <style>{`
         @keyframes mapCurrentPulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.06); opacity: 0.9; } }

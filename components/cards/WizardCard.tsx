@@ -26,7 +26,7 @@ const PORTRAIT: Record<CardDensity, number> = { full: 240, combat: 118, row: 0 }
  * Struttura, ordine delle informazioni e scrittura degli effetti restano gli stessi.
  */
 export function WizardCard({
-  drafted, density = 'full', currentHp, selected, onClick, className, testId, portraitHeight,
+  drafted, density = 'full', currentHp, selected, onClick, className, testId, portraitHeight, style,
 }: {
   drafted: DraftedWizard
   density?: CardDensity
@@ -38,6 +38,9 @@ export function WizardCard({
   /** Altezza del ritratto in px, oppure 'fill' per prendere lo spazio residuo
    *  quando la carta è stirata da una griglia. */
   portraitHeight?: number | 'fill'
+  /** Sovrascrive lo stile della cornice — usato in battaglia per tingere il lato
+   *  (rosso i nemici, verde i tuoi) invece del filo di rarità. */
+  style?: React.CSSProperties
 }) {
   const { wizard, stats, spell } = drafted
   const frame = tierFrame(wizard.tier as Tier)
@@ -60,6 +63,7 @@ export function WizardCard({
       style={{
         background: frame.background,
         boxShadow: selected ? `0 0 0 2px #f6ecc4, ${frame.boxShadow}` : frame.boxShadow,
+        ...style,
       }}
     >
       <div className={`relative flex flex-1 overflow-hidden rounded-[14px] ${isRow ? 'flex-row items-stretch' : 'flex-col'}`}
