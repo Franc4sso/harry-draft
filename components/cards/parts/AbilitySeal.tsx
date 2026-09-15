@@ -21,7 +21,11 @@ export function AbilitySeal({ wizardId }: { wizardId: string }) {
   return (
     <Tooltip
       label={`Abilità personale: ${ability.name}`}
-      className="absolute bottom-[70px] left-2.5 z-20"
+      // `bottom-full mb-1.5` invece di una costante in pixel: il sigillo si appoggia
+      // al bordo superiore della targa del nome, qualunque altezza abbia. Con un
+      // `bottom-[70px]` fisso restava isolato a metà ritratto sulle carte piene e
+      // finiva sopra il nome su quelle basse.
+      className="absolute bottom-full left-3 z-20 mb-1.5"
       triggerClassName="flex h-7 w-7 items-center justify-center rounded-full text-[12px] text-[#2a1d05] transition-transform hover:scale-110 focus-visible:scale-110"
       content={
         <span className="block w-52">

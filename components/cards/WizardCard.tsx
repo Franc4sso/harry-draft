@@ -77,9 +77,13 @@ export function WizardCard({
                   {archetype.glyph} {archetype.name}
                 </span>
               )}
-              <AbilitySeal wizardId={wizard.id} />
+              {/* Il sigillo sta DENTRO la targa (non come suo fratello) perché si
+                  ancora con `bottom-full`: così si appoggia al bordo superiore del
+                  nome qualunque altezza abbia la targa, invece di galleggiare a
+                  metà ritratto con un offset fisso in pixel. */}
               <div className="absolute inset-x-0 bottom-0 z-[3] px-3 pb-2.5 pt-6"
                 style={{ background: 'linear-gradient(0deg, rgba(8,6,15,.96) 34%, rgba(8,6,15,.5) 68%, transparent)' }}>
+                <AbilitySeal wizardId={wizard.id} />
                 <div className="mb-1.5 flex items-center gap-1.5 text-[8.5px] font-extrabold uppercase tracking-[.2em]"
                   style={{ color: accent }}>
                   {wizard.role}
