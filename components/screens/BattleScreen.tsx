@@ -1,7 +1,7 @@
 'use client'
 import { useMemo, useState } from 'react'
 import { Play, Pause, SkipForward, FastForward, ChevronRight } from 'lucide-react'
-import type { ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard, LogEntry } from '@/types'
+import type { ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard } from '@/types'
 import { buildReplay } from '@/game/engine/combat/replay'
 import { detectDuos } from '@/game/engine/duos'
 import { livingOf } from '@/game/engine/roster'
@@ -11,13 +11,18 @@ import { Hourglass } from 'lucide-react'
 import { InitiativeBar } from '@/components/battle/InitiativeBar'
 import { BattleArena } from '@/components/battle/BattleArena'
 import { ActionPanel } from '@/components/battle/ActionPanel'
-import { BattleLog } from '@/components/battle/BattleLog'
 import { StatusLegend } from '@/components/battle/StatusLegend'
 import { BattleRecap } from '@/components/battle/BattleRecap'
-import { Button } from '@/components/ui/Button'
 import { lastRealEntryAt } from '@/lib/initiative'
 import { BattleEndModal } from '@/components/battle/BattleEndModal'
 import { recapTotals } from '@/lib/battleRecap'
+
+/** Portrait height fed to every WizardCard in the arena — FIXED, never shrunk.
+ *  "Il ritratto non si rimpicciolisce" is an explicit user requirement (D1 in the
+ *  design spec), so unlike MapScreen's row-step contraction, the fit to 768px
+ *  here comes entirely from trimming the surrounding chrome (header, controls,
+ *  bottom bar), not from shrinking the card. */
+const PORTRAIT_HEIGHT = 118
 
 export function BattleScreen({
   result, playerTeam, playerSyn, playerRelics, enemy, enemySyn, title, rightTitle, onFinish, enemyLevel = 1,
@@ -32,7 +37,7 @@ export function BattleScreen({
   title: string
   rightTitle?: string
   onFinish: () => void
-  /** Level shown on enemy busts (menace was removed 2026-07-01); players use their own. */
+  /** Level shown on enemy cards (menace was removed 2026-07-01); players use their own. */
   enemyLevel?: number
   /** Same values simulateBattle used for the enemy side — threaded into buildReplay so
    *  the InitiativeBar's displayed spd matches the sim's actual turn order. */
@@ -68,9 +73,9 @@ export function BattleScreen({
   const stickyEntry = useMemo(() => lastRealEntryAt(replay, r.index), [replay, r.index])
 
   // Recap frame slices: computed ONCE per tick (keyed on replay+index) and
-  // shared by identity between the desktop and mobile layout copies below, so
-  // React.memo(BattleRecap) can skip the second copy's render+recapTotals scan
-  // entirely instead of rescanning frames 0..index up to 4x per tick.
+  // shared by identity between both bottom-bar panels, so React.memo(BattleRecap)
+  // can skip the second copy's render+recapTotals scan entirely instead of
+  // rescanning frames 0..index twice per tick.
   const leftRecapFrames = useMemo(() => replay.frames.slice(0, r.index + 1), [replay, r.index])
   const rightRecapFrames = leftRecapFrames
 
@@ -98,102 +103,83 @@ export function BattleScreen({
     return { mvpName: top?.name ?? '—', mvpDealt: top?.dealt ?? 0, bigHit }
   }, [replay])
 
-  // BattleLog entries: sliced fresh from replay.frames every tick so the log
-  // grows with r.index — memoized so the array identity only changes when the
-  // replay or the current index actually change, letting React.memo(BattleLog)
-  // skip re-renders triggered by unrelated state (e.g. the end-modal dismiss toggle).
-  const logEntries = useMemo(
-    () => replay.frames.slice(1, r.index + 1).map(f => f.entry!),
-    [replay, r.index],
-  )
-
-  const controlAt = useMemo(() => {
-    const kinds = ['stun', 'freeze', 'silence', 'disarm'] as const
-    return (entry: LogEntry) => {
-      const fi = replay.frames.findIndex(f => f.entry === entry)
-      if (fi < 0 || !entry.actorSide) return undefined
-      const key = `${entry.actorSide}:${entry.actorId}`
-      const effs = replay.frames[fi]?.statusEffects?.[key] ?? []
-      return kinds.find(k => effs.some(e => e.kind === k))
-    }
-  }, [replay])
-
   return (
-    <main className="flex-1 flex flex-col items-center gap-5 p-4 sm:p-6">
-      <div className="flex flex-col items-center gap-1">
-        <h1 className="font-display text-2xl text-[#F0D98A] [text-shadow:0_0_18px_rgba(201,162,75,0.25)]">{title}</h1>
-        <p className="text-[11px] uppercase tracking-widest text-white/35">
-          Turno {r.entry?.turn ?? 0}
-          {r.entry?.actorId ? <> · agisce <span className="text-white/60">{replay.units.find(u => u.id === r.entry!.actorId && u.side === r.entry!.actorSide)?.name ?? r.entry!.actorId}</span></> : null}
-        </p>
+    <main className="flex h-[100dvh] min-h-0 flex-1 flex-col items-center gap-1 overflow-hidden p-1.5 sm:p-2">
+      {/* Titolo + turno + controlli sulla STESSA riga: nel budget fisso di 768px
+          (il ritratto non si rimpicciolisce, D1) ogni riga di intestazione pesa,
+          quindi qui condividono un'unica fascia invece di impilarsi. */}
+      <div className="flex w-full max-w-5xl shrink-0 flex-wrap items-center justify-center gap-x-4 gap-y-1">
+        <div className="flex flex-col items-center leading-tight">
+          <h1 className="font-display text-base text-[#F0D98A] [text-shadow:0_0_18px_rgba(201,162,75,0.25)]">{title}</h1>
+          <p className="text-[9px] uppercase tracking-widest text-white/35">
+            Turno {r.entry?.turn ?? 0}
+            {r.entry?.actorId ? <> · agisce <span className="text-white/60">{replay.units.find(u => u.id === r.entry!.actorId && u.side === r.entry!.actorSide)?.name ?? r.entry!.actorId}</span></> : null}
+          </p>
+        </div>
+
+        {/* Controlli di riproduzione — bottoni nativi compatti (non il componente
+            Button condiviso, la cui base `px-6 py-3` non si lascia stringere da un
+            className successivo per come funziona la cascata CSS) così questa riga
+            resta bassa nel budget fisso di 768px. */}
+        {!r.done && (
+          <div className="flex shrink-0 flex-wrap items-center justify-center gap-1">
+          {[
+            { onClick: r.toggle, label: r.playing ? 'Pausa' : 'Riproduci', icon: r.playing ? <Pause size={14} /> : <Play size={14} />, text: null },
+            { onClick: r.step, label: 'Passo', icon: <ChevronRight size={13} />, text: 'Passo' },
+            { onClick: () => r.setSpeed(REPLAY_SPEEDS[(REPLAY_SPEEDS.indexOf(r.speed) + 1) % REPLAY_SPEEDS.length]!), label: `${r.speed}×`, icon: <FastForward size={13} />, text: `${r.speed}×` },
+            { onClick: r.skip, label: 'Salta', icon: <SkipForward size={13} />, text: 'Salta' },
+          ].map((b, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={b.onClick}
+              aria-label={b.text ? undefined : b.label}
+              className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/[0.04] px-2.5 py-1 text-[11px] uppercase tracking-wide text-white/75 transition-colors hover:border-gold/40 hover:bg-white/[0.08] hover:text-white"
+            >
+              {b.icon}{b.text}
+            </button>
+          ))}
+          </div>
+        )}
       </div>
 
       {fatigueActive && (
         <div
           data-testid="fatigue-banner"
-          className="flex items-center gap-2 rounded-xl border border-fuchsia-400/40 bg-fuchsia-950/40 px-4 py-1.5 text-xs font-semibold text-fuchsia-200 shadow-[0_0_16px_rgba(217,70,239,0.15)]"
+          className="flex shrink-0 items-center gap-2 rounded-xl border border-fuchsia-400/40 bg-fuchsia-950/40 px-3 py-0.5 text-xs font-semibold text-fuchsia-200 shadow-[0_0_16px_rgba(217,70,239,0.15)]"
         >
           <Hourglass size={14} className="shrink-0 text-fuchsia-300" aria-hidden />
           Sfinimento! Tutti i maghi perdono PV ogni turno.
         </div>
       )}
 
-      {!r.done && (
-        <div className="flex flex-wrap items-center justify-center gap-2 sm:gap-3">
-          <Button variant="ghost" onClick={r.toggle} className="px-4" aria-label={r.playing ? 'Pausa' : 'Riproduci'}>
-            {r.playing ? <Pause size={18} /> : <Play size={18} />}
-          </Button>
-          <Button variant="ghost" onClick={r.step} className="px-4 gap-1 inline-flex items-center" aria-label="Passo">
-            <ChevronRight size={16} /> Passo
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => r.setSpeed(REPLAY_SPEEDS[(REPLAY_SPEEDS.indexOf(r.speed) + 1) % REPLAY_SPEEDS.length]!)}
-            className="px-4 gap-1 inline-flex items-center"
-          >
-            <FastForward size={16} /> {r.speed}×
-          </Button>
-          <Button variant="ghost" onClick={r.skip} className="px-4 gap-1 inline-flex items-center">
-            <SkipForward size={16} /> Salta
-          </Button>
-        </div>
-      )}
-
-      <div className="grid w-full max-w-7xl grid-cols-1 lg:grid-cols-[7rem_1fr_13rem] gap-4 items-start">
-        <div className="hidden lg:block">
-          <InitiativeBar replay={replay} index={r.index} />
-        </div>
-
-        <div className="flex flex-col items-center gap-3 min-w-0">
-          <BattleArena
-            replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle}
-            enemyLevel={enemyLevel} speed={r.speed} duos={activeDuos} intensity={r.intensity}
-            center={<ActionPanel entry={stickyEntry} units={replay.units} />}
-          />
-        </div>
-
-        <div className="hidden lg:flex lg:flex-col gap-3">
-          <BattleRecap frames={leftRecapFrames} units={replay.units} side="left" title="I tuoi danni" tone="ally" />
-          <BattleRecap frames={rightRecapFrames} units={replay.units} side="right" title="Danni nemici" tone="enemy" />
-        </div>
-      </div>
-
-      {/* initiative + recaps stack here so small screens still get them */}
-      <div className="flex flex-col items-center gap-3 lg:hidden w-full">
+      {/* Ordine turni — striscia orizzontale, sempre in cima al campo (~46px). */}
+      <div className="w-full max-w-5xl shrink-0">
         <InitiativeBar replay={replay} index={r.index} />
-        <BattleRecap frames={leftRecapFrames} units={replay.units} side="left" title="I tuoi danni" tone="ally" />
-        <BattleRecap frames={rightRecapFrames} units={replay.units} side="right" title="Danni nemici" tone="enemy" />
       </div>
 
-      <div className="flex w-full max-w-md justify-center">
-        <StatusLegend />
+      {/* Campo contro campo: il ritratto NON si rimpicciolisce mai (D1, requisito
+          esplicito) — questa regione può crescere ma le due carte-densità-combat
+          restano a PORTRAIT_HEIGHT fisso; il bilancio di 768px viene tutto dallo
+          spazio intorno (header, controlli, barra danni), non dalla carta. */}
+      <div className="flex min-h-0 w-full flex-1 flex-col items-center justify-center">
+        <BattleArena
+          replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle}
+          enemyLevel={enemyLevel} speed={r.speed} duos={activeDuos} intensity={r.intensity}
+          portraitHeight={PORTRAIT_HEIGHT}
+          center={<ActionPanel entry={stickyEntry} units={replay.units} />}
+        />
       </div>
 
-      <BattleLog
-        entries={logEntries}
-        units={replay.units}
-        controlAt={controlAt}
-      />
+      {/* Danni in fondo — una sola barra: i due resoconti fianco a fianco (versione
+          compatta) più la legenda stati, già chiusa di default (una riga sola). */}
+      <div className="flex w-full max-w-5xl shrink-0 flex-wrap items-start justify-center gap-2">
+        <BattleRecap frames={leftRecapFrames} units={replay.units} side="left" title="I tuoi danni" tone="ally" compact className="max-w-xs" />
+        <BattleRecap frames={rightRecapFrames} units={replay.units} side="right" title="Danni nemici" tone="enemy" compact className="max-w-xs" />
+        <div className="flex items-start">
+          <StatusLegend />
+        </div>
+      </div>
 
       {r.modalReady && !dismissed && (
         <BattleEndModal

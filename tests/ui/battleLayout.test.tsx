@@ -12,12 +12,18 @@ const replay = {
   frames: [{ statusEffects: {}, cooldowns: {} }],
 } as unknown as Replay
 
-it('player row sits above the enemies row in the DOM', () => {
+// Task 10 (Battaglia A — "campo contro campo") deliberately flips this from the
+// earlier "Arena Row Inversion" redesign: the brief's chosen mockup puts the
+// ENEMY row visually on top and the player's team below, facing each other —
+// so enemies now come FIRST in document order (no flex-direction reversal is
+// used, the DOM order IS the visual order). Updated, not deleted, per task 10's
+// instructions.
+it('enemies row sits above the player row in the DOM (campo contro campo)', () => {
   render(<BattleArena replay={replay} hp={{ 'left:a': 100, 'right:b': 100 }} entry={null} />)
   const player = screen.getByTestId('row-player')
   const enemies = screen.getByTestId('row-enemies')
-  // player appears before enemies in document order
-  expect(player.compareDocumentPosition(enemies) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  // enemies appear before player in document order
+  expect(enemies.compareDocumentPosition(player) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
 })
 
 it('renders the center node between the rows', () => {

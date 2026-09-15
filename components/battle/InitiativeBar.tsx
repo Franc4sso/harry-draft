@@ -55,9 +55,9 @@ function InitiativeBarImpl({ replay, index }: { replay: Replay; index: number })
   return (
     <div
       data-testid="initiative-bar"
-      className="flex flex-col items-stretch gap-1.5 w-full max-h-[34rem] overflow-y-auto py-2"
+      className="flex flex-row flex-wrap items-center justify-center gap-1.5 w-full py-1"
     >
-      <span className="text-[10px] uppercase tracking-widest text-white/35 text-center">Ordine</span>
+      <span className="mr-1 shrink-0 text-[10px] uppercase tracking-widest text-white/35">Ordine</span>
       {sequence.map((key, i) => {
         const u = byKey[key]
         if (!u) return null
@@ -73,17 +73,17 @@ function InitiativeBarImpl({ replay, index }: { replay: Replay; index: number })
             initial={{ opacity: 0, x: -8 }}
             animate={{ opacity: isCurrent ? 1 : 0.6, scale: isCurrent ? 1.05 : 1 }}
             transition={{ type: 'spring', stiffness: 320, damping: 24 }}
-            className="relative flex flex-col items-center gap-0.5 rounded-lg px-1 py-1"
+            className="relative flex flex-col items-center gap-0.5 rounded-lg px-0.5 py-0.5"
           >
-            <div className={cn('relative h-8 w-8 shrink-0 overflow-hidden rounded-full ring-2', ring, isCurrent && 'ring-4')}>
+            <div className={cn('relative h-6 w-6 shrink-0 overflow-hidden rounded-full ring-2', ring, isCurrent && 'ring-[3px]')}>
               <PortraitImage id={u.id} house={u.house} alt={u.name} variant="bust" />
             </div>
-            <span className="flex items-center gap-0.5 text-[9px] tabular-nums text-white/60 leading-none">
+            <span className="flex items-center gap-0.5 text-[8px] tabular-nums text-white/60 leading-none">
               <span aria-hidden className={mine ? 'text-emerald-300' : 'text-rose-300'}>{mine ? '▲' : '▼'}</span>
-              <Zap className="h-2.5 w-2.5 text-amber-300/80" aria-hidden />{spdAt(u)}
+              <Zap className="h-2 w-2 text-amber-300/80" aria-hidden />{spdAt(u)}
             </span>
             {isCurrent && (
-              <span data-role="ora-label" className="absolute -top-1 right-0 rounded bg-white/15 px-1 text-[7px] uppercase tracking-widest text-white/80">Ora</span>
+              <span data-role="ora-label" className="absolute -top-1 right-0 rounded bg-white/15 px-1 text-[6.5px] uppercase tracking-widest text-white/80">Ora</span>
             )}
           </motion.div>
         )

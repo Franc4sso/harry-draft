@@ -14,13 +14,19 @@ import { cn } from '@/lib/theme'
  * this component only re-renders (and re-scans) once per tick, not per copy.
  */
 export const BattleRecap = memo(function BattleRecap({
-  frames, units, side = 'left', title = 'Resoconto squadra', tone = 'ally',
+  frames, units, side = 'left', title = 'Resoconto squadra', tone = 'ally', compact = false, className,
 }: {
   frames: ReplayFrame[]
   units: ReplayUnit[]
   side?: 'left' | 'right'
   title?: string
   tone?: 'ally' | 'enemy'
+  /** Tighter padding/rows for the battle-screen bottom "damage bar" (task 10), where
+   *  two of these sit side by side inside a fixed height budget. Same rows, same
+   *  data, just less breathing room — the standalone use (still untouched) keeps
+   *  the roomier default. */
+  compact?: boolean
+  className?: string
 }) {
   const rows = recapTotals(frames, units, side)
   const max = Math.max(1, ...rows.map(r => r.dealt + r.healed))
@@ -31,16 +37,16 @@ export const BattleRecap = memo(function BattleRecap({
     <div
       data-testid="battle-recap"
       data-tone={tone}
-      className={cn('rounded-2xl border bg-[rgba(20,16,33,0.55)] p-3 w-full max-w-md backdrop-blur-sm', accent)}
+      className={cn('rounded-2xl border bg-[rgba(20,16,33,0.55)] w-full max-w-md backdrop-blur-sm', accent, compact ? 'p-1.5' : 'p-3', className)}
     >
-      <p className={cn('mb-2 flex items-center gap-1 text-[10px] uppercase tracking-[0.16em]', dot)}>
+      <p className={cn('flex items-center gap-1 text-[10px] uppercase tracking-[0.16em]', dot, compact ? 'mb-0.5' : 'mb-2')}>
         <span aria-hidden>◆</span>{title}
       </p>
-      <ul className="space-y-1.5">
+      <ul className={compact ? 'space-y-0' : 'space-y-1.5'}>
         {rows.map((r) => (
-          <li key={r.key} data-testid="battle-recap-row" className="flex items-center gap-2 text-[11px]">
+          <li key={r.key} data-testid="battle-recap-row" className={cn('flex items-center gap-2', compact ? 'text-[10px] leading-tight' : 'text-[11px]')}>
             <span className="w-20 truncate text-white/80">{r.name}</span>
-            <span className="flex-1 flex h-2 overflow-hidden rounded-full bg-white/10">
+            <span className={cn('flex-1 flex overflow-hidden rounded-full bg-white/10', compact ? 'h-1.5' : 'h-2')}>
               <span className="h-full bg-rose-400/80" style={{ width: `${(r.dealt / max) * 100}%` }} />
               <span className="h-full bg-emerald-400/80" style={{ width: `${(r.healed / max) * 100}%` }} />
             </span>

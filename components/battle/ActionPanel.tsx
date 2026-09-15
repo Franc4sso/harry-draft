@@ -43,18 +43,20 @@ function resultFor(entry: LogEntry): ResultDescriptor | null {
   return { tone: 'damage', text: float.text }
 }
 
-/** Mini portrait + name used for both attacker and target. */
+/** Mini portrait + name used for both attacker and target. Task 10 (Battaglia A):
+ *  the action row sits BETWEEN the two card rows in a tight budget (~60-90px, per
+ *  the brief), so these thumbnails are much smaller than before (w-9 vs w-14/16). */
 function Combatant({ unit, role }: { unit: ReplayUnit; role: 'attacker' | 'target' }) {
   return (
-    <div className="flex flex-col items-center gap-1">
-      <div className="w-14 sm:w-16">
+    <div className="flex flex-col items-center">
+      <div className="w-7">
         <RarityFrame tier={unit.tier}>
-          <div className="relative aspect-[3/4] w-full overflow-hidden rounded-lg">
+          <div className="relative aspect-[3/4] w-full overflow-hidden rounded-md">
             <PortraitImage id={unit.id} house={unit.house} alt={unit.name} variant="bust" />
           </div>
         </RarityFrame>
       </div>
-      <span data-role={role} className="max-w-[6rem] truncate text-center text-xs font-medium leading-tight">
+      <span data-role={role} className="max-w-[4rem] truncate text-center text-[9px] font-medium leading-tight">
         {unit.name}
       </span>
     </div>
@@ -76,7 +78,7 @@ export function ActionPanel({ entry, units }: { entry: LogEntry | null; units: R
   }
 
   // Shell (no display class) + a centered grid variant for placeholder/degraded.
-  const shell = 'rounded-2xl border border-[#C9A24B]/20 bg-[rgba(20,16,33,0.55)] px-4 py-3 w-full max-w-xl min-h-[5rem] backdrop-blur-sm'
+  const shell = 'rounded-2xl border border-[#C9A24B]/20 bg-[rgba(20,16,33,0.55)] px-3 py-1 w-full max-w-xl min-h-[2.75rem] backdrop-blur-sm'
   const centered = cn(shell, 'grid place-items-center')
 
   if (!entry) {
@@ -111,17 +113,17 @@ export function ActionPanel({ entry, units }: { entry: LogEntry | null; units: R
   const selfTarget = attacker.key === target.key
   if (selfTarget) {
     return (
-      <div data-testid="action-panel" className={cn(shell, 'flex items-center justify-center gap-3 sm:gap-5')}>
+      <div data-testid="action-panel" className={cn(shell, 'flex items-center justify-center gap-2 sm:gap-3')}>
         <Combatant unit={attacker} role="attacker" />
-        <div className="flex flex-col items-center gap-1 min-w-[5rem]">
-          <span data-role="spell" className="text-center text-base font-display text-[#F0D98A]">
+        <div className="flex flex-col items-center min-w-[3.5rem]">
+          <span data-role="spell" className="text-center text-xs font-display leading-tight text-[#F0D98A]">
             {entry.action}
           </span>
           {result && (
             <span
               data-role="result"
               data-tone={result.tone}
-              className={cn('text-center font-display tabular-nums leading-tight', RESULT_CLASS[result.tone])}
+              className={cn('text-center font-display text-xs tabular-nums leading-tight', RESULT_CLASS[result.tone])}
             >
               {result.text}
             </span>
@@ -134,13 +136,13 @@ export function ActionPanel({ entry, units }: { entry: LogEntry | null; units: R
   // Attacker/target slotted by arena side; the result sits under the TARGET.
   const attackerCol = <Combatant unit={attacker} role="attacker" />
   const targetCol = (
-    <div className="flex flex-col items-center gap-1">
+    <div className="flex flex-col items-center">
       <Combatant unit={target} role="target" />
       {result && (
         <span
           data-role="result"
           data-tone={result.tone}
-          className={cn('text-center font-display tabular-nums leading-tight', RESULT_CLASS[result.tone])}
+          className={cn('text-center font-display text-xs tabular-nums leading-tight', RESULT_CLASS[result.tone])}
         >
           {result.text}
         </span>
@@ -149,19 +151,24 @@ export function ActionPanel({ entry, units }: { entry: LogEntry | null; units: R
   )
 
   const middle = (
-    <div className="flex flex-col items-center gap-1 min-w-[5rem]">
-      <span data-role="spell" className="text-center text-base font-display text-[#F0D98A]">
+    <div className="flex flex-col items-center min-w-[3.5rem]">
+      <span data-role="spell" className="text-center text-xs font-display leading-tight text-[#F0D98A]">
         {entry.action}
       </span>
-      <ArrowRight size={22} className={cn('text-white/40', mirrored && 'rotate-180')} aria-hidden />
+      <ArrowRight size={13} className={cn('text-white/40', mirrored && 'rotate-180')} aria-hidden />
     </div>
   )
 
   const narration = describeEntry(entry, names)
 
+  // Task 10: the action row lives in a tight fixed budget between the two card
+  // rows, so the narration sentence — previously always visible — is now a
+  // `title` tooltip on the panel instead of a rendered line (still exposed to
+  // tests/queries via `data-role="narration"` on a visually-hidden span, so
+  // nothing that reads it loses the text, only the vertical space it took).
   return (
-    <div data-testid="action-panel" className={cn(shell, 'flex flex-col items-center gap-1.5')}>
-      <div className="flex items-center justify-center gap-3 sm:gap-5 w-full">
+    <div data-testid="action-panel" title={narration} className={cn(shell, 'flex items-center justify-center gap-1')}>
+      <div className="flex items-center justify-center gap-3 sm:gap-4 w-full">
         {mirrored ? (
           <>
             {targetCol}
@@ -176,9 +183,9 @@ export function ActionPanel({ entry, units }: { entry: LogEntry | null; units: R
           </>
         )}
       </div>
-      <p role="note" data-role="narration" className="text-center text-[11px] text-white/55 leading-snug">
+      <span role="note" data-role="narration" className="sr-only">
         {narration}
-      </p>
+      </span>
     </div>
   )
 }

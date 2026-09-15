@@ -183,6 +183,7 @@ export function RunBRunner({
             area={area}
             areasTotal={c.areasTotal}
             noRecruits={c.run.runModifiers?.noRecruits}
+            team={c.run.team}
           />,
         )
 
