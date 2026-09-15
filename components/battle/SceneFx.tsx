@@ -229,6 +229,16 @@ function specFor(event: SceneEvent): SceneSpec {
   }
 }
 
+/** True when `specFor(event)` has at least one visible layer (number, word,
+ *  decor, or a motion class on actor/target). Exported so tests can assert
+ *  "this event actually renders something" through the real `specFor` logic
+ *  instead of re-deriving their own copy of the `nothingToShow` condition,
+ *  which would silently drift from the component over time. */
+export function eventRendersSomething(event: SceneEvent): boolean {
+  const spec = specFor(event)
+  return !!(spec.number || spec.word || spec.decor.length > 0 || spec.actorMotion || spec.targetMotion)
+}
+
 const NUMBER_TONE_CLASS: Record<Tone, string> = {
   white: 'text-white',
   gold: 'text-amber-300',
@@ -254,9 +264,7 @@ export function SceneFx({
   targetBox?: DOMRect | null
 }) {
   const spec = specFor(event)
-  const nothingToShow = !spec.number && !spec.word && spec.decor.length === 0
-    && !spec.actorMotion && !spec.targetMotion
-  if (nothingToShow) return null
+  if (!eventRendersSomething(event)) return null
 
   // recoil lands its number on the actor's own box; everything else lands on
   // the target's box (falling back to the actor's box when no target box was
