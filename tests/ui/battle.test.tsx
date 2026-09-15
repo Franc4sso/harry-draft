@@ -360,6 +360,17 @@ describe('BattleArena', () => {
     expect(bust.getAttribute('data-testid')).toBe('battle-unit')
   })
 
+  // Le pillole erano sparite col rifacimento (UnitBust le aveva, WizardCard no):
+  // dal frame dopo l'applicazione non si sapeva più che un mago era avvelenato.
+  it('mostra gli stati attivi sulle unità in battaglia', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    const poisoned = unitKey('left', 'harry')
+    replay.frames[1]!.statusEffects = { [poisoned]: [{ kind: 'dot', statusId: 'veleno', amount: 6, remaining: 2, stacks: 3 }] }
+    render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={replay.frames[1]!.entry} frameKey={1} />)
+    expect(screen.getAllByTestId('status-pip').length).toBeGreaterThanOrEqual(1)
+  })
+
   it('shows the damage float only on the targeted bust, not on every unit', () => {
     const l = left(), r = right()
     const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)

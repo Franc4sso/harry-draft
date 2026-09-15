@@ -1,6 +1,6 @@
 'use client'
 import type React from 'react'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { LogEntry, ActiveEffect, ActiveDuo, DraftedWizard } from '@/types'
 import type { Replay, ReplayUnit } from '@/game/engine/combat/replay'
 import { firstDuoFireFrames, unitKey } from '@/game/engine/combat/replay'
@@ -11,14 +11,39 @@ import { ArenaBackdrop } from './ArenaBackdrop'
 import { PixiArena } from './PixiArena'
 import { Callout } from './Callout'
 import { DuoPills } from './DuoPills'
+import { StatusPips } from './StatusPips'
+import { SceneFx } from './SceneFx'
 import { floatFor } from './damageFloat'
 import { cn } from '@/lib/theme'
 import { DUO_BY_ID } from '@/data/duos'
+import { sceneEventOf, type SceneKind } from '@/lib/battleScene'
 
 /** Big/ultimate enemy spells worth warning the player about a beat before they land. */
 const BIG_SPELLS = new Set([
   'Avada Kedavra', 'Ardemonio', 'Sectumsempra', 'Bombarda', 'Reducto', 'Confringo', 'Crucio',
 ])
+
+/** Which `fx-*` motion class (battleAnim.css) lands on the ACTOR's and the TARGET's own
+ *  wrapper for a given scene, so the card itself lunges/recoils/staggers — not just the
+ *  floating number over it. Mirrors SceneFx's internal (unexported) `specFor` table for the
+ *  cases the brief calls out by name: strike on the actor, kick/kickBig on the target,
+ *  swerve for a dodge, shiver for a skipped turn, fall for a kill. `SceneFx` itself only
+ *  draws the numbers/words/decor layer — applying motion to the actual unit card is this
+ *  composition layer's job. */
+const MOTION_BY_KIND: Partial<Record<SceneKind, { actor?: string; target?: string }>> = {
+  hit:     { actor: 'fx-strike', target: 'fx-kick' },
+  crit:    { actor: 'fx-strike', target: 'fx-kickBig' },
+  shatter: { actor: 'fx-strike', target: 'fx-kickBig' },
+  pen:     { actor: 'fx-strike', target: 'fx-kick' },
+  block:   { target: 'fx-kick' },
+  dodge:   { target: 'fx-swerve' },
+  kill:    { actor: 'fx-strike', target: 'fx-fall' },
+  revive:  { target: 'fx-rise' },
+  heal:    { target: 'fx-rise' },
+  skip:    { actor: 'fx-shiver' },
+  fatigue: { actor: 'fx-shiver' },
+  recoil:  { actor: 'fx-kick' },
+}
 
 /**
  * Reconstructs the DraftedWizard-shaped object WizardCard needs from a lean
@@ -107,6 +132,31 @@ export function BattleArena({
     ? (statusEffects[skipKey]?.some((e: ActiveEffect) => e.kind === 'freeze') ? 'freeze' : 'stun')
     : null
 
+  // The scene this frame must show, per lib/battleScene.ts: pure function of this frame and
+  // the one before it (status gained/lost is a DIFF between the two). «Ogni evento del motore
+  // deve avere una scena» — this is what makes that true on screen, feeding both the SceneFx
+  // decor/number/word layer below and the actor/target motion classes on the cards themselves.
+  const prevFrame = replay.frames[frameKey - 1]
+  const sceneEvent = useMemo(() => sceneEventOf(frame ?? replay.frames[0]!, prevFrame), [frame, prevFrame, replay.frames])
+  const motion = MOTION_BY_KIND[sceneEvent.kind]
+
+  // SceneFx positions its number over the acting/target card by their live on-screen rect.
+  // Same DOM-measurement pattern PixiArena already uses for its own VFX anchors
+  // (`document.querySelector('[data-unit-key=...]')` + getBoundingClientRect) — re-measured
+  // every frame since cards can move (dead units grey out/shrink motion, but not layout here).
+  const [boxes, setBoxes] = useState<{ actor: DOMRect | null; target: DOMRect | null }>({ actor: null, target: null })
+  useEffect(() => {
+    const boxOf = (key: string | null) => {
+      if (!key) return null
+      const el = document.querySelector(`[data-unit-key="${CSS.escape(key)}"]`)
+      return el ? el.getBoundingClientRect() : null
+    }
+    setBoxes({
+      actor: boxOf(sceneEvent.actorKey ?? actingKey),
+      target: boxOf(sceneEvent.targetKey ?? targetKey),
+    })
+  }, [frameKey, sceneEvent.actorKey, sceneEvent.targetKey, actingKey, targetKey])
+
   // Boss telegraph: peek at the NEXT frame — if an enemy is about to unleash a big/ultimate
   // spell, warn the player one beat before it lands.
   const telegraph = useMemo(() => {
@@ -153,6 +203,13 @@ export function BattleArena({
       const dead = (hp[u.key] ?? 0) <= 0
       const drafted = toDrafted(u)
       const skipping = u.key === skipKey ? skipKind : null
+      // The motion this frame's scene puts on THIS card, if any: strike when it's the
+      // actor, kick/kickBig/swerve/fall when it's the target. `key={frameKey}` on the
+      // wrapper (below) remounts the class so a repeated kind (e.g. two hits in a row)
+      // restarts the CSS animation instead of no-opping on an unchanged className.
+      const cardMotion = u.key === sceneEvent.actorKey ? motion?.actor
+        : u.key === sceneEvent.targetKey ? motion?.target
+          : undefined
       return (
         <div
           key={u.key}
@@ -166,24 +223,27 @@ export function BattleArena({
               quale. Rosso i nemici, verde i tuoi — gli stessi colori che il gioco
               usa già per i danni inflitti e subiti. Sovrascrive il filo di rarità
               solo qui, in battaglia, dove sapere chi è chi conta più del tier. */}
-          <WizardCard
-            drafted={drafted}
-            density="combat"
-            currentHp={Math.max(0, hp[u.key] ?? 0)}
-            portraitHeight={portraitHeight}
-            style={{
-              background: mirrored ? 'rgba(240,114,114,.55)' : 'rgba(124,220,125,.45)',
-              // `p-px` della carta rende la cornice un filo da 1px: al 42% di alpha
-              // la tinta di lato era invisibile e si perdeva il tier senza guadagnare
-              // nulla. 2px pieni bastano a leggere il lato da lontano.
-              padding: 2,
-            }}
-            className={cn(
-              dead && 'grayscale opacity-60',
-              acting && 'ring-2 ring-[#7cfc9b] shadow-[0_0_22px_rgba(124,252,155,0.55)]',
-              targeted && !acting && 'ring-2 ring-rose-400 shadow-[0_0_22px_rgba(255,107,107,0.6)]',
-            )}
-          />
+          <div key={cardMotion ? `${frameKey}-motion` : 'still'} className={cardMotion}>
+            <WizardCard
+              drafted={drafted}
+              density="combat"
+              currentHp={Math.max(0, hp[u.key] ?? 0)}
+              portraitHeight={portraitHeight}
+              style={{
+                background: mirrored ? 'rgba(240,114,114,.55)' : 'rgba(124,220,125,.45)',
+                // `p-px` della carta rende la cornice un filo da 1px: al 42% di alpha
+                // la tinta di lato era invisibile e si perdeva il tier senza guadagnare
+                // nulla. 2px pieni bastano a leggere il lato da lontano.
+                padding: 2,
+              }}
+              className={cn(
+                dead && 'grayscale opacity-60',
+                acting && 'ring-2 ring-[#7cfc9b] shadow-[0_0_22px_rgba(124,252,155,0.55)]',
+                targeted && !acting && 'ring-2 ring-rose-400 shadow-[0_0_22px_rgba(255,107,107,0.6)]',
+              )}
+            />
+          </div>
+          <StatusPips effects={statusEffects[u.key] ?? []} />
           {targeted && !!float && !dead && (
             <span
               data-testid="damage-float"
@@ -257,6 +317,12 @@ export function BattleArena({
 
       <PixiArena entry={entry} frameKey={frameKey} speed={speed} intensity={intensity} />
       <Callout entry={entry} frameKey={frameKey} appliedControl={appliedControl} duoName={duoName} />
+      {/* Il livello degli effetti: un numero/parola per OGNI evento del motore
+          (sceneEventOf non ha mai `null`, solo `kind: 'none'` quando SceneFx non
+          disegna nulla). `frameKey` come key rimonta l'intero layer a ogni
+          fotogramma così un evento ripetuto (due colpi identici di fila)
+          riparte da capo invece di restare fermo sull'animazione già finita. */}
+      <SceneFx key={frameKey} event={sceneEvent} frameKey={frameKey} actorBox={boxes.actor} targetBox={boxes.target} />
     </div>
   )
 }
