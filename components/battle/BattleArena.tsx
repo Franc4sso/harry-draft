@@ -158,7 +158,7 @@ export function BattleArena({
           key={u.key}
           data-unit-key={u.key}
           data-testid="battle-unit"
-          className="relative shrink-0 transition-opacity duration-200"
+          className="relative w-[31%] max-w-[300px] shrink-0 transition-opacity duration-200"
           style={{ opacity: anyAction && !involved ? 0.45 : 1 }}
         >
           {/* Il lato si legge dal COLORE della cornice: senza, le sei carte sono
@@ -171,7 +171,13 @@ export function BattleArena({
             density="combat"
             currentHp={Math.max(0, hp[u.key] ?? 0)}
             portraitHeight={portraitHeight}
-            style={{ background: mirrored ? 'rgba(240,114,114,.42)' : 'rgba(124,220,125,.34)' }}
+            style={{
+              background: mirrored ? 'rgba(240,114,114,.55)' : 'rgba(124,220,125,.45)',
+              // `p-px` della carta rende la cornice un filo da 1px: al 42% di alpha
+              // la tinta di lato era invisibile e si perdeva il tier senza guadagnare
+              // nulla. 2px pieni bastano a leggere il lato da lontano.
+              padding: 2,
+            }}
             className={cn(
               dead && 'grayscale opacity-60',
               acting && 'ring-2 ring-[#7cfc9b] shadow-[0_0_22px_rgba(124,252,155,0.55)]',
@@ -232,6 +238,12 @@ export function BattleArena({
           disposizione stessa (nemici sempre sopra) e con l'intestazione della
           schermata, e nel budget fisso di 768px ogni riga di testo pesa. */}
       <section aria-label={rightTitle} className="flex w-full flex-col items-center">
+        {/* La larghezza fissa sta sul WRAPPER di ogni unità (vedi renderSide), non
+            sulla carta: senza, ognuna si dimensionava sul proprio contenuto — un nome
+            lungo la allargava — e le due file non erano allineate (misurato: da 210 a
+            290px nella stessa fila). Metterla sulla CARTA invece che sul wrapper la
+            stringe e ne manda a capo il contenuto, facendola crescere in ALTEZZA:
+            provato, l'arena passava da 1063px e tre unità uscivano dallo schermo. */}
         <div data-testid="row-enemies" className="flex flex-nowrap justify-center gap-2">{renderSide(right, true)}</div>
       </section>
 

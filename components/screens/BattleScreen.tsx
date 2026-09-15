@@ -1,7 +1,7 @@
 'use client'
 import { useMemo, useState } from 'react'
 import { Play, Pause, SkipForward, FastForward, ChevronRight } from 'lucide-react'
-import type { ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard } from '@/types'
+import type { LogEntry, ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard } from '@/types'
 import { buildReplay } from '@/game/engine/combat/replay'
 import { detectDuos } from '@/game/engine/duos'
 import { livingOf } from '@/game/engine/roster'
@@ -11,7 +11,7 @@ import { Hourglass } from 'lucide-react'
 import { InitiativeBar } from '@/components/battle/InitiativeBar'
 import { BattleArena } from '@/components/battle/BattleArena'
 import { ActionPanel } from '@/components/battle/ActionPanel'
-import { StatusLegend } from '@/components/battle/StatusLegend'
+import { BattleLog } from '@/components/battle/BattleLog'
 import { BattleRecap } from '@/components/battle/BattleRecap'
 import { lastRealEntryAt } from '@/lib/initiative'
 import { BattleEndModal } from '@/components/battle/BattleEndModal'
@@ -104,7 +104,11 @@ export function BattleScreen({
   }, [replay])
 
   return (
-    <main className="flex h-[100dvh] min-h-0 flex-1 flex-col items-center gap-1 overflow-hidden p-1.5 sm:p-2">
+    // `max-h-[100dvh]` invece di `h-[100dvh]`: `body` ha `min-h-full` (altezza
+    // MINIMA, non massima), quindi un'altezza imposta qui non aveva alcun tetto
+    // sopra di se' e il main cresceva col registro fino a 824px. Un massimo,
+    // invece, vincola davvero — e `overflow-hidden` tiene dentro cio' che eccede.
+    <main className="flex max-h-[100dvh] min-h-0 flex-1 flex-col items-center gap-1 overflow-hidden p-1.5 sm:p-2">
       {/* Titolo + turno + controlli sulla STESSA riga: nel budget fisso di 768px
           (il ritratto non si rimpicciolisce, D1) ogni riga di intestazione pesa,
           quindi qui condividono un'unica fascia invece di impilarsi. */}
@@ -171,14 +175,25 @@ export function BattleScreen({
         />
       </div>
 
-      {/* Danni in fondo — una sola barra: i due resoconti fianco a fianco (versione
-          compatta) più la legenda stati, già chiusa di default (una riga sola). */}
-      <div className="flex w-full max-w-5xl shrink-0 flex-wrap items-start justify-center gap-2">
+      {/* In fondo: i due resoconti danni e IL REGISTRO.
+          Il registro era stato tolto nel rifacimento della battaglia, e con lui
+          l'unico posto dove leggere cosa è successo: la narrazione del colpo era
+          diventata `sr-only` nell'ActionPanel, e le pillole di stato sulle carte
+          non esistono più. Senza registro, dal frame dopo l'applicazione il
+          giocatore non sa più che un mago è avvelenato o silenziato.
+          La StatusLegend è stata rimossa al suo posto: spiegava dieci icone di
+          stato che nessuno disegna più — una legenda di simboli inesistenti. */}
+      {/* `overflow-hidden` + altezza fissa: il registro cresce a ogni turno, e senza
+          un tetto spingeva il documento oltre i 768px mentre la battaglia avanzava
+          (misurato: 824px dopo sei turni). Ora scorre dentro la sua fascia. */}
+      <div className="flex w-full max-w-5xl shrink-0 items-stretch justify-center gap-2 overflow-hidden" style={{ height: 96 }}>
         <BattleRecap frames={leftRecapFrames} units={replay.units} side="left" title="I tuoi danni" tone="ally" compact className="max-w-xs" />
         <BattleRecap frames={rightRecapFrames} units={replay.units} side="right" title="Danni nemici" tone="enemy" compact className="max-w-xs" />
-        <div className="flex items-start">
-          <StatusLegend />
-        </div>
+        <BattleLog
+          entries={leftRecapFrames.map(f => f.entry).filter((e): e is LogEntry => !!e)}
+          units={replay.units}
+          className="min-w-0 max-w-sm flex-1"
+        />
       </div>
 
       {r.modalReady && !dismissed && (

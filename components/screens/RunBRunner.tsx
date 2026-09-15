@@ -366,7 +366,11 @@ export function RunBRunner({
           initial={reduce ? { opacity: 0 } : 'initial'}
           animate={reduce ? { opacity: 1 } : 'animate'}
           exit={reduce ? { opacity: 0 } : 'exit'}
-          className="flex-1 flex flex-col"
+          // `min-h-0`: un figlio flex ha `min-height:auto` e si rifiuta di scendere
+          // sotto il proprio contenuto, quindi senza questo il `h-[100dvh]` della
+          // BattleScreen non veniva rispettato e il main cresceva a 824px mentre il
+          // registro si popolava. Stessa causa gia' vista sulla mappa.
+          className="flex min-h-0 flex-1 flex-col"
         >
           {renderView()}
         </motion.div>

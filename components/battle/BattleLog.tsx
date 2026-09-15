@@ -99,11 +99,12 @@ export function describeEntry(
 }
 
 function BattleLogImpl({
-  entries, units, controlAt,
+  entries, units, controlAt, className,
 }: {
   entries: LogEntry[]
   units: ReplayUnit[]
   controlAt?: (entry: LogEntry) => 'stun' | 'freeze' | 'silence' | 'disarm' | undefined
+  className?: string
 }) {
   const names: Record<string, string> = {}
   for (const u of units) names[u.key] = u.name
@@ -117,7 +118,7 @@ function BattleLogImpl({
   }, [entries.length])
 
   return (
-    <div ref={scrollRef} className="glass rounded-2xl p-3 w-full max-w-md max-h-64 overflow-y-auto">
+    <div ref={scrollRef} data-testid="battle-log" className={cn('glass w-full max-w-md overflow-y-auto rounded-2xl p-3', className)} style={{ maxHeight: 96 }}>
       <ul className="space-y-1 text-xs">
         <AnimatePresence initial={false}>
           {entries.map((entry, i) => (
