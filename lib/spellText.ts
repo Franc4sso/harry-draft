@@ -126,9 +126,29 @@ export function spellVerb(spell: Spell): string {
   }
 
   // Nessun effetto meccanico: resta la descrizione d'autore, che per le magie
-  // di solo danno è già breve ("Esplosione concussiva").
-  if (parts.length === 0) return spell.desc ?? ''
+  // di solo danno è già breve ("Esplosione concussiva"). Passa però da `sanitize`:
+  // è testo scritto a mano in data/spells.ts, e senza il filtro la garanzia
+  // "niente gergo sulla carta" dipenderebbe dalla disciplina di chi lo scrive.
+  if (parts.length === 0) return sanitize(spell.desc ?? '')
   return parts.join(', ')
+}
+
+/**
+ * Rete di sicurezza sul testo d'autore: toglie il gergo di sistema e corregge la
+ * concordanza del singolare, così la regola della carta vale anche per le
+ * descrizioni scritte a mano.
+ *
+ * Non è ridondante rispetto ai test: quelli girano in CI, questa gira a runtime.
+ * Senza, una `desc` nuova con dentro "(permanente, cumulativo)" finirebbe dritta
+ * sulla carta e se ne accorgerebbe solo chi lancia la suite.
+ */
+function sanitize(text: string): string {
+  return text
+    .replace(/\s*\((?:permanente|cumulativo)[^)]*\)/gi, '')
+    .replace(/\bper 1 turni\b/gi, 'per 1 turno')
+    .replace(/\b1 turni\b/g, '1 turno')
+    .replace(/\s{2,}/g, ' ')
+    .trim()
 }
 
 /** La precisione. Una magia che non può mancare dice «sempre»: un «100%»

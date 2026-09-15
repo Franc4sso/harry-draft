@@ -30,6 +30,20 @@ describe('spellVerb — cosa fa, senza gergo', () => {
       expect(spellVerb(s)).not.toMatch(/\(.*\(/)
     }
   })
+  // I test qui sopra girano su TUTTE le magie reali, ma per le magie di solo danno
+  // `spellVerb` ripiega sulla `desc` scritta a mano: oggi nessuna contiene gergo,
+  // quindi passerebbero anche senza alcun filtro. Questi due casi provano che la
+  // rete di sicurezza esiste davvero, invece di dipendere dalla disciplina di chi
+  // scrive i contenuti. (Difetto segnalato in review, 2026-09-15.)
+  it('ripulisce il gergo anche da una desc scritta a mano', () => {
+    const fake = { ...spell('bombarda'), desc: 'Esplode (permanente, cumulativo) forte.' }
+    expect(spellVerb(fake)).toBe('Esplode forte.')
+  })
+  it('corregge la concordanza anche da una desc scritta a mano', () => {
+    const fake = { ...spell('bombarda'), desc: 'Stordisce per 1 turni.' }
+    expect(spellVerb(fake)).toBe('Stordisce per 1 turno.')
+  })
+
   it('usa "resta" per gli effetti permanenti', () => {
     expect(spellVerb(spell('confundo'))).toContain('resta')
   })

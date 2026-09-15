@@ -13,9 +13,19 @@ describe('tierFrame — cornici sobrie', () => {
   })
 
   it('nessun alone supera i 20px', () => {
+    // Il blur è il TERZO valore di ogni ombra (`offsetX offsetY blur [spread] rgba(…)`).
+    // La prima versione di questo test prendeva il numero adiacente a `rgba(`: funziona
+    // solo finché nessuna ombra usa lo spread, perché in quel caso catturerebbe lo
+    // spread e lascerebbe passare un blur enorme. Qui si scompone ogni ombra e si
+    // legge la posizione giusta. (Difetto segnalato in review, 2026-09-15.)
     for (const t of TIERS) {
-      const blurs = [...tierFrame(t).boxShadow.matchAll(/(\d+)px\s+rgba/g)].map(m => Number(m[1]))
-      for (const b of blurs) expect(b, `tier ${t}`).toBeLessThanOrEqual(20)
+      const shadows = tierFrame(t).boxShadow.split(/,(?![^(]*\))/)
+      for (const shadow of shadows) {
+        const nums = [...shadow.matchAll(/(-?[\d.]+)px/g)].map(m => Number(m[1]))
+        const blur = nums[2]
+        if (blur === undefined) continue
+        expect(blur, `tier ${t}, ombra "${shadow.trim()}"`).toBeLessThanOrEqual(20)
+      }
     }
   })
 
