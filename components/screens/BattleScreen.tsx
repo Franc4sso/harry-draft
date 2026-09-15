@@ -40,7 +40,7 @@ export function BattleScreen({
   /** Level shown on enemy cards (menace was removed 2026-07-01); players use their own. */
   enemyLevel?: number
   /** Same values simulateBattle used for the enemy side — threaded into buildReplay so
-   *  the InitiativeBar's displayed spd matches the sim's actual turn order. */
+   *  the turn lane's displayed spd matches the sim's actual turn order. */
   rightMenace?: number
   rightRelics?: ActiveRelic[]
   rightDamageReduction?: number
@@ -160,8 +160,28 @@ export function BattleScreen({
       {/* Campo contro campo: il ritratto NON si rimpicciolisce mai (D1, requisito
           esplicito) — questa regione può crescere ma le due carte-densità-combat
           restano a PORTRAIT_HEIGHT fisso; il bilancio di 768px viene tutto dallo
-          spazio intorno (header, controlli, barra danni), non dalla carta. */}
-      <div className="flex min-h-0 w-full flex-1 flex-col items-center justify-center">
+          spazio intorno (header, controlli, barra danni), non dalla carta.
+
+          `overflow-hidden` + `justify-start` qui, non `justify-center`: BattleArena
+          (Task 5, territorio approvato, non toccato) non porta NESSUN tetto di
+          altezza, e la sua altezza vera dipende dal ROSTER — non dal ritratto (fisso),
+          ma dalla riga della magia sotto (`SpellLine`, `break-words` senza limite di
+          righe): un nome lungo va a capo e aggiunge una riga, altri no. Col solo
+          `overflow-hidden` + `justify-center` ereditato, quando una carta eccede la
+          quota calcolata da flex l'arena viene CENTRATA nella propria fascia e
+          l'eccedenza esce in parti uguali sopra E sotto: la metà sopra tagliava via
+          proprio le prime righe della fila nemica (nome, badge archetipo) — misurato
+          dal vivo su un roster con nomi lunghi (Penelope Clearwater/Peter Minus/Marcus
+          Flint), screenshot alla mano, non solo `getBoundingClientRect` fuori range.
+          `justify-start` sposta quel taglio SOLO in fondo (il bordo inferiore della
+          fila giocatore, l'ultima cosa disegnata) invece che in cima alla fila nemica,
+          la prima cosa che l'occhio legge: stesso `overflow-hidden` (quindi ancora
+          contenuto DENTRO la fascia, mai fuori dal documento — `scrollHeight` resta
+          768), ma la degradazione è nella direzione meno dannosa, non simmetrica. Il
+          ritratto non si rimpicciolisce comunque (D1): l'eccedenza va tagliata qui —
+          non spinta fuori dallo schermo in modo invisibile, e non a scapito della fila
+          che il giocatore deve leggere per prima. */}
+      <div className="flex min-h-0 w-full flex-1 flex-col items-center justify-start overflow-hidden">
         <BattleArena
           replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle}
           enemyLevel={enemyLevel} speed={r.speed} duos={activeDuos} intensity={r.intensity}
