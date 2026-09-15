@@ -243,6 +243,22 @@ describe('BattleScreen', () => {
     expect(passo.compareDocumentPosition(arena) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
+  it('la corsia dei turni è montata in battaglia', () => {
+    renderBattleScreen()
+    expect(screen.getAllByTestId('lane-slot').length).toBeGreaterThanOrEqual(4)
+  })
+
+  // TurnLane REPLACES InitiativeBar (Task 6 — la corsia mostra il futuro reale del
+  // replay, la barra ricalcolava un ordine ordinando per spd; tenerle entrambe le
+  // avrebbe fatte contraddire a vicenda e avrebbe sforato il budget di 768px).
+  // InitiativeBar resta come componente (altri test lo montano direttamente), ma
+  // BattleScreen non lo monta più: questo test lo accerta.
+  it('la corsia sostituisce la barra di iniziativa in schermata', () => {
+    renderBattleScreen()
+    expect(screen.queryByTestId('initiative-bar')).toBeNull()
+    expect(screen.getByTestId('turn-lane')).toBeInTheDocument()
+  })
+
   it('shows dual damage recaps and the battle log', () => {
     renderBattleScreen()
     // Both recaps render twice (desktop grid + below-lg block); getAllByText asserts at least one present.
@@ -369,6 +385,88 @@ describe('BattleArena', () => {
     replay.frames[1]!.statusEffects = { [poisoned]: [{ kind: 'dot', statusId: 'veleno', amount: 6, remaining: 2, stacks: 3 }] }
     render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={replay.frames[1]!.entry} frameKey={1} />)
     expect(screen.getAllByTestId('status-pip').length).toBeGreaterThanOrEqual(1)
+  })
+
+  // Fix round 1 (review): asymmetric — actor gets fx-strike, target gets fx-kick — so a
+  // swapped actor/target wiring in BattleArena's cardMotion fails this test. sceneEventOf
+  // reads its scene from replay.frames[frameKey].entry, NOT the `entry` prop, so the frame's
+  // own entry has to carry the plain hit (no flags → SceneKind 'hit' per lib/battleScene.ts).
+  it('applies fx-strike to the actor and fx-kick to the target on a plain hit', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    const actorKey = unitKey('left', 'harry')
+    const targetKey = unitKey('right', 'draco')
+    const hit: LogEntry = {
+      turn: 1, actorId: 'harry', actorSide: 'left', action: 'Stupeficium',
+      targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 12, flags: [],
+    }
+    replay.frames[1]!.entry = hit
+    render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={hit} frameKey={1} />)
+    const actorEl = document.querySelector(`[data-unit-key="${CSS.escape(actorKey)}"]`) as HTMLElement
+    const targetEl = document.querySelector(`[data-unit-key="${CSS.escape(targetKey)}"]`) as HTMLElement
+    expect(actorEl.querySelector('.fx-strike')).not.toBeNull()
+    expect(actorEl.querySelector('.fx-kick')).toBeNull()
+    expect(targetEl.querySelector('.fx-kick')).not.toBeNull()
+    expect(targetEl.querySelector('.fx-strike')).toBeNull()
+  })
+
+  // Fix round 1 (review): proves prevFrame is really `replay.frames[frameKey - 1]` and not a
+  // stand-in (same frame twice, or unconditionally undefined). `gained`/`lost` (the ONLY thing
+  // `prev` affects inside sceneEventOf — see lib/battleScene.ts's diffStatuses) aren't rendered
+  // anywhere yet in BattleArena/SceneFx, so there is no current DOM signal that depends on the
+  // diff's CONTENT. What's still real and composition-level to guard is the WIRING: BattleArena
+  // must call sceneEventOf with the frame at frameKey-1, not with the same frame, not with
+  // undefined. Spying on the real (unmocked) sceneEventOf and inspecting its actual call
+  // arguments catches exactly the two ways the reviewer named: "prevFrame passed as frame" and
+  // "prevFrame dropped to undefined unconditionally" — both are wrong-argument bugs a
+  // presence-only pip assertion could never see.
+  it('calls sceneEventOf with the PREVIOUS frame, not the current one or none', async () => {
+    const battleScene = await import('@/lib/battleScene')
+    const spy = vi.spyOn(battleScene, 'sceneEventOf')
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    render(<BattleArena replay={replay} hp={replay.frames[2]!.hp} entry={replay.frames[2]!.entry} frameKey={2} />)
+    expect(spy).toHaveBeenCalled()
+    const [frameArg, prevArg] = spy.mock.calls[spy.mock.calls.length - 1]!
+    expect(frameArg).toBe(replay.frames[2])
+    expect(prevArg).toBe(replay.frames[1])
+    expect(prevArg).not.toBe(frameArg)
+    spy.mockRestore()
+  })
+
+  // Fix round 1 (review): SceneFx must actually mount and draw through BattleArena's wiring,
+  // not just in its own isolated unit tests (Task 4).
+  it('renders SceneFx\'s number/word through the arena for a real hit frame', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    const hit: LogEntry = {
+      turn: 1, actorId: 'harry', actorSide: 'left', action: 'Stupeficium',
+      targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 37, flags: [],
+    }
+    replay.frames[1]!.entry = hit
+    render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={hit} frameKey={1} />)
+    expect(screen.getByTestId('scene-fx')).toBeInTheDocument()
+    expect(screen.getByTestId('fx-number')).toHaveTextContent('37')
+  })
+
+  // Fix round 1 (review): the box-measurement path (getBoundingClientRect + CSS.escape)
+  // resolves to the correct unit, not just "doesn't crash". jsdom returns a zero DOMRect
+  // (not null) for any mounted element, so actorBox/targetBox are non-null here — this checks
+  // SceneFx actually receives a box (the fixed-position number is only positioned via
+  // numberBox when one is passed; see SceneFx.tsx's `style={numberBox ? {...} : undefined}`).
+  it('measures a real box for the targeted unit and feeds it to the fx number position', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    const hit: LogEntry = {
+      turn: 1, actorId: 'harry', actorSide: 'left', action: 'Stupeficium',
+      targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 20, flags: [],
+    }
+    replay.frames[1]!.entry = hit
+    render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={hit} frameKey={1} />)
+    const num = screen.getByTestId('fx-number')
+    // A resolved (non-null) box makes SceneFx set `position: fixed` inline; an unresolved
+    // (null) box leaves the element with no inline position style at all.
+    expect(num.style.position).toBe('fixed')
   })
 
   it('shows the damage float only on the targeted bust, not on every unit', () => {
