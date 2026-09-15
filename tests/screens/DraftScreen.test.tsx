@@ -12,7 +12,10 @@ describe('DraftScreen', () => {
       expect(screen.getByTestId(`draft-pick-${i}`)).toBeInTheDocument()
     }
     expect(screen.queryByTestId('draft-pick-3')).toBeNull()
-    expect(screen.getByText(new RegExp(`Pesca 0/${STARTER_PICKS}`))).toBeInTheDocument()
+    // Layout A collapsed the header to one line: the redundant "Pesca N/3" body line
+    // (147px stack → ~50px) is gone, so the pick count now lives only in the Insegna
+    // kicker, which reads "Pesca 1/3" (picks.length + 1), not "Pesca 0/3".
+    expect(screen.getByText(new RegExp(`Pesca ${1}\\s*/\\s*${STARTER_PICKS}`))).toBeInTheDocument()
   })
 
   it('fires onComplete with STARTER_PICKS wizards after picking', async () => {

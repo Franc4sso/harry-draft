@@ -50,42 +50,46 @@ describe('RecruitScreen', () => {
     expect(container.querySelectorAll('[data-testid="draft-duo-tracker"] [data-duo]').length).toBe(6)
   })
 
-  it('renders candidates as horizontal (landscape) cards, like the draft', () => {
+  it('renders candidates as WizardCard (the same card used everywhere), like the draft', () => {
     const onPick = vi.fn()
     render(<RecruitScreen offer={offer} team={team} teamMax={5} onPick={onPick} relics={[]} />)
-    // Each candidate uses the SAME poster card as the first draft (WizardCardColumn,
-    // `.wizard-col`) — recruiting looks identical to the draft.
+    // Layout A ("Entra ↔ Esce") swapped the old poster-only WizardCardColumn for the
+    // shared WizardCard (Task 8/9): `data-testid` now sits on the card root itself
+    // (it IS the tile), not a `.wizard-col` element nested inside a wrapper div.
     for (const d of offer) {
       const tile = screen.getByTestId(`recruit-${d.wizard.id}`)
-      expect(tile.querySelector('.wizard-col')).not.toBeNull()
+      expect(tile.getAttribute('role')).toBe('button')
     }
   })
 
-  it('lays the candidates out side by side (a responsive grid, like the draft row)', () => {
+  it('stacks the candidates in the left "entra" column (a responsive grid, like the draft)', () => {
     const onPick = vi.fn()
     render(<RecruitScreen offer={offer} team={team} teamMax={5} onPick={onPick} relics={[]} />)
+    // Layout A puts recruits in their own left column (recruits | swap arrow | squad),
+    // so the candidates share a `section` ancestor rather than being each other's
+    // sibling directly — walk up from the card root (now the testid'd element itself)
+    // to the hover wrapper div, then to that shared section.
     const tiles = offer.map(d => screen.getByTestId(`recruit-${d.wizard.id}`))
-    const cols = new Set(tiles.map(t => t.parentElement))
-    expect(cols.size).toBe(1)
-    const col = [...cols][0]!
-    expect(col.tagName.toLowerCase()).toBe('section')
-    // multi-column at wider breakpoints (poster cards side by side, not a single stack)
-    expect(col.className).toContain('lg:grid-cols-3')
+    const sections = new Set(tiles.map(t => t.closest('section')))
+    expect(sections.size).toBe(1)
+    const col = [...sections][0]!
+    // Always 3-across: three cards side by side, not stacked, so they stay no taller
+    // than the row-card squad list beside them (fits 1366×768 without a page scroll).
+    expect(col.className).toContain('grid-cols-3')
   })
 
-  it('keeps the Combo Duo rail as a right-hand aside sibling of the candidates', () => {
+  it('keeps the Combo Duo panel as a "cosa cambia" band below the two columns', () => {
     const onPick = vi.fn()
     const { container } = render(
       <RecruitScreen offer={offer} team={team} teamMax={5} onPick={onPick} relics={[]} />,
     )
-    const aside = container.querySelector('aside')
-    expect(aside).not.toBeNull()
-    expect(aside!.querySelector('[data-testid="draft-duo-tracker"]')).not.toBeNull()
-    // Layout mirrors the draft exactly: the candidates + rail live in a two-column
-    // grid (md:grid-cols-[1fr_280px]); the aside is its right-hand column.
-    const shell = aside!.parentElement!
-    expect(shell.className).toContain('md:grid-cols-[1fr_280px]')
-    expect(shell.querySelector('section')).not.toBeNull()
+    // Layout A ("Entra ↔ Esce") moved the Duo tracker out of a right-hand aside rail
+    // into a full-width band under the recruit/squad columns — it already tells you
+    // what a swap changes (lights/advances/turns off), so it doubles as the "cosa
+    // cambia" strip the layout calls for instead of a second panel.
+    const tracker = container.querySelector('[data-testid="draft-duo-tracker"]')
+    expect(tracker).not.toBeNull()
+    expect(container.querySelector('aside')).toBeNull()
   })
 
   describe('dead wizard in the replace picker', () => {

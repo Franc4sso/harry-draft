@@ -5,7 +5,7 @@ import { useDraft } from '@/hooks/useDraft'
 import { STARTER_PICKS } from '@/game/engine/runEngine'
 import { SquadPanel } from '@/components/draft/SquadPanel'
 import { DuoTracker } from '@/components/draft/DuoTracker'
-import { DraftCandidateCard } from '@/components/draft/DraftCandidateCard'
+import { WizardCard } from '@/components/cards/WizardCard'
 import { Stagger, StaggerItem } from '@/components/ui/motion'
 import { Insegna } from '@/components/ui/Insegna'
 import { Frame } from '@/components/ui/Frame'
@@ -75,52 +75,54 @@ export function DraftScreen({
 
   return (
     <main data-testid="draft-screen" className="flex-1 w-full">
-      {/* Sticky header: squad + progress */}
+      {/* Sticky header: ONE row — title (with the pick count folded into its kicker) +
+          the squad rail alongside it — instead of the old 3-line stack (kicker line,
+          title, a redundant duplicate "Pesca N/3" line, squad panel below): that stack
+          measured 147px, this row ~50px, freeing space for portraitHeight=280 cards. */}
       {/* z-[60] keeps the sticky header above card chip tooltips (z-50) — without it,
           a tooltip on a top-row wizard paints over the header. */}
-      <header className="sticky top-0 z-[60] border-b border-white/10 bg-[rgba(10,8,19,0.9)] px-4 py-2 backdrop-blur">
-        <Insegna kicker={`Pesca ${picks.length + 1} / ${target}`} title="Scegli il mago" className="[&_h1]:text-xl [&_.kicker]:text-[9px] [&_.kicker]:tracking-[0.3em] sm:[&_h1]:text-2xl" />
-        <div className="mb-2 mt-1 flex items-center justify-center gap-2 text-[11px] uppercase tracking-widest">
-          <span className="text-[#b08d57]">Pesca {picks.length}/{target}</span>
-        </div>
+      <header className="sticky top-0 z-[60] flex items-center justify-between gap-4 border-b border-white/10 bg-[rgba(10,8,19,0.9)] px-4 py-2 backdrop-blur">
+        <Insegna kicker={`Pesca ${picks.length + 1} / ${target}`} title="Scegli il mago" className="text-left [&_h1]:mt-0 [&_h1]:text-xl [&_.kicker]:mb-0 [&_.kicker]:text-[9px] [&_.kicker]:tracking-[0.3em] [&_[aria-hidden]]:hidden sm:[&_h1]:text-2xl" />
         <SquadPanel picks={picks} teamSize={target} layout="row" />
       </header>
 
       {/*
-        Single-column on mobile: candidates first, tracker below.
-        Two-column on desktop (md+): candidates left, tracker right rail.
+        Layout A (Pesca): three full cards + the combo panel as a FOURTH column, all in
+        one row, aligned top and bottom — not a candidate grid beside a separate right
+        rail. Single-column stack on mobile (candidates first, combo below).
       */}
-      <div className="mx-auto grid max-w-6xl grid-cols-1 items-start gap-6 p-4 md:grid-cols-[1fr_320px]">
-        {/* items-start (above) + content-start (here) keep each candidate at its
-            own height: without them the column stretches to match the tracker
-            rail, growing the hovered card downward when the rail gets taller. */}
-        <section onPointerLeave={() => setConsidered(null)}>
-          {/* Re-key by pick count so each new hand cascades in again. */}
-          <Stagger key={picks.length} className="grid grid-cols-1 items-stretch gap-4 sm:grid-cols-3">
-            {current.map((c, i) => (
-              <StaggerItem key={c.wizard.id} className="h-full">
-                <DraftCandidateCard
+      <div
+        className="mx-auto grid max-w-[1340px] grid-cols-1 items-start gap-4 px-4 md:grid-cols-[repeat(3,1fr)_402px]"
+        onPointerLeave={() => setConsidered(null)}
+      >
+        {/* Re-key by pick count so each new hand cascades in again. */}
+        <Stagger key={picks.length} className="contents">
+          {current.map((c, i) => (
+            <StaggerItem key={c.wizard.id} className="h-full">
+              <div className="h-full" onPointerEnter={() => setConsidered(c)} onFocus={() => setConsidered(c)}>
+                <WizardCard
                   drafted={c}
+                  density="full"
+                  portraitHeight={280}
+                  className="h-full w-full"
                   testId={`draft-pick-${i}`}
-                  onConsider={() => setConsidered(c)}
-                  onPick={() => { setConsidered(null); pick(i) }}
+                  onClick={() => { setConsidered(null); pick(i) }}
                 />
-              </StaggerItem>
-            ))}
-          </Stagger>
-        </section>
+              </div>
+            </StaggerItem>
+          ))}
+        </Stagger>
 
-        {/* Combo tracker: right rail on desktop, stacks below candidates on mobile */}
-        <aside>
-          <Frame variant="panel" className="sticky top-28 max-h-[calc(100dvh-8rem)] overflow-y-auto [scrollbar-gutter:stable]" innerClassName="relative p-3">
-            <Parchment className="absolute inset-0" />
-            <div className="relative">
-              {/* UN SOLO pannello (piano "Un solo asse", Fase 2): i segnali col loro grado
-                  — l'ex tracker delle Costellazioni — e le combo che accendono. */}
-              <DuoTracker picks={picks} considered={considered} />
-            </div>
-          </Frame>
-        </aside>
+        {/* Combo panel: fourth column, top- and bottom-aligned with the cards
+            (items-start on the grid + h-full here) instead of a sticky right rail. */}
+        <Frame variant="panel" className="h-full overflow-y-auto [scrollbar-gutter:stable]" innerClassName="relative h-full p-3">
+          <Parchment className="absolute inset-0" />
+          <div className="relative">
+            {/* UN SOLO pannello (piano "Un solo asse", Fase 2): i segnali col loro grado
+                — l'ex tracker delle Costellazioni — e le combo che accendono. */}
+            <DuoTracker picks={picks} considered={considered} />
+          </div>
+        </Frame>
       </div>
 
       <p className="py-3 text-center text-[10px] uppercase tracking-widest text-white/30">seed: {seed}</p>
