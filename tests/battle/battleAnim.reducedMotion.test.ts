@@ -31,8 +31,50 @@ function reducedMotionBlock(source: string): string {
   return source.slice(braceStart, i + 1)
 }
 
+/**
+ * Extracts the body of a top-level `@keyframes <name> { ... }` block, matched
+ * by the BARE animation name (keyframes are never selected by a `.fx-*`
+ * class — that class only binds `animation: <name> ...` on the element).
+ * Brace-matched so nested `{ }` from percentage stops don't truncate it.
+ */
+function keyframesBody(source: string, name: string): string {
+  const marker = new RegExp(`@keyframes\\s+${name}\\s*\\{`)
+  const m = marker.exec(source)
+  expect(m, `@keyframes ${name} must exist`).not.toBeNull()
+  const braceStart = m!.index + m![0].length - 1
+  let depth = 0
+  let i = braceStart
+  for (; i < source.length; i++) {
+    if (source[i] === '{') depth++
+    if (source[i] === '}') {
+      depth--
+      if (depth === 0) break
+    }
+  }
+  return source.slice(braceStart + 1, i)
+}
+
+/** The final stop of a keyframes body: the `100% { ... }` block (or the last
+ *  comma-joined selector ending in `100%`, e.g. `0%, 100% { ... }`). This is
+ *  the state the animation actually settles into once it finishes playing —
+ *  exactly where "ends at opacity: 0" would live. */
+function finalStopBody(body: string): string {
+  const stopRegex = /([\d%,\s]+)\{([^}]*)\}/g
+  let last: string | null = null
+  let match: RegExpExecArray | null
+  while ((match = stopRegex.exec(body))) {
+    const selectors = match[1] ?? ''
+    if (/\b100%/.test(selectors)) last = match[2] ?? ''
+  }
+  expect(last, 'a 100% stop must exist in the keyframes body').not.toBeNull()
+  return last!
+}
+
 describe('battleAnim.css — reduced motion keeps numbers/words visible', () => {
   const TEXT_CLASSES = ['.fx-numPop', '.fx-numCrit', '.fx-wordPop', '.fx-tickUp']
+  // Bare animation names bound by the classes above (keyframes are keyed by
+  // name, not by the `.fx-*` class — see keyframesBody).
+  const TEXT_ANIMATIONS = ['numPop', 'numCrit', 'wordPop', 'tickUp']
 
   it('has a reduced-motion block', () => {
     expect(css).toContain('@media (prefers-reduced-motion: reduce)')
@@ -51,17 +93,16 @@ describe('battleAnim.css — reduced motion keeps numbers/words visible', () => 
     }
   })
 
-  it('never sets opacity: 0 on a text-bearing class anywhere in the file', () => {
-    for (const cls of TEXT_CLASSES) {
-      // Find every rule block whose selector list includes this class, and
-      // confirm none of them (base keyframe end-state or override) leaves it
-      // at opacity: 0. We scan `100% { ... }` keyframe stops for the base
-      // animation and the override rule bodies above.
-      const classSelectorRegex = new RegExp(`\\${cls}[^{]*\\{([^}]*)\\}`, 'g')
-      let match: RegExpExecArray | null
-      while ((match = classSelectorRegex.exec(css))) {
-        expect(match[1], `${cls} rule must not end at opacity: 0`).not.toMatch(/opacity:\s*0(?!\.\d)(?!\s*;?\s*!important;?\s*\/\*)/)
-      }
+  it('never lets a text-bearing @keyframes animation settle at opacity: 0', () => {
+    // Regression target: the base `@keyframes numPop { ... 100% { opacity: 0 } }`
+    // (etc.) is where an animation "ending invisible" actually lives — the
+    // reduced-motion override (checked above) can't compensate for a base
+    // keyframe that legitimately plays (motion allowed) and fades to nothing.
+    for (const name of TEXT_ANIMATIONS) {
+      const body = keyframesBody(css, name)
+      const finalStop = finalStopBody(body)
+      expect(finalStop, `@keyframes ${name}'s 100% stop must not settle at opacity: 0`)
+        .not.toMatch(/opacity:\s*0(?!\.\d)/)
     }
   })
 })
