@@ -45,3 +45,12 @@ export function archetypeTooltip(tag: keyof typeof ARCHETYPE_BY_TAG): string {
   const effect = meta.synergyId ? ARCHETYPE_EFFECT[meta.synergyId] : undefined
   return effect ?? `Archetipo: ${meta.name}`
 }
+
+/** Primary archetype for the card ribbon: the first of the wizard's tags that has an entry in
+ *  ARCHETYPE_BY_TAG (veleno/esecuzione/scudirigen/magieOscure). A wizard can carry more than one
+ *  archetype tag (e.g. Voldemort: esecuzione + magieOscure) — the mockup shows a single ribbon,
+ *  so we take the first match in tag order. `undefined` when no tag matches (no ribbon). */
+export function primaryArchetype(tags: string[] | undefined) {
+  const tag = (tags ?? []).find((t): t is keyof typeof ARCHETYPE_BY_TAG => t in ARCHETYPE_BY_TAG)
+  return tag ? ARCHETYPE_BY_TAG[tag] : undefined
+}

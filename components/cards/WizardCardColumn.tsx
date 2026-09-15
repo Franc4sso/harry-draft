@@ -13,18 +13,9 @@ import { ROLE_ACCENT, roleTooltip } from '@/lib/roleInfo'
 import { TRAIT_BY_ID } from '@/data/traits'
 import { abilityFor } from '@/lib/wizardAbilities'
 import { displayName } from '@/lib/displayName'
-import { ARCHETYPE_BY_TAG, archetypeTooltip } from '@/lib/archetypes'
+import { ARCHETYPE_BY_TAG, archetypeTooltip, primaryArchetype } from '@/lib/archetypes'
 import { Tooltip } from '@/components/ui/Tooltip'
 import { tagsOf } from '@/game/engine/roster'
-
-/** Primary archetype for the card ribbon: the first of the wizard's tags that has an entry in
- *  ARCHETYPE_BY_TAG (veleno/esecuzione/scudirigen/magieOscure). A wizard can carry more than one
- *  archetype tag (e.g. Voldemort: esecuzione + magieOscure) — the mockup shows a single ribbon,
- *  so we take the first match in tag order. `undefined` when no tag matches (no ribbon). */
-function primaryArchetype(tags: string[] | undefined) {
-  const tag = (tags ?? []).find((t): t is keyof typeof ARCHETYPE_BY_TAG => t in ARCHETYPE_BY_TAG)
-  return tag ? ARCHETYPE_BY_TAG[tag] : undefined
-}
 
 /**
  * Vertical "poster" card for the draft. Full-bleed portrait hero (role badge +
