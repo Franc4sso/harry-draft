@@ -46,7 +46,16 @@ export function Tooltip({
         aria-label={label}
         aria-expanded={open}
         onPointerDown={(e) => e.stopPropagation()}
-        onClick={(e) => { e.stopPropagation(); setOpen((o) => !o) }}
+        // Il click col MOUSE tiene aperto, non fa toggle: su desktop l'hover ha
+        // già aperto il popover, quindi un toggle cieco lo richiuderebbe subito
+        // e cliccare un tooltip sembrerebbe non fare nulla. Col dito l'hover non
+        // esiste (`detail === 0` per i click sintetici da tocco/tastiera), e lì
+        // il toggle è il comportamento giusto: tocco per aprire, ritocco per chiudere.
+        onClick={(e) => {
+          e.stopPropagation()
+          const fromMouse = e.detail > 0
+          setOpen((o) => (fromMouse ? true : !o))
+        }}
         onMouseEnter={() => setOpen(true)}
         onMouseLeave={() => setOpen(false)}
         onKeyDown={(e) => { if (e.key === 'Escape') setOpen(false) }}
