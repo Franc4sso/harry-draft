@@ -8,7 +8,7 @@ import { livingOf } from '@/game/engine/roster'
 import { useBattleReplay, REPLAY_SPEEDS } from '@/hooks/useBattleReplay'
 import { BALANCE } from '@/data/constants'
 import { Hourglass } from 'lucide-react'
-import { InitiativeBar } from '@/components/battle/InitiativeBar'
+import { TurnLane } from '@/components/battle/TurnLane'
 import { BattleArena } from '@/components/battle/BattleArena'
 import { ActionPanel } from '@/components/battle/ActionPanel'
 import { BattleLog } from '@/components/battle/BattleLog'
@@ -157,11 +157,6 @@ export function BattleScreen({
         </div>
       )}
 
-      {/* Ordine turni — striscia orizzontale, sempre in cima al campo (~46px). */}
-      <div className="w-full max-w-5xl shrink-0">
-        <InitiativeBar replay={replay} index={r.index} />
-      </div>
-
       {/* Campo contro campo: il ritratto NON si rimpicciolisce mai (D1, requisito
           esplicito) — questa regione può crescere ma le due carte-densità-combat
           restano a PORTRAIT_HEIGHT fisso; il bilancio di 768px viene tutto dallo
@@ -175,6 +170,27 @@ export function BattleScreen({
         />
       </div>
 
+      {/* Corsia del tempo — SOSTITUISCE l'InitiativeBar (Task 6). La barra
+          ricalcolava un ordine ordinando le unità vive per spd; la corsia legge
+          invece il futuro VERO del replay (initiativeAt sulle frame reali), mostra
+          CON QUALE incantesimo agirà ciascuno, e anticipa chi salterà il turno
+          (stordito/congelato) o userà solo un colpo base (silenziato) — letture che
+          la barra non dava affatto. Le due, mostrate insieme, si sarebbero
+          contraddette (ordini calcolati diversamente) e la barra da sola sforava
+          comunque il budget fisso di 768px insieme alla corsia: la barra è quindi
+          rimossa da questa schermata (il componente resta per altri usi).
+
+          Altezza 100, non i 128 del mockup: misurato, l'arena delle WizardCard
+          approvate (nome + riga incantesimo + banda statistiche sopra ai 118px
+          fissi del ritratto, PORTRAIT_HEIGHT sopra) occupa un minimo di ~591px,
+          non i 452 del mockup — e il ritratto non si rimpicciolisce mai (D1) né
+          l'arena si tocca (territorio approvato del Task 5). La corsia è la new
+          entry nel budget fisso di 768px, quindi è lei a pagare il conto: la sua
+          fascia si restringe (vedi TurnLane, avatar/gap ridotti per starci). */}
+      <div className="w-full max-w-5xl shrink-0" style={{ height: 100 }}>
+        <TurnLane replay={replay} index={r.index} className="h-full" />
+      </div>
+
       {/* In fondo: i due resoconti danni e IL REGISTRO.
           Il registro era stato tolto nel rifacimento della battaglia, e con lui
           l'unico posto dove leggere cosa è successo: la narrazione del colpo era
@@ -186,7 +202,7 @@ export function BattleScreen({
       {/* `overflow-hidden` + altezza fissa: il registro cresce a ogni turno, e senza
           un tetto spingeva il documento oltre i 768px mentre la battaglia avanzava
           (misurato: 824px dopo sei turni). Ora scorre dentro la sua fascia. */}
-      <div className="flex w-full max-w-5xl shrink-0 items-stretch justify-center gap-2 overflow-hidden" style={{ height: 96 }}>
+      <div className="flex w-full max-w-5xl shrink-0 items-stretch justify-center gap-2 overflow-hidden" style={{ height: 92 }}>
         <BattleRecap frames={leftRecapFrames} units={replay.units} side="left" title="I tuoi danni" tone="ally" compact className="max-w-xs" />
         <BattleRecap frames={rightRecapFrames} units={replay.units} side="right" title="Danni nemici" tone="enemy" compact className="max-w-xs" />
         <BattleLog

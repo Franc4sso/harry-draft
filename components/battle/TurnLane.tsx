@@ -94,9 +94,18 @@ export function TurnLane({ replay, index, className }: { replay: Replay; index: 
   }, [order, pos, startPos, nowKey, upcoming])
 
   return (
+    // No built-in height class: the mockup's 128px assumed the lane was the only
+    // newcomer to a screen with room to spare, but the arena's real minimum
+    // (~591px, from the approved WizardCards' name/spell/stat band on top of the
+    // fixed 118px portrait — see BattleScreen's PORTRAIT_HEIGHT comment) leaves
+    // far less than that in the 768px budget. Per design ruling: the portrait
+    // never shrinks and the arena is Task 5's approved territory, so the LANE
+    // pays for its own seat — the caller sizes it (BattleScreen uses ~100px)
+    // and every measurement below (avatar sizes, offsets, gaps) is tuned to fit
+    // that, down from the mockup's roomier 128px sizing.
     <div
       data-testid="turn-lane"
-      className={cn('relative h-32 overflow-hidden rounded-[13px] border border-amber-300/25', className)}
+      className={cn('relative overflow-hidden rounded-[13px] border border-amber-300/25', className)}
       style={{ background: 'linear-gradient(90deg, rgba(202,162,74,.12), rgba(16,13,28,.74) 32%)' }}
     >
       <div
@@ -105,7 +114,7 @@ export function TurnLane({ replay, index, className }: { replay: Replay; index: 
         style={{ background: 'linear-gradient(90deg, rgba(202,162,74,.16), transparent)' }}
       />
       <motion.div
-        className="absolute left-5 top-4 flex items-start"
+        className="absolute left-5 top-2 flex items-start"
         initial={false}
         animate={{ x: -startPos * SLOT_WIDTH }}
         transition={reduce ? { duration: 0 } : { duration: 0.58, ease: [0.22, 1, 0.36, 1] }}
@@ -125,7 +134,11 @@ export function TurnLane({ replay, index, className }: { replay: Replay; index: 
               : null
           const silenced = effects.some(e => (e.statusId ?? e.kind) === 'silence')
           const mine = u.side === 'left'
-          const avatarSize = isNow ? 50 : 40
+          // Shrunk from the mockup's 50/40 (see the file-level comment on the
+          // root height): the lane's whole vertical budget is ~100px here, not
+          // 128px, so avatars pay their share of the cut alongside the offsets
+          // and gaps below.
+          const avatarSize = isNow ? 40 : 32
           const ring = mine ? 'rgba(124,220,125,.4)' : 'rgba(240,114,114,.45)'
 
           return (
@@ -134,7 +147,7 @@ export function TurnLane({ replay, index, className }: { replay: Replay; index: 
               data-testid="lane-slot"
               data-unit={key}
               data-now={isNow ? 'true' : 'false'}
-              className="flex flex-col items-center gap-1.5"
+              className="flex flex-col items-center gap-1"
               style={{ width: SLOT_WIDTH, flex: `0 0 ${SLOT_WIDTH}px`, opacity: isPast ? 0.22 : 1, transition: reduce ? undefined : 'opacity 0.4s' }}
             >
               <div
