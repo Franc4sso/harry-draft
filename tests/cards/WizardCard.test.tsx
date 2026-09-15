@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import { readdirSync } from 'node:fs'
 import { WizardCard } from '@/components/cards/WizardCard'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
@@ -54,5 +55,14 @@ describe('WizardCard', () => {
     unmount()
     render(<WizardCard drafted={drafted('hermione')} testId="c2" onClick={() => {}} />)
     expect(screen.getByTestId('c2')).toHaveAttribute('role', 'button')
+  })
+
+  // Guardia Task 11: i tre componenti-carta vecchi (WizardCardColumn, WizardCardRow,
+  // UnitBust) sono stati cancellati — resta un solo componente-carta, in ogni schermata
+  // in cui appare, come richiesto esplicitamente dall'utente ("dev'essere lo stesso per
+  // ogni volta in cui la card appare"). Verifica che nessuno ne aggiunga un secondo.
+  it('esiste un solo componente-carta', () => {
+    const files = readdirSync('components/cards').filter(f => /^WizardCard.*\.tsx$/.test(f))
+    expect(files, 'la carta deve restare una sola, in tutte le schermate').toEqual(['WizardCard.tsx'])
   })
 })

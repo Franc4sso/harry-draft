@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { UnitBust } from '@/components/battle/UnitBust'
 import { BattleArena } from '@/components/battle/BattleArena'
 import type { ReplayUnit, Replay } from '@/game/engine/combat/replay'
 import type { LogEntry } from '@/types'
@@ -12,21 +11,10 @@ const unit = (over: Partial<ReplayUnit> = {}): ReplayUnit => ({
   ...over,
 })
 
-describe('UnitBust: lampo SALTA', () => {
-  it("skipping='freeze' rende [data-skipping=\"freeze\"] con testo SALTA", () => {
-    const { container } = render(<UnitBust unit={unit()} hp={80} skipping="freeze" />)
-    const flash = container.querySelector('[data-skipping]')
-    expect(flash).toHaveAttribute('data-skipping', 'freeze')
-    expect(flash).toHaveTextContent(/salta/i)
-  })
-
-  it('skipping=null non rende alcun [data-skipping]', () => {
-    const { container } = render(<UnitBust unit={unit()} hp={80} skipping={null} />)
-    expect(container.querySelector('[data-skipping]')).toBeNull()
-    expect(screen.getByTestId('battle-unit')).not.toHaveTextContent(/salta/i)
-  })
-})
-
+// Il describe "UnitBust: lampo SALTA" che testava UnitBust direttamente è stato rimosso
+// (Task 11 — UnitBust cancellato): il lampo SALTA vive ora SOLO dentro BattleArena (mai
+// più su una card isolata), quindi la copertura sotto — che già passava per BattleArena —
+// è l'unica che resta, ed è invariata.
 describe('BattleArena: un frame Stordito salta il turno senza accendere acting', () => {
   const entry = (over: Partial<LogEntry> = {}): LogEntry => ({
     turn: 1, actorId: 'x', actorSide: 'left', action: 'Colpo', targetId: 'foe', targetSide: 'right',

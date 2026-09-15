@@ -5,7 +5,6 @@ import { SpellFx, ShieldFx } from '@/components/battle/SpellFx'
 import { describeEntry } from '@/components/battle/BattleLog'
 import { BattleScreen } from '@/components/screens/BattleScreen'
 import { InitiativeBar } from '@/components/battle/InitiativeBar'
-import { UnitBust } from '@/components/battle/UnitBust'
 import { BattleArena } from '@/components/battle/BattleArena'
 import { ActionPanel } from '@/components/battle/ActionPanel'
 import { buildReplay, unitKey } from '@/game/engine/combat/replay'
@@ -152,98 +151,16 @@ describe('InitiativeBar', () => {
   })
 })
 
-describe('UnitBust', () => {
-  const u = {
-    key: 'left:harry', side: 'left' as const, id: 'harry', name: 'Harry Potter',
-    house: 'Grifondoro' as const, role: 'Attaccante' as const, tier: 1 as const, maxHp: 100,
-    atk: 50, def: 40, spd: 30, baseAtk: 50, baseDef: 40, baseSpd: 30,
-    spell: { id: 'stupeficium', name: 'Stupeficium', cooldown: 1 },
-  }
-  it('renders the name, an HP value, and a rarity treatment', () => {
-    render(<UnitBust unit={u} hp={72} />)
-    expect(screen.getByText('Harry Potter')).toBeInTheDocument()
-    expect(screen.getByTestId('battle-unit')).toBeInTheDocument()
-  })
-  it('flags a downed unit as dead', () => {
-    render(<UnitBust unit={u} hp={0} />)
-    expect(screen.getByTestId('battle-unit').getAttribute('data-dead')).toBe('true')
-  })
-
-  describe('cooldown row', () => {
-    it('shows the spell name and "pronto" (green) when off cooldown', () => {
-      render(<UnitBust unit={u} hp={50} cooldown={0} />)
-      const row = screen.getByTestId('battle-unit').querySelector('[data-role="cooldown"]') as HTMLElement
-      expect(row).not.toBeNull()
-      expect(row.textContent).toContain('Stupeficium')
-      expect(row.textContent).toMatch(/pronto/i)
-      expect(row.querySelector('[data-ready="true"]')!.className).toContain('emerald')
-    })
-    it('shows "pronto" when no cooldown is provided', () => {
-      render(<UnitBust unit={u} hp={50} />)
-      const row = screen.getByTestId('battle-unit').querySelector('[data-role="cooldown"]') as HTMLElement
-      expect(row.textContent).toMatch(/pronto/i)
-    })
-    it('uses the singular "1 turno" when one turn remains', () => {
-      render(<UnitBust unit={u} hp={50} cooldown={1} />)
-      const row = screen.getByTestId('battle-unit').querySelector('[data-role="cooldown"]') as HTMLElement
-      expect(row.textContent).toContain('Stupeficium')
-      expect(row.textContent).toMatch(/1 turno\b/)
-      expect(row.textContent).not.toMatch(/pronto/i)
-    })
-    it('uses the plural "2 turni" when several turns remain', () => {
-      render(<UnitBust unit={u} hp={50} cooldown={2} />)
-      const row = screen.getByTestId('battle-unit').querySelector('[data-role="cooldown"]') as HTMLElement
-      expect(row.textContent).toMatch(/2 turni/)
-    })
-  })
-
-  describe('status row', () => {
-    it('renders a status icon with its DOSE count and a descriptive title for a dot', () => {
-      // A dot (veleno) pill shows its dose count (stacks), which starts at 1 and grows — NOT
-      // `remaining` (frozen at 2 for permanent veleno). Here stacks:2 → shows "2".
-      render(<UnitBust unit={u} hp={50} effects={[{ kind: 'dot', amount: 6, remaining: 2, stacks: 2 }]} />)
-      const root = screen.getByTestId('battle-unit')
-      const dot = root.querySelector('[data-status-kind="dot"]') as HTMLElement
-      expect(dot).not.toBeNull()
-      expect(dot.textContent).toContain('2')
-      expect(dot.getAttribute('title')).toMatch(/veleno/i)
-      // Per-turn damage: amount 6 × 2 doses = 12 (no statusId → falls back to amount).
-      expect(dot.getAttribute('title')).toContain('12')
-    })
-    it('renders one pill per active non-control status, plus a glyph for the control effect', () => {
-      render(
-        <UnitBust
-          unit={u}
-          hp={50}
-          effects={[
-            { kind: 'dot', amount: 6, remaining: 2 },
-            { kind: 'stun', remaining: 1 },
-            { kind: 'shield', absorbLeft: 30, remaining: 3 },
-          ]}
-        />,
-      )
-      const root = screen.getByTestId('battle-unit')
-      // stun is a control kind: it gets the portrait glyph, NOT a top pill (no duplication) —
-      // only dot + shield remain as pills.
-      expect(root.querySelectorAll('[data-status-kind]').length).toBe(2)
-      expect(root.querySelector('[data-status-kind="stun"]')).toBeNull()
-      expect(root.querySelector('[data-control-glyph="stun"]')).not.toBeNull()
-    })
-    it('does NOT render a pill for buff/debuff effects (the live stat bars show those)', () => {
-      render(<UnitBust unit={u} hp={50} effects={[{ kind: 'buff', stat: 'atk', amount: 10, remaining: 2 }]} />)
-      const root = screen.getByTestId('battle-unit')
-      expect(root.querySelector('[data-status-kind="buff"]')).toBeNull()
-    })
-  })
-
-  it('control strip shows label and remaining turns as "<label> ·<n>t"', () => {
-    render(<UnitBust unit={u} hp={50} effects={[{ kind: 'stun', remaining: 2 }]} />)
-    const strip = screen.getByTestId('battle-unit').querySelector('[data-control-strip]') as HTMLElement
-    expect(strip).not.toBeNull()
-    expect(strip.textContent).toContain('Stordito')
-    expect(strip.textContent).toMatch(/·2t/)
-  })
-})
+// Il describe "UnitBust" che testava il componente direttamente è stato rimosso
+// (Task 11 — UnitBust cancellato). Copriva: nome/HP/dead flag (ora coperti tramite
+// BattleArena+WizardCard, vedi describe 'BattleArena' più sotto), la riga cooldown e
+// la riga stati (icone/pillole/striscia di controllo) — queste ultime due erano già
+// state dichiarate come RIDUZIONE ACCETTATA per questo stesso Task 10 nei commenti dei
+// test 'renders the dotted unit's card...' e 'still shows the unit's spell name...' più
+// in basso in questo file: WizardCard density="combat" non ha una riga cooldown né
+// pillole di stato — quella lettura ora passa dal Callout (annuncio centrale
+// all'applicazione) e dalla narrazione BattleLog/ActionPanel, non da un indicatore
+// persistente sulla card.
 
 describe('BattleScreen', () => {
   it('skips to the end and fires onFinish on continue', async () => {

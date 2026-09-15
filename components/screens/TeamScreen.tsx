@@ -2,7 +2,7 @@
 import type { DraftedWizard } from '@/types'
 import { detectSynergies } from '@/game/engine/synergy'
 import { synergyBonusText } from '@/lib/glossary'
-import { WizardCardRow } from '@/components/cards/WizardCardRow'
+import { WizardCard } from '@/components/cards/WizardCard'
 import { Button } from '@/components/ui/Button'
 import { Frame } from '@/components/ui/Frame'
 import { Insegna } from '@/components/ui/Insegna'
@@ -76,7 +76,7 @@ export function TeamScreen({
       {/* Roster — horizontal cards, consistent with the draft. */}
       <div className="flex w-full max-w-3xl flex-col gap-3">
         {team.map((m) => (
-          <WizardCardRow key={m.wizard.id} drafted={m} showLevel />
+          <WizardCard key={m.wizard.id} drafted={m} density="row" />
         ))}
       </div>
 

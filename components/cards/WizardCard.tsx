@@ -3,12 +3,16 @@ import type { DraftedWizard, Tier } from '@/types'
 import { tierFrame } from '@/lib/theme'
 import { displayName } from '@/lib/displayName'
 import { ROLE_ACCENT } from '@/lib/roleInfo'
-import { primaryArchetype } from '@/lib/archetypes'
+import { ARCHETYPE_BY_TAG, archetypeTooltip, primaryArchetype } from '@/lib/archetypes'
 import { tagsOf } from '@/game/engine/roster'
 import { SpellLine } from './parts/SpellLine'
 import { StatBand } from './parts/StatBand'
 import { AbilitySeal } from './parts/AbilitySeal'
 import { RarityPips } from './parts/RarityPips'
+import { MarchioMarks } from './MarchioMarks'
+import { PortraitImage } from '@/components/ui/PortraitImage'
+import { Tooltip } from '@/components/ui/Tooltip'
+import { TRAIT_BY_ID } from '@/data/traits'
 
 export type CardDensity = 'full' | 'combat' | 'row'
 
@@ -46,7 +50,10 @@ export function WizardCard({
   const frame = tierFrame(wizard.tier as Tier)
   const clickable = Boolean(onClick)
   const accent = ROLE_ACCENT[wizard.role]
-  const archetype = primaryArchetype(tagsOf(drafted))
+  const effectiveTags = tagsOf(drafted)
+  const archetype = primaryArchetype(effectiveTags)
+  const archetypeTag = effectiveTags.find((t): t is keyof typeof ARCHETYPE_BY_TAG => t in ARCHETYPE_BY_TAG)
+  const shinyTrait = drafted.shiny ? TRAIT_BY_ID[drafted.shiny.traitId] : undefined
   const isRow = density === 'row'
   const fillPortrait = portraitHeight === 'fill'
   const portH = typeof portraitHeight === 'number' ? portraitHeight : PORTRAIT[density]
@@ -75,21 +82,45 @@ export function WizardCard({
             vuoto fra la magia e le statistiche. Il ritratto è la parte che l'utente
             ha chiesto di tenere grande, quindi è quella che cresce. */}
         <div
-          className={`relative ${fillPortrait ? 'min-h-0 flex-1' : 'shrink-0'} ${isRow ? 'w-[54px]' : ''}`}
+          className={`relative overflow-hidden ${fillPortrait ? 'min-h-0 flex-1' : 'shrink-0'} ${isRow ? 'w-[54px]' : ''}`}
           style={{
             height: isRow || fillPortrait ? undefined : portH,
             background: 'linear-gradient(160deg,#2f3557,#1a1f36)',
           }}
         >
+          <PortraitImage
+            id={wizard.id}
+            house={wizard.house}
+            alt={wizard.name}
+            variant={density === 'combat' ? 'bust' : 'card'}
+          />
           <span aria-hidden className="absolute inset-0"
             style={{ background: 'radial-gradient(118% 84% at 50% 34%, transparent 48%, rgba(6,4,12,.7) 100%)' }} />
           {!isRow && (
             <>
               <RarityPips tier={wizard.tier as Tier} />
-              {archetype && (
-                <span className="absolute right-2 top-2 z-10 rounded border border-white/20 bg-[rgba(10,8,18,.6)] px-1.5 py-1 text-[8px] font-extrabold uppercase tracking-[.1em] text-[#dbe9ff]">
-                  {archetype.glyph} {archetype.name}
+              {density === 'combat' && drafted.level !== undefined && (
+                <span
+                  data-testid="card-level-badge"
+                  className="absolute left-2 top-2 z-10 rounded border border-[#C9A24B]/45 bg-[#C9A24B]/25 px-1.5 py-1 text-[8px] font-extrabold uppercase tracking-[.1em] text-[#F4DE9A]"
+                >
+                  Lv. {drafted.level}
                 </span>
+              )}
+              {archetype && archetypeTag && (
+                <Tooltip
+                  label={`Archetipo ${archetype.name}`}
+                  content={archetypeTooltip(archetypeTag)}
+                  className="absolute right-2 top-2 z-10"
+                >
+                  <span
+                    data-testid="archetype-badge"
+                    data-archetype={archetypeTag}
+                    className="rounded border border-white/20 bg-[rgba(10,8,18,.6)] px-1.5 py-1 text-[8px] font-extrabold uppercase tracking-[.1em] text-[#dbe9ff]"
+                  >
+                    {archetype.glyph} {archetype.name}
+                  </span>
+                </Tooltip>
               )}
               {/* Il sigillo sta DENTRO la targa (non come suo fratello) perché si
                   ancora con `bottom-full`: così si appoggia al bordo superiore del
@@ -107,7 +138,41 @@ export function WizardCard({
                 <h3 className="font-display text-[20px] font-black leading-[.98] text-white"
                   style={{ textShadow: '0 3px 16px rgba(0,0,0,.9)' }}>
                   {displayName(drafted)}
+                  {drafted.shiny && shinyTrait && (
+                    <Tooltip
+                      label="Cimelio raro"
+                      content={`${shinyTrait.name} — ${shinyTrait.desc}`}
+                      triggerClassName="ml-1.5 inline-flex align-middle"
+                    >
+                      <span
+                        data-testid="shiny-foil"
+                        className="inline-flex h-4 w-4 items-center justify-center rounded-full text-[10px] font-bold"
+                        style={{
+                          color: '#3a2a08',
+                          background: 'linear-gradient(135deg, #ffe9a8, #d9a94a)',
+                          boxShadow: '0 0 8px rgba(255,205,90,0.7), inset 0 1px 0 rgba(255,255,255,0.6)',
+                        }}
+                        aria-hidden
+                      >
+                        ✦
+                      </span>
+                    </Tooltip>
+                  )}
                 </h3>
+                {/* Il Marchio (tag CONCESSO a runtime, es. Spoglie della Vittoria) è distinto dal
+                    nastro archetipo sopra: quel nastro mostra solo IL PRIMO tag, quindi un mago con
+                    un archetipo nativo che riceve un Marchio diverso non lo vedrebbe da nessuna
+                    parte senza questa pill dedicata. */}
+                <div className="mt-1"><MarchioMarks drafted={drafted} /></div>
+                {drafted.corrotto && (
+                  <span
+                    data-testid="corrotto-badge"
+                    title="Corrotto — non curabile"
+                    className="mt-1 inline-flex items-center gap-0.5 rounded-full border border-purple-400/60 bg-purple-950/70 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-purple-200"
+                  >
+                    <span aria-hidden>☠</span> Corrotto — non curabile
+                  </span>
+                )}
               </div>
             </>
           )}
@@ -119,11 +184,51 @@ export function WizardCard({
             <div className="flex items-baseline justify-between gap-2">
               <span className="min-w-0 flex-1 truncate font-display text-[11px] font-extrabold leading-none text-white">
                 {displayName(drafted)}
+                {drafted.shiny && shinyTrait && (
+                  <Tooltip
+                    label="Cimelio raro"
+                    content={`${shinyTrait.name} — ${shinyTrait.desc}`}
+                    triggerClassName="ml-1 inline-flex align-middle"
+                  >
+                    <span
+                      data-testid="shiny-foil"
+                      className="inline-flex h-3.5 w-3.5 items-center justify-center rounded-full text-[8px] font-bold"
+                      style={{
+                        color: '#3a2a08',
+                        background: 'linear-gradient(135deg, #ffe9a8, #d9a94a)',
+                        boxShadow: '0 0 6px rgba(255,205,90,0.7), inset 0 1px 0 rgba(255,255,255,0.6)',
+                      }}
+                      aria-hidden
+                    >
+                      ✦
+                    </span>
+                  </Tooltip>
+                )}
               </span>
-              <span className="shrink-0 text-[7px] font-extrabold uppercase tracking-[.14em]" style={{ color: accent }}>
-                {wizard.role}
+              <span className="flex shrink-0 items-center gap-1.5">
+                {drafted.level !== undefined && (
+                  <span
+                    data-testid="card-level-badge"
+                    className="rounded border border-[#C9A24B]/45 bg-[#C9A24B]/25 px-1 text-[8px] font-extrabold tabular-nums text-[#F4DE9A]"
+                  >
+                    Lv. {drafted.level}
+                  </span>
+                )}
+                <span className="text-[7px] font-extrabold uppercase tracking-[.14em]" style={{ color: accent }}>
+                  {wizard.role}
+                </span>
               </span>
             </div>
+            <MarchioMarks drafted={drafted} />
+            {drafted.corrotto && (
+              <span
+                data-testid="corrotto-badge"
+                title="Corrotto — non curabile"
+                className="inline-flex w-fit items-center gap-0.5 rounded-full border border-purple-400/60 bg-purple-950/70 px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide text-purple-200"
+              >
+                <span aria-hidden>☠</span> Corrotto — non curabile
+              </span>
+            )}
             {currentHp !== undefined && (
               <span className="h-[3px] overflow-hidden rounded-full bg-[rgba(124,220,125,.2)]">
                 <i data-testid="card-hp-bar" className="block h-full rounded-full bg-[#7cdc7d]" style={{ width: `${hpPct}%` }} />

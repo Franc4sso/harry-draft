@@ -1,8 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { WizardCardColumn } from '@/components/cards/WizardCardColumn'
-import { WizardCardRow } from '@/components/cards/WizardCardRow'
-import { UnitBust } from '@/components/battle/UnitBust'
+import { WizardCard } from '@/components/cards/WizardCard'
 import { buildReplay, unitKey } from '@/game/engine/combat/replay'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
@@ -29,28 +27,31 @@ const emptyResult: BattleResult = {
   alliesLost: 0,
 }
 
-describe('Corrotto badge', () => {
-  it('WizardCardColumn: mostra il badge quando corrotto=true, con testo "non curabile"', () => {
-    render(<WizardCardColumn drafted={{ ...drafted(), corrotto: true }} />)
+// Le tre vecchie carte (WizardCardColumn/WizardCardRow/UnitBust) sono state sostituite
+// dall'unica WizardCard (density full/row/combat) — vedi Task 11. Il badge Corrotto vive
+// ora su WizardCard stessa, per tutte e tre le densità.
+describe('Corrotto badge (WizardCard)', () => {
+  it('density full: mostra il badge quando corrotto=true, con testo "non curabile"', () => {
+    render(<WizardCard drafted={{ ...drafted(), corrotto: true }} density="full" />)
     const badge = screen.getByTestId('corrotto-badge')
     expect(badge).toHaveTextContent(/corrotto/i)
     expect(badge).toHaveTextContent(/non curabile/i)
   })
 
-  it('WizardCardColumn: nessun badge quando non corrotto', () => {
-    render(<WizardCardColumn drafted={drafted()} />)
+  it('density full: nessun badge quando non corrotto', () => {
+    render(<WizardCard drafted={drafted()} density="full" />)
     expect(screen.queryByTestId('corrotto-badge')).toBeNull()
   })
 
-  it('WizardCardRow (roster/battaglia): mostra il badge quando corrotto=true', () => {
-    render(<WizardCardRow drafted={{ ...drafted(), corrotto: true }} />)
+  it('density row (roster/mappa): mostra il badge quando corrotto=true', () => {
+    render(<WizardCard drafted={{ ...drafted(), corrotto: true }} density="row" />)
     const badge = screen.getByTestId('corrotto-badge')
     expect(badge).toHaveTextContent(/corrotto/i)
     expect(badge).toHaveTextContent(/non curabile/i)
   })
 
-  it('WizardCardRow: nessun badge quando non corrotto', () => {
-    render(<WizardCardRow drafted={drafted()} />)
+  it('density row: nessun badge quando non corrotto', () => {
+    render(<WizardCard drafted={drafted()} density="row" />)
     expect(screen.queryByTestId('corrotto-badge')).toBeNull()
   })
 
@@ -69,26 +70,15 @@ describe('Corrotto badge', () => {
     expect(other.corrotto).toBeUndefined()
   })
 
-  it('UnitBust (battaglia): mostra il badge quando unit.corrotto=true', () => {
-    const l = team(['harry'], 1)
-    const r = team(['draco'], 2)
-    l[0] = { ...l[0]!, corrotto: true }
-    const replay = buildReplay(emptyResult, l, r)
-    const unit = replay.units.find(u => u.key === unitKey('left', 'harry'))!
-
-    render(<UnitBust unit={unit} hp={unit.maxHp} />)
+  it('density combat (battaglia): mostra il badge quando drafted.corrotto=true', () => {
+    render(<WizardCard drafted={{ ...drafted(), corrotto: true }} density="combat" currentHp={100} />)
     const badge = screen.getByTestId('corrotto-badge')
     expect(badge).toHaveTextContent(/corrotto/i)
     expect(badge).toHaveTextContent(/non curabile/i)
   })
 
-  it('UnitBust (battaglia): nessun badge quando non corrotto', () => {
-    const l = team(['harry'], 1)
-    const r = team(['draco'], 2)
-    const replay = buildReplay(emptyResult, l, r)
-    const unit = replay.units.find(u => u.key === unitKey('left', 'harry'))!
-
-    render(<UnitBust unit={unit} hp={unit.maxHp} />)
+  it('density combat: nessun badge quando non corrotto', () => {
+    render(<WizardCard drafted={drafted()} density="combat" currentHp={100} />)
     expect(screen.queryByTestId('corrotto-badge')).toBeNull()
   })
 })

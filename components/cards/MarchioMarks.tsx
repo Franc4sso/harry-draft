@@ -8,7 +8,7 @@ import { Tooltip } from '@/components/ui/Tooltip'
  * distinti dai tag nativi.
  *
  * Perché una pill a parte e non solo il nastro archetipo: il nastro mostra UN archetipo, il
- * PRIMO (vedi `primaryArchetype` in WizardCardColumn). Un mago che ha già un archetipo nativo
+ * PRIMO (vedi `primaryArchetype` in `lib/archetypes.ts`). Un mago che ha già un archetipo nativo
  * e riceve un Marchio diverso non lo vedrebbe da nessuna parte — e il giocatore che ha appena
  * speso la sua scelta di vittoria non ritroverebbe il segnale sulla card. Questa pill lo rende
  * sempre visibile, e dice anche che è stato GUADAGNATO, non nativo.

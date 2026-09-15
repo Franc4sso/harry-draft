@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { WizardCardColumn } from '@/components/cards/WizardCardColumn'
+import { WizardCard } from '@/components/cards/WizardCard'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
 import { WIZARD_BY_ID } from '@/data/wizards'
@@ -11,56 +11,50 @@ const snape = () => draftWizard(createRng(1), WIZARD_BY_ID['snape']!) // tier 2 
 const hermione = () => draftWizard(createRng(1), WIZARD_BY_ID['hermione']!) // tier 3 — rare
 const seamus = () => draftWizard(createRng(1), WIZARD_BY_ID['seamus']!) // tier 4 — common
 
-describe('WizardCardColumn', () => {
+// WizardCardColumn è stato cancellato (Task 11): la densità "poster" ora è
+// WizardCard density="full". Il vecchio sistema di ornamenti PER TIER (corona
+// leggendaria/filigrana epica, testId tier-legendary-crown/tier-epic-filigree) è stato
+// sostituito — per design, Task 7 — da RarityPips: le stesse quattro tacche per ogni
+// tier, accese in proporzione alla rarità (vedi tests/cards/RarityPips.test.tsx).
+describe('WizardCard density="full" (poster layout)', () => {
   it('renders name, spell name, and the four stat labels', () => {
     const d = harry()
-    render(<WizardCardColumn drafted={d} testId="col-0" />)
+    render(<WizardCard drafted={d} density="full" testId="col-0" />)
     expect(screen.getByTestId('col-0')).toBeInTheDocument()
     expect(screen.getByText(displayName(d))).toBeInTheDocument()
-    // The spell name shows once, in the spell block (the ability plate now
-    // shows the wizard's Signature, a separate name, via abilityFor).
     expect(screen.getByText(d.spell.name)).toBeInTheDocument()
     for (const l of ['HP', 'ATT', 'DIF', 'VEL']) expect(screen.getByText(l)).toBeInTheDocument()
   })
+
   it('renders without the affiliation strip (removed per approved mockup)', () => {
-    render(<WizardCardColumn drafted={harry()} />)
+    render(<WizardCard drafted={harry()} density="full" />)
     expect(screen.queryByTestId('affiliation-strip')).toBeNull()
   })
+
   it('fires onClick when clicked', () => {
     const onClick = vi.fn()
-    render(<WizardCardColumn drafted={harry()} onClick={onClick} testId="col-0" />)
+    render(<WizardCard drafted={harry()} density="full" onClick={onClick} testId="col-0" />)
     screen.getByTestId('col-0').click()
     expect(onClick).toHaveBeenCalled()
   })
 
-  // Signature ornaments, ported from the approved mockup (.superpowers/design/rarity-borders.html):
-  // the T1 crown and T2 filigree flourishes must appear ONLY on their own tier — no bleed to others.
-  describe('tier ornaments', () => {
-    it('renders the legendary crown on tier 1 only', () => {
-      render(<WizardCardColumn drafted={harry()} testId="col-t1" />)
-      expect(screen.getByTestId('tier-legendary-crown')).toBeInTheDocument()
+  describe('rarity pips (replace the old per-tier crown/filigree)', () => {
+    it('lights all four pips for tier 1 (legendary)', () => {
+      render(<WizardCard drafted={harry()} density="full" />)
+      expect(document.querySelectorAll('[data-lit="true"]')).toHaveLength(4)
     })
-    it('renders the epic filigree on tier 2 only', () => {
-      render(<WizardCardColumn drafted={snape()} testId="col-t2" />)
-      expect(screen.getByTestId('tier-epic-filigree')).toBeInTheDocument()
+    it('lights one pip for tier 4 (common)', () => {
+      render(<WizardCard drafted={seamus()} density="full" />)
+      expect(document.querySelectorAll('[data-lit="true"]')).toHaveLength(1)
     })
-    it('omits the crown and filigree on tier 3 (rare)', () => {
-      render(<WizardCardColumn drafted={hermione()} testId="col-t3" />)
-      expect(screen.queryByTestId('tier-legendary-crown')).toBeNull()
-      expect(screen.queryByTestId('tier-epic-filigree')).toBeNull()
-    })
-    it('omits the crown and filigree on tier 4 (common)', () => {
-      render(<WizardCardColumn drafted={seamus()} testId="col-t4" />)
-      expect(screen.queryByTestId('tier-legendary-crown')).toBeNull()
-      expect(screen.queryByTestId('tier-epic-filigree')).toBeNull()
-    })
-    it('omits the filigree on tier 1 (no cross-tier bleed)', () => {
-      render(<WizardCardColumn drafted={harry()} testId="col-t1b" />)
-      expect(screen.queryByTestId('tier-epic-filigree')).toBeNull()
-    })
-    it('omits the crown on tier 2 (no cross-tier bleed)', () => {
-      render(<WizardCardColumn drafted={snape()} testId="col-t2b" />)
-      expect(screen.queryByTestId('tier-legendary-crown')).toBeNull()
+    it('lights a proportionate number of pips for tier 2 and tier 3', () => {
+      const { unmount } = render(<WizardCard drafted={snape()} density="full" />)
+      const t2 = document.querySelectorAll('[data-lit="true"]').length
+      unmount()
+      render(<WizardCard drafted={hermione()} density="full" />)
+      const t3 = document.querySelectorAll('[data-lit="true"]').length
+      expect(t2).toBeGreaterThan(t3)
+      expect(t3).toBeGreaterThan(1)
     })
   })
 })

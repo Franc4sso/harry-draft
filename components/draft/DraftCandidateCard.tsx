@@ -1,6 +1,6 @@
 'use client'
 import type { DraftedWizard } from '@/types'
-import { WizardCardColumn } from '@/components/cards/WizardCardColumn'
+import { WizardCard } from '@/components/cards/WizardCard'
 
 export function DraftCandidateCard({
   drafted, onPick, onConsider, testId,
@@ -12,7 +12,7 @@ export function DraftCandidateCard({
 }) {
   return (
     <div className="relative h-full w-full" onPointerEnter={onConsider} onFocus={onConsider} tabIndex={0}>
-      <WizardCardColumn drafted={drafted} onClick={onPick} testId={testId} />
+      <WizardCard drafted={drafted} density="full" portraitHeight="fill" onClick={onPick} testId={testId} />
     </div>
   )
 }

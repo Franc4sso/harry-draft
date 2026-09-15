@@ -1,23 +1,27 @@
 import { describe, it, expect } from 'vitest'
 import { render, screen } from '@testing-library/react'
-import { UnitBust } from '@/components/battle/UnitBust'
-import type { ReplayUnit } from '@/game/engine/combat/replay'
+import { WizardCard } from '@/components/cards/WizardCard'
+import type { DraftedWizard } from '@/types'
+import { draftWizard } from '@/game/engine/statRoll'
+import { createRng } from '@/game/engine/rng'
+import { WIZARD_BY_ID } from '@/data/wizards'
 
-const unit: ReplayUnit = {
-  key: 'left:harry', side: 'left', id: 'harry', name: 'Harry Potter',
-  house: 'Grifondoro', role: 'Attaccante', tier: 1, maxHp: 100,
-  atk: 50, def: 40, spd: 30, baseAtk: 50, baseDef: 40, baseSpd: 30, level: 1,
-  spell: { id: 'stupeficium', name: 'Stupeficium', cooldown: 1 },
-}
+// UnitBust è stato sostituito da WizardCard density="combat" (Task 11). Il livello ora
+// vive su `drafted.level` (non più su due prop separate `level`/`unit.level` con fallback):
+// BattleArena.toDrafted già lo passa da ReplayUnit.level, quindi un solo campo basta.
+const drafted = (level?: number): DraftedWizard => ({
+  ...draftWizard(createRng(1), WIZARD_BY_ID['harry']!),
+  level,
+})
 
-describe('UnitBust level badge', () => {
-  it('shows the passed unit level', () => {
-    render(<UnitBust unit={unit} hp={80} level={4} />)
+describe('WizardCard level badge (density combat)', () => {
+  it('shows the level carried on the drafted wizard', () => {
+    render(<WizardCard drafted={drafted(4)} density="combat" currentHp={80} />)
     expect(screen.getByText(/Lv\.?\s*4/i)).toBeInTheDocument()
   })
 
-  it('falls back to the unit own level when none is passed', () => {
-    render(<UnitBust unit={{ ...unit, level: 7 }} hp={80} />)
-    expect(screen.getByText(/Lv\.?\s*7/i)).toBeInTheDocument()
+  it('shows no level badge when the drafted wizard carries none (e.g. an enemy with no level assigned yet)', () => {
+    render(<WizardCard drafted={drafted(undefined)} density="combat" currentHp={80} />)
+    expect(screen.queryByTestId('card-level-badge')).toBeNull()
   })
 })
