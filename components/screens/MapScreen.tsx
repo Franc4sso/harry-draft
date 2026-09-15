@@ -7,6 +7,7 @@ import { Insegna } from '@/components/ui/Insegna'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { RoleIcon } from '@/components/cards/RoleIcon'
 import { displayName } from '@/lib/displayName'
+import { useAvailableHeight } from '@/hooks/useAvailableHeight'
 
 /** Floor index for any node id (area-scoped `a#f#n#` or legacy `f#n#`). */
 function floorOf(id: string): number {
@@ -84,6 +85,9 @@ function EnemyPreview({ node, accent, side }: { node: RunNode; accent: string; s
 
 // Layout grid: each floor is a row (entry at the bottom, boss at the top).
 const COL = 168, ROW = 148, NODE = 60, BOSS = 80
+/** Passo verticale minimo: sotto questo i nodi (NODE = 60) si toccherebbero e le
+ *  etichette diventerebbero illeggibili. Meglio scorrere che schiacciare oltre. */
+const ROW_MIN = 92
 // Headroom above the top floor so the boss node's above-node telegraph label
 // (`bottom-full`, always visible) doesn't overflow into the header title.
 const TOP_PAD = 44
@@ -103,6 +107,13 @@ export function MapScreen({
   noRecruits?: boolean
 }) {
   const reduce = useReducedMotion()
+  // Chiamato PRIMA di ogni return anticipato (regole dei hook). Misura lo spazio
+  // verticale reale del contenitore per adattare il passo fra i piani (vedi `row`).
+  const [scrollRef, containerH] = useAvailableHeight<HTMLDivElement>()
+  // Spazio netto per la sola griglia: tolti il padding del contenitore (p-6 sopra,
+  // pb-16 sotto = 24 + 64), l'header e il gap-5 che lo separa dalla mappa.
+  const CHROME = 24 + 64 + 96 + 20
+  const availH = containerH > 0 ? containerH - CHROME : 0
   const reachable = new Set(reachableIds)
   // Endless mode passes no `areasTotal` (the run is infinite): show `∞` for the total
   // rather than the old `?? 1` fallback, which rendered a nonsensical "Area 3 / 1".
@@ -124,13 +135,25 @@ export function MapScreen({
   const floors = Array.from({ length: maxFloor + 1 }, (_, f) => map.filter(n => floorOf(n.id) === f))
   const maxW = Math.max(1, ...floors.map(fl => fl.length))
   const width = maxW * COL
-  const height = (maxFloor + 1) * ROW + TOP_PAD
+
+  // Passo verticale ADATTIVO. A passo fisso (ROW = 148) cinque piani occupano ~784px
+  // che, con header e padding, sforano un portatile: l'ultima fila — i nodi
+  // SELEZIONABILI — finiva sotto il bordo e bisognava scorrere per vedere le proprie
+  // mosse (misurato: 1 nodo tagliato a 1366x768, 1280x800 e 1536x864).
+  // Quando lo spazio misurato non basta, il passo si contrae fino a ROW_MIN; sotto
+  // quella soglia i nodi si toccherebbero, quindi si torna a scorrere. `availH === 0`
+  // significa "non ancora misurato" (primo paint / SSR) → passo pieno.
+  const rows = maxFloor + 1
+  const row = availH > 0
+    ? Math.max(ROW_MIN, Math.min(ROW, (availH - TOP_PAD) / rows))
+    : ROW
+  const height = rows * row + TOP_PAD
 
   // Node centres: x spread evenly across the floor, y by floor (floor 0 at the bottom).
   const pos = new Map<string, { x: number; y: number }>()
   floors.forEach((nodes, f) => {
     nodes.forEach((n, i) => {
-      pos.set(n.id, { x: (width * (i + 1)) / (nodes.length + 1), y: (maxFloor - f) * ROW + ROW / 2 + TOP_PAD })
+      pos.set(n.id, { x: (width * (i + 1)) / (nodes.length + 1), y: (maxFloor - f) * row + row / 2 + TOP_PAD })
     })
   })
 
@@ -151,6 +174,7 @@ export function MapScreen({
 
   return (
     <div
+      ref={scrollRef}
       className="relative flex-1 flex flex-col items-center gap-5 overflow-auto p-6 pb-16 [scrollbar-gutter:stable]"
       style={{ background: 'radial-gradient(130% 80% at 50% -12%, #1b1436 0%, #100c20 52%, #09070f 100%)' }}
     >

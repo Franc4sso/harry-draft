@@ -132,13 +132,19 @@ export function RunBRunner({
   // larger LEFT sidebar beside the screen content, so the player can read their wizards
   // and relics while choosing a path / recruit / relic. Battle and the end screens
   // don't use it (battle shows relics in-fight).
+  // `h-[100dvh]` + `min-h-0`: senza un'altezza VINCOLATA in questa catena, il
+  // contenitore cresceva col contenuto (misurato: clientHeight 918px su un viewport
+  // da 768) e l'`overflow-auto` della mappa non aveva alcun limite entro cui
+  // scorrere — l'ultima fila di nodi, quella selezionabile, finiva sotto il bordo.
+  // `min-h-0` è necessario perché un figlio flex ha `min-height:auto` e si
+  // rifiuterebbe di rimpicciolirsi sotto il proprio contenuto, annullando il vincolo.
   const withTeamSidebar = (content: ReactNode) => (
-    <div className="flex-1 flex flex-row items-start gap-4 p-3">
+    <div className="flex h-[100dvh] min-h-0 flex-row items-stretch gap-4 p-3">
       <motion.aside
         initial={reduce ? false : { opacity: 0, x: -18 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
-        className="sticky top-3 flex w-72 shrink-0 flex-col gap-3"
+        className="flex w-72 shrink-0 flex-col gap-3 overflow-y-auto [scrollbar-gutter:stable]"
       >
         <TeamSynergyBar
           team={c.run.team}
@@ -150,7 +156,9 @@ export function RunBRunner({
           <RelicBar relics={c.run.relics} className="mt-2" onUse={c.useConsumableRelic} team={c.run.team} />
         </Frame>
       </motion.aside>
-      <div className="min-w-0 flex-1">{content}</div>
+      {/* `min-h-0` anche qui: senza, questa colonna non si rimpicciolisce sotto il
+          proprio contenuto e il vincolo d'altezza del padre non arriva alla mappa. */}
+      <div className="flex min-h-0 min-w-0 flex-1 flex-col">{content}</div>
     </div>
   )
 
