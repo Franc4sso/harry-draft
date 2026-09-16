@@ -14,14 +14,18 @@ const unit = (over: Partial<ReplayUnit> = {}): ReplayUnit => ({
 // Il describe "UnitBust: lampo SALTA" che testava UnitBust direttamente è stato rimosso
 // (Task 11 — UnitBust cancellato): il lampo SALTA vive ora SOLO dentro BattleArena (mai
 // più su una card isolata), quindi la copertura sotto — che già passava per BattleArena —
-// è l'unica che resta, ed è invariata.
+// è l'unica che resta, ed è invariata nel suo principio.
 //
-// 2026-09-16 (Task 3, "il palco"): la card WizardCard density="combat" (`battle-unit`) è
-// sparita — chi salta il turno è ora il Duellante grande (l'unità che salta È l'attore di
-// questo frame, quindi resta in scena, ora smorzata solo se non stesse agendo). Il lampo
-// SALTA è un fratello del Duellante nel suo slot di scena (`stage-attore`), non un
-// discendente (Duellante non accetta children) — stessa forma già adottata per
-// `damage-float` nel resto della suite.
+// 2026-09-16 (Task 5, "la scena, composta"): lo stage a due Duellante grandi (Task 3) è
+// stato respinto dall'utente a schermo — "fa totalmente schifo" — e sostituito da dieci
+// CartaCombat complete e uguali, in due file. Non esistono più gli slot `stage-attore`/
+// `stage-bersaglio` (erano wrapper posizionati assolutamente per i due duellanti); ogni
+// unità — inclusa quella che salta — è ora semplicemente una `carta-combat` nella sua riga,
+// col lampo SALTA come fratello DENTRO il wrapper `relative` che BattleArena crea per ogni
+// carta (vedi `renderRow` in BattleArena.tsx: `<div key={u.key} className="relative">` col
+// ribbon, la CartaCombat, e il flash SALTA tutti come fratelli). Questa riscrittura sostituisce
+// la query sullo slot di scena con una query sul wrapper della carta stessa, individuata da
+// `data-unit-key`.
 describe('BattleArena: un frame Stordito salta il turno senza accendere acting', () => {
   const entry = (over: Partial<LogEntry> = {}): LogEntry => ({
     turn: 1, actorId: 'x', actorSide: 'left', action: 'Colpo', targetId: 'foe', targetSide: 'right',
@@ -46,14 +50,15 @@ describe('BattleArena: un frame Stordito salta il turno senza accendere acting',
   it('mostra SALTA sull\'unità e NON la fa sembrare in azione', () => {
     render(<BattleArena replay={replay} hp={hp} entry={stordito} frameKey={1} />)
     // L'unità che salta è l'attore di questo frame (Stordito porta il suo `actorSide`),
-    // quindi resta in scena come duellante — nello slot "attore". Nessuna aura "sta
-    // agendo" si accende (quella arriva dalla motion class fx-strike, assente qui: lo
-    // Stordito non produce un colpo, produce lo shiver+SALTA).
-    const actorSlot = screen.getByTestId('stage-attore')
-    const skipper = actorSlot.querySelector('[data-testid="duellante"][data-unit-key="left:x"]')
+    // quindi porta il ribbon ◆ LANCIA e la cornice dorata "attore" sulla sua carta. Nessuna
+    // motion class fx-strike si accende (lo Stordito non produce un colpo, produce lo
+    // shiver+SALTA).
+    const skipper = document.querySelector('[data-testid="carta-combat"][data-unit-key="left:x"]') as HTMLElement
     expect(skipper).not.toBeNull()
     expect(skipper).not.toHaveClass('fx-strike')
-    const flash = actorSlot.querySelector('[data-skipping]')
+    expect(skipper.getAttribute('data-ruolo')).toBe('attore')
+    const wrapper = skipper.closest('.relative') as HTMLElement
+    const flash = wrapper.querySelector('[data-skipping]')
     expect(flash).toHaveAttribute('data-skipping', 'stun')
     expect(flash).toHaveTextContent(/salta/i)
   })

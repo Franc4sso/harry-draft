@@ -341,52 +341,53 @@ describe('ShieldFx', () => {
   })
 })
 
+// jsdom's `getBoundingClientRect` always returns an all-zero DOMRect. `BattleArena`'s
+// `struckBox` measurement (feeding `ColpoSullaCarta`) explicitly bails to `null` when the
+// STAGE's own measured width is 0 (`if (f.width === 0 || f.height === 0) { setStruckBox(null)
+// ... }` — see BattleArena.tsx), since a zero-width frame can't scale coordinates
+// meaningfully. Under bare jsdom that guard ALWAYS fires, so `colpo` never renders in any
+// test that doesn't stub non-zero rects — this is a jsdom layout limitation, not a component
+// bug (same limitation the pre-Task-5 SceneFx tests already worked around, see the box-stub
+// test below). A minimal non-zero stage rect (any target-card rect nested inside it) is
+// enough to let the real measurement code path run.
+function stubNonZeroRects() {
+  const orig = Element.prototype.getBoundingClientRect
+  vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+    const isStage = this.getAttribute('data-testid') === 'stage'
+    const r = isStage ? { top: 0, left: 0, width: 1366, height: 768 } : { top: 46, left: 250, width: 212, height: 254 }
+    return { ...r, right: r.left + r.width, bottom: r.top + r.height, x: r.left, y: r.top, toJSON() { return this } } as DOMRect
+  })
+  return () => {
+    vi.mocked(Element.prototype.getBoundingClientRect).mockRestore()
+    expect(Element.prototype.getBoundingClientRect).toBe(orig)
+  }
+}
+
 describe('BattleArena', () => {
-  // 2026-09-16 (Task 3, "il palco"): la scena non è più sei/dieci carte uguali in due file
-  // — il mockup approvato ("La corsia del tempo" v11) mette in primo piano chi agisce e chi
-  // subisce come due Duellante grandi al centro, e relega TUTTI gli altri (compresi i due in
-  // scena, smorzati — `dimmed`, il posto non scompare mai) a Miniatura laterali. Questo test
-  // sostituisce l'assert sulle dieci `battle-unit` (5+5 WizardCard density="combat" in due
-  // file) col conteggio della nuova composizione: sempre due duellanti, e una miniatura per
-  // OGNI unità del roster (qui 5v5 = 10, non le sei del mockup che usa un 3v3 d'esempio —
-  // il principio «ogni unità ha sempre il suo posto in miniatura» vale a qualunque taglia
-  // di squadra, la miniatura dei due in scena resta e basta smorzarsi).
-  it('la scena mette i due duellanti al centro e tutte le altre unità di lato in miniatura', () => {
+  // 2026-09-16 (Task 5, "la scena, composta"): la scena dei due Duellante grandi + Miniature
+  // laterali (Task 3, "il palco") e' stata RESPINTA dall'utente a schermo -- "fa totalmente
+  // schifo" -- perche' con cinque maghi per lato "in modalita' teatro" il campo si perdeva. La
+  // composizione torna a dieci CartaCombat complete e della stessa taglia, in due file da
+  // cinque (nemici sopra, alleati sotto), col nastro dei sigilli al centro. Questo sostituisce
+  // l'assert "2 duellanti + N miniature" con quello letterale del nuovo piano: tutte le carte,
+  // mai solo due.
+  it('la scena mostra tutte e dieci le carte, mai solo due', () => {
     const l = left(), r = right()
     const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
     const firstReal = replay.frames.findIndex(f => f.entry && f.entry.type !== 'system' && f.entry.actorSide)
     render(<BattleArena replay={replay} hp={replay.frames[firstReal]!.hp} entry={replay.frames[firstReal]!.entry} frameKey={firstReal} />)
-    expect(screen.getAllByTestId('duellante')).toHaveLength(2)
-    expect(screen.getAllByTestId('miniatura')).toHaveLength(replay.units.length)
+    expect(screen.getAllByTestId('carta-combat')).toHaveLength(replay.units.length)
+    expect(screen.queryAllByTestId('duellante')).toHaveLength(0)
+    expect(screen.queryAllByTestId('miniatura')).toHaveLength(0)
   })
 
-  // Un tick di veleno o un Duo non hanno attore/bersaglio propri (system frame): i due
-  // duellanti restano quelli dell'ultima azione vera (lastRealEntryAt), come già fa la
-  // corsia dei turni — la scena non si svuota mai.
-  //
-  // FIX ROUND 1 (review): la versione precedente pescava un frame di sistema dal replay
-  // REALE (simulateBattle + buildReplay su 5v5) filtrando su `f.entry.type === 'system' ||
-  // !f.entry.actorSide` — ma nella fixture di questa suite il primo frame di sistema
-  // trovato (`Reliquia`, turno 1) porta COMUNQUE `actorSide`/`targetSide` propri (è un
-  // drop di reliquia auto-diretto: attore e bersaglio sono la stessa unità). Con
-  // `entry.actorSide` sempre presente, `stageActorSrc`/`stageTargetSrc` in BattleArena non
-  // ricadono MAI su `lastRealEntryAt` — il ramo di fallback non veniva mai esercitato, e
-  // il test passava per un motivo che non aveva nulla a che fare con l'assert (2 duellanti
-  // erano già lì perché il frame aveva il suo proprio attore/bersaglio, non perché il
-  // fallback avesse recuperato l'ultima azione vera). Prova diretta: ho tolto il fallback
-  // (`stageActorSrc = entry?.actorSide ? entry : null`, stesso per il target) e rilanciato
-  // `tests/ui/battle.test.tsx tests/ui/skipTurn.test.tsx tests/ui/poisonTick.test.tsx`:
-  // 40/40 verdi. Il replay 5v5 di questa fixture non ha NESSUN frame senza `actorSide` —
-  // nessun seed lo produce.
-  //
-  // Questa riscrittura costruisce a mano (stesso pattern di tests/ui/skipTurn.test.tsx) un
-  // replay minimo con un frame REALMENTE privo di attore/bersaglio (un tick di veleno
-  // generico, senza `actorSide` né `targetSide` — il caso che il brief cita alla lettera:
-  // «veleno, Duo» senza attore/bersaglio propri) e prova non solo che restano 2 duellanti,
-  // ma che sono ESATTAMENTE quelli dell'ultima azione vera (harry attore, foe bersaglio),
-  // non una coppia qualunque. Rilanciata la stessa falsificazione contro QUESTA versione:
-  // togliendo il fallback il test va rosso (vedi task-3-report.md per l'evidenza completa).
-  it('sui frame di sistema senza attore/bersaglio propri la scena tiene l\'ultima azione vera', () => {
+  // Un tick di veleno o un Duo non hanno attore/bersaglio propri (system frame): il ribbon
+  // LANCIA/COLPITA e la cornice ruolo restano su chi ha compiuto l'ultima azione vera
+  // (lastRealEntryAt), come gia' fa la corsia dei turni -- il ruolo non si spegne mai a meta'
+  // battaglia. Stessa fixture minima (costruita a mano, non dal motore reale -- nessun seed
+  // 5v5 produce un frame senza NE' actorSide NE' targetSide) gia' usata prima del Task 3 per
+  // falsificare la stessa proprieta'; qui l'assert e' sulle carte, non sui duellanti.
+  it('sui frame di sistema senza attore/bersaglio propri il ruolo tiene l\'ultima azione vera', () => {
     const attacker = (): ReplayUnit => ({
       key: 'left:x', id: 'x', name: 'X', side: 'left', house: 'Grifondoro', role: 'Attaccante', tier: 3,
       maxHp: 100, atk: 10, def: 10, spd: 10, baseAtk: 10, baseDef: 10, baseSpd: 10,
@@ -401,12 +402,6 @@ describe('BattleArena', () => {
       turn: 1, actorId: 'x', actorSide: 'left', action: 'Colpo', targetId: 'foe', targetSide: 'right',
       type: 'Attacco', value: 10, flags: [],
     }
-    // Un tick di veleno "generico" senza actorSide NÉ targetSide — il caso letterale del
-    // commento nel codice sorgente: nessun attore che sta agendo, nessun bersaglio scelto
-    // questo frame, solo danno passivo sull'unità colpita. `buildReplay`/il motore reale
-    // producono sempre un `targetSide` sui tick di veleno (leggono l'attaccante/bersaglio
-    // di quel DoT specifico) — questa è la forma "senza nessuno dei due" che il fallback
-    // deve coprire, e che nessuna battaglia reale in questa fixture emette.
     const poisonTick: LogEntry = {
       turn: 1, actorId: '', action: 'Veleno', targetId: '', type: 'system', value: 4, flags: ['dot'],
     }
@@ -418,18 +413,16 @@ describe('BattleArena', () => {
         { statusEffects: {}, cooldowns: {}, entry: poisonTick, hp: { 'left:x': 96, 'right:foe': 90 } },
       ],
     } as unknown as Replay
-    // Sanity: il frame di sistema che stiamo per rendere davvero non ha né actorSide né
-    // targetSide — altrimenti staremmo ripetendo lo stesso errore appena diagnosticato.
     expect(poisonTick.actorSide).toBeUndefined()
     expect(poisonTick.targetSide).toBeUndefined()
 
     render(<BattleArena replay={replay} hp={replay.frames[2]!.hp} entry={poisonTick} frameKey={2} />)
-    const duellanti = screen.getAllByTestId('duellante')
-    expect(duellanti).toHaveLength(2)
-    // Non una coppia qualunque: quella dell'ultima azione vera (frame 1 — harry-equivalente
-    // attore, foe bersaglio), recuperata da lastRealEntryAt.
-    const keys = duellanti.map(el => el.getAttribute('data-unit-key')).sort()
-    expect(keys).toEqual(['left:x', 'right:foe'])
+    const actorCard = document.querySelector('[data-testid="carta-combat"][data-unit-key="left:x"]') as HTMLElement
+    const targetCard = document.querySelector('[data-testid="carta-combat"][data-unit-key="right:foe"]') as HTMLElement
+    expect(actorCard.getAttribute('data-ruolo')).toBe('attore')
+    expect(targetCard.getAttribute('data-ruolo')).toBe('bersaglio')
+    expect(screen.getByText('◆ LANCIA')).toBeInTheDocument()
+    expect(screen.getByText('✖ COLPITA')).toBeInTheDocument()
   })
 
   it('no longer renders the legacy DOM Protego dome (block reaction moved to the Pixi VFX layer)', () => {
@@ -443,46 +436,41 @@ describe('BattleArena', () => {
     expect(screen.queryByTestId('shield-fx')).toBeNull()
   })
 
-  // Task 10 (superseded) asserted a WizardCard density="combat" bust. Task 3 (il palco)
-  // replaced the two-row card grid with the stage: `data-unit-key` now appears TWICE for
-  // a unit on stage (its big Duellante AND its dimmed side Miniatura) — a bare
-  // `document.querySelector` would silently resolve to whichever mounts first. This test
-  // now asserts the composition's own guard: the duellante-preferring selector
-  // (`[data-testid="duellante"][data-unit-key=...]`, same one BattleArena/PixiArena use
-  // to anchor VFX) resolves to the duellante for a unit that's on stage as the actor,
-  // while the plain `[data-unit-key]` selector still finds A match (proving the key isn't
-  // just missing) — the point being WHICH element it must prefer, not merely that it's
-  // findable, since that ambiguity is exactly what would misplace an effect onto the
-  // 84×104 miniature instead of the 420×376 duellante.
-  it('renders the dotted unit keyed for VFX targeting, resolving to its duellante (not its miniature)', () => {
+  // Task 3 ("il palco") asserted a duellante-preferring selector because `data-unit-key`
+  // appeared twice per staged unit (its Duellante + its dimmed Miniatura). Task 5 ("la
+  // scena, composta") removes the second copy entirely: every unit is now ONE CartaCombat,
+  // so `data-unit-key` appears exactly ONCE per unit regardless of role. This rewrite drops
+  // the "prefers duellante" assertion (the ambiguity it guarded no longer exists) and checks
+  // what replaces it: a single, unambiguous match.
+  it('keys each unit for VFX targeting with a single unambiguous carta-combat match', () => {
     const l = left(), r = right()
     const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
-    // Inject a real dot effect on harry into a frame's statusEffects (the engine path).
     const dotted = unitKey('left', 'harry')
     replay.frames[1]!.statusEffects = { [dotted]: [{ kind: 'dot', statusId: 'veleno', amount: 6, remaining: 2, stacks: 2 }] }
     render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={replay.frames[1]!.entry} frameKey={1} />)
     const anyMatch = document.querySelectorAll(`[data-unit-key="${CSS.escape(dotted)}"]`)
-    expect(anyMatch.length).toBe(2) // duellante + miniatura, same key
-    const preferred = document.querySelector(`[data-testid="duellante"][data-unit-key="${CSS.escape(dotted)}"]`) as HTMLElement
-    expect(preferred).not.toBeNull()
-    expect(preferred.getAttribute('data-testid')).toBe('duellante')
+    expect(anyMatch.length).toBe(1)
+    expect(anyMatch[0]!.getAttribute('data-testid')).toBe('carta-combat')
   })
 
-  // Le pillole erano sparite col rifacimento (UnitBust le aveva, WizardCard no):
-  // dal frame dopo l'applicazione non si sapeva più che un mago era avvelenato.
+  // Le pillole erano sparite col rifacimento pre-Task-3 (UnitBust le aveva, WizardCard no).
+  // Task 5: CartaCombat le somma per famiglia tramite lib/battleStacks (`pilloleDi`) col
+  // proprio testid `carta-pillola` -- non piu' `status-pip` (quello resta lo StatusPips
+  // standalone, che BattleArena non monta piu').
   it('mostra gli stati attivi sulle unità in battaglia', () => {
     const l = left(), r = right()
     const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
     const poisoned = unitKey('left', 'harry')
     replay.frames[1]!.statusEffects = { [poisoned]: [{ kind: 'dot', statusId: 'veleno', amount: 6, remaining: 2, stacks: 3 }] }
     render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={replay.frames[1]!.entry} frameKey={1} />)
-    expect(screen.getAllByTestId('status-pip').length).toBeGreaterThanOrEqual(1)
+    expect(screen.getAllByTestId('carta-pillola').length).toBeGreaterThanOrEqual(1)
   })
 
-  // Fix round 1 (review): asymmetric — actor gets fx-strike, target gets fx-kick — so a
-  // swapped actor/target wiring in BattleArena's cardMotion fails this test. sceneEventOf
-  // reads its scene from replay.frames[frameKey].entry, NOT the `entry` prop, so the frame's
-  // own entry has to carry the plain hit (no flags → SceneKind 'hit' per lib/battleScene.ts).
+  // Fix round 1 (Task 3 review): asymmetric -- actor gets fx-strike, target gets fx-kick -- so
+  // a swapped actor/target wiring in BattleArena's cardMotion fails this test. Still true
+  // against the new scene: the motion class lands on the CartaCombat's own root className
+  // (merged via `cn`), not a wrapper -- only the selector changed (carta-combat, not
+  // duellante), since `data-unit-key` is no longer ambiguous (one card per unit, see above).
   it('applies fx-strike to the actor and fx-kick to the target on a plain hit', () => {
     const l = left(), r = right()
     const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
@@ -494,29 +482,19 @@ describe('BattleArena', () => {
     }
     replay.frames[1]!.entry = hit
     render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={hit} frameKey={1} />)
-    // The motion class lands directly on the duellante's OWN root className (merged via
-    // `cn`, not a wrapper around it — see BattleArena's renderDuellante), so the check is
-    // against the element's own class list, not a descendant. Same duellante-preferring
-    // selector as BattleArena/PixiArena's own VFX box lookup, since a bare `[data-unit-key]`
-    // selector is now ambiguous (duellante + dimmed miniature share it).
-    const actorEl = document.querySelector(`[data-testid="duellante"][data-unit-key="${CSS.escape(actorKey)}"]`) as HTMLElement
-    const targetEl = document.querySelector(`[data-testid="duellante"][data-unit-key="${CSS.escape(targetKey)}"]`) as HTMLElement
+    const actorEl = document.querySelector(`[data-testid="carta-combat"][data-unit-key="${CSS.escape(actorKey)}"]`) as HTMLElement
+    const targetEl = document.querySelector(`[data-testid="carta-combat"][data-unit-key="${CSS.escape(targetKey)}"]`) as HTMLElement
     expect(actorEl.classList.contains('fx-strike')).toBe(true)
     expect(actorEl.classList.contains('fx-kick')).toBe(false)
     expect(targetEl.classList.contains('fx-kick')).toBe(true)
     expect(targetEl.classList.contains('fx-strike')).toBe(false)
   })
 
-  // Fix round 1 (review): proves prevFrame is really `replay.frames[frameKey - 1]` and not a
-  // stand-in (same frame twice, or unconditionally undefined). `gained`/`lost` (the ONLY thing
-  // `prev` affects inside sceneEventOf — see lib/battleScene.ts's diffStatuses) aren't rendered
-  // anywhere yet in BattleArena/SceneFx, so there is no current DOM signal that depends on the
-  // diff's CONTENT. What's still real and composition-level to guard is the WIRING: BattleArena
-  // must call sceneEventOf with the frame at frameKey-1, not with the same frame, not with
-  // undefined. Spying on the real (unmocked) sceneEventOf and inspecting its actual call
-  // arguments catches exactly the two ways the reviewer named: "prevFrame passed as frame" and
-  // "prevFrame dropped to undefined unconditionally" — both are wrong-argument bugs a
-  // presence-only pip assertion could never see.
+  // Fix round 1 (Task 3 review): proves prevFrame is really `replay.frames[frameKey - 1]` and
+  // not a stand-in. Still exercised the same way post-Task-5: BattleArena still computes
+  // `sceneEvent` from `sceneEventOf(frame, prevFrame)` to feed ColpoSullaCarta and the motion
+  // classes -- only the DOWNSTREAM consumer of that scene changed (ColpoSullaCarta instead of
+  // SceneFx), not the wiring this test guards.
   it('calls sceneEventOf with the PREVIOUS frame, not the current one or none', async () => {
     const battleScene = await import('@/lib/battleScene')
     const spy = vi.spyOn(battleScene, 'sceneEventOf')
@@ -531,27 +509,67 @@ describe('BattleArena', () => {
     spy.mockRestore()
   })
 
-  // Fix round 1 (review): SceneFx must actually mount and draw through BattleArena's wiring,
-  // not just in its own isolated unit tests (Task 4).
-  it('renders SceneFx\'s number/word through the arena for a real hit frame', () => {
-    const l = left(), r = right()
-    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
-    const hit: LogEntry = {
-      turn: 1, actorId: 'harry', actorSide: 'left', action: 'Stupeficium',
-      targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 37, flags: [],
+  // Fix round 1 (Task 3 review) asserted SceneFx's number/word mounted through BattleArena's
+  // own wiring, not just its isolated unit tests. Task 4 replaced SceneFx's number/word layer
+  // with ColpoSullaCarta (anchored to the struck CARD's own box, not a free-floating
+  // position) -- BattleArena no longer mounts SceneFx at all (`scene-fx`/`fx-number` are gone
+  // from its output). This rewrite asserts the successor: `colpo`/`colpo-numero` render
+  // through the arena for a real hit frame, with the actual number.
+  it('renders ColpoSullaCarta\'s number through the arena for a real hit frame', () => {
+    const restore = stubNonZeroRects()
+    try {
+      const l = left(), r = right()
+      const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+      const hit: LogEntry = {
+        turn: 1, actorId: 'harry', actorSide: 'left', action: 'Stupeficium',
+        targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 37, flags: [],
+      }
+      replay.frames[1]!.entry = hit
+      render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={hit} frameKey={1} />)
+      expect(screen.getByTestId('colpo')).toBeInTheDocument()
+      expect(screen.getByTestId('colpo-numero')).toHaveTextContent('37')
+    } finally {
+      restore()
     }
-    replay.frames[1]!.entry = hit
-    render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={hit} frameKey={1} />)
-    expect(screen.getByTestId('scene-fx')).toBeInTheDocument()
-    expect(screen.getByTestId('fx-number')).toHaveTextContent('37')
   })
 
-  // Fix round 1 (review): the box-measurement path (getBoundingClientRect + CSS.escape)
-  // resolves to the correct unit, not just "doesn't crash". jsdom returns a zero DOMRect
-  // (not null) for any mounted element, so actorBox/targetBox are non-null here — this checks
-  // SceneFx actually receives a box (the fixed-position number is only positioned via
-  // numberBox when one is passed; see SceneFx.tsx's `style={numberBox ? {...} : undefined}`).
-  it('measures a real box for the targeted unit and feeds it to the fx number position', () => {
+  // Fix round 1 (Task 3 review) checked SceneFx actually received a resolved (non-null) box
+  // via a `position: fixed` inline-style tell. ColpoSullaCarta's box contract is different (a
+  // plain `{x,y,w,h}` in FRAME coordinates, not a DOMRect prop) -- it positions itself with
+  // `left`/`top` numeric pixel styles derived from that box's center, always inline. This
+  // rewrite checks the successor signal: the rendered `left`/`top` are real finite numbers,
+  // i.e. `struckBox` resolved to the actual struck card rather than staying null (which would
+  // make ColpoSullaCarta return null entirely -- see its own `if (!box) return null`).
+  it('measures a real box for the targeted card and feeds it to the colpo position', () => {
+    const restore = stubNonZeroRects()
+    try {
+      const l = left(), r = right()
+      const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+      const hit: LogEntry = {
+        turn: 1, actorId: 'harry', actorSide: 'left', action: 'Stupeficium',
+        targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 20, flags: [],
+      }
+      replay.frames[1]!.entry = hit
+      render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={hit} frameKey={1} />)
+      const colpo = screen.getByTestId('colpo')
+      expect(colpo.style.left).not.toBe('')
+      expect(colpo.style.top).not.toBe('')
+      expect(Number.isFinite(parseFloat(colpo.style.left))).toBe(true)
+      expect(Number.isFinite(parseFloat(colpo.style.top))).toBe(true)
+    } finally {
+      restore()
+    }
+  })
+
+  // FIX ROUND 1 (Task 3 review) stubbed getBoundingClientRect per-element (duellante vs
+  // miniature) to prove BattleArena's box measurement actually PREFERS the right element, not
+  // merely that it doesn't crash. Task 5's `struckBox` is a DIFFERENT measurement (the struck
+  // CARD's own rect, converted into frame coordinates via the stage's own rect), but the same
+  // failure mode is possible: silently measuring the wrong element, or a stale one. This
+  // rewrite stubs the stage frame and the target card to distinct, known rects and asserts the
+  // resulting `colpo` position reflects THAT ratio -- falsified the same way as before:
+  // swapping which rect id the card reads (target vs a bystander) turns this red.
+  it('the measured colpo position is derived from the struck card\'s own rect within the frame', () => {
     const l = left(), r = right()
     const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
     const hit: LogEntry = {
@@ -559,95 +577,82 @@ describe('BattleArena', () => {
       targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 20, flags: [],
     }
     replay.frames[1]!.entry = hit
-    render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={hit} frameKey={1} />)
-    const num = screen.getByTestId('fx-number')
-    // A resolved (non-null) box makes SceneFx set `position: fixed` inline; an unresolved
-    // (null) box leaves the element with no inline position style at all.
-    expect(num.style.position).toBe('fixed')
-  })
+    const targetKey = unitKey('right', 'draco')
 
-  // FIX ROUND 1 (review): the previous suite proved the duellante-preferring selector
-  // resolves correctly WHEN CALLED DIRECTLY (in the tests' own queries) but never asserted
-  // that BattleArena/PixiArena actually USE that selector internally. Direct falsification:
-  // replacing BattleArena's `boxOf` with a bare `document.querySelector('[data-unit-key=…]')`
-  // (dropping the `[data-testid="duellante"]` preference) still passed 377/378 of
-  // `tests/ui tests/battle` — nothing caught the regression. jsdom's `getBoundingClientRect`
-  // returns the same zero-rect for every element, which is exactly why: a test can't tell
-  // "measured the duellante" from "measured the miniature" by value unless the two elements
-  // are made to report DIFFERENT rects. This test stubs `getBoundingClientRect` per-element
-  // (keyed on whether it's the duellante) and asserts the box SceneFx actually receives
-  // matches the duellante's stub, not the miniature's — so dropping the preference makes the
-  // received box wrong, not merely present. Falsified the same way as Critical 1 (see
-  // task-3-report.md for the evidence): reverting `boxOf` to a bare selector turns this red.
-  it('the measured box for a staged unit belongs to its duellante (420×376), not its miniature (84×104)', () => {
-    const l = left(), r = right()
-    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
-    const hit: LogEntry = {
-      turn: 1, actorId: 'harry', actorSide: 'left', action: 'Stupeficium',
-      targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 20, flags: [],
-    }
-    replay.frames[1]!.entry = hit
-
-    const DUELLANTE_RECT = { top: 84, left: 778, width: 420, height: 376 }
-    const MINIATURA_RECT = { top: 62, left: 1264, width: 84, height: 104 }
+    const FRAME_RECT = { top: 0, left: 0, width: 1366, height: 768 }
+    const CARD_RECT = { top: 46, left: 250, width: 212, height: 254 }
     const orig = Element.prototype.getBoundingClientRect
     const spy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
-      const isDuellante = this.getAttribute('data-testid') === 'duellante'
-      const r = isDuellante ? DUELLANTE_RECT : MINIATURA_RECT
+      const isStage = this.getAttribute('data-testid') === 'stage'
+      const isTargetCard = this.getAttribute('data-testid') === 'carta-combat'
+        && this.getAttribute('data-unit-key') === targetKey
+      const r = isStage ? FRAME_RECT : isTargetCard ? CARD_RECT : { top: 900, left: 900, width: 1, height: 1 }
       return { ...r, right: r.left + r.width, bottom: r.top + r.height, x: r.left, y: r.top, toJSON() { return this } } as DOMRect
     })
 
     try {
       render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={hit} frameKey={1} />)
-      const num = screen.getByTestId('fx-number')
-      // SceneFx positions the number at `numberBox.left + numberBox.width / 2`. If the
-      // duellante's box won, this is 778 + 210 = 988; if the miniature's box won instead
-      // (the regression this test catches), it would be 1264 + 42 = 1306.
-      expect(num.style.left).toBe('988px')
-      expect(num.style.top).toBe('84px')
+      const colpo = screen.getByTestId('colpo')
+      // ColpoSullaCarta centers on the box: left = clamp(box.x + box.w/2, 80, 1286).
+      // box.x/box.w come straight from CARD_RECT (scale 1366/1366 = 1): center = 250+106=356.
+      expect(colpo.style.left).toBe('356px')
+      // top = box.y + box.h/2 = 46 + 127 = 173.
+      expect(colpo.style.top).toBe('173px')
     } finally {
       spy.mockRestore()
       expect(Element.prototype.getBoundingClientRect).toBe(orig)
     }
   })
 
-  it('shows the damage float only on the targeted bust, not on every unit', () => {
-    const l = left(), r = right()
-    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
-    const targetKey = unitKey('right', 'draco')
-    const e: LogEntry = {
-      turn: 1, actorId: 'harry', actorSide: 'left', action: 'Stupeficium',
-      targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 42, flags: [],
+  // Task 3 asserted the damage float rendered only inside the target's stage slot. Task 5
+  // removed `damageFloat`/`floatFor` from BattleArena entirely -- the struck number now lives
+  // exclusively on ColpoSullaCarta, anchored to the struck card itself. This rewrite checks
+  // the successor guard: exactly one `colpo` for the hit, and no legacy per-card float.
+  it('shows exactly one colpo for the hit, not one per card', () => {
+    const restore = stubNonZeroRects()
+    try {
+      const l = left(), r = right()
+      const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+      const e: LogEntry = {
+        turn: 1, actorId: 'harry', actorSide: 'left', action: 'Stupeficium',
+        targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 42, flags: [],
+      }
+      render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={e} frameKey={1} />)
+      expect(document.querySelectorAll('[data-testid="colpo"]')).toHaveLength(1)
+      expect(document.querySelectorAll('[data-testid="damage-float"]')).toHaveLength(0)
+    } finally {
+      restore()
     }
-    render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={e} frameKey={1} />)
-    // Exactly one float, inside the "bersaglio" stage slot (the float only renders in the
-    // `role === 'bersaglio'` branch of BattleArena's renderDuellante, as a sibling of the
-    // Duellante inside that slot's own positioning wrapper — the miniature never gets one).
-    const floats = document.querySelectorAll('[data-testid="damage-float"]')
-    expect(floats.length).toBe(1)
-    const targetSlot = screen.getByTestId('stage-bersaglio')
-    const duellanteInSlot = targetSlot.querySelector(`[data-testid="duellante"][data-unit-key="${CSS.escape(targetKey)}"]`)
-    expect(duellanteInSlot).not.toBeNull()
-    expect(targetSlot.querySelector('[data-testid="damage-float"]')).not.toBeNull()
   })
 
-  // Task 10 asserted the unit's spell NAME still showed on its card (via SpellLine) even
-  // without a live cooldown countdown. Task 3 (il palco) removed that assertion's premise
-  // entirely: neither `Duellante` nor `Miniatura` renders a spell name or a cooldown row at
-  // all — that reading now lives in the ActionPanel/Callout/BattleLog, not on the unit's own
-  // portrait. What's still real and worth guarding here is that a cooldown on the frame
-  // doesn't break the unit's stage identity: it's still keyed and still resolves to its
-  // duellante (the frame's real actor) even while carrying a live cooldown map.
-  it('keeps the unit keyed to its duellante when the frame carries a cooldown', () => {
+  // Task 10 asserted the unit's spell NAME still showed on its card even without a live
+  // cooldown countdown. Task 3 removed that (neither Duellante nor Miniatura rendered it).
+  // Task 5's CartaCombat DOES render the spell name again (`cc-sp`, via the `spell` prop
+  // BattleArena feeds from SPELL_BY_ID) -- this rewrite restores that coverage AND keeps the
+  // Task 3 guard (a cooldown on the frame doesn't break the unit's card identity: still keyed,
+  // still resolves to exactly one carta-combat).
+  it('keeps the unit keyed to its single carta-combat when the frame carries a cooldown, spell name intact', () => {
     const l = left(), r = right()
     const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
     const key = unitKey('left', 'harry')
     const harry = replay.units.find(u => u.key === key)!
     replay.frames[1]!.cooldowns = { [key]: { [harry.spell.id]: 2 } }
     render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={replay.frames[1]!.entry} frameKey={1} />)
-    const bust = document.querySelector(`[data-testid="duellante"][data-unit-key="${CSS.escape(key)}"]`) as HTMLElement
-    expect(bust).not.toBeNull()
-    expect(bust.getAttribute('data-testid')).toBe('duellante')
+    const cards = document.querySelectorAll(`[data-testid="carta-combat"][data-unit-key="${CSS.escape(key)}"]`)
+    expect(cards).toHaveLength(1)
+    expect(cards[0]!.textContent).toContain(harry.spell.name)
+  })
+
+  // Task 5: il nastro dei sigilli sostituisce la corsia di iniziativa al centro della scena --
+  // qui si verifica solo che BattleArena lo monti davvero, non la sua logica interna (coperta
+  // da tests/battle/NastroSigilli.test.tsx).
+  it('monta il nastro dei sigilli al centro della scena', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    const firstReal = replay.frames.findIndex(f => f.entry && f.entry.type !== 'system' && f.entry.actorSide)
+    render(<BattleArena replay={replay} hp={replay.frames[firstReal]!.hp} entry={replay.frames[firstReal]!.entry} frameKey={firstReal} />)
+    expect(screen.getByTestId('nastro-sigilli')).toBeInTheDocument()
+    expect(screen.getAllByTestId('sigillo').length).toBeGreaterThanOrEqual(4)
   })
 })
 

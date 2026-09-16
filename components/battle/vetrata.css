@@ -296,6 +296,36 @@
 .carta-combat .cc-corner.bl { left: -1px; bottom: -1px; border-right: 0; border-top: 0; }
 .carta-combat .cc-corner.br { right: -1px; bottom: -1px; border-left: 0; border-top: 0; }
 
+/* ═══ IL RIBBON — chi lancia, chi è colpita (.tab nel mockup) ═══
+ * https://claude.ai/artifact/PNqfY2yLXxHiY4ziu6QsUq, Variante B (Vetrata): `.tab` siede a
+ * cavallo del bordo alto della carta (top:-9px), centrato. Minor deferred dal Task 2: la
+ * cornice incisa dice "questa carta conta", il ribbon dice "questa sta colpendo quella" —
+ * la lettura che l'utente chiede più spesso («devo capire bene chi viene colpito»).
+ */
+.tab-lancia, .tab-colpita {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 8;
+  font: 900 7.5px/16px Inter, sans-serif;
+  letter-spacing: .16em;
+  height: 16px;
+  padding: 0 9px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.tab-lancia {
+  background: linear-gradient(180deg, var(--vg-gold-lit), var(--vg-gold));
+  color: var(--vg-ink-gold);
+}
+.tab-colpita {
+  background: linear-gradient(180deg, #ff8480, var(--vg-red));
+  color: #2c0b0a;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .carta-combat, .carta-combat * {
     animation: none !important;

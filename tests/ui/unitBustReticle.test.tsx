@@ -10,12 +10,14 @@ import type { DraftedWizard, LogEntry } from '@/types'
 
 // UnitBust's corner-bracket "[data-testid=target-reticle]" was gone even before this task
 // (Task 11 — UnitBust deleted). Its Task 10 successor (a red ring + glow on the WizardCard
-// among six identical cards) is ALSO gone as of Task 3 ("il palco"): there is no longer a
-// "which of six cards is the target" question — the target IS the on-stage "bersaglio"
-// duellante, the one big portrait in the gold `#target` slot from the mockup. This test now
-// covers that signal: the targeted unit renders as the `bersaglio` duellante (gold border,
-// per `role === 'bersaglio'` in Duellante.tsx), and a bystander gets no such treatment at
-// all — it's just one of the six side miniatures, dimmed only if it happens to be on stage.
+// among six identical cards) was replaced by Task 3's ("il palco") gold/red-bordered
+// "bersaglio" Duellante — which was ITSELF rejected by the user on screen — "fa totalmente
+// schifo" — and replaced by Task 5 ("la scena, composta") with ten equal-size CartaCombat
+// cards. There is no longer a separate big "duellante" element or a `stage-bersaglio` slot:
+// the target IS one of the ten cards, marked by its own `data-ruolo="bersaglio"` attribute
+// (which drives the red corner treatment in vetrata.css, `.carta-combat[data-ruolo=
+// 'bersaglio']`) plus the `✖ COLPITA` ribbon above it. This test now covers that signal
+// directly on the card, and a bystander gets neither the attribute nor the ribbon.
 function team(ids: string[], seed = 1): DraftedWizard[] {
   const r = createRng(seed)
   return ids.map(id => draftWizard(r, WIZARD_BY_ID[id]!))
@@ -23,7 +25,7 @@ function team(ids: string[], seed = 1): DraftedWizard[] {
 const left = () => team(['harry', 'ron', 'hermione', 'luna', 'neville'], 7)
 const right = () => team(['draco', 'crabbe', 'goyle', 'snape', 'bellatrix'], 13)
 
-it('renders the chosen target as the gold "bersaglio" duellante on stage', () => {
+it('renders the chosen target as the "bersaglio" card, with the COLPITA ribbon', () => {
   const l = left(), r = right()
   const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
   const e: LogEntry = {
@@ -32,13 +34,14 @@ it('renders the chosen target as the gold "bersaglio" duellante on stage', () =>
   }
   render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={e} frameKey={1} />)
   const targetKey = unitKey('right', 'draco')
-  const targetSlot = screen.getByTestId('stage-bersaglio')
-  const targetDuellante = targetSlot.querySelector(`[data-testid="duellante"][data-unit-key="${CSS.escape(targetKey)}"]`) as HTMLElement
-  expect(targetDuellante).not.toBeNull()
-  expect(targetDuellante.style.borderColor).toMatch(/gold/)
+  const targetCard = document.querySelector(`[data-testid="carta-combat"][data-unit-key="${CSS.escape(targetKey)}"]`) as HTMLElement
+  expect(targetCard).not.toBeNull()
+  expect(targetCard.getAttribute('data-ruolo')).toBe('bersaglio')
+  const wrapper = targetCard.closest('.relative') as HTMLElement
+  expect(wrapper.querySelector('.tab-colpita')).not.toBeNull()
 })
 
-it('a bystander is only a side miniature, never the bersaglio duellante', () => {
+it('a bystander is just another card, never the bersaglio', () => {
   const l = left(), r = right()
   const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
   const e: LogEntry = {
@@ -47,7 +50,9 @@ it('a bystander is only a side miniature, never the bersaglio duellante', () => 
   }
   render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={e} frameKey={1} />)
   const bystanderKey = unitKey('right', 'crabbe')
-  expect(document.querySelector(`[data-testid="stage-bersaglio"] [data-unit-key="${CSS.escape(bystanderKey)}"]`)).toBeNull()
-  const bystanderMini = document.querySelector(`[data-testid="miniatura"][data-unit-key="${CSS.escape(bystanderKey)}"]`)
-  expect(bystanderMini).not.toBeNull()
+  const bystanderCard = document.querySelector(`[data-testid="carta-combat"][data-unit-key="${CSS.escape(bystanderKey)}"]`) as HTMLElement
+  expect(bystanderCard).not.toBeNull()
+  expect(bystanderCard.getAttribute('data-ruolo')).not.toBe('bersaglio')
+  const wrapper = bystanderCard.closest('.relative') as HTMLElement
+  expect(wrapper.querySelector('.tab-colpita')).toBeNull()
 })

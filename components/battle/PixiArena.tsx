@@ -8,22 +8,29 @@ import { heatAmp } from '@/lib/vfx/crescendo'
 import { spellVfxFor } from '@/lib/vfx/spellVfx'
 
 /**
- * Resolves the DOM element that anchors this unit's VFX. `data-unit-key` appears TWICE for
- * a unit on stage (its big Duellante AND its dimmed side Miniatura) — a bare
- * `[data-unit-key]` selector resolves to whichever mounts first in the DOM, which can anchor
- * VFX to the 84×104 miniature instead of the 420×376 duellante. Prefer the duellante and
- * fall back to the generic selector only when the unit isn't currently staged.
+ * Resolves the DOM element that anchors this unit's VFX. Prefers the unit's `CartaCombat`
+ * (`data-testid="carta-combat"`) — the one card every unit now renders as, per the Vetrata
+ * scene (Task 5) — and falls back to the generic `[data-unit-key]` selector for anything
+ * that isn't a CartaCombat at all (a stale/legacy DOM, or a future card variant).
+ *
+ * 2026-09-16 (Task 5, "la scena, composta"): this used to prefer `[data-testid="duellante"]`
+ * from the rejected two-duellants-plus-miniatures staging (Task 3). That testid no longer
+ * exists anywhere in the DOM — left unchanged, this selector would have silently fallen
+ * through to the generic `[data-unit-key]` match every time, which still resolves (nothing
+ * visibly breaks) but stops being a *preference* at all, since there is now only ONE
+ * `data-unit-key` per unit on stage instead of two. Updated per the plan's ruling on
+ * CONFLICT-1 rather than left to rot quietly.
  *
  * Exported (pure, no Pixi/WebGL dependency) so this selection logic can be tested directly:
  * under jsdom, `createPixiStage` always fails (no WebGL), so `centerPct` below — and the
  * whole `choreograph` call it feeds — never actually runs in a unit test. Without this
- * extraction there would be no way to falsify a dropped duellante-preference on THIS site,
- * only on BattleArena's separate copy of the same guard.
+ * extraction there would be no way to falsify a dropped preference on THIS site, only on
+ * BattleArena's separate copy of the same guard.
  */
 export function resolveUnitEl(side?: string, id?: string): Element | null {
   if (!side || !id) return null
   const key = CSS.escape(`${side}:${id}`)
-  return document.querySelector(`[data-testid="duellante"][data-unit-key="${key}"]`)
+  return document.querySelector(`[data-testid="carta-combat"][data-unit-key="${key}"]`)
     ?? document.querySelector(`[data-unit-key="${key}"]`)
 }
 
