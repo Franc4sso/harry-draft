@@ -52,7 +52,17 @@ function ribbonOrder(replay: Replay): RibbonSlot[] {
 // excludes p+7 — that unit's next turn). 7 guarantees every unit reappears at
 // least once within the visible window regardless of where in the round the
 // focus currently sits, which is what makes "who will skip" reliably visible.
-const FUTURE_COUNT = 7
+/** Passo costante di uno slot del nastro. Costante e non misurato: e' quello che
+ *  rende la traslazione prevedibile (`nowOffset * SLOT_W`) e quindi lo scorrimento
+ *  fluido invece che dipendente dalla larghezza del nome di chi lancia. */
+const SLOT_W = 96
+
+/** Larghezza del riquadro di fuoco: gli slot accanto al turno corrente lo
+ *  SCAVALCANO invece di finirci sotto. Misurato a 1600x900 con la finestra
+ *  precedente: 4 sigilli su 15 sparivano dietro il pannello. */
+const FOCUS_W = 380
+
+const FUTURE_COUNT = 3
 const PAST_COUNT = 2
 
 /**
@@ -116,15 +126,6 @@ export function NastroSigilli({ replay, index, className }: { replay: Replay; in
     if (pct) parts.push(pct)
     return parts.join(' · ')
   }, [focusEntry, focusTarget])
-
-  // Nodes flank the focus panel rather than flowing behind it: the mockup's
-  // own node/focus coordinates never overlap (last past node at left:152px,
-  // focus starts at 206px; first future node at 648px, focus ends at 586px) —
-  // this splits the sequence into two flex groups either side of a center
-  // spacer sized to the focus panel's own footprint, reproducing that gap
-  // instead of relying on z-index to hide the collision.
-  const past = sequence.slice(0, nowOffset)
-  const future = sequence.slice(nowOffset + 1)
 
   const renderNode = (slot: RibbonSlot, isPast: boolean) => {
     const u = byKey[slot.key]
@@ -212,15 +213,57 @@ export function NastroSigilli({ replay, index, className }: { replay: Replay; in
         style={{ background: 'linear-gradient(90deg,transparent,rgba(226,214,186,.24) 6%,rgba(226,214,186,.24) 94%,transparent)' }}
       />
 
-      <div className="relative flex items-center justify-center gap-3">
-        <div className="flex flex-1 items-center justify-end gap-3 overflow-hidden">
-          {past.map(slot => renderNode(slot, true))}
-        </div>
-        {/* Reserves the focus panel's own footprint so neither side's nodes
-         *  ever render underneath it (see comment above `past`/`future`). */}
-        <div aria-hidden className="shrink-0" style={{ width: 380 }} />
-        <div className="flex flex-1 items-center justify-start gap-3 overflow-hidden">
-          {future.map(slot => renderNode(slot, false))}
+      {/* Il nastro SCORRE. Prima erano due gruppi flex (passati a sinistra, futuri a
+          destra) separati da uno spaziatore: a ogni turno la lista si ricomponeva
+          di colpo, quindi non si vedeva nessun movimento — il rilievo dell'utente
+          («non scorre, vorrei proprio vedere come scorre»).
+
+          Ora e' UNA striscia sola di slot a passo COSTANTE (`SLOT_W`), traslata di
+          `-(nowOffset * SLOT_W)` piu' meta' contenitore: cosi' lo slot del turno
+          corrente cade sempre esattamente al centro, e quando l'indice avanza la
+          striscia scivola di un passo invece di ricostruirsi. L'animazione sta
+          sulla trasformazione, quindi e' il nastro a muoversi, non i nodi a
+          saltare da una posizione all'altra.
+
+          `top-1/2 -translate-y-1/2`: la riga sta sulla STESSA linea del binario e
+          del riquadro di fuoco. Prima era in cima al contenitore e, siccome ogni
+          nodo e' alto (ottagono + nome + incantesimo), il suo centro cadeva 54px
+          sopra quello del riquadro — misurato dal vivo, ed e' lo sfasamento che
+          si vede nello screenshot. */}
+      <div className="absolute inset-x-0 top-1/2 h-0 -translate-y-1/2">
+        <div
+          data-testid="nastro-riga"
+          className="absolute left-1/2 top-1/2 flex -translate-y-1/2 items-center"
+          style={{
+            // Il centro da raggiungere e' la META' dello slot di fuoco, che e' piu'
+            // largo degli altri: sommo gli slot che lo precedono (tutti SLOT_W) e
+            // mezza larghezza del riquadro.
+            //
+            // `left-1/2` (meta' del WRAPPER) e non `translateX(50%)`: quel 50% si
+            // riferiva alla riga stessa, larga `max-content`, quindi il centro
+            // cadeva altrove — misurato, lo slot di fuoco stava a 281..661 mentre
+            // il pannello era a 603..983, 322px di scarto, e tre sigilli futuri
+            // finivano sotto il pannello. Ora la riga parte dal centro del wrapper,
+            // lo stesso riferimento che usa il riquadro di fuoco.
+            transform: `translateX(-${nowOffset * SLOT_W + FOCUS_W / 2}px)`,
+            transition: reduce ? undefined : 'transform .52s cubic-bezier(.22,1,.36,1)',
+            width: 'max-content',
+          }}
+        >
+          {sequence.map((slot, i) => (
+            <div
+              key={`${slot.turn}-${slot.key}`}
+              className="flex shrink-0 justify-center"
+              style={{
+                // Lo slot del turno corrente E' il riquadro di fuoco: ne occupa la
+                // larghezza e non disegna nodo, cosi' i vicini gli stanno ACCANTO
+                // invece che sotto (misurato: 4 sigilli su 15 ci sparivano dietro).
+                width: i === nowOffset ? FOCUS_W : SLOT_W,
+              }}
+            >
+              {i === nowOffset ? null : renderNode(slot, i < nowOffset)}
+            </div>
+          ))}
         </div>
       </div>
 

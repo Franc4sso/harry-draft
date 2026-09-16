@@ -54,8 +54,8 @@
 
 .carta-combat {
   position: relative;
-  width: 212px;
-  height: 254px;
+  width: 15.5198cqw;
+  aspect-ratio: 212 / 254;
   overflow: visible;
   border: 1px solid rgba(226, 214, 186, .2);
   background: linear-gradient(180deg, #16132a, #090711);
@@ -100,23 +100,23 @@
 
 .carta-combat .cc-rl {
   position: absolute;
-  left: 8px;
-  bottom: 38px;
+  left: 0.5857cqw;
+  bottom: 2.7818cqw;
   z-index: 3;
-  font: 800 6.5px/1 Inter, sans-serif;
+  font: 800 0.4758cqw/1 Inter, sans-serif;
   letter-spacing: .16em;
   text-transform: uppercase;
 }
 
 .carta-combat .cc-nm {
   position: absolute;
-  left: 8px;
-  right: 8px;
-  bottom: 19px;
+  left: 0.5857cqw;
+  right: 0.5857cqw;
+  bottom: 1.3909cqw;
   z-index: 3;
   font-family: Cinzel, Georgia, serif;
   font-weight: 900;
-  font-size: 14px;
+  font-size: 1.0249cqw;
   color: #fff;
   line-height: 1.08;
   white-space: nowrap;
@@ -126,22 +126,22 @@
 
 .carta-combat .cc-sp {
   position: absolute;
-  left: 8px;
-  right: 8px;
-  bottom: 5px;
+  left: 0.5857cqw;
+  right: 0.5857cqw;
+  bottom: 0.366cqw;
   z-index: 3;
-  font: 600 8.5px/1 Inter, sans-serif;
+  font: 600 0.6223cqw/1 Inter, sans-serif;
   color: var(--vg-gold-pale);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 0.366cqw;
 }
 
 .carta-combat .cc-hpw {
-  height: 6px;
+  height: 0.4392cqw;
   background: rgba(0, 0, 0, .72);
   position: relative;
 }
@@ -155,9 +155,9 @@
 }
 .carta-combat .cc-hpt {
   position: absolute;
-  right: 5px;
-  top: -10px;
-  font: 800 7.5px/9px Inter, sans-serif;
+  right: 0.366cqw;
+  top: -0.7321cqw;
+  font: 800 0.549cqw/0.6589cqw Inter, sans-serif;
   color: rgba(255, 255, 255, .66);
   font-variant-numeric: tabular-nums;
   z-index: 4;
@@ -165,7 +165,7 @@
 
 .carta-combat .cc-st {
   display: flex;
-  padding: 5px 4px 6px;
+  padding: 0.366cqw 0.2928cqw 0.4392cqw;
   gap: 1px;
   background: rgba(0, 0, 0, .4);
   border-top: 1px solid rgba(226, 214, 186, .07);
@@ -173,17 +173,17 @@
 .carta-combat .cc-st span {
   flex: 1;
   text-align: center;
-  font: 800 11.5px/1.2 Inter, sans-serif;
+  font: 800 0.8419cqw/1.2 Inter, sans-serif;
   color: #fff;
   font-variant-numeric: tabular-nums;
 }
 .carta-combat .cc-st span u {
   display: block;
-  font: 700 6px/1 Inter, sans-serif;
+  font: 700 0.4392cqw/1 Inter, sans-serif;
   letter-spacing: .11em;
   color: var(--vg-faint);
   text-decoration: none;
-  margin-bottom: 2.5px;
+  margin-bottom: 0.183cqw;
 }
 
 /* Caduto */
@@ -205,7 +205,7 @@
   top: 46%;
   z-index: 6;
   text-align: center;
-  font: 900 9px/1 Inter, sans-serif;
+  font: 900 0.6589cqw/1 Inter, sans-serif;
   letter-spacing: .24em;
   color: rgba(255, 255, 255, .62);
 }
@@ -213,26 +213,26 @@
 /* Pillole sommate: una per famiglia, col totale */
 .carta-combat .cc-pips {
   position: absolute;
-  top: 5px;
-  left: 5px;
+  top: 0.366cqw;
+  left: 0.366cqw;
   z-index: 6;
   display: flex;
   flex-wrap: wrap;
-  gap: 3px;
+  gap: 0.2196cqw;
   max-width: 92%;
 }
 .carta-combat .cc-pip {
   display: flex;
   align-items: center;
-  gap: 3px;
-  height: 17px;
-  padding: 0 5px 0 4px;
-  font: 900 9px/1 Inter, sans-serif;
+  gap: 0.2196cqw;
+  height: 1.2445cqw;
+  padding: 0 0.366cqw 0 0.2928cqw;
+  font: 900 0.6589cqw/1 Inter, sans-serif;
   color: #08060f;
   border: 1px solid rgba(8, 6, 15, .6);
 }
 .carta-combat .cc-pip b {
-  font: 900 10px/1 Inter, sans-serif;
+  font: 900 0.7321cqw/1 Inter, sans-serif;
   font-variant-numeric: tabular-nums;
 }
 

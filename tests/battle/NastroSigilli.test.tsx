@@ -22,7 +22,11 @@ function fixture() {
 describe('NastroSigilli', () => {
   it('mostra la sequenza degli incantesimi in arrivo', () => {
     render(<NastroSigilli replay={fixture()} index={3} />)
-    expect(screen.getAllByTestId('sigillo').length).toBeGreaterThanOrEqual(4)
+    // 2026-09-16: era >= 4. La finestra dei futuri e' scesa da 7 a 3 perche'
+    // MISURATO a 1600x900: dei 15 slot mostrati, 5 finivano fuori dalla cornice
+    // e 4 sotto il riquadro di fuoco — 9 su 15 invisibili. Mostrarne meno ma
+    // tutti visibili e' il punto; il numero segue quella decisione.
+    expect(screen.getAllByTestId('sigillo').length).toBeGreaterThanOrEqual(3)
   })
 
   it('il turno attuale è in fuoco, e dice chi lancia cosa', () => {
@@ -39,8 +43,21 @@ describe('NastroSigilli', () => {
   })
 
   it('chi salterà porta la tacca, prima che accada', () => {
+    // 2026-09-16: con la finestra dei futuri scesa da 7 a 3 (vedi sopra), storidre
+    // la PRIMA unita' del replay non bastava piu': poteva semplicemente non
+    // ricadere nella finestra visibile, e il test sarebbe diventato rosso per la
+    // dimensione della finestra invece che per la tacca. Ora l'unita' stordita e'
+    // scelta fra quelle che il nastro mostra DAVVERO all'indice sotto esame, cosi'
+    // il test continua a difendere la tacca e non la larghezza della finestra.
     const replay = fixture()
-    const key = replay.units[0]!.key
+    // Chi il nastro mostra DAVVERO a questo indice lo si chiede al nastro stesso,
+    // invece di dedurlo scorrendo i frame: la prima versione di questa correzione
+    // indovinava dai primi frame e sceglieva un'unita' fuori finestra (rosso per
+    // il motivo sbagliato). Un primo render legge i `data-unit` resi, poi si
+    // stordisce una di quelle e si ri-renderizza.
+    const probe = render(<NastroSigilli replay={replay} index={1} />)
+    const key = screen.getAllByTestId('sigillo')[0]!.getAttribute('data-unit')!
+    probe.unmount()
     const patched = { ...replay, frames: replay.frames.map(f => ({
       ...f, statusEffects: { ...f.statusEffects,
         [key]: [{ kind: 'stun', statusId: 'stun', remaining: 2, stacks: 1 }] } })) }

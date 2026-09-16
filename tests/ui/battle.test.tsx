@@ -675,7 +675,9 @@ describe('BattleArena', () => {
     const firstReal = replay.frames.findIndex(f => f.entry && f.entry.type !== 'system' && f.entry.actorSide)
     render(<BattleArena replay={replay} hp={replay.frames[firstReal]!.hp} entry={replay.frames[firstReal]!.entry} frameKey={firstReal} />)
     expect(screen.getByTestId('nastro-sigilli')).toBeInTheDocument()
-    expect(screen.getAllByTestId('sigillo').length).toBeGreaterThanOrEqual(4)
+    // 2026-09-16: era >= 4; la finestra dei futuri e' scesa da 7 a 3 perche' 9
+    // slot su 15 finivano fuori cornice o sotto il riquadro (misurato a 1600x900).
+    expect(screen.getAllByTestId('sigillo').length).toBeGreaterThanOrEqual(3)
   })
 })
 

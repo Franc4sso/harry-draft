@@ -266,7 +266,18 @@ export function BattleArena({
     })
 
   return (
-    <div data-testid="battle-arena" className="vetrata-world relative mx-auto w-full max-w-6xl overflow-visible rounded-3xl">
+    // `max-w-6xl` (1152px) teneva la scena a francobollo: su 1920 e su 2560 la
+    // cornice restava identica, con vuoto intorno. Ora il tetto e' l'ALTEZZA
+    // disponibile, non una costante: `calc(var(--arena-h) * 1366 / 768)` e' la
+    // larghezza massima che la cornice puo' avere senza che la sua altezza (in
+    // rapporto 1366:768) sfori lo spazio verticale. Cosi' su uno schermo alto la
+    // scena cresce davvero, e su uno basso si restringe da sola invece di essere
+    // tagliata — che era il difetto di partenza.
+    <div
+      data-testid="battle-arena"
+      className="vetrata-world relative mx-auto w-full overflow-visible rounded-3xl"
+      style={{ maxWidth: 'calc(var(--arena-h, 648px) * 1366 / 768)' }}
+    >
       <ArenaBackdrop />
       <DuoPills duos={duos} firingId={firingId} />
       {telegraph && (
@@ -283,7 +294,19 @@ export function BattleArena({
       {/* La cornice: 1366×768 nel mockup, tenuta in proporzione — non in pixel fissi —
           perché la cornice reale non è sempre quella (brief). Le due file di dieci carte e
           il nastro sono posizionati in percentuale DI QUESTO box. */}
-      <div ref={frameRef} data-testid="stage" className="relative w-full" style={{ aspectRatio: '1366 / 768' }}>
+      {/* `containerType: 'inline-size'` fa di questa cornice il RIFERIMENTO delle
+          unita' `cqw` con cui la carta si misura (vetrata.css). Senza, la carta
+          tornerebbe a misure fisse e la fila alleata uscirebbe di nuovo: la
+          cornice e' in proporzione (1366/768 sotto `max-w-6xl`, quindi alta 648px
+          reali) mentre la carta era disegnata 212x254 per una cornice da 768 —
+          due file da 254 piu' il nastro non entrano in 648, e sforavano di 36px
+          a OGNI risoluzione (misurato a 1366, 1920 e 2560). */}
+      <div
+        ref={frameRef}
+        data-testid="stage"
+        className="relative w-full"
+        style={{ aspectRatio: '1366 / 768', containerType: 'inline-size' }}
+      >
         <div data-testid="col-enemies" aria-label={rightTitle} className="absolute left-0 right-0 flex justify-center gap-[1.6%]" style={{ top: `${(46 / 768) * 100}%` }}>
           {renderRow(right)}
         </div>

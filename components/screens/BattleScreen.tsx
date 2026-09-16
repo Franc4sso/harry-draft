@@ -1,5 +1,5 @@
 'use client'
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Play, Pause, SkipForward, FastForward, ChevronRight } from 'lucide-react'
 import type { ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard } from '@/types'
 import { buildReplay } from '@/game/engine/combat/replay'
@@ -61,6 +61,26 @@ export function BattleScreen({
   // Lets the player dismiss the end modal to review the settled board/log,
   // then reopen it (or confirm) via the floating "Rivedi esito" button.
   const [dismissed, setDismissed] = useState(false)
+  // Misura la fascia dell'arena e la pubblica come `--arena-h` (vedi sotto).
+  // ResizeObserver e non un listener su `resize`: la fascia cambia altezza anche
+  // quando compare il banner dello Sfinimento, cioe' senza che la finestra si
+  // muova affatto.
+  const bandRef = useRef<HTMLDivElement | null>(null)
+  const [bandH, setBandH] = useState<number | null>(null)
+  const arenaBandRef = useCallback((node: HTMLDivElement | null) => {
+    bandRef.current = node
+    if (node) setBandH(node.getBoundingClientRect().height)
+  }, [])
+  useEffect(() => {
+    const node = bandRef.current
+    if (!node || typeof ResizeObserver === 'undefined') return
+    const ro = new ResizeObserver(([e]) => {
+      if (e) setBandH(e.contentRect.height)
+    })
+    ro.observe(node)
+    return () => ro.disconnect()
+  }, [])
+
   // Fatigue ("Sfinimento") kicks in once the anti-stall system starts ticking
   // true damage every turn. Flag it as soon as the current turn passes the
   // threshold, or the moment a Fatica entry has actually played (whichever
@@ -90,7 +110,10 @@ export function BattleScreen({
     // MINIMA, non massima), quindi un'altezza imposta qui non aveva alcun tetto
     // sopra di se' e il main cresceva col registro fino a 824px. Un massimo,
     // invece, vincola davvero — e `overflow-hidden` tiene dentro cio' che eccede.
-    <main className="flex max-h-[100dvh] min-h-0 flex-1 flex-col items-center gap-1 overflow-hidden p-1.5 sm:p-2">
+    <main
+      className="flex max-h-[100dvh] min-h-0 flex-1 flex-col items-center gap-1 overflow-hidden p-1.5 sm:p-2"
+      style={bandH ? ({ '--arena-h': `${bandH}px` } as React.CSSProperties) : undefined}
+    >
       {/* Titolo + turno + controlli sulla STESSA riga: nel budget fisso di 768px
           (il ritratto non si rimpicciolisce, D1) ogni riga di intestazione pesa,
           quindi qui condividono un'unica fascia invece di impilarsi. */}
@@ -163,7 +186,13 @@ export function BattleScreen({
           ritratto non si rimpicciolisce comunque (D1): l'eccedenza va tagliata qui —
           non spinta fuori dallo schermo in modo invisibile, e non a scapito della fila
           che il giocatore deve leggere per prima. */}
-      <div className="flex min-h-0 w-full flex-1 flex-col items-center justify-start overflow-hidden">
+      {/* Pubblica l'altezza REALE di questa fascia come `--arena-h`: e' `flex-1`,
+          quindi la sua altezza si conosce solo a runtime, e l'arena la usa come
+          tetto alla propria larghezza (aspect 1366:768). Cosi' la scena cresce
+          sugli schermi alti invece di restare bloccata a `max-w-6xl` (1152px,
+          identici a 1920 e a 2560) e si restringe da sola su quelli bassi invece
+          di farsi tagliare. */}
+      <div ref={arenaBandRef} className="flex min-h-0 w-full flex-1 flex-col items-center justify-start overflow-hidden">
         <BattleArena
           replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle}
           enemyLevel={enemyLevel} speed={r.speed} duos={activeDuos} intensity={r.intensity}
