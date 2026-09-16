@@ -341,12 +341,37 @@ describe('ShieldFx', () => {
 })
 
 describe('BattleArena', () => {
-  it('renders every combatant as a bust', () => {
+  // 2026-09-16 (Task 3, "il palco"): la scena non è più sei/dieci carte uguali in due file
+  // — il mockup approvato ("La corsia del tempo" v11) mette in primo piano chi agisce e chi
+  // subisce come due Duellante grandi al centro, e relega TUTTI gli altri (compresi i due in
+  // scena, smorzati — `dimmed`, il posto non scompare mai) a Miniatura laterali. Questo test
+  // sostituisce l'assert sulle dieci `battle-unit` (5+5 WizardCard density="combat" in due
+  // file) col conteggio della nuova composizione: sempre due duellanti, e una miniatura per
+  // OGNI unità del roster (qui 5v5 = 10, non le sei del mockup che usa un 3v3 d'esempio —
+  // il principio «ogni unità ha sempre il suo posto in miniatura» vale a qualunque taglia
+  // di squadra, la miniatura dei due in scena resta e basta smorzarsi).
+  it('la scena mette i due duellanti al centro e tutte le altre unità di lato in miniatura', () => {
     const l = left(), r = right()
     const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
-    render(<BattleArena replay={replay} hp={replay.frames[0]!.hp} entry={null} frameKey={0} />)
-    expect(screen.getAllByTestId('battle-unit')).toHaveLength(10)
+    const firstReal = replay.frames.findIndex(f => f.entry && f.entry.type !== 'system' && f.entry.actorSide)
+    render(<BattleArena replay={replay} hp={replay.frames[firstReal]!.hp} entry={replay.frames[firstReal]!.entry} frameKey={firstReal} />)
+    expect(screen.getAllByTestId('duellante')).toHaveLength(2)
+    expect(screen.getAllByTestId('miniatura')).toHaveLength(replay.units.length)
   })
+
+  // Un tick di veleno o un Duo non hanno attore/bersaglio propri (system frame): i due
+  // duellanti restano quelli dell'ultima azione vera (lastRealEntryAt), come già fa la
+  // corsia dei turni — la scena non si svuota mai.
+  it('sui frame di sistema la scena non si svuota', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    const firstReal = replay.frames.findIndex(f => f.entry && f.entry.type !== 'system' && f.entry.actorSide)
+    const sysIdx = replay.frames.findIndex((f, i) => i > firstReal && f.entry && (f.entry.type === 'system' || !f.entry.actorSide))
+    expect(sysIdx).toBeGreaterThan(firstReal)
+    render(<BattleArena replay={replay} hp={replay.frames[sysIdx]!.hp} entry={replay.frames[sysIdx]!.entry} frameKey={sysIdx} />)
+    expect(screen.getAllByTestId('duellante')).toHaveLength(2)
+  })
+
   it('no longer renders the legacy DOM Protego dome (block reaction moved to the Pixi VFX layer)', () => {
     const l = left(), r = right()
     const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
@@ -358,22 +383,29 @@ describe('BattleArena', () => {
     expect(screen.queryByTestId('shield-fx')).toBeNull()
   })
 
-  // Task 10 (mappa C / battaglia A): BattleArena stopped rendering UnitBust (which owned the
-  // per-unit status pills) and now renders WizardCard density="combat" instead — the single
-  // shared card, which has no inline status-pill row. Status visibility didn't disappear from
-  // the screen: it moved to the Callout (big center announcement on apply) and BattleLog/
-  // ActionPanel narration. This test now asserts what the card still surfaces for a dotted
-  // unit — its identity + live HP wrapper — rather than a pill UnitBust alone used to render.
-  it('renders the dotted unit\'s card keyed for VFX targeting, even with a real dot effect on frame', () => {
+  // Task 10 (superseded) asserted a WizardCard density="combat" bust. Task 3 (il palco)
+  // replaced the two-row card grid with the stage: `data-unit-key` now appears TWICE for
+  // a unit on stage (its big Duellante AND its dimmed side Miniatura) — a bare
+  // `document.querySelector` would silently resolve to whichever mounts first. This test
+  // now asserts the composition's own guard: the duellante-preferring selector
+  // (`[data-testid="duellante"][data-unit-key=...]`, same one BattleArena/PixiArena use
+  // to anchor VFX) resolves to the duellante for a unit that's on stage as the actor,
+  // while the plain `[data-unit-key]` selector still finds A match (proving the key isn't
+  // just missing) — the point being WHICH element it must prefer, not merely that it's
+  // findable, since that ambiguity is exactly what would misplace an effect onto the
+  // 84×104 miniature instead of the 420×376 duellante.
+  it('renders the dotted unit keyed for VFX targeting, resolving to its duellante (not its miniature)', () => {
     const l = left(), r = right()
     const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
     // Inject a real dot effect on harry into a frame's statusEffects (the engine path).
     const dotted = unitKey('left', 'harry')
     replay.frames[1]!.statusEffects = { [dotted]: [{ kind: 'dot', statusId: 'veleno', amount: 6, remaining: 2, stacks: 2 }] }
     render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={replay.frames[1]!.entry} frameKey={1} />)
-    const bust = document.querySelector(`[data-unit-key="${CSS.escape(dotted)}"]`) as HTMLElement
-    expect(bust).not.toBeNull()
-    expect(bust.getAttribute('data-testid')).toBe('battle-unit')
+    const anyMatch = document.querySelectorAll(`[data-unit-key="${CSS.escape(dotted)}"]`)
+    expect(anyMatch.length).toBe(2) // duellante + miniatura, same key
+    const preferred = document.querySelector(`[data-testid="duellante"][data-unit-key="${CSS.escape(dotted)}"]`) as HTMLElement
+    expect(preferred).not.toBeNull()
+    expect(preferred.getAttribute('data-testid')).toBe('duellante')
   })
 
   // Le pillole erano sparite col rifacimento (UnitBust le aveva, WizardCard no):
@@ -402,12 +434,17 @@ describe('BattleArena', () => {
     }
     replay.frames[1]!.entry = hit
     render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={hit} frameKey={1} />)
-    const actorEl = document.querySelector(`[data-unit-key="${CSS.escape(actorKey)}"]`) as HTMLElement
-    const targetEl = document.querySelector(`[data-unit-key="${CSS.escape(targetKey)}"]`) as HTMLElement
-    expect(actorEl.querySelector('.fx-strike')).not.toBeNull()
-    expect(actorEl.querySelector('.fx-kick')).toBeNull()
-    expect(targetEl.querySelector('.fx-kick')).not.toBeNull()
-    expect(targetEl.querySelector('.fx-strike')).toBeNull()
+    // The motion class lands directly on the duellante's OWN root className (merged via
+    // `cn`, not a wrapper around it — see BattleArena's renderDuellante), so the check is
+    // against the element's own class list, not a descendant. Same duellante-preferring
+    // selector as BattleArena/PixiArena's own VFX box lookup, since a bare `[data-unit-key]`
+    // selector is now ambiguous (duellante + dimmed miniature share it).
+    const actorEl = document.querySelector(`[data-testid="duellante"][data-unit-key="${CSS.escape(actorKey)}"]`) as HTMLElement
+    const targetEl = document.querySelector(`[data-testid="duellante"][data-unit-key="${CSS.escape(targetKey)}"]`) as HTMLElement
+    expect(actorEl.classList.contains('fx-strike')).toBe(true)
+    expect(actorEl.classList.contains('fx-kick')).toBe(false)
+    expect(targetEl.classList.contains('fx-kick')).toBe(true)
+    expect(targetEl.classList.contains('fx-strike')).toBe(false)
   })
 
   // Fix round 1 (review): proves prevFrame is really `replay.frames[frameKey - 1]` and not a
@@ -478,29 +515,34 @@ describe('BattleArena', () => {
       targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 42, flags: [],
     }
     render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={e} frameKey={1} />)
-    // Exactly one float, on the targeted bust (floatKey is only wired to the target;
-    // other busts get a stable key so React.memo can skip them during playback).
+    // Exactly one float, inside the "bersaglio" stage slot (the float only renders in the
+    // `role === 'bersaglio'` branch of BattleArena's renderDuellante, as a sibling of the
+    // Duellante inside that slot's own positioning wrapper — the miniature never gets one).
     const floats = document.querySelectorAll('[data-testid="damage-float"]')
     expect(floats.length).toBe(1)
-    const targetBust = document.querySelector(`[data-unit-key="${CSS.escape(targetKey)}"]`) as HTMLElement
-    expect(targetBust.querySelector('[data-testid="damage-float"]')).not.toBeNull()
+    const targetSlot = screen.getByTestId('stage-bersaglio')
+    const duellanteInSlot = targetSlot.querySelector(`[data-testid="duellante"][data-unit-key="${CSS.escape(targetKey)}"]`)
+    expect(duellanteInSlot).not.toBeNull()
+    expect(targetSlot.querySelector('[data-testid="damage-float"]')).not.toBeNull()
   })
 
-  // Task 10: same story as the dot test above — WizardCard's combat density has no
-  // `[data-role="cooldown"]` row (that lived on UnitBust, which BattleArena no longer
-  // renders). The unit's own spell NAME still shows (via SpellLine), just not its live
-  // per-frame cooldown countdown; that's a real, accepted reduction for this task, not a
-  // silently-dropped assertion — the test now covers what's still true post-rewrite.
-  it('still shows the unit\'s spell name on its card when the frame carries a cooldown', () => {
+  // Task 10 asserted the unit's spell NAME still showed on its card (via SpellLine) even
+  // without a live cooldown countdown. Task 3 (il palco) removed that assertion's premise
+  // entirely: neither `Duellante` nor `Miniatura` renders a spell name or a cooldown row at
+  // all — that reading now lives in the ActionPanel/Callout/BattleLog, not on the unit's own
+  // portrait. What's still real and worth guarding here is that a cooldown on the frame
+  // doesn't break the unit's stage identity: it's still keyed and still resolves to its
+  // duellante (the frame's real actor) even while carrying a live cooldown map.
+  it('keeps the unit keyed to its duellante when the frame carries a cooldown', () => {
     const l = left(), r = right()
     const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
     const key = unitKey('left', 'harry')
     const harry = replay.units.find(u => u.key === key)!
     replay.frames[1]!.cooldowns = { [key]: { [harry.spell.id]: 2 } }
     render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={replay.frames[1]!.entry} frameKey={1} />)
-    const bust = document.querySelector(`[data-unit-key="${CSS.escape(key)}"]`) as HTMLElement
+    const bust = document.querySelector(`[data-testid="duellante"][data-unit-key="${CSS.escape(key)}"]`) as HTMLElement
     expect(bust).not.toBeNull()
-    expect(bust.getAttribute('data-testid')).toBe('battle-unit')
+    expect(bust.getAttribute('data-testid')).toBe('duellante')
   })
 })
 

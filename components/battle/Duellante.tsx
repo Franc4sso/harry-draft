@@ -49,18 +49,22 @@ export function Duellante({
 
       <StatusPips effects={effects} />
 
+      {/* Mockup `.big .nm`: ONE element carries both the name text and the darkening
+          gradient behind it, via `background-image` + content-driven padding (`30px`
+          top so the gradient reaches up over the face, `12px`/`10px` sides/bottom) —
+          not two absolutely-positioned nodes (a gradient div UNDER a text div) with the
+          gradient's height hardcoded to the box's 46%. That hardcoded height didn't
+          track the actual text block, so a two-line name could clip the gradient short
+          of the name's own top edge. One element sized by its own content can't. */}
       <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-[46%]"
+        className="absolute inset-x-0 bottom-0 z-10 px-3 pb-2.5 pt-[30px]"
         style={{ background: 'linear-gradient(0deg, rgba(7,5,14,.97), transparent)' }}
-      />
-
-      <div className="absolute inset-x-3 bottom-[7px] z-10">
+      >
         <div className="mb-1.5">
           <p className="font-display truncate text-[17px] font-black leading-tight text-white">
             {unit.name}
           </p>
-          <p className="text-[9px] font-semibold uppercase tracking-[0.2em] text-white/65">
+          <p className="text-[9px] font-extrabold uppercase tracking-[0.12em] text-white/65">
             {subtitle}
           </p>
         </div>

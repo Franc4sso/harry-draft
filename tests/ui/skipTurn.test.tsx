@@ -15,6 +15,13 @@ const unit = (over: Partial<ReplayUnit> = {}): ReplayUnit => ({
 // (Task 11 — UnitBust cancellato): il lampo SALTA vive ora SOLO dentro BattleArena (mai
 // più su una card isolata), quindi la copertura sotto — che già passava per BattleArena —
 // è l'unica che resta, ed è invariata.
+//
+// 2026-09-16 (Task 3, "il palco"): la card WizardCard density="combat" (`battle-unit`) è
+// sparita — chi salta il turno è ora il Duellante grande (l'unità che salta È l'attore di
+// questo frame, quindi resta in scena, ora smorzata solo se non stesse agendo). Il lampo
+// SALTA è un fratello del Duellante nel suo slot di scena (`stage-attore`), non un
+// discendente (Duellante non accetta children) — stessa forma già adottata per
+// `damage-float` nel resto della suite.
 describe('BattleArena: un frame Stordito salta il turno senza accendere acting', () => {
   const entry = (over: Partial<LogEntry> = {}): LogEntry => ({
     turn: 1, actorId: 'x', actorSide: 'left', action: 'Colpo', targetId: 'foe', targetSide: 'right',
@@ -37,11 +44,16 @@ describe('BattleArena: un frame Stordito salta il turno senza accendere acting',
   const hp = { 'left:x': 80, 'right:foe': 100 }
 
   it('mostra SALTA sull\'unità e NON la fa sembrare in azione', () => {
-    const { container } = render(<BattleArena replay={replay} hp={hp} entry={stordito} frameKey={1} />)
-    const busts = screen.getAllByTestId('battle-unit')
-    const skipper = busts.find(b => b.getAttribute('data-unit-key') === 'left:x')!
-    expect(skipper).not.toHaveAttribute('data-acting')
-    const flash = skipper.querySelector('[data-skipping]') ?? container.querySelector('[data-unit-key="left:x"] [data-skipping]')
+    render(<BattleArena replay={replay} hp={hp} entry={stordito} frameKey={1} />)
+    // L'unità che salta è l'attore di questo frame (Stordito porta il suo `actorSide`),
+    // quindi resta in scena come duellante — nello slot "attore". Nessuna aura "sta
+    // agendo" si accende (quella arriva dalla motion class fx-strike, assente qui: lo
+    // Stordito non produce un colpo, produce lo shiver+SALTA).
+    const actorSlot = screen.getByTestId('stage-attore')
+    const skipper = actorSlot.querySelector('[data-testid="duellante"][data-unit-key="left:x"]')
+    expect(skipper).not.toBeNull()
+    expect(skipper).not.toHaveClass('fx-strike')
+    const flash = actorSlot.querySelector('[data-skipping]')
     expect(flash).toHaveAttribute('data-skipping', 'stun')
     expect(flash).toHaveTextContent(/salta/i)
   })

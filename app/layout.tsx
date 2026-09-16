@@ -4,7 +4,10 @@ import './globals.css'
 import { GameShell } from '@/components/ui/GameShell'
 
 const inter = Inter({ variable: '--font-sans', subsets: ['latin'] })
-const cinzel = Cinzel({ variable: '--font-display', subsets: ['latin'], weight: ['600', '700', '800'] })
+// '900' added for the duellante's name (mockup `.big .nm`: font-weight 900) — the three
+// lighter weights already covered every other Cinzel use in the app, but the big portrait
+// name specifically asks for the heaviest cut and Google's Cinzel serves it.
+const cinzel = Cinzel({ variable: '--font-display', subsets: ['latin'], weight: ['600', '700', '800', '900'] })
 
 export const metadata: Metadata = {
   title: 'Harry Draft — Draft Roguelite',

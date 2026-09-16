@@ -1,17 +1,16 @@
 'use client'
 import type React from 'react'
 import { useEffect, useMemo, useState } from 'react'
-import type { LogEntry, ActiveEffect, ActiveDuo, DraftedWizard } from '@/types'
+import type { LogEntry, ActiveEffect, ActiveDuo } from '@/types'
 import type { Replay, ReplayUnit } from '@/game/engine/combat/replay'
 import { firstDuoFireFrames, unitKey } from '@/game/engine/combat/replay'
-import { WizardCard } from '@/components/cards/WizardCard'
-import { WIZARD_BY_ID } from '@/data/wizards'
-import { SPELL_BY_ID } from '@/data/spells'
+import { lastRealEntryAt } from '@/lib/initiative'
+import { Duellante } from './Duellante'
+import { Miniatura } from './Miniatura'
 import { ArenaBackdrop } from './ArenaBackdrop'
 import { PixiArena } from './PixiArena'
 import { Callout } from './Callout'
 import { DuoPills } from './DuoPills'
-import { StatusPips } from './StatusPips'
 import { SceneFx } from './SceneFx'
 import { floatFor } from './damageFloat'
 import { cn } from '@/lib/theme'
@@ -46,44 +45,17 @@ const MOTION_BY_KIND: Partial<Record<SceneKind, { actor?: string; target?: strin
 }
 
 /**
- * Reconstructs the DraftedWizard-shaped object WizardCard needs from a lean
- * ReplayUnit. Lossless for everything the card actually shows: `wizard` and
- * `spell` come straight from the same data tables the real draft used
- * (WIZARD_BY_ID/SPELL_BY_ID keyed off the unit's own ids), stats come from
- * the unit's live-buffed atk/def/spd + its maxHp. The only thing NOT
- * recovered is `grantedTags` (runtime-only tags granted mid-run, e.g. Marchio) —
- * `tagsOf` falls back to the wizard's native tags, so the archetype badge can
- * miss a runtime tag; that's cosmetic (badge only), not a data field the
- * brief requires in battle.
- */
-function toDrafted(u: ReplayUnit): DraftedWizard {
-  const zeroRange: readonly [number, number] = [0, 0]
-  const wizard = WIZARD_BY_ID[u.id] ?? {
-    id: u.id, name: u.name, house: u.house, role: u.role, tier: u.tier, gender: 'm' as const,
-    ranges: { hp: zeroRange, atk: zeroRange, def: zeroRange, spd: zeroRange }, spellPool: [],
-  }
-  const spell = SPELL_BY_ID[u.spell.id] ?? {
-    id: u.spell.id, name: u.spell.name, type: 'Attacco' as const, cooldown: u.spell.cooldown,
-    power: 1, hitChance: 100, desc: '',
-  }
-  return {
-    wizard,
-    stats: { hp: u.maxHp, atk: u.atk, def: u.def, spd: u.spd },
-    maxHp: u.maxHp,
-    spell,
-    level: u.level,
-    corrotto: u.corrotto,
-  }
-}
-
-/**
- * Staged battlefield — "campo contro campo": enemies as a row of combat
- * cards ABOVE the action row, the player's team as a mirrored row BELOW.
- * Both rows sit close together so all six cards stay inside the viewport
- * (task 10: the previous stacked-section layout pushed the enemy row off
- * screen at 1366×768). `data-unit-key` stays on the wrapping div (not on
- * WizardCard, which doesn't know about it) because PixiArena measures VFX
- * launch/landing points off that exact attribute.
+ * The stage — "La corsia del tempo" mockup v11: two large duellants centre stage (the
+ * unit acting and the one it targets), the other four wizards reduced to side miniatures,
+ * three per side, in the stable order of `replay.units`. This REPLACES the previous
+ * "six combat cards in two facing rows" composition (Task 10, superseded): that layout
+ * read as six identical cards and — per the user's verdict on the shipped result — "fa
+ * totalmente schifo". The mockup's actual idea (portrait-scale focus on who's dueling
+ * right now) never reached that implementation; this task is that missing piece.
+ *
+ * Percentages below are the mockup's absolute pixel geometry (1366×768 frame) converted
+ * to proportions of this component's own box, so the layout holds at any rendered size —
+ * the brief is explicit that the real frame is not always exactly 1366×768.
  */
 export function BattleArena({
   replay, hp, entry, frameKey = 0, leftTitle = 'La tua squadra', rightTitle = 'Avversari', center, enemyLevel = 1, speed = 1, duos = [], intensity = 0, portraitHeight = 118,
@@ -103,10 +75,16 @@ export function BattleArena({
   duos?: ActiveDuo[]
   /** Crescendo: calore del combattimento 0..1, amplifica i layer cinematici. Vedi `lib/vfx/crescendo.ts`. */
   intensity?: number
-  /** Portrait height fed to every WizardCard (px). Lets BattleScreen shrink the
-   *  whole arena adaptively so all six cards stay inside 768px. */
+  /** Unused by the stage itself (the duellant portrait is fixed at mockup scale, not
+   *  fed a height) — kept for signature compatibility, BattleScreen still passes it. */
   portraitHeight?: number
 }) {
+  // enemyLevel/portraitHeight are no longer read by the stage (the duellante portrait is
+  // fixed at mockup scale, not fed a height, and menace/level badges aren't part of this
+  // composition) — kept only for signature compatibility, since BattleScreen still passes
+  // them and the brief requires BattleArena's public signature to stay unchanged.
+  void enemyLevel; void portraitHeight
+
   // Una riga di sistema marchiata da un Duo non ha un vero "attore che agisce": MIASMA la attribuisce
   // al CADAVERE che contagia (giusto nel log, ma in arena accenderebbe l'aura "sta agendo" su un morto),
   // e le altre (KO del Mietitore, sputo dell'Untore) sono conseguenze passive, non azioni. Su questi
@@ -140,22 +118,47 @@ export function BattleArena({
   const sceneEvent = useMemo(() => sceneEventOf(frame ?? replay.frames[0]!, prevFrame), [frame, prevFrame, replay.frames])
   const motion = MOTION_BY_KIND[sceneEvent.kind]
 
+  // Chi va IN SCENA come duellante grande: l'attore/bersaglio di QUESTO frame, o — sui frame
+  // di sistema (veleno che ticchetta, un Duo che scatta, uno stordimento) che non hanno un
+  // vero attore/bersaglio proprio — quelli dell'ULTIMA azione vera (stesso principio della
+  // corsia dei turni, che tiene evidenziato l'ultimo attore reale finché non ne arriva uno
+  // nuovo). La scena non si svuota mai: senza questo fallback i due riquadri grandi
+  // resterebbero vuoti a ogni tick di stato, che è la maggioranza dei frame di una battaglia
+  // lunga.
+  const lastReal = useMemo(() => lastRealEntryAt(replay, frameKey), [replay, frameKey])
+  // Il fallback vale per attore e bersaglio INDIPENDENTEMENTE: uno Stordito ha un attore
+  // proprio (l'unità che salta) ma nessun bersaglio (il motore non ne emette uno per
+  // questa azione — game/engine/combat/simulate.ts), quindi il duellante attore mostra
+  // l'unità che sta saltando mentre il bersaglio tiene quello dell'ultima azione vera:
+  // niente slot vuoto, la scena non si svuota mai su NESSUNO dei due lati.
+  const stageActorSrc = entry?.actorSide ? entry : lastReal
+  const stageTargetSrc = entry?.targetSide && entry.targetId ? entry : lastReal
+  const stageActorKey = stageActorSrc?.actorSide ? unitKey(stageActorSrc.actorSide, stageActorSrc.actorId) : null
+  const stageTargetKey = stageTargetSrc?.targetSide && stageTargetSrc.targetId ? unitKey(stageTargetSrc.targetSide, stageTargetSrc.targetId) : null
+
   // SceneFx positions its number over the acting/target card by their live on-screen rect.
   // Same DOM-measurement pattern PixiArena already uses for its own VFX anchors
   // (`document.querySelector('[data-unit-key=...]')` + getBoundingClientRect) — re-measured
   // every frame since cards can move (dead units grey out/shrink motion, but not layout here).
+  //
+  // `data-unit-key` now appears TWICE in the DOM for a unit on stage: once on its big
+  // `Duellante`, once on its dimmed side `Miniatura`. A first-match `querySelector` would
+  // silently resolve to whichever rendered first — landing effects on the 84×104 miniature
+  // instead of the 420×376 duellante. `boxOf` below always prefers the duellante and only
+  // falls back to the generic selector when the unit isn't currently staged.
   const [boxes, setBoxes] = useState<{ actor: DOMRect | null; target: DOMRect | null }>({ actor: null, target: null })
   useEffect(() => {
     const boxOf = (key: string | null) => {
       if (!key) return null
-      const el = document.querySelector(`[data-unit-key="${CSS.escape(key)}"]`)
+      const el = document.querySelector(`[data-testid="duellante"][data-unit-key="${CSS.escape(key)}"]`)
+        ?? document.querySelector(`[data-unit-key="${CSS.escape(key)}"]`)
       return el ? el.getBoundingClientRect() : null
     }
     setBoxes({
-      actor: boxOf(sceneEvent.actorKey ?? actingKey),
-      target: boxOf(sceneEvent.targetKey ?? targetKey),
+      actor: boxOf(sceneEvent.actorKey ?? actingKey ?? stageActorKey),
+      target: boxOf(sceneEvent.targetKey ?? targetKey ?? stageTargetKey),
     })
-  }, [frameKey, sceneEvent.actorKey, sceneEvent.targetKey, actingKey, targetKey])
+  }, [frameKey, sceneEvent.actorKey, sceneEvent.targetKey, actingKey, targetKey, stageActorKey, stageTargetKey])
 
   // Boss telegraph: peek at the NEXT frame — if an enemy is about to unleash a big/ultimate
   // spell, warn the player one beat before it lands.
@@ -194,92 +197,109 @@ export function BattleArena({
   const left = useMemo(() => replay.units.filter(u => u.side === 'left'), [replay.units])
   const right = useMemo(() => replay.units.filter(u => u.side === 'right'), [replay.units])
 
-  const anyAction = !!actingKey
-  const renderSide = (units: ReplayUnit[], mirrored: boolean) =>
+  const stageActor = replay.units.find(u => u.key === stageActorKey) ?? null
+  const stageTarget = replay.units.find(u => u.key === stageTargetKey) ?? null
+
+  // La motion (fx-strike/fx-kick/...) è ancorata all'attore/bersaglio DI QUESTO frame
+  // (`sceneEvent`), non al fallback di sistema: su un tick di veleno il duellante resta
+  // in scena ma non si lancia né arretra, l'animazione parte solo quando c'è un vero evento.
+  const actorMotion = stageActorKey && stageActorKey === sceneEvent.actorKey ? motion?.actor : undefined
+  const targetMotion = stageTargetKey && stageTargetKey === sceneEvent.targetKey ? motion?.target : undefined
+
+  const renderMinis = (units: ReplayUnit[]) =>
     units.map(u => {
-      const involved = u.key === actingKey || u.key === targetKey
-      const acting = u.key === actingKey
-      const targeted = u.key === targetKey
       const dead = (hp[u.key] ?? 0) <= 0
-      const drafted = toDrafted(u)
-      const skipping = u.key === skipKey ? skipKind : null
-      // The motion this frame's scene puts on THIS card, if any: strike when it's the
-      // actor, kick/kickBig/swerve/fall when it's the target. `key={frameKey}` on the
-      // wrapper (below) remounts the class so a repeated kind (e.g. two hits in a row)
-      // restarts the CSS animation instead of no-opping on an unchanged className.
-      const cardMotion = u.key === sceneEvent.actorKey ? motion?.actor
-        : u.key === sceneEvent.targetKey ? motion?.target
-          : undefined
+      const dimmed = u.key === stageActorKey || u.key === stageTargetKey
       return (
-        <div
+        <Miniatura
           key={u.key}
-          data-unit-key={u.key}
-          data-testid="battle-unit"
-          className="relative w-[31%] max-w-[300px] shrink-0 transition-opacity duration-200"
-          style={{ opacity: anyAction && !involved ? 0.45 : 1 }}
-        >
-          {/* Il lato si legge dal COLORE della cornice: senza, le sei carte sono
-              identiche e in mezzo a uno scontro bisogna ricordare quale fila è
-              quale. Rosso i nemici, verde i tuoi — gli stessi colori che il gioco
-              usa già per i danni inflitti e subiti. Sovrascrive il filo di rarità
-              solo qui, in battaglia, dove sapere chi è chi conta più del tier. */}
-          <div key={cardMotion ? `${frameKey}-motion` : 'still'} className={cardMotion}>
-            <WizardCard
-              drafted={drafted}
-              density="combat"
-              currentHp={Math.max(0, hp[u.key] ?? 0)}
-              portraitHeight={portraitHeight}
-              style={{
-                background: mirrored ? 'rgba(240,114,114,.55)' : 'rgba(124,220,125,.45)',
-                // `p-px` della carta rende la cornice un filo da 1px: al 42% di alpha
-                // la tinta di lato era invisibile e si perdeva il tier senza guadagnare
-                // nulla. 2px pieni bastano a leggere il lato da lontano.
-                padding: 2,
-              }}
-              className={cn(
-                dead && 'grayscale opacity-60',
-                acting && 'ring-2 ring-[#7cfc9b] shadow-[0_0_22px_rgba(124,252,155,0.55)]',
-                targeted && !acting && 'ring-2 ring-rose-400 shadow-[0_0_22px_rgba(255,107,107,0.6)]',
-              )}
-            />
-          </div>
-          <StatusPips effects={statusEffects[u.key] ?? []} />
-          {targeted && !!float && !dead && (
-            <span
-              data-testid="damage-float"
-              className={cn(
-                'pointer-events-none absolute left-1/2 top-1 -translate-x-1/2 select-none font-display text-sm font-bold tabular-nums drop-shadow',
-                float.tone === 'crit' ? 'text-amber-300 text-lg' : float.tone === 'heal' ? 'text-emerald-300'
-                  : float.tone === 'dot' ? 'text-green-300' : float.tone === 'dodge' ? 'text-white/70 text-[11px] uppercase tracking-wider' : 'text-rose-300',
-              )}
-            >
-              {float.text}
-            </span>
-          )}
-          {dead && (
-            <span className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-rose-300">
-              Morto
-            </span>
-          )}
-          {skipping && (
-            <span
-              data-skipping={skipping}
-              className={cn(
-                'pointer-events-none absolute inset-0 z-20 grid place-items-center rounded-[15px] bg-black/35',
-              )}
-            >
-              <span className={cn('font-display text-[13px] font-extrabold uppercase tracking-wide -rotate-3 rounded px-2 py-1 text-black',
-                skipping === 'freeze' ? 'bg-cyan-300' : 'bg-yellow-300')}>
-                SALTA
-              </span>
-            </span>
-          )}
-        </div>
+          unit={u}
+          hp={Math.max(0, hp[u.key] ?? 0)}
+          maxHp={u.maxHp}
+          effects={statusEffects[u.key] ?? []}
+          dimmed={dimmed}
+          dead={dead}
+        />
       )
     })
 
+  const renderDuellante = (u: ReplayUnit | null, role: 'attore' | 'bersaglio') => {
+    if (!u) return null
+    const dead = (hp[u.key] ?? 0) <= 0
+    const cardMotion = role === 'attore' ? actorMotion : targetMotion
+    const skipping = u.key === skipKey ? skipKind : null
+    return (
+      <div
+        key={`${u.key}-${role}`}
+        data-testid={`stage-${role}`}
+        className="relative"
+        style={{
+          position: 'absolute',
+          left: role === 'attore' ? '4.9%' : '58.3%',
+          top: '8.4%',
+          width: '36.8%',
+          height: '83.2%',
+        }}
+      >
+        {/* `key={cardMotion ? ... }` remounts the class so a repeated kind (two hits in a
+            row) restarts the CSS animation instead of no-opping on an unchanged className —
+            same trick the previous two-row layout used. The motion class goes straight onto
+            `Duellante`'s own root via `className` (merged there with `cn`), not a wrapper
+            around it: `Duellante` is the element carrying `data-testid="duellante"` +
+            `data-unit-key`, and SceneFx/PixiArena's box measurement + these tests' DOM
+            queries all resolve to THAT element — a class on an outer wrapper wouldn't be a
+            *descendant* match for `.querySelector('.fx-strike')` run against it. */}
+        <Duellante
+          key={cardMotion ? `${frameKey}-motion` : 'still'}
+          unit={u}
+          hp={Math.max(0, hp[u.key] ?? 0)}
+          maxHp={u.maxHp}
+          role={role}
+          effects={statusEffects[u.key] ?? []}
+          dead={dead}
+          className={cn('h-full w-full', cardMotion)}
+        />
+        {role === 'bersaglio' && !!float && !dead && (
+          <span
+            data-testid="damage-float"
+            className={cn(
+              'pointer-events-none absolute left-1/2 top-1 -translate-x-1/2 select-none font-display text-sm font-bold tabular-nums drop-shadow',
+              float.tone === 'crit' ? 'text-amber-300 text-lg' : float.tone === 'heal' ? 'text-emerald-300'
+                : float.tone === 'dot' ? 'text-green-300' : float.tone === 'dodge' ? 'text-white/70 text-[11px] uppercase tracking-wider' : 'text-rose-300',
+            )}
+          >
+            {float.text}
+          </span>
+        )}
+        {dead && (
+          <span className="pointer-events-none absolute inset-x-0 top-1/2 -translate-y-1/2 text-center text-[10px] font-bold uppercase tracking-[0.18em] text-rose-300">
+            Morto
+          </span>
+        )}
+        {skipping && (
+          <span
+            data-skipping={skipping}
+            className="pointer-events-none absolute inset-0 z-20 grid place-items-center rounded-[13px] bg-black/35"
+          >
+            <span className={cn('font-display text-[13px] font-extrabold uppercase tracking-wide -rotate-3 rounded px-2 py-1 text-black',
+              skipping === 'freeze' ? 'bg-cyan-300' : 'bg-yellow-300')}>
+              SALTA
+            </span>
+          </span>
+        )}
+      </div>
+    )
+  }
+
   return (
-    <div data-testid="battle-arena" className="relative mx-auto flex w-full max-w-5xl flex-col items-stretch gap-1 rounded-3xl px-2 py-1">
+    <div data-testid="battle-arena" className="relative mx-auto grid w-full max-w-6xl grid-cols-[84px_1fr_84px] items-start gap-2 rounded-3xl px-2 py-1">
+      {/* `grid` + `grid-cols-[84px_1fr_84px]`, NOT `flex` + `items-stretch`: a flex row's
+          `items-stretch` forces the stage's height to match the row's cross-axis size —
+          which defeats `aspect-ratio` on the stage entirely, since aspect-ratio only sizes
+          an axis that's otherwise free. A CSS grid row instead sizes itself to its tallest
+          item's OWN content height (the stage's aspect-ratio counts as that), and only then
+          stretches the shorter siblings (the two mini columns) to match — which is exactly
+          "the columns share the stage's height", the effect we actually want. */}
       <ArenaBackdrop />
       <DuoPills duos={duos} firingId={firingId} />
       {telegraph && (
@@ -292,37 +312,53 @@ export function BattleArena({
           ⚠ {telegraph.name} sta caricando {telegraph.spell}…
         </div>
       )}
-      {/* Campo contro campo: nemici sopra, squadra sotto, affacciate — la riga
-          dell'azione in corso sta fra le due file. I titoli di riga (prima due
-          <h3> "Avversari"/"La tua squadra") sono stati tolti: ridondanti con la
-          disposizione stessa (nemici sempre sopra) e con l'intestazione della
-          schermata, e nel budget fisso di 768px ogni riga di testo pesa. */}
-      <section aria-label={rightTitle} className="flex w-full flex-col items-center">
-        {/* La larghezza fissa sta sul WRAPPER di ogni unità (vedi renderSide), non
-            sulla carta: senza, ognuna si dimensionava sul proprio contenuto — un nome
-            lungo la allargava — e le due file non erano allineate (misurato: da 210 a
-            290px nella stessa fila). Metterla sulla CARTA invece che sul wrapper la
-            stringe e ne manda a capo il contenuto, facendola crescere in ALTEZZA:
-            provato, l'arena passava da 1063px e tre unità uscivano dallo schermo. */}
-        <div data-testid="row-enemies" className="flex flex-nowrap justify-center gap-2">{renderSide(right, true)}</div>
-      </section>
 
-      <div className="flex w-full items-center justify-center self-center">
-        {center ?? <span className="font-display text-2xl text-white/30 select-none">VS</span>}
+      {/* Colonna sinistra: le tre miniature nemiche — nel mockup a x18, sopra x112 dove
+          inizia il palco, quindi FUORI dalla scena grande, sul suo stesso fianco. */}
+      <div data-testid="col-enemies" aria-label={rightTitle} className="flex flex-col justify-between py-[3.5%]">
+        {renderMinis(right)}
       </div>
 
-      <section aria-label={leftTitle} className="flex w-full flex-col items-center">
-        <div data-testid="row-player" className="flex flex-nowrap justify-center gap-2">{renderSide(left, false)}</div>
-      </section>
+      {/* Il palco: 1142×452 nel mockup. I due duellanti (attore a sinistra, bersaglio a
+          destra — `#actor`/`#target`) sono posizionati in percentuale DI QUESTO box, non
+          in pixel fissi, perché la cornice reale non è sempre 1366×768 (brief). Lo slot
+          centrale (`center`) ospita l'etichetta incantesimo/ActionPanel, alla posizione
+          del mockup (43.9% left, 30.7% top, 12.2% larghezza). */}
+      <div data-testid="stage" className="relative min-w-0 overflow-visible rounded-[15px] border border-[rgba(202,162,74,.3)]" style={{ aspectRatio: '1142 / 452' }}>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 rounded-[15px]"
+          style={{
+            background: 'radial-gradient(74% 92% at 50% 16%, rgba(202,162,74,.14), transparent 64%), linear-gradient(180deg, #181433, #0b0917)',
+          }}
+        />
 
-      <PixiArena entry={entry} frameKey={frameKey} speed={speed} intensity={intensity} />
+        {renderDuellante(stageActor, 'attore')}
+        {renderDuellante(stageTarget, 'bersaglio')}
+
+        <div
+          data-testid="stage-center"
+          className="pointer-events-none absolute z-10 -translate-x-1/2 text-center"
+          style={{ left: '50%', top: '30.7%', width: '12.2%', minWidth: 140 }}
+        >
+          {center}
+        </div>
+
+        <PixiArena entry={entry} frameKey={frameKey} speed={speed} intensity={intensity} />
+        {/* Il livello degli effetti: un numero/parola per OGNI evento del motore
+            (sceneEventOf non ha mai `null`, solo `kind: 'none'` quando SceneFx non
+            disegna nulla). `frameKey` come key rimonta l'intero layer a ogni
+            fotogramma così un evento ripetuto (due colpi identici di fila)
+            riparte da capo invece di restare fermo sull'animazione già finita. */}
+        <SceneFx key={frameKey} event={sceneEvent} frameKey={frameKey} actorBox={boxes.actor} targetBox={boxes.target} />
+      </div>
+
+      {/* Colonna destra: le tre miniature alleate. */}
+      <div data-testid="col-allies" aria-label={leftTitle} className="flex flex-col justify-between py-[3.5%]">
+        {renderMinis(left)}
+      </div>
+
       <Callout entry={entry} frameKey={frameKey} appliedControl={appliedControl} duoName={duoName} />
-      {/* Il livello degli effetti: un numero/parola per OGNI evento del motore
-          (sceneEventOf non ha mai `null`, solo `kind: 'none'` quando SceneFx non
-          disegna nulla). `frameKey` come key rimonta l'intero layer a ogni
-          fotogramma così un evento ripetuto (due colpi identici di fila)
-          riparte da capo invece di restare fermo sull'animazione già finita. */}
-      <SceneFx key={frameKey} event={sceneEvent} frameKey={frameKey} actorBox={boxes.actor} targetBox={boxes.target} />
     </div>
   )
 }

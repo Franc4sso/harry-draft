@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { render } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import { floatFor } from '@/components/battle/damageFloat'
 import { BattleArena } from '@/components/battle/BattleArena'
 import { buildReplay, unitKey } from '@/game/engine/combat/replay'
@@ -23,6 +23,11 @@ it('un colpo normale resta tono damage', () => {
 // The dot/damage color distinction survives on the floating number itself
 // (BattleArena's [data-testid=damage-float], text-green-300 for dot vs text-rose-300 for
 // damage) — this covers that successor instead of the deleted overlay.
+//
+// 2026-09-16 (Task 3, "il palco"): `data-unit-key` now appears TWICE for a unit on stage
+// (its Duellante + its dimmed side Miniatura). The float itself is a sibling of the
+// Duellante inside that unit's `stage-bersaglio` slot (Duellante can't take children), so
+// this test now reads it from the slot rather than from `[data-unit-key]` directly.
 function team(ids: string[], seed = 1): DraftedWizard[] {
   const r = createRng(seed)
   return ids.map(id => draftWizard(r, WIZARD_BY_ID[id]!))
@@ -37,10 +42,11 @@ describe('BattleArena: il colore del numero fluttuante segue il tono', () => {
       turn: 1, actorId: 'harry', actorSide: 'left', action: 'Veleno',
       targetId: 'draco', targetSide: 'right', type: 'Controllo', value: 9, flags: ['dot'],
     }
-    const { container } = render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={e} frameKey={1} />)
+    render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={e} frameKey={1} />)
     const targetKey = unitKey('right', 'draco')
-    const targetBust = container.querySelector(`[data-unit-key="${CSS.escape(targetKey)}"]`) as HTMLElement
-    const float = targetBust.querySelector('[data-testid="damage-float"]')!
+    const targetSlot = screen.getByTestId('stage-bersaglio')
+    expect(targetSlot.querySelector(`[data-testid="duellante"][data-unit-key="${CSS.escape(targetKey)}"]`)).not.toBeNull()
+    const float = targetSlot.querySelector('[data-testid="damage-float"]')!
     expect(float.className).toMatch(/text-green-300/)
     expect(float.className).not.toMatch(/text-rose-300/)
   })

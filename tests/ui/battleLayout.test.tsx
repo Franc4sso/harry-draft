@@ -12,21 +12,21 @@ const replay = {
   frames: [{ statusEffects: {}, cooldowns: {} }],
 } as unknown as Replay
 
-// Task 10 (Battaglia A — "campo contro campo") deliberately flips this from the
-// earlier "Arena Row Inversion" redesign: the brief's chosen mockup puts the
-// ENEMY row visually on top and the player's team below, facing each other —
-// so enemies now come FIRST in document order (no flex-direction reversal is
-// used, the DOM order IS the visual order). Updated, not deleted, per task 10's
-// instructions.
-it('enemies row sits above the player row in the DOM (campo contro campo)', () => {
+// 2026-09-16 (Task 3, "il palco"): Task 10's "campo contro campo" two-row layout
+// (`row-enemies` above `row-player`, mirrored WizardCard rows) is gone — replaced by the
+// mockup's stage, with enemy miniatures in a LEFT column and ally miniatures in a RIGHT
+// column (mirroring "La corsia del tempo" v11: NEMICI at x18, I TUOI at x1264 — enemies
+// on the reader's left, allies on the right, same relative order as before: enemies come
+// first). `col-enemies`/`col-allies` are those two columns' new test ids.
+it('enemies sit in the left column, allies in the right column, in document order', () => {
   render(<BattleArena replay={replay} hp={{ 'left:a': 100, 'right:b': 100 }} entry={null} />)
-  const player = screen.getByTestId('row-player')
-  const enemies = screen.getByTestId('row-enemies')
-  // enemies appear before player in document order
-  expect(enemies.compareDocumentPosition(player) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+  const allies = screen.getByTestId('col-allies')
+  const enemies = screen.getByTestId('col-enemies')
+  // enemies appear before allies in document order
+  expect(enemies.compareDocumentPosition(allies) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
 })
 
-it('renders the center node between the rows', () => {
+it('renders the center node inside the stage', () => {
   render(<BattleArena replay={replay} hp={{ 'left:a': 100, 'right:b': 100 }} entry={null} center={<div data-testid="center-slot">X</div>} />)
   expect(screen.getByTestId('center-slot')).toBeInTheDocument()
 })

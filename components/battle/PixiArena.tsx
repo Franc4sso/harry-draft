@@ -121,7 +121,13 @@ export function PixiArena({
     if (a.width === 0 || a.height === 0) return
     const centerPct = (side?: string, id?: string) => {
       if (!side || !id) return null
-      const el = document.querySelector(`[data-unit-key="${CSS.escape(`${side}:${id}`)}"]`)
+      // `data-unit-key` appears twice for a unit on stage (its big Duellante AND its dimmed
+      // side Miniatura) — a bare selector resolves to whichever mounts first in the DOM,
+      // which can anchor VFX to the 84×104 miniature instead of the 420×376 duellante. Prefer
+      // the duellante and fall back to the generic selector only when the unit isn't staged.
+      const key = CSS.escape(`${side}:${id}`)
+      const el = document.querySelector(`[data-testid="duellante"][data-unit-key="${key}"]`)
+        ?? document.querySelector(`[data-unit-key="${key}"]`)
       if (!el) return null
       const r = el.getBoundingClientRect()
       return {
