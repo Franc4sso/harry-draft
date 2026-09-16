@@ -1,0 +1,304 @@
+/* components/battle/vetrata.css
+ *
+ * Il mondo della carta di battaglia — variante "Vetrata" del mockup
+ * (https://claude.ai/artifact/PNqfY2yLXxHiY4ziu6QsUq, Variante B). Valori presi
+ * dal CSS del mockup, non a memoria: vedi task-2-report.md per il punto esatto
+ * di ogni regola.
+ *
+ * Non tocca game/engine/, data/, WizardCard o battleStacks — solo presentazione.
+ */
+
+.vetrata-world {
+  /* .fr background, Variante B — losanghe di piombo a 60°/-60°, luce colorata
+     da dietro, sfondo verticale scuro. */
+  background:
+    repeating-linear-gradient(60deg, rgba(125, 183, 255, .028) 0 2px, transparent 2px 46px),
+    repeating-linear-gradient(-60deg, rgba(201, 139, 255, .025) 0 2px, transparent 2px 46px),
+    radial-gradient(70% 46% at 50% 44%, rgba(125, 183, 255, .07), transparent 66%),
+    linear-gradient(180deg, #0f0e1e 0%, #0a0814 52%, #060510 100%);
+}
+
+.vetrata-world::after {
+  /* .fr::after — vignettatura. */
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 14;
+  box-shadow: inset 0 0 150px rgba(3, 2, 7, .86);
+}
+
+:root {
+  --vg-ink: #f2eee4;
+  --vg-soft: rgba(242, 238, 228, .56);
+  --vg-faint: rgba(242, 238, 228, .24);
+  --vg-line: rgba(226, 214, 186, .12);
+  --vg-rule: rgba(226, 214, 186, .24);
+  --vg-gold: #b8963f;
+  --vg-gold-pale: #e8d49a;
+  --vg-gold-lit: #f7e8bc;
+  --vg-ink-gold: #241c0d;
+  --vg-hp: #7cdc7d;
+  --vg-foe: #e86a6a;
+  --vg-ally: #6dc46e;
+  --vg-amber: #e0a05c;
+  --vg-red: #e8544f;
+  --vg-ven: #7fc47f;
+  --vg-burn: #e08040;
+  --vg-stun: #d9bd6a;
+  --vg-frz: #6bb8dd;
+  --vg-sil: #a888dd;
+}
+
+/* ═══ CARTA (.c nel mockup) ═══ */
+
+.carta-combat {
+  position: relative;
+  width: 212px;
+  height: 254px;
+  overflow: visible;
+  border: 1px solid rgba(226, 214, 186, .2);
+  background: linear-gradient(180deg, #16132a, #090711);
+  display: flex;
+  flex-direction: column;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12); /* il filo di luce */
+  font-family: Inter, system-ui, sans-serif;
+  color: var(--vg-ink);
+}
+
+.carta-combat[data-side='right'] {
+  border-color: rgba(232, 106, 106, .3);
+}
+.carta-combat[data-side='left'] {
+  border-color: rgba(109, 196, 110, .26);
+}
+
+.carta-combat .cc-inner {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.carta-combat .cc-por {
+  flex: 1 1 auto;
+  position: relative;
+  background: linear-gradient(158deg, #2e3453, #161a2e);
+  overflow: hidden;
+}
+.carta-combat .cc-por::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(6, 5, 11, .97) 2%, rgba(6, 5, 11, .52) 26%, transparent 52%);
+}
+.carta-combat .cc-por img,
+.carta-combat .cc-por svg {
+  display: block;
+}
+
+.carta-combat .cc-rl {
+  position: absolute;
+  left: 8px;
+  bottom: 38px;
+  z-index: 3;
+  font: 800 6.5px/1 Inter, sans-serif;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+}
+
+.carta-combat .cc-nm {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 19px;
+  z-index: 3;
+  font-family: Cinzel, Georgia, serif;
+  font-weight: 900;
+  font-size: 14px;
+  color: #fff;
+  line-height: 1.08;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.carta-combat .cc-sp {
+  position: absolute;
+  left: 8px;
+  right: 8px;
+  bottom: 5px;
+  z-index: 3;
+  font: 600 8.5px/1 Inter, sans-serif;
+  color: var(--vg-gold-pale);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.carta-combat .cc-hpw {
+  height: 6px;
+  background: rgba(0, 0, 0, .72);
+  position: relative;
+}
+.carta-combat .cc-hpw i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(180deg, #9ce89d, var(--vg-hp));
+}
+.carta-combat[data-side='right'] .cc-hpw i {
+  background: linear-gradient(180deg, #f58b8b, var(--vg-foe));
+}
+.carta-combat .cc-hpt {
+  position: absolute;
+  right: 5px;
+  top: -10px;
+  font: 800 7.5px/9px Inter, sans-serif;
+  color: rgba(255, 255, 255, .66);
+  font-variant-numeric: tabular-nums;
+  z-index: 4;
+}
+
+.carta-combat .cc-st {
+  display: flex;
+  padding: 5px 4px 6px;
+  gap: 1px;
+  background: rgba(0, 0, 0, .4);
+  border-top: 1px solid rgba(226, 214, 186, .07);
+}
+.carta-combat .cc-st span {
+  flex: 1;
+  text-align: center;
+  font: 800 11.5px/1.2 Inter, sans-serif;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+.carta-combat .cc-st span u {
+  display: block;
+  font: 700 6px/1 Inter, sans-serif;
+  letter-spacing: .11em;
+  color: var(--vg-faint);
+  text-decoration: none;
+  margin-bottom: 2.5px;
+}
+
+/* Caduto */
+.carta-combat[data-caduto='true'] .cc-inner {
+  filter: grayscale(1) brightness(.72);
+  opacity: .34;
+}
+.carta-combat[data-caduto='true'] .cc-por::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: repeating-linear-gradient(-45deg, rgba(0, 0, 0, .4) 0 7px, transparent 7px 14px);
+}
+.carta-combat .cc-caduta {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 46%;
+  z-index: 6;
+  text-align: center;
+  font: 900 9px/1 Inter, sans-serif;
+  letter-spacing: .24em;
+  color: rgba(255, 255, 255, .62);
+}
+
+/* Pillole sommate: una per famiglia, col totale */
+.carta-combat .cc-pips {
+  position: absolute;
+  top: 5px;
+  left: 5px;
+  z-index: 6;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  max-width: 92%;
+}
+.carta-combat .cc-pip {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 17px;
+  padding: 0 5px 0 4px;
+  font: 900 9px/1 Inter, sans-serif;
+  color: #08060f;
+  border: 1px solid rgba(8, 6, 15, .6);
+}
+.carta-combat .cc-pip b {
+  font: 900 10px/1 Inter, sans-serif;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Aure — intensità, non presenza */
+.carta-combat[data-aura='veleno'] {
+  border-color: var(--vg-ven) !important;
+  border-width: 2px !important;
+  border-style: dashed !important;
+}
+.carta-combat[data-aura='burn'] {
+  border-color: var(--vg-burn) !important;
+  border-width: 2px !important;
+}
+.carta-combat[data-aura='burn'] .cc-por::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 30%;
+  z-index: 3;
+  background: linear-gradient(0deg, rgba(224, 128, 64, .55), transparent);
+  clip-path: polygon(0 100%, 6% 46%, 13% 80%, 21% 32%, 29% 70%, 37% 24%, 46% 64%, 55% 22%, 64% 68%, 73% 36%, 82% 74%, 91% 42%, 100% 86%, 100% 100%);
+}
+.carta-combat[data-aura='stun'] {
+  border-color: var(--vg-stun) !important;
+  border-width: 2px !important;
+}
+.carta-combat[data-aura='freeze'] {
+  border-color: var(--vg-frz) !important;
+  border-width: 2px !important;
+}
+.carta-combat[data-aura='freeze'] .cc-por::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: linear-gradient(135deg, rgba(107, 184, 221, .3), transparent 42%);
+  clip-path: polygon(0 0, 32% 0, 13% 30%, 0 20%);
+}
+
+/* Ruolo in scena: cornice dell'attore (oro) e del bersaglio (rosso) */
+.carta-combat[data-ruolo='attore'] {
+  border-color: var(--vg-gold) !important;
+  border-width: 2px !important;
+}
+.carta-combat[data-ruolo='bersaglio'] {
+  border-color: var(--vg-red) !important;
+  border-width: 2px !important;
+}
+
+.carta-combat .cc-corner {
+  position: absolute;
+  width: 15px;
+  height: 15px;
+  z-index: 7;
+  border: 2px solid var(--k);
+}
+.carta-combat .cc-corner.tl { left: -1px; top: -1px; border-right: 0; border-bottom: 0; }
+.carta-combat .cc-corner.tr { right: -1px; top: -1px; border-left: 0; border-bottom: 0; }
+.carta-combat .cc-corner.bl { left: -1px; bottom: -1px; border-right: 0; border-top: 0; }
+.carta-combat .cc-corner.br { right: -1px; bottom: -1px; border-left: 0; border-top: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .carta-combat, .carta-combat * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
