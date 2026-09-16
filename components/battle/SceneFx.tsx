@@ -305,12 +305,27 @@ export function SceneFx({
       )}
 
       {spec.word && (
+        // FIX ROUND 1 (review, pre-existing bug newly exposed by 420×376 duellante portraits):
+        // this used to sit at `top-1/2` — dead centre of the stage, which is also dead centre
+        // of BOTH duellante portraits' faces (the actor/target boxes span 8.4%–91.6% of the
+        // stage height). A short word like SALTA (in the narrow gap between the two portraits)
+        // fits there; a long one — VELENO, ARMATURA FORATA — is wider than that gap and paints
+        // straight across the actor's face, edge to edge (confirmed on a real frame: reviewer's
+        // f4 screenshot). The mockup's own `word()` calls all land in the upper band, y≈110–160
+        // in the 1366×768 frame (≈14%–25% of the stage's own height, stage top=46/height=452),
+        // well above where any portrait's face sits — NOT by avoiding horizontal overlap (the
+        // mockup's long words genuinely are wider than the 157px centre gap and do cross onto
+        // the portraits horizontally) but by sitting high enough to cross hair/background
+        // instead of eyes. `top: 18%` reproduces that: centre of the band, clear at any word
+        // length, same trick as the mockup rather than a narrower one that still fails on a
+        // long phrase.
         <span
           data-testid="fx-word"
           className={[
-            'absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 select-none whitespace-nowrap font-display text-xl font-bold uppercase tracking-[0.14em] text-white',
+            'absolute left-1/2 -translate-x-1/2 -translate-y-1/2 select-none whitespace-nowrap font-display text-xl font-bold uppercase tracking-[0.14em] text-white',
             spec.word.className,
           ].join(' ')}
+          style={{ top: '18%' }}
         >
           {spec.word.text}
         </span>

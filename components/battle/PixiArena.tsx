@@ -8,6 +8,26 @@ import { heatAmp } from '@/lib/vfx/crescendo'
 import { spellVfxFor } from '@/lib/vfx/spellVfx'
 
 /**
+ * Resolves the DOM element that anchors this unit's VFX. `data-unit-key` appears TWICE for
+ * a unit on stage (its big Duellante AND its dimmed side Miniatura) — a bare
+ * `[data-unit-key]` selector resolves to whichever mounts first in the DOM, which can anchor
+ * VFX to the 84×104 miniature instead of the 420×376 duellante. Prefer the duellante and
+ * fall back to the generic selector only when the unit isn't currently staged.
+ *
+ * Exported (pure, no Pixi/WebGL dependency) so this selection logic can be tested directly:
+ * under jsdom, `createPixiStage` always fails (no WebGL), so `centerPct` below — and the
+ * whole `choreograph` call it feeds — never actually runs in a unit test. Without this
+ * extraction there would be no way to falsify a dropped duellante-preference on THIS site,
+ * only on BattleArena's separate copy of the same guard.
+ */
+export function resolveUnitEl(side?: string, id?: string): Element | null {
+  if (!side || !id) return null
+  const key = CSS.escape(`${side}:${id}`)
+  return document.querySelector(`[data-testid="duellante"][data-unit-key="${key}"]`)
+    ?? document.querySelector(`[data-unit-key="${key}"]`)
+}
+
+/**
  * Mounts the Pixi WebGL VFX layer inside the real BattleArena and drives it
  * from replay frames. Adapted from `app/combat-lab/page.tsx`'s mounting +
  * `onScreen` wash logic. Client-only: the stage is created in a `useEffect`
@@ -120,14 +140,7 @@ export function PixiArena({
     const a = mount.getBoundingClientRect()
     if (a.width === 0 || a.height === 0) return
     const centerPct = (side?: string, id?: string) => {
-      if (!side || !id) return null
-      // `data-unit-key` appears twice for a unit on stage (its big Duellante AND its dimmed
-      // side Miniatura) — a bare selector resolves to whichever mounts first in the DOM,
-      // which can anchor VFX to the 84×104 miniature instead of the 420×376 duellante. Prefer
-      // the duellante and fall back to the generic selector only when the unit isn't staged.
-      const key = CSS.escape(`${side}:${id}`)
-      const el = document.querySelector(`[data-testid="duellante"][data-unit-key="${key}"]`)
-        ?? document.querySelector(`[data-unit-key="${key}"]`)
+      const el = resolveUnitEl(side, id)
       if (!el) return null
       const r = el.getBoundingClientRect()
       return {

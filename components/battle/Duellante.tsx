@@ -39,11 +39,20 @@ export function Duellante({
       data-unit-key={unit.key}
       data-dead={dead ? 'true' : undefined}
       className={cn(
-        'relative h-[376px] w-[420px] overflow-hidden rounded-[13px] border-2 transition-[filter]',
+        'relative overflow-hidden rounded-[13px] border-2 transition-[filter]',
         dead && 'grayscale',
         className,
       )}
-      style={{ borderColor, ...style }}
+      // FIX ROUND 1 (review): the 420×376 mockup size used to live in the Tailwind class
+      // list (`h-[376px] w-[420px]`), which collided with the caller's own `h-full w-full`
+      // (BattleArena passes that so the duellante fills its percentage-sized stage slot).
+      // `cn` (lib/cn.ts) is a plain string join with no tailwind-merge — it does NOT dedupe
+      // conflicting utilities, so which one wins depends on Tailwind's stylesheet emission
+      // order, not on className string order. That happened to resolve correctly today, but
+      // silently — a build-tool detail, not a guarantee. Inline `style` doesn't have that
+      // problem: a plain object spread always lets the caller's own `style` win over this
+      // default, deterministically, with no dependency on CSS specificity or emission order.
+      style={{ height: 376, width: 420, borderColor, ...style }}
     >
       <PortraitImage id={unit.id} house={unit.house} alt={unit.name} variant="bust" />
 

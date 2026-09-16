@@ -8,6 +8,7 @@ import { InitiativeBar } from '@/components/battle/InitiativeBar'
 import { BattleArena } from '@/components/battle/BattleArena'
 import { ActionPanel } from '@/components/battle/ActionPanel'
 import { buildReplay, unitKey } from '@/game/engine/combat/replay'
+import type { ReplayUnit, Replay } from '@/game/engine/combat/replay'
 import { simulateBattle } from '@/game/engine/combat/simulate'
 import { detectSynergies } from '@/game/engine/synergy'
 import { draftWizard } from '@/game/engine/statRoll'
@@ -362,14 +363,73 @@ describe('BattleArena', () => {
   // Un tick di veleno o un Duo non hanno attore/bersaglio propri (system frame): i due
   // duellanti restano quelli dell'ultima azione vera (lastRealEntryAt), come già fa la
   // corsia dei turni — la scena non si svuota mai.
-  it('sui frame di sistema la scena non si svuota', () => {
-    const l = left(), r = right()
-    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
-    const firstReal = replay.frames.findIndex(f => f.entry && f.entry.type !== 'system' && f.entry.actorSide)
-    const sysIdx = replay.frames.findIndex((f, i) => i > firstReal && f.entry && (f.entry.type === 'system' || !f.entry.actorSide))
-    expect(sysIdx).toBeGreaterThan(firstReal)
-    render(<BattleArena replay={replay} hp={replay.frames[sysIdx]!.hp} entry={replay.frames[sysIdx]!.entry} frameKey={sysIdx} />)
-    expect(screen.getAllByTestId('duellante')).toHaveLength(2)
+  //
+  // FIX ROUND 1 (review): la versione precedente pescava un frame di sistema dal replay
+  // REALE (simulateBattle + buildReplay su 5v5) filtrando su `f.entry.type === 'system' ||
+  // !f.entry.actorSide` — ma nella fixture di questa suite il primo frame di sistema
+  // trovato (`Reliquia`, turno 1) porta COMUNQUE `actorSide`/`targetSide` propri (è un
+  // drop di reliquia auto-diretto: attore e bersaglio sono la stessa unità). Con
+  // `entry.actorSide` sempre presente, `stageActorSrc`/`stageTargetSrc` in BattleArena non
+  // ricadono MAI su `lastRealEntryAt` — il ramo di fallback non veniva mai esercitato, e
+  // il test passava per un motivo che non aveva nulla a che fare con l'assert (2 duellanti
+  // erano già lì perché il frame aveva il suo proprio attore/bersaglio, non perché il
+  // fallback avesse recuperato l'ultima azione vera). Prova diretta: ho tolto il fallback
+  // (`stageActorSrc = entry?.actorSide ? entry : null`, stesso per il target) e rilanciato
+  // `tests/ui/battle.test.tsx tests/ui/skipTurn.test.tsx tests/ui/poisonTick.test.tsx`:
+  // 40/40 verdi. Il replay 5v5 di questa fixture non ha NESSUN frame senza `actorSide` —
+  // nessun seed lo produce.
+  //
+  // Questa riscrittura costruisce a mano (stesso pattern di tests/ui/skipTurn.test.tsx) un
+  // replay minimo con un frame REALMENTE privo di attore/bersaglio (un tick di veleno
+  // generico, senza `actorSide` né `targetSide` — il caso che il brief cita alla lettera:
+  // «veleno, Duo» senza attore/bersaglio propri) e prova non solo che restano 2 duellanti,
+  // ma che sono ESATTAMENTE quelli dell'ultima azione vera (harry attore, foe bersaglio),
+  // non una coppia qualunque. Rilanciata la stessa falsificazione contro QUESTA versione:
+  // togliendo il fallback il test va rosso (vedi task-3-report.md per l'evidenza completa).
+  it('sui frame di sistema senza attore/bersaglio propri la scena tiene l\'ultima azione vera', () => {
+    const attacker = (): ReplayUnit => ({
+      key: 'left:x', id: 'x', name: 'X', side: 'left', house: 'Grifondoro', role: 'Attaccante', tier: 3,
+      maxHp: 100, atk: 10, def: 10, spd: 10, baseAtk: 10, baseDef: 10, baseSpd: 10,
+      spell: { id: 's', name: 'S', cooldown: 0 },
+    })
+    const defender = (): ReplayUnit => ({
+      key: 'right:foe', id: 'foe', name: 'Foe', side: 'right', house: 'Serpeverde', role: 'Tank', tier: 3,
+      maxHp: 100, atk: 10, def: 10, spd: 10, baseAtk: 10, baseDef: 10, baseSpd: 10,
+      spell: { id: 's2', name: 'S2', cooldown: 0 },
+    })
+    const realHit: LogEntry = {
+      turn: 1, actorId: 'x', actorSide: 'left', action: 'Colpo', targetId: 'foe', targetSide: 'right',
+      type: 'Attacco', value: 10, flags: [],
+    }
+    // Un tick di veleno "generico" senza actorSide NÉ targetSide — il caso letterale del
+    // commento nel codice sorgente: nessun attore che sta agendo, nessun bersaglio scelto
+    // questo frame, solo danno passivo sull'unità colpita. `buildReplay`/il motore reale
+    // producono sempre un `targetSide` sui tick di veleno (leggono l'attaccante/bersaglio
+    // di quel DoT specifico) — questa è la forma "senza nessuno dei due" che il fallback
+    // deve coprire, e che nessuna battaglia reale in questa fixture emette.
+    const poisonTick: LogEntry = {
+      turn: 1, actorId: '', action: 'Veleno', targetId: '', type: 'system', value: 4, flags: ['dot'],
+    }
+    const replay = {
+      units: [attacker(), defender()],
+      frames: [
+        { statusEffects: {}, cooldowns: {}, entry: null, hp: { 'left:x': 100, 'right:foe': 100 } },
+        { statusEffects: {}, cooldowns: {}, entry: realHit, hp: { 'left:x': 100, 'right:foe': 90 } },
+        { statusEffects: {}, cooldowns: {}, entry: poisonTick, hp: { 'left:x': 96, 'right:foe': 90 } },
+      ],
+    } as unknown as Replay
+    // Sanity: il frame di sistema che stiamo per rendere davvero non ha né actorSide né
+    // targetSide — altrimenti staremmo ripetendo lo stesso errore appena diagnosticato.
+    expect(poisonTick.actorSide).toBeUndefined()
+    expect(poisonTick.targetSide).toBeUndefined()
+
+    render(<BattleArena replay={replay} hp={replay.frames[2]!.hp} entry={poisonTick} frameKey={2} />)
+    const duellanti = screen.getAllByTestId('duellante')
+    expect(duellanti).toHaveLength(2)
+    // Non una coppia qualunque: quella dell'ultima azione vera (frame 1 — harry-equivalente
+    // attore, foe bersaglio), recuperata da lastRealEntryAt.
+    const keys = duellanti.map(el => el.getAttribute('data-unit-key')).sort()
+    expect(keys).toEqual(['left:x', 'right:foe'])
   })
 
   it('no longer renders the legacy DOM Protego dome (block reaction moved to the Pixi VFX layer)', () => {
@@ -504,6 +564,51 @@ describe('BattleArena', () => {
     // A resolved (non-null) box makes SceneFx set `position: fixed` inline; an unresolved
     // (null) box leaves the element with no inline position style at all.
     expect(num.style.position).toBe('fixed')
+  })
+
+  // FIX ROUND 1 (review): the previous suite proved the duellante-preferring selector
+  // resolves correctly WHEN CALLED DIRECTLY (in the tests' own queries) but never asserted
+  // that BattleArena/PixiArena actually USE that selector internally. Direct falsification:
+  // replacing BattleArena's `boxOf` with a bare `document.querySelector('[data-unit-key=…]')`
+  // (dropping the `[data-testid="duellante"]` preference) still passed 377/378 of
+  // `tests/ui tests/battle` — nothing caught the regression. jsdom's `getBoundingClientRect`
+  // returns the same zero-rect for every element, which is exactly why: a test can't tell
+  // "measured the duellante" from "measured the miniature" by value unless the two elements
+  // are made to report DIFFERENT rects. This test stubs `getBoundingClientRect` per-element
+  // (keyed on whether it's the duellante) and asserts the box SceneFx actually receives
+  // matches the duellante's stub, not the miniature's — so dropping the preference makes the
+  // received box wrong, not merely present. Falsified the same way as Critical 1 (see
+  // task-3-report.md for the evidence): reverting `boxOf` to a bare selector turns this red.
+  it('the measured box for a staged unit belongs to its duellante (420×376), not its miniature (84×104)', () => {
+    const l = left(), r = right()
+    const replay = buildReplay(simulateBattle(l, r, createRng(42)), l, r)
+    const hit: LogEntry = {
+      turn: 1, actorId: 'harry', actorSide: 'left', action: 'Stupeficium',
+      targetId: 'draco', targetSide: 'right', type: 'Attacco', value: 20, flags: [],
+    }
+    replay.frames[1]!.entry = hit
+
+    const DUELLANTE_RECT = { top: 84, left: 778, width: 420, height: 376 }
+    const MINIATURA_RECT = { top: 62, left: 1264, width: 84, height: 104 }
+    const orig = Element.prototype.getBoundingClientRect
+    const spy = vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(function (this: Element) {
+      const isDuellante = this.getAttribute('data-testid') === 'duellante'
+      const r = isDuellante ? DUELLANTE_RECT : MINIATURA_RECT
+      return { ...r, right: r.left + r.width, bottom: r.top + r.height, x: r.left, y: r.top, toJSON() { return this } } as DOMRect
+    })
+
+    try {
+      render(<BattleArena replay={replay} hp={replay.frames[1]!.hp} entry={hit} frameKey={1} />)
+      const num = screen.getByTestId('fx-number')
+      // SceneFx positions the number at `numberBox.left + numberBox.width / 2`. If the
+      // duellante's box won, this is 778 + 210 = 988; if the miniature's box won instead
+      // (the regression this test catches), it would be 1264 + 42 = 1306.
+      expect(num.style.left).toBe('988px')
+      expect(num.style.top).toBe('84px')
+    } finally {
+      spy.mockRestore()
+      expect(Element.prototype.getBoundingClientRect).toBe(orig)
+    }
   })
 
   it('shows the damage float only on the targeted bust, not on every unit', () => {

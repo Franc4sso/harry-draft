@@ -248,7 +248,14 @@ export function BattleArena({
             around it: `Duellante` is the element carrying `data-testid="duellante"` +
             `data-unit-key`, and SceneFx/PixiArena's box measurement + these tests' DOM
             queries all resolve to THAT element — a class on an outer wrapper wouldn't be a
-            *descendant* match for `.querySelector('.fx-strike')` run against it. */}
+            *descendant* match for `.querySelector('.fx-strike')` run against it.
+
+            FIX ROUND 1 (review): `Duellante`'s own 420×376 mockup size now lives in its
+            default `style` (see Duellante.tsx), not in a Tailwind class — so `h-full w-full`
+            here alone would lose to that inline default (inline `style` always beats a
+            class, regardless of stylesheet order). Passing `style={{height:'100%',
+            width:'100%'}}` explicitly overrides it, deterministically: this stage slot needs
+            the duellante to fill its percentage-sized container, not the fixed mockup size. */}
         <Duellante
           key={cardMotion ? `${frameKey}-motion` : 'still'}
           unit={u}
@@ -257,7 +264,8 @@ export function BattleArena({
           role={role}
           effects={statusEffects[u.key] ?? []}
           dead={dead}
-          className={cn('h-full w-full', cardMotion)}
+          className={cardMotion}
+          style={{ height: '100%', width: '100%' }}
         />
         {role === 'bersaglio' && !!float && !dead && (
           <span
@@ -323,7 +331,13 @@ export function BattleArena({
           destra — `#actor`/`#target`) sono posizionati in percentuale DI QUESTO box, non
           in pixel fissi, perché la cornice reale non è sempre 1366×768 (brief). Lo slot
           centrale (`center`) ospita l'etichetta incantesimo/ActionPanel, alla posizione
-          del mockup (43.9% left, 30.7% top, 12.2% larghezza). */}
+          del mockup (spell label: left 600, top 236, width 166 — coordinate assolute nel
+          frame 1366×768). FIX ROUND 1 (review): top/width erano percentuali del FRAME
+          (236/768=30.7%, 166/1366=12.2%) invece che del box `.stage` stesso (top 46,
+          altezza 452 — left 112, larghezza 1142): il denominatore giusto è la dimensione
+          dello stage, non quella del frame intero, perché questi due div sono posizionati
+          `absolute` dentro lo stage, non dentro il frame. Ricalcolati: top =
+          (236−46)/452 = 42.0%, width = 166/1142 = 14.5%. */}
       <div data-testid="stage" className="relative min-w-0 overflow-visible rounded-[15px] border border-[rgba(202,162,74,.3)]" style={{ aspectRatio: '1142 / 452' }}>
         <div
           aria-hidden
@@ -339,7 +353,7 @@ export function BattleArena({
         <div
           data-testid="stage-center"
           className="pointer-events-none absolute z-10 -translate-x-1/2 text-center"
-          style={{ left: '50%', top: '30.7%', width: '12.2%', minWidth: 140 }}
+          style={{ left: '50%', top: '42.0%', width: '14.5%', minWidth: 140 }}
         >
           {center}
         </div>
