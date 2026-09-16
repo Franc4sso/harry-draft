@@ -22,13 +22,18 @@ export interface Pillola {
   label: string
 }
 
+/** Le uniche famiglie visive che esistono. Chiuso di proposito: `familyOf` può SOLO
+ *  restituire uno di questi valori (verificato dal compilatore, vedi sotto), quindi
+ *  `FAMILY_META[family]` non può mai mancare — non serve e non esiste un fallback. */
+type Family = 'stun' | 'freeze' | 'silence' | 'disarm' | 'regen' | 'shield' | 'veleno' | 'burn' | 'buff' | 'debuff'
+
 /**
  * Famiglia visiva per ciascuno dei 24 id in `data/statuses.ts`. Il `kind` dello StatusDef
  * (StatusKind) NON basta da solo: `burn` e `veleno` condividono `kind:'dot'` ma devono
  * restare pillole DISTINTE (la correzione dell'utente riguarda esattamente il veleno).
  * Ogni voce sotto ha glifo e colore univoci — nessuno condiviso tra famiglie.
  */
-const FAMILY_META: Record<string, { glyph: string; color: string; label: string }> = {
+const FAMILY_META: Record<Family, { glyph: string; color: string; label: string }> = {
   // Riusa EFFECT_META (lib/glossary.ts) dove la chiave combacia 1:1 con uno StatusKind:
   // stun, freeze, silence, disarm, regen, shield → stesso colore del resto della UI.
   stun: { glyph: '⚡', color: '#C98BFF', label: 'Stordito' },
@@ -48,20 +53,32 @@ const FAMILY_META: Record<string, { glyph: string; color: string; label: string 
   debuff: { glyph: '▼', color: '#FFB37D', label: 'Indebolito' },
 }
 
-/** Mappa ogni id del catalogo (`data/statuses.ts`) alla sua famiglia visiva. */
-function familyOf(statusId: string): string {
-  const def = STATUS_BY_ID[statusId]
-  if (!def) return statusId
+/**
+ * Mappa ogni id del catalogo (`data/statuses.ts`) alla sua famiglia visiva.
+ *
+ * FALLISCE RUMOROSAMENTE (throw) su un id sconosciuto o un `StatusKind` non gestito,
+ * invece di restituire un valore qualunque che poi degraderebbe in silenzio al
+ * segnaposto ('•') in `pilloleDi`. Un id fuori catalogo o un nuovo StatusKind aggiunto
+ * a `data/statuses.ts` senza toccare questa funzione deve rompere subito, non spedire
+ * un pallino grigio in produzione — è esattamente il buco che la review ha trovato.
+ */
+function familyOf(statusId: string): Family {
   if (statusId === 'burn' || statusId === 'veleno') return statusId
+  const def = STATUS_BY_ID[statusId]
+  if (!def) throw new Error(`battleStacks: id di stato sconosciuto "${statusId}" — non è in data/statuses.ts`)
   if (def.kind === 'buff' || def.kind === 'debuff') return def.kind
-  // stun/freeze/silence/disarm/regen/shield/ward — 'ward' (protego) è concettualmente
-  // uno scudo (family:'shield' in data/statuses.ts): stessa pillola.
+  // 'ward' (protego) è concettualmente uno scudo (family:'shield' in data/statuses.ts):
+  // stessa pillola.
   if (def.kind === 'ward') return 'shield'
-  return def.kind
+  if (def.kind === 'stun' || def.kind === 'freeze' || def.kind === 'silence'
+    || def.kind === 'disarm' || def.kind === 'regen' || def.kind === 'shield') return def.kind
+  // def.kind === 'dot' qui significa un ID diverso da burn/veleno con kind:'dot' — non
+  // esiste ancora nel catalogo, e non ha una famiglia visiva assegnata. Rumoroso apposta.
+  throw new Error(`battleStacks: nessuna famiglia visiva per lo StatusKind "${def.kind}" (id "${statusId}")`)
 }
 
 /** Il conteggio "giusto" per una famiglia: dosi per i DoT, punti per lo scudo, turni per il resto. */
-function countFor(family: string, effects: ActiveEffect[]): number | undefined {
+function countFor(family: Family, effects: ActiveEffect[]): number | undefined {
   if (family === 'shield') {
     const total = effects.reduce((sum, e) => sum + (e.absorbLeft ?? 0), 0)
     return total > 0 ? total : undefined
@@ -78,7 +95,7 @@ function countFor(family: string, effects: ActiveEffect[]): number | undefined {
 
 /** Le pillole di un'unità: UNA per famiglia, col totale. Mai due icone uguali. */
 export function pilloleDi(effects: ActiveEffect[]): Pillola[] {
-  const byFamily = new Map<string, ActiveEffect[]>()
+  const byFamily = new Map<Family, ActiveEffect[]>()
   for (const e of effects) {
     const id = e.statusId ?? e.kind
     const family = familyOf(id)
@@ -89,7 +106,9 @@ export function pilloleDi(effects: ActiveEffect[]): Pillola[] {
 
   const out: Pillola[] = []
   for (const [family, group] of byFamily) {
-    const meta = FAMILY_META[family] ?? { glyph: '•', color: '#9aa3ad', label: family }
+    // Nessun fallback: `family` è tipizzato `Family`, quindi questa entry esiste sempre.
+    // Un id senza famiglia visiva è già fallito rumorosamente dentro `familyOf`.
+    const meta = FAMILY_META[family]
     out.push({
       kind: family,
       glyph: meta.glyph,
@@ -102,19 +121,27 @@ export function pilloleDi(effects: ActiveEffect[]): Pillola[] {
 }
 
 /** Famiglie che bloccano il turno: la loro aura si accende sempre, indipendentemente dai numeri. */
-const TURN_BLOCKING = new Set(['stun', 'freeze'])
+const TURN_BLOCKING = new Set<Family>(['stun', 'freeze'])
 
 /** Soglia minima di dosi perché un DoT "pesi" abbastanza da meritare l'aura. Una dose sola
  *  è solo una pillola: misurato che animare un'aura per ogni dose singola propagata (es. il
  *  Duo Miasma su cinque alleati) è illeggibile e costa 19fps contro 52. */
 const DOT_AURA_MIN_STACKS = 2
 
-/** Ordine di gravità: a parità di più stati attivi, vince il primo di questa lista. */
-const SEVERITY_ORDER = ['freeze', 'stun', 'silence', 'disarm', 'veleno', 'burn']
+/** Ordine di gravità per l'aura: a parità di più stati attivi, vince il primo di questa
+ *  lista. Copre SOLO le famiglie che `auraDi` può effettivamente mettere in `candidates`
+ *  — i turn-blocker (`TURN_BLOCKING`) e i DoT sopra soglia (`DOT_AURA_MIN_STACKS`). Non
+ *  contiene `silence`/`disarm`: oggi non bloccano il turno e non sono DoT, quindi non
+ *  possono mai finire in `candidates` — un id qui che `candidates` non può mai contenere
+ *  sarebbe morto e fuorviante per chi legge dopo. Se un domani silence/disarm dovessero
+ *  accendere un'aura propria, vanno aggiunti QUI *e* al ramo che popola `candidates`
+ *  sotto, altrimenti torna a essere una bugia.
+ */
+const SEVERITY_ORDER: Family[] = ['freeze', 'stun', 'veleno', 'burn']
 
 /** L'aura della cornice, o null. Intensità, non presenza. */
 export function auraDi(effects: ActiveEffect[]): { kind: string; color: string } | null {
-  const candidates = new Set<string>()
+  const candidates = new Set<Family>()
 
   for (const e of effects) {
     const id = e.statusId ?? e.kind
@@ -133,5 +160,5 @@ export function auraDi(effects: ActiveEffect[]): { kind: string; color: string }
 
   const winner = SEVERITY_ORDER.find(k => candidates.has(k)) ?? [...candidates][0]!
   const meta = FAMILY_META[winner]
-  return { kind: winner, color: meta?.color ?? '#9aa3ad' }
+  return { kind: winner, color: meta.color }
 }

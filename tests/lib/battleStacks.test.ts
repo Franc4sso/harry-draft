@@ -37,11 +37,27 @@ describe('pilloleDi — una per famiglia, col totale', () => {
   })
 
   it('ogni stato del catalogo produce una pillola con glifo e nome', () => {
+    // Per ogni id chiamiamo pilloleDi SEPARATAMENTE e intercettiamo l'eccezione: un id
+    // senza famiglia visiva ora fallisce rumorosamente (vedi familyOf) invece di degradare
+    // in silenzio a un segnaposto — vogliamo che QUESTO test lo nomini, non un TypeError
+    // generico che interrompe la suite senza dire quale id.
     const muti = STATUS_DEFS.filter(d => {
-      const p = pilloleDi([fx(d.id)])
-      return p.length === 0 || !p[0]!.glyph || !p[0]!.label
+      try {
+        const p = pilloleDi([fx(d.id)])
+        return p.length === 0 || !p[0]!.glyph || !p[0]!.label
+      } catch {
+        return true
+      }
     }).map(d => d.id)
     expect(muti, `stati senza pillola: ${muti.join(', ')}`).toEqual([])
+  })
+
+  it('un id fuori dal catalogo non degrada in un segnaposto muto: esplode e lo nomina', () => {
+    // Guardia rinforzata dopo la review: prima un id senza famiglia visiva cadeva in un
+    // fallback silenzioso ('•' generico) che la suite non poteva rilevare. Ora `familyOf`
+    // fallisce rumorosamente — questo test lo dimostra chiamando pilloleDi con un id che
+    // non esiste in data/statuses.ts.
+    expect(() => pilloleDi([fx('non_esiste_nel_catalogo')])).toThrow(/non_esiste_nel_catalogo/)
   })
 })
 
