@@ -47,9 +47,12 @@ describe('ColpoSullaCarta', () => {
   })
 
   it('su una carta di bordo il numero resta dentro la cornice', () => {
-    // Misurato sul mockup: senza vincolo il K.O. usciva a sinistra.
+    // Misurato sul mockup: senza vincolo il K.O. usciva a sinistra. Il box qui ha centro
+    // NON clampato a x=-40+212/2=66, sotto la soglia di 80: se il vincolo non scattasse
+    // `left` resterebbe a 66 e l'assert sotto fallirebbe (falsificato: rimuovendo il
+    // clamp nell'implementazione questo test va rosso — vedi task-4-report.md).
     render(<ColpoSullaCarta event={ev({ kind: 'kill', word: 'K.O.' })} frameKey={1}
-      box={{ x: 0, y: 510, w: 212, h: 254 }} />)
+      box={{ x: -40, y: 510, w: 212, h: 254 }} />)
     expect(parseFloat(screen.getByTestId('colpo').style.left)).toBeGreaterThanOrEqual(80)
   })
 
