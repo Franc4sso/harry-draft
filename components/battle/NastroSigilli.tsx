@@ -40,7 +40,18 @@ function ribbonOrder(replay: Replay): RibbonSlot[] {
   const out: RibbonSlot[] = []
   for (const f of replay.frames) {
     const e = f.entry
+    // `type === 'system'` NON basta: un tick di veleno/bruciatura porta un `type`
+    // non-system (misurato: 'Controllo') insieme a `flags:['dot']`, quindi entrava
+    // nel nastro come se fosse un LANCIO. Bellatrix compariva con "Bruciatura" al
+    // posto del suo Crucio — «le abilità dei personaggi a volte non combaciano con
+    // i loro attacchi» (utente).
+    //
+    // Il `dot` da solo non basta in senso inverso: la stessa bandiera sta anche
+    // sul CAST di un attacco che avvelena (Serpensortia), che è un lancio vero e
+    // deve restare. Il discrimine è `value` senza bersaglio proprio? No: si usa il
+    // fatto che un tick NON ha un incantesimo col nome dell'azione nel catalogo.
     if (!e || e.type === 'system' || !e.actorSide) continue
+    if (e.flags?.includes('dot') && !SPELL_BY_NAME[e.action]) continue
     out.push({ key: unitKey(e.actorSide, e.actorId), turn: e.turn, entry: e })
   }
   return out

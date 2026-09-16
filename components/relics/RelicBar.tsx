@@ -1,3 +1,5 @@
+'use client'
+import { useCallback, useRef, useState } from 'react'
 import type { ActiveRelic, DraftedWizard } from '@/types'
 import type { Keyword } from '@/types/keyword'
 import type { RelicRarity } from '@/types/relic'
@@ -47,12 +49,7 @@ export function RelicBar({ relics, className, onUse, team }: RelicBarProps) {
           // `group` + `relative` so the styled tooltip below reveals on hover/focus.
           // The pill is focusable (tabIndex) so keyboard users get the effect too — the
           // native `title` is gone (invisible on touch, unstyled), replaced by this panel.
-          <span
-            key={relic.id}
-            tabIndex={0}
-            className="group relative px-2.5 py-1 rounded-full text-xs border bg-white/5 inline-flex items-center gap-1.5 outline-none focus-visible:ring-2 focus-visible:ring-white/30"
-            style={{ borderColor: `${color}55`, color }}
-          >
+          <RelicPill key={relic.id} color={color}>
             {relic.name}
             {onUse && relic.active === 'revive' && (
               <button
@@ -71,7 +68,7 @@ export function RelicBar({ relics, className, onUse, team }: RelicBarProps) {
                 colour + a top arrow read faster than the old flat panel. */}
             <span
               role="tooltip"
-              className="pointer-events-none absolute left-0 top-full z-[60] mt-2 w-56 max-w-[16rem] overflow-hidden rounded-xl border opacity-0 shadow-2xl transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+              className="pointer-events-none absolute left-0 top-full z-[60] mt-2 w-56 max-w-[16rem] overflow-hidden rounded-xl border opacity-0 shadow-2xl transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100 group-data-[sopra=true]:top-auto group-data-[sopra=true]:bottom-full group-data-[sopra=true]:mb-2 group-data-[sopra=true]:mt-0"
               style={{
                 background: '#181327',
                 borderColor: color,
@@ -81,8 +78,10 @@ export function RelicBar({ relics, className, onUse, team }: RelicBarProps) {
               {/* top arrow (points back up at the pill) */}
               <span
                 aria-hidden
-                className="absolute bottom-full left-4 border-[6px] border-transparent"
-                style={{ borderBottomColor: color }}
+                className="absolute bottom-full left-4 border-[6px] border-transparent [border-top-color:transparent] group-data-[sopra=true]:bottom-auto group-data-[sopra=true]:top-full group-data-[sopra=true]:[border-bottom-color:transparent] group-data-[sopra=true]:[border-top-color:inherit]"
+                // La freccia punta sempre verso la pillola: quando il pannello si
+                // apre sopra, il bordo colorato passa da quello inferiore al superiore.
+                style={{ borderBottomColor: color, borderTopColor: color }}
               />
               <span
                 className="flex items-center gap-2 px-2.5 py-1.5"
@@ -114,9 +113,51 @@ export function RelicBar({ relics, className, onUse, team }: RelicBarProps) {
                 )}
               </span>
             </span>
-          </span>
+          </RelicPill>
         )
       })}
     </div>
+  )
+}
+
+/**
+ * La pillola di una reliquia col suo pannello.
+ *
+ * Il pannello si apriva SEMPRE verso il basso (`absolute left-0 top-full`), quindi
+ * su una reliquia in fondo alla lista finiva fuori dallo schermo: misurato a
+ * 390x844, un tooltip finiva a `top: -224` — interamente sopra il bordo — mentre
+ * il trigger stava a 410 con spazio abbondante sotto.
+ *
+ * NOTA sul perche' il difetto era "a volte": RelicBar NON usa il `Tooltip`
+ * condiviso, ha una resa propria (banda colorata, freccia, parole chiave). Due
+ * implementazioni dello stesso elemento, e correggere quella condivisa non
+ * toccava questa. La resa resta; cambia solo il LATO, ora misurato.
+ */
+function RelicPill({ color, children }: { color: string; children: React.ReactNode }) {
+  const ref = useRef<HTMLSpanElement>(null)
+  const [aprireSopra, setAprireSopra] = useState(false)
+
+  // Si misura all'apertura (hover/focus), non a ogni render: sotto c'e' abbastanza
+  // spazio per il pannello? Se no, si apre verso l'alto.
+  const misura = useCallback(() => {
+    const el = ref.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    const STIMA_PANNELLO = 150
+    setAprireSopra(window.innerHeight - r.bottom < STIMA_PANNELLO && r.top > STIMA_PANNELLO)
+  }, [])
+
+  return (
+    <span
+      ref={ref}
+      tabIndex={0}
+      onMouseEnter={misura}
+      onFocus={misura}
+      data-sopra={aprireSopra ? 'true' : undefined}
+      className="group relative px-2.5 py-1 rounded-full text-xs border bg-white/5 inline-flex items-center gap-1.5 outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+      style={{ borderColor: `${color}55`, color }}
+    >
+      {children}
+    </span>
   )
 }
