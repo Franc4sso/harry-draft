@@ -1,6 +1,8 @@
 import type { ReplayUnit } from '@/game/engine/combat/replay'
 import type { ActiveEffect } from '@/types'
 import { StatusPips } from '@/components/battle/StatusPips'
+import { auraFor } from '@/components/battle/statusAura'
+import '@/components/battle/statusAura.css'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { cn } from '@/lib/theme'
 
@@ -32,15 +34,18 @@ export function Duellante({
   const borderColor = role === 'bersaglio' ? 'var(--gold-bright, #caa24a)' : isFoe ? 'rgba(240,114,114,.45)' : 'rgba(124,220,125,.45)'
   const subtitle = role === 'attore' ? 'AGISCE' : 'SUBISCE'
   const hpColor = ratio > 0.5 ? '#7CFC9B' : ratio > 0.25 ? '#FFD37D' : '#FF6B6B'
+  const aura = dead ? null : auraFor(effects)
 
   return (
     <div
       data-testid="duellante"
       data-unit-key={unit.key}
       data-dead={dead ? 'true' : undefined}
+      data-aura={aura?.kind}
       className={cn(
         'relative overflow-hidden rounded-[13px] border-2 transition-[filter]',
         dead && 'grayscale',
+        aura && `aura-full ${aura.className}`,
         className,
       )}
       // FIX ROUND 1 (review): the 420×376 mockup size used to live in the Tailwind class
@@ -55,6 +60,13 @@ export function Duellante({
       style={{ height: 376, width: 420, borderColor, ...style }}
     >
       <PortraitImage id={unit.id} house={unit.house} alt={unit.name} variant="bust" />
+
+      {/* Texture interna dell'aura (foschia, braci, patina, tratteggio): DEVE
+          restare dentro gli angoli arrotondati del ritratto, a differenza del
+          bagliore esterno (che vive nel box-shadow di `.aura-full`, vedi
+          statusAura.css — un box-shadow non è soggetto all'overflow-hidden
+          del proprio elemento, un figlio posizionato invece sì). */}
+      {aura && <div aria-hidden className={`aura-texture ${aura.className}`} />}
 
       <StatusPips effects={effects} />
 

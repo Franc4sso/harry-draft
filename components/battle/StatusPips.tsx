@@ -4,28 +4,39 @@ import { STATUS_BY_ID } from '@/data/statuses'
 /** Glifo e colore per stato. Copre TUTTI i 24 `id` di `data/statuses.ts` —
  *  il test di copertura più sotto lo fa rispettare. I colori riprendono quelli
  *  già usati dal gioco per le stesse idee (verde veleno, ambra stordimento,
- *  azzurro scudo), e gli stati della stessa famiglia condividono il glifo:
- *  tre gradi di lentezza sono la stessa idea, non tre icone da imparare. */
+ *  azzurro scudo). Ogni FAMIGLIA ha un glifo suo, netto anche a 15px, e MAI
+ *  condiviso con un'altra famiglia (test di copertura in StatusPips.test.tsx
+ *  lo verifica): teschio veleno, fiamma bruciatura, fiocco gelo, stella
+ *  stordimento, bocca sbarrata silenzio, mano disarmo, scudo, croce cura,
+ *  freccia giù indebolimento (lentezza/forza), rombo vulnerabilità. Gli
+ *  stati della STESSA famiglia condividono il glifo — tre gradi di lentezza
+ *  sono la stessa idea, non tre icone da imparare — ma non famiglie diverse:
+ *  prima stun E raccolto usavano '✦' (stordimento non è "buff"), e slow/
+ *  weaken/expose condividevano '▼' (lentezza non è indebolimento non è
+ *  vulnerabilità) — a colpo d'occhio non si distinguevano.
+ */
 const PIP: Record<string, { glyph: string; color: string }> = {
   // controllo — il turno salta o si perde un'opzione
-  stun:     { glyph: '✦', color: '#f0d48a' },
-  freeze:   { glyph: '❄', color: '#7dd3ff' },
-  silence:  { glyph: '✖', color: '#c4a3ff' },
-  disarm:   { glyph: '✋', color: '#ffd37d' },
+  stun:     { glyph: '★', color: '#f0d48a' }, // stella: stordito
+  freeze:   { glyph: '❄', color: '#7dd3ff' }, // fiocco: gelo
+  silence:  { glyph: '⊘', color: '#c4a3ff' }, // bocca sbarrata: silenziato
+  disarm:   { glyph: '✋', color: '#ffd37d' }, // mano: disarmato
   // danno nel tempo
-  veleno:   { glyph: '☠', color: '#8fd98f' },
-  burn:     { glyph: '🔥', color: '#ffb37d' },
+  veleno:   { glyph: '☠', color: '#8fd98f' }, // teschio: veleno
+  burn:     { glyph: '🔥', color: '#ffb37d' }, // fiamma: bruciatura
   // difesa
-  shield:   { glyph: '◈', color: '#8ab6f0' },
-  protego:  { glyph: '❖', color: '#8ab6f0' },
-  regen:    { glyph: '✚', color: '#7cfc9b' },
-  // potenziamenti
+  shield:   { glyph: '◈', color: '#8ab6f0' }, // scudo
+  protego:  { glyph: '◈', color: '#8ab6f0' }, // scudo (stessa famiglia di shield)
+  regen:    { glyph: '✚', color: '#7cfc9b' }, // croce: cura
+  // potenziamenti — freccia SU: qualcosa cresce (distinta dalla freccia giù
+  // dell'indebolimento, e da '★' dello stordimento)
   atkUp:    { glyph: '▲', color: '#ff9a7a' },
   atkUp1:   { glyph: '▲', color: '#ff9a7a' },
   defUp:    { glyph: '▲', color: '#8ab6f0' },
   spdUp:    { glyph: '▲', color: '#f0d48a' },
-  raccolto: { glyph: '✦', color: '#f0d48a' },
-  // indebolimenti
+  raccolto: { glyph: '▲', color: '#f0d48a' },
+  // indebolimenti — freccia GIÙ: lentezza/forza in meno (famiglia unica:
+  // slow è spd, weaken è atk, stessa idea "qualcosa scende")
   slow:     { glyph: '▼', color: '#ffb37d' },
   slow1:    { glyph: '▼', color: '#ffb37d' },
   slow2:    { glyph: '▼', color: '#ffb37d' },
@@ -33,9 +44,11 @@ const PIP: Record<string, { glyph: string; color: string }> = {
   weaken1:  { glyph: '▼', color: '#ffb37d' },
   weaken2:  { glyph: '▼', color: '#ffb37d' },
   weaken3:  { glyph: '▼', color: '#ffb37d' },
-  expose1:  { glyph: '◇', color: '#ff9a7a' },
-  expose2:  { glyph: '◇', color: '#ff9a7a' },
-  expose3:  { glyph: '◇', color: '#ff9a7a' },
+  // vulnerabilità — rombo: famiglia SEPARATA dall'indebolimento (def in
+  // meno non è atk/spd in meno: subisci più danno, non fai meno danno)
+  expose1:  { glyph: '◆', color: '#ff9a7a' },
+  expose2:  { glyph: '◆', color: '#ff9a7a' },
+  expose3:  { glyph: '◆', color: '#ff9a7a' },
 }
 
 /** Il numero da mostrare sulla pillola. Per il veleno e la bruciatura sono le

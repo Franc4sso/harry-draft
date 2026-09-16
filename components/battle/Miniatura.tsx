@@ -1,6 +1,8 @@
 import type { ReplayUnit } from '@/game/engine/combat/replay'
 import type { ActiveEffect } from '@/types'
 import { StatusPips } from '@/components/battle/StatusPips'
+import { auraFor } from '@/components/battle/statusAura'
+import '@/components/battle/statusAura.css'
 import { PortraitImage } from '@/components/ui/PortraitImage'
 import { cn } from '@/lib/theme'
 
@@ -39,6 +41,7 @@ export function Miniatura({
   const isFoe = unit.side === 'right'
   const sideColor = isFoe ? 'rgba(240,114,114,.45)' : 'rgba(124,220,125,.4)'
   const hpColor = isFoe ? '#f07272' : '#7cdc7d'
+  const aura = dead ? null : auraFor(effects)
 
   return (
     <div
@@ -46,10 +49,12 @@ export function Miniatura({
       data-unit-key={unit.key}
       data-dimmed={dimmed ? 'true' : undefined}
       data-dead={dead ? 'true' : undefined}
+      data-aura={aura?.kind}
       className={cn(
         'relative flex h-[104px] w-[84px] flex-col overflow-hidden rounded-[9px] border-[1.5px] motion-reduce:!transition-none',
         dimmed && 'scale-[.94] opacity-30',
         dead && 'grayscale opacity-[.28]',
+        aura && `aura-mini ${aura.className}`,
         className,
       )}
       style={{

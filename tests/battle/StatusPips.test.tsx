@@ -49,4 +49,57 @@ describe('StatusPips', () => {
     }).map(d => d.id)
     expect(senzaGlifo, `stati senza glifo: ${senzaGlifo.join(', ')}`).toEqual([])
   })
+
+  it('nessun glifo è condiviso fra famiglie DIVERSE', () => {
+    // "Famiglia" qui è più fine del `family` di StatusDef (che ha solo 6
+    // valori e fonderebbe scudo/rigenera o disarmo/silenzio/stordimento):
+    // ogni riga è un'idea a sé — stordito, gelo, silenziato, disarmato,
+    // veleno, bruciatura, scudo, cura, "qualcosa sale" (buff), "qualcosa
+    // scende" (lentezza/indebolimento), vulnerabilità. Gli id nella STESSA
+    // riga sono gradi della stessa idea e DEVONO condividere il glifo (tre
+    // gradi di lentezza non sono tre icone da imparare); righe diverse non
+    // devono MAI condividerlo — prima del fix, stun/raccolto condividevano
+    // '✦' e slow/weaken/expose condividevano '▼'.
+    const FAMILIES: string[][] = [
+      ['stun'],
+      ['freeze'],
+      ['silence'],
+      ['disarm'],
+      ['veleno'],
+      ['burn'],
+      ['shield', 'protego'],
+      ['regen'],
+      ['atkUp', 'atkUp1', 'defUp', 'spdUp', 'raccolto'],
+      ['slow', 'slow1', 'slow2', 'slow3', 'weaken1', 'weaken2', 'weaken3'],
+      ['expose1', 'expose2', 'expose3'],
+    ]
+    // Ogni id del catalogo deve comparire in esattamente una famiglia qui —
+    // altrimenti il test non starebbe davvero testando la copertura reale.
+    const allIds = STATUS_DEFS.map(d => d.id).sort()
+    const coveredIds = FAMILIES.flat().sort()
+    expect(coveredIds).toEqual(allIds)
+
+    const glyphOf = (id: string) => {
+      render(<StatusPips effects={[fx(id)]} />)
+      return screen.getAllByTestId('status-pip').at(-1)!.textContent!.replace(/\d+$/, '')
+    }
+
+    const glyphByFamilyIndex = FAMILIES.map(fam => new Set(fam.map(glyphOf)))
+    // Dentro una famiglia, un solo glifo: i suoi membri sono gradi della
+    // stessa idea.
+    glyphByFamilyIndex.forEach((glyphs, i) => {
+      expect(glyphs.size, `la famiglia ${FAMILIES[i]!.join('/')} ha glifi diversi al suo interno`).toBe(1)
+    })
+
+    const seen = new Map<string, number>()
+    glyphByFamilyIndex.forEach((glyphs, i) => {
+      const glyph = [...glyphs][0]!
+      const clashIndex = seen.get(glyph)
+      expect(
+        clashIndex,
+        `glifo '${glyph}' condiviso fra ${FAMILIES[i]!.join('/')} e ${clashIndex !== undefined ? FAMILIES[clashIndex]!.join('/') : ''}`,
+      ).toBeUndefined()
+      seen.set(glyph, i)
+    })
+  })
 })

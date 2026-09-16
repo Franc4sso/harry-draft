@@ -1,0 +1,275 @@
+/*
+ * "Lo stato si vede" — le nove aure di `statusAura.ts` (una per unità, mai
+ * più di una alla volta: vedi PRIORITY in quel file). Ogni aura è pensata
+ * per essere riconoscibile SENZA leggere il colore: veleno respira lento,
+ * bruciatura guizza irregolare, gelo è rigido e cristallizzato, controllo
+ * pulsa a scatti, silenzio è smorzato/spento, disarmo è tratteggiato,
+ * scudo è fermo e solido, rigenera sale dolce, debole è un bordo sottile e
+ * opaco. Il colore da solo (daltonismo, schermo scadente a distanza) non
+ * deve essere l'unico segnale: la FORMA del movimento lo è altrettanto.
+ *
+ * IMPORTANTE — perché l'alone vive su DUE layer, non uno: sia Duellante che
+ * Miniatura sono `overflow-hidden` (angoli arrotondati sul ritratto), e
+ * `overflow-hidden` ritaglia qualunque figlio posizionato fuori dal box —
+ * un `::after` con `inset:-3px` dentro un contenitore clippato sparisce
+ * quasi del tutto (misurato dal vivo: era la causa per cui ogni aura tranne
+ * gelo/debole non si vedeva affatto). `box-shadow`, invece, dipinge FUORI
+ * dal border-box del proprio elemento SENZA essere soggetto all'overflow di
+ * quell'elemento stesso (l'overflow di un box ritaglia i suoi CONTENUTI, non
+ * la propria ombra) — quindi il bagliore esterno sta su `.aura-full`/
+ * `.aura-mini` stessi, mentre solo le texture interne (foschia, braci,
+ * patina cristallina) — che DEVONO essere ritagliate agli angoli arrotondati
+ * — vivono su `.aura-texture`, un layer interno alla cornice.
+ *
+ * `.aura-full` va sul Duellante (420×376): alone pieno intorno alla
+ * cornice. `.aura-mini` va sulla Miniatura (84×104): SOLO bordo colorato +
+ * una pulsazione tenue — un alone pieno a quella taglia coprirebbe il
+ * ritratto (vedi Miniatura.tsx).
+ *
+ * prefers-reduced-motion: l'aura resta (colore + bordo + ombra ferma sulla
+ * sua posa "a riposo"), sparisce solo il movimento — altrimenti chi ha
+ * quell'impostazione non avrebbe NESSUN segno di stato.
+ */
+
+:root {
+  --aura-veleno: #8fd98f;
+  --aura-bruciatura: #ffb37d;
+  --aura-gelo: #7dd3ff;
+  --aura-controllo: #f0d48a;
+  --aura-silenzio: #c4a3ff;
+  --aura-disarmo: #ffd37d;
+  --aura-scudo: #8ab6f0;
+  --aura-rigenera: #7cfc9b;
+  --aura-debole: #ffb37d;
+}
+
+/* ---------- Duellante: aura piena ---------- */
+
+.aura-full {
+  position: relative;
+}
+
+/* Veleno — un alone verde che respira lento, con una foschia che sale */
+.aura-full.aura-veleno {
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--aura-veleno) 55%, transparent),
+    0 0 26px 6px color-mix(in srgb, var(--aura-veleno) 65%, transparent);
+  animation: auraVelenoBreatheShadow 3.6s ease-in-out infinite;
+}
+.aura-texture.aura-veleno {
+  background: linear-gradient(0deg, color-mix(in srgb, var(--aura-veleno) 30%, transparent), transparent 55%);
+  animation: auraVelenoBreathe 3.6s ease-in-out infinite;
+}
+
+/* Bruciatura — braci arancioni che guizzano irregolari sul bordo (NON un
+ * pulse simmetrico: il fuoco non è un metronomo — timing e ampiezza diversi
+ * a ogni step tramite keyframes non uniformi). */
+.aura-full.aura-bruciatura {
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--aura-bruciatura) 60%, transparent),
+    0 0 24px 5px color-mix(in srgb, var(--aura-bruciatura) 70%, transparent);
+  animation: auraBruciaturaFlickerShadow 1.3s ease-in-out infinite;
+}
+.aura-texture.aura-bruciatura {
+  background: radial-gradient(120% 60% at 50% 100%, color-mix(in srgb, var(--aura-bruciatura) 35%, transparent), transparent 65%);
+  animation: auraBruciaturaFlicker 1.3s ease-in-out infinite;
+}
+
+/* Gelo — bordo azzurro cristallizzato, fermo e rigido, con patina. Niente
+ * animazione di movimento: il "fermo" È il segno del gelo. Una patina
+ * sottile e statica basta a dargli materia senza muoversi. */
+.aura-full.aura-gelo {
+  box-shadow:
+    0 0 0 2px var(--aura-gelo),
+    0 0 18px 3px color-mix(in srgb, var(--aura-gelo) 60%, transparent);
+}
+.aura-texture.aura-gelo {
+  background:
+    repeating-linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--aura-gelo) 16%, transparent) 0 6px,
+      transparent 6px 12px
+    );
+  box-shadow: inset 0 0 16px 2px color-mix(in srgb, var(--aura-gelo) 40%, transparent);
+}
+
+/* Controllo (stordito) — alone ambra che pulsa a scatti (non morbido: a
+ * gradini, come un rintocco) */
+.aura-full.aura-controllo {
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--aura-controllo) 65%, transparent),
+    0 0 26px 6px color-mix(in srgb, var(--aura-controllo) 65%, transparent);
+  animation: auraControlloPulseShadow 0.9s steps(2, jump-end) infinite;
+}
+
+/* Silenzio — bordo viola smorzato, come spento: bassa opacità, quasi nessun
+ * movimento, un lento affievolirsi che non torna mai a piena luce */
+.aura-full.aura-silenzio {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--aura-silenzio) 45%, transparent),
+    0 0 12px 2px color-mix(in srgb, var(--aura-silenzio) 35%, transparent);
+  animation: auraSilenzioSmother 4.2s ease-in-out infinite;
+}
+
+/* Disarmo — bordo giallo tratteggiato: le trattine "marciano" lente lungo
+ * il perimetro (mano disarmata: un segno che scorre, non un lampo). */
+.aura-full.aura-disarmo {
+  box-shadow: 0 0 14px 2px color-mix(in srgb, var(--aura-disarmo) 55%, transparent);
+}
+.aura-texture.aura-disarmo {
+  border-radius: inherit;
+  background:
+    repeating-linear-gradient(90deg, var(--aura-disarmo) 0 10px, transparent 10px 20px) top / 20px 3px repeat-x,
+    repeating-linear-gradient(90deg, var(--aura-disarmo) 0 10px, transparent 10px 20px) bottom / 20px 3px repeat-x,
+    repeating-linear-gradient(0deg, var(--aura-disarmo) 0 10px, transparent 10px 20px) left / 3px 20px repeat-y,
+    repeating-linear-gradient(0deg, var(--aura-disarmo) 0 10px, transparent 10px 20px) right / 3px 20px repeat-y;
+  animation: auraDisarmoMarch 1.4s linear infinite;
+}
+
+/* Scudo — alone azzurro fermo e solido: nessun movimento, solo una presenza
+ * ferma (la fermezza è il punto: uno scudo non trema) */
+.aura-full.aura-scudo {
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--aura-scudo) 55%, transparent),
+    0 0 20px 4px color-mix(in srgb, var(--aura-scudo) 55%, transparent);
+}
+
+/* Rigenera — alone verde chiaro che sale dolce */
+.aura-full.aura-rigenera {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--aura-rigenera) 55%, transparent),
+    0 0 20px 4px color-mix(in srgb, var(--aura-rigenera) 55%, transparent);
+  animation: auraRigeneraRiseShadow 2.6s ease-in-out infinite;
+}
+.aura-texture.aura-rigenera {
+  background: linear-gradient(0deg, color-mix(in srgb, var(--aura-rigenera) 28%, transparent), transparent 60%);
+  animation: auraRigeneraRise 2.6s ease-in-out infinite;
+}
+
+/* Debole — bordo arancione sottile, opaco: la più leggera di tutte, appena
+ * percettibile, coerente con l'idea che sia il gradino più basso */
+.aura-full.aura-debole {
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--aura-debole) 50%, transparent),
+    0 0 8px 1px color-mix(in srgb, var(--aura-debole) 30%, transparent);
+}
+
+/* Layer interno per le texture che DEVONO restare dentro gli angoli
+ * arrotondati (foschia, braci, patina, tratteggio) — sopra il ritratto,
+ * sotto il nome/gradiente in fondo (z-index deciso dal chiamante). */
+.aura-texture {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+/* ---------- Miniatura: aura ridotta (bordo + pulsazione tenue) ---------- */
+
+.aura-mini {
+  transition: border-color .3s ease, box-shadow .3s ease;
+}
+
+.aura-mini.aura-veleno    { border-color: var(--aura-veleno) !important; box-shadow: 0 0 10px 2px color-mix(in srgb, var(--aura-veleno) 65%, transparent); animation: auraMiniPulse 3.6s ease-in-out infinite; }
+.aura-mini.aura-bruciatura{ border-color: var(--aura-bruciatura) !important; box-shadow: 0 0 10px 2px color-mix(in srgb, var(--aura-bruciatura) 65%, transparent); animation: auraMiniFlicker 1.3s ease-in-out infinite; }
+.aura-mini.aura-gelo      { border-color: var(--aura-gelo) !important; border-width: 2px !important; box-shadow: 0 0 10px 2px color-mix(in srgb, var(--aura-gelo) 65%, transparent); }
+.aura-mini.aura-controllo { border-color: var(--aura-controllo) !important; box-shadow: 0 0 10px 2px color-mix(in srgb, var(--aura-controllo) 65%, transparent); animation: auraMiniPulse 0.9s steps(2, jump-end) infinite; }
+.aura-mini.aura-silenzio  { border-color: color-mix(in srgb, var(--aura-silenzio) 70%, transparent) !important; box-shadow: 0 0 7px 1px color-mix(in srgb, var(--aura-silenzio) 40%, transparent); }
+.aura-mini.aura-disarmo   { border-color: var(--aura-disarmo) !important; border-style: dashed !important; box-shadow: 0 0 7px 1px color-mix(in srgb, var(--aura-disarmo) 45%, transparent); }
+.aura-mini.aura-scudo     { border-color: var(--aura-scudo) !important; border-width: 2px !important; box-shadow: 0 0 10px 2px color-mix(in srgb, var(--aura-scudo) 60%, transparent); }
+.aura-mini.aura-rigenera  { border-color: var(--aura-rigenera) !important; box-shadow: 0 0 10px 2px color-mix(in srgb, var(--aura-rigenera) 60%, transparent); animation: auraMiniPulse 2.6s ease-in-out infinite; }
+.aura-mini.aura-debole    { border-color: color-mix(in srgb, var(--aura-debole) 65%, transparent) !important; box-shadow: 0 0 5px 1px color-mix(in srgb, var(--aura-debole) 30%, transparent); }
+
+/* ---------- Fotogrammi chiave ---------- */
+
+@keyframes auraVelenoBreathe {
+  0%, 100% { opacity: 0.7; filter: blur(0); }
+  50%      { opacity: 1; filter: blur(0.4px); }
+}
+@keyframes auraVelenoBreatheShadow {
+  0%, 100% { filter: brightness(0.9); }
+  50%      { filter: brightness(1.25); }
+}
+
+/* Guizzo irregolare: step non uniformi in tempo e intensità, non un
+ * pulse simmetrico — la fiamma non è un metronomo. */
+@keyframes auraBruciaturaFlicker {
+  0%   { opacity: 0.8; filter: brightness(1) saturate(1); }
+  12%  { opacity: 1; filter: brightness(1.25) saturate(1.15); }
+  27%  { opacity: 0.7; filter: brightness(0.95) saturate(1); }
+  41%  { opacity: 1; filter: brightness(1.3) saturate(1.2); }
+  58%  { opacity: 0.82; filter: brightness(1) saturate(1); }
+  73%  { opacity: 1; filter: brightness(1.2) saturate(1.1); }
+  86%  { opacity: 0.76; filter: brightness(0.98) saturate(1); }
+  100% { opacity: 0.8; filter: brightness(1) saturate(1); }
+}
+@keyframes auraBruciaturaFlickerShadow {
+  0%   { filter: brightness(1); }
+  12%  { filter: brightness(1.3); }
+  27%  { filter: brightness(0.9); }
+  41%  { filter: brightness(1.35); }
+  58%  { filter: brightness(1); }
+  73%  { filter: brightness(1.25); }
+  86%  { filter: brightness(0.95); }
+  100% { filter: brightness(1); }
+}
+@keyframes auraMiniFlicker {
+  0%   { opacity: 0.85; }
+  12%  { opacity: 1; }
+  27%  { opacity: 0.7; }
+  41%  { opacity: 1; }
+  58%  { opacity: 0.85; }
+  73%  { opacity: 1; }
+  86%  { opacity: 0.75; }
+  100% { opacity: 0.85; }
+}
+
+@keyframes auraControlloPulseShadow {
+  0%, 100% { filter: brightness(0.85); }
+  50%      { filter: brightness(1.3); }
+}
+
+@keyframes auraSilenzioSmother {
+  0%, 100% { filter: brightness(0.75); }
+  50%      { filter: brightness(1); }
+}
+
+@keyframes auraDisarmoMarch {
+  0%   { background-position: 0 0, 0 0, 0 0, 0 0; }
+  100% { background-position: 20px 0, -20px 0, 0 -20px, 0 20px; }
+}
+
+@keyframes auraRigeneraRise {
+  0%, 100% { opacity: 0.6; transform: translateY(0); }
+  50%      { opacity: 1; transform: translateY(-2px); }
+}
+@keyframes auraRigeneraRiseShadow {
+  0%, 100% { filter: brightness(0.9); }
+  50%      { filter: brightness(1.2); }
+}
+
+@keyframes auraMiniPulse {
+  0%, 100% { opacity: 0.75; }
+  50%      { opacity: 1; }
+}
+
+/* ---------- prefers-reduced-motion: l'informazione resta, il moto no ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .aura-full,
+  .aura-texture,
+  .aura-mini {
+    animation: none !important;
+  }
+  /* Ferma ogni aura sulla sua posa a riposo più leggibile — il box-shadow
+   * (già presente fuori da qualunque animazione) resta esattamente com'è,
+   * qui si fermano solo i layer che l'animazione muoveva. */
+  .aura-texture.aura-veleno     { opacity: 0.85; filter: none; }
+  .aura-texture.aura-bruciatura { opacity: 0.9; filter: none; }
+  .aura-texture.aura-rigenera   { opacity: 0.8; transform: none; }
+
+  .aura-mini.aura-veleno,
+  .aura-mini.aura-bruciatura,
+  .aura-mini.aura-controllo,
+  .aura-mini.aura-rigenera {
+    opacity: 1;
+  }
+}
