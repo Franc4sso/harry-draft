@@ -16,6 +16,7 @@
 - **Misure vincolanti** (dal mockup, in px su una cornice 1366×768): barra `1366×38` a `0,0` · miniature `84×104`, nemiche a `x=18` e alleate a `x=1264`, entrambe a `y=62/174/286` · palco `1142×452` a `112,46` · ritratto attore `420×376` a `168,84` · ritratto bersaglio `420×376` a `778,84` · incantesimo al centro a `600,236` largo `166` · corsia `1142×128` a `112,520` · registro `1142×92` a `112,660`.
 - **1366×768, niente tagli.** `main` è `max-h-[100dvh] overflow-hidden`: **`scrollHeight` a 768 NON è una prova**, l'eccesso viene nascosto. Va verificato che ogni unità abbia `top >= 0` e `bottom <= 768`.
 - **Il ritratto non si rimpicciolisce** (D1).
+- **Lo stato alterato si vede da lontano.** Richiesta esplicita dell'utente: «vorrei la giusta evidenza di bruciatura, veleno e tutte le altre cose, con delle icone CHIARE E PRECISE, nel caso se un personaggio è avvelenato, metti intorno alla cornice un effetto figo del veleno, bruciatura uguale, cose belle animate». Quindi due livelli, non uno: un'**icona leggibile** sulla pillola, e la **cornice dell'unità che reagisce** — un alone verde che respira per il veleno, braci che guizzano per la bruciatura, e così per gli altri. Vale sul duellante e, in forma ridotta, sulla miniatura.
 - `prefers-reduced-motion`: restano gli stati finali, sparisce solo il movimento.
 - **Nessun test silenziato.** I test che asserivano sulle sei carte-combat vanno riscritti sulla nuova scena con un commento che spiega perché.
 - Non si tocca `game/engine/`, `data/`, il bilanciamento, né `WizardCard` (resta la carta di pesca/reclutamento).
@@ -28,6 +29,9 @@
 | `components/battle/Duellante.tsx` | **Creare.** Il ritratto grande 420×376: ritratto, nome, «AGISCE»/«SUBISCE», pillole, barra vita. |
 | `components/battle/Miniatura.tsx` | **Creare.** Il riquadro 84×104: ritratto, barra vita 4px, nome troncato, pillole. |
 | `components/battle/BattleArena.tsx` | **Riscrivere la resa.** Diventa il palco; la logica attore/bersaglio/salto/scena resta. |
+| `components/battle/statusAura.ts` | **Creare.** Da quali stati è affetta un'unità → quale aura porta la sua cornice. Puro, testabile. |
+| `components/battle/statusAura.css` | **Creare.** I fotogrammi chiave delle aure (veleno, bruciatura, gelo, silenzio, scudo…). |
+| `components/battle/StatusPips.tsx` | **Modificare.** Glifi più leggibili al posto di quelli ambigui. |
 | `components/screens/BattleScreen.tsx` | **Modificare.** Ridistribuire l'altezza sulle misure del mockup. |
 
 ---
@@ -292,7 +296,124 @@ git commit -m "feat(battaglia): il palco — duellanti al centro, comprimari ai 
 
 ---
 
-## Task 4: L'altezza, e la prova che tutto si vede
+## Task 4: Lo stato si vede — icone chiare e cornici che reagiscono
+
+**Files:**
+- Create: `components/battle/statusAura.ts`
+- Create: `components/battle/statusAura.css`
+- Modify: `components/battle/StatusPips.tsx` (solo i glifi)
+- Modify: `components/battle/Duellante.tsx`, `components/battle/Miniatura.tsx` (applicare l'aura)
+- Test: `tests/battle/statusAura.test.ts`
+
+**Perché:** oggi l'unico segno che un mago è avvelenato è una pillola da 15px in un angolo. Su un ritratto da 420×376 si perde. L'utente vuole che **si veda da lontano**, e che ogni stato abbia il suo segno riconoscibile.
+
+**Interfaces:**
+- Produces:
+  ```ts
+  export type AuraKind = 'veleno' | 'bruciatura' | 'gelo' | 'silenzio' | 'disarmo' | 'scudo' | 'rigenera' | 'controllo' | 'debole'
+
+  export interface Aura {
+    kind: AuraKind
+    /** Classe CSS da mettere sul contenitore dell'unità. */
+    className: string
+    /** Colore dell'alone, per lo stile inline. */
+    color: string
+  }
+
+  /** L'aura che questa unità deve portare, o null. Se ha più stati vince il più
+   *  grave secondo PRIORITY: una sola cornice, non cinque sovrapposte. */
+  export function auraFor(effects: ActiveEffect[]): Aura | null
+  ```
+
+**Priorità** (dal più grave): `gelo` > `controllo` (stordito) > `bruciatura` > `veleno` > `silenzio` > `disarmo` > `debole` > `scudo` > `rigenera`. Una cornice sola: due aure sovrapposte diventano fango visivo.
+
+**Le aure** (in `statusAura.css`, tutte animate salvo `prefers-reduced-motion`):
+
+| stato | la cornice fa | colore |
+|---|---|---|
+| veleno | alone verde che **respira** lento, con una foschia che sale | `#8fd98f` |
+| bruciatura | braci arancioni che **guizzano** irregolari sul bordo | `#ffb37d` |
+| gelo | bordo azzurro **cristallizzato**, fermo e rigido, con patina | `#7dd3ff` |
+| controllo (stordito) | alone ambra che **pulsa** a scatti | `#f0d48a` |
+| silenzio | bordo viola **smorzato**, come spento | `#c4a3ff` |
+| disarmo | bordo giallo **tratteggiato** | `#ffd37d` |
+| scudo | alone azzurro **fermo e solido** | `#8ab6f0` |
+| rigenera | alone verde chiaro che **sale** dolce | `#7cfc9b` |
+| debole | bordo arancione **sottile**, opaco | `#ffb37d` |
+
+**I glifi delle pillole** vanno resi inequivocabili. Oggi `stun` e `raccolto` usano entrambi `✦`, e i tre gradi di lentezza/indebolimento condividono `▼` — a colpo d'occhio non si distinguono da una vulnerabilità. Rivedere la mappa `PIP` perché ogni **famiglia** abbia un glifo suo, netto anche a 15px: teschio veleno, fiamma bruciatura, fiocco gelo, stella stordimento, bocca sbarrata silenzio, mano disarmo, scudo, croce cura, freccia giù indebolimento, rombo vulnerabilità. Nessun glifo condiviso fra famiglie diverse.
+
+- [ ] **Step 1: Write the failing test**
+
+```ts
+// tests/battle/statusAura.test.ts
+import { describe, it, expect } from 'vitest'
+import { auraFor } from '@/components/battle/statusAura'
+import { STATUS_DEFS } from '@/data/statuses'
+import type { ActiveEffect } from '@/types'
+
+const fx = (id: string): ActiveEffect =>
+  ({ kind: id, statusId: id, remaining: 2, stacks: 1 } as unknown as ActiveEffect)
+
+describe('auraFor', () => {
+  it('senza stati, nessuna aura', () => {
+    expect(auraFor([])).toBeNull()
+  })
+
+  it('il veleno accende l aura del veleno', () => {
+    expect(auraFor([fx('veleno')])?.kind).toBe('veleno')
+  })
+
+  it('la bruciatura ha un aura DIVERSA dal veleno', () => {
+    expect(auraFor([fx('burn')])?.kind).toBe('bruciatura')
+    expect(auraFor([fx('burn')])?.color).not.toBe(auraFor([fx('veleno')])?.color)
+  })
+
+  it('con più stati vince il più grave: una cornice sola', () => {
+    // gelo batte veleno: se un mago è congelato E avvelenato, la cosa che conta
+    // ora è che salterà il turno.
+    expect(auraFor([fx('veleno'), fx('freeze')])?.kind).toBe('gelo')
+    expect(auraFor([fx('regen'), fx('burn')])?.kind).toBe('bruciatura')
+  })
+
+  it('ogni stato del catalogo ha un aura — nessuno resta muto', () => {
+    // Stessa forma della guardia sulle pillole: letta da STATUS_DEFS, così
+    // aggiungere uno stato senza dargli un segno rende questo test rosso.
+    const muti = STATUS_DEFS.filter(d => auraFor([fx(d.id)]) === null).map(d => d.id)
+    expect(muti, `stati senza aura: ${muti.join(', ')}`).toEqual([])
+  })
+})
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `npx vitest run tests/battle/statusAura.test.ts` — Expected: FAIL, modulo non risolto.
+
+- [ ] **Step 3: Implementare l'aura e i fotogrammi chiave**
+
+- [ ] **Step 4: Rivedere i glifi delle pillole**
+
+Nessuna famiglia deve condividere un glifo con un'altra. Il test di copertura esistente in `tests/battle/StatusPips.test.tsx` continua a valere; **aggiungerne uno** che asserisca che due famiglie diverse non hanno lo stesso glifo.
+
+- [ ] **Step 5: Applicare l'aura a duellante e miniatura**
+
+Sul duellante l'aura è piena; sulla miniatura è ridotta (bordo colorato + pulsazione tenue), perché a 84×104 un alone grande coprirebbe il ritratto.
+
+- [ ] **Step 6: Guardare, non solo misurare**
+
+Aprire una battaglia vera e **guardare** un mago avvelenato e uno che brucia, a schermo. I test dicono che l'aura c'è; solo l'occhio dice se si vede e se è bella. Se non lo è, sistemare prima di committare.
+
+- [ ] **Step 7: Run + typecheck + commit**
+
+```bash
+npx vitest run tests/battle && npm run typecheck 2>&1 | grep -v '.next/dev'
+git add components/battle/statusAura.ts components/battle/statusAura.css components/battle/StatusPips.tsx components/battle/Duellante.tsx components/battle/Miniatura.tsx tests/battle/statusAura.test.ts tests/battle/StatusPips.test.tsx
+git commit -m "feat(battaglia): veleno e bruciatura si vedono dalla cornice, non solo da una pillola"
+```
+
+---
+
+## Task 5: L'altezza, e la prova che tutto si vede
 
 **Files:**
 - Modify: `components/screens/BattleScreen.tsx`
@@ -341,13 +462,14 @@ git commit -m "feat(battaglia): il budget dell'altezza torna sulle misure del mo
 | Comprimari in miniatura ai lati | 2, 3 |
 | Effetti nello spazio libero, non sopra le carte | 3 (il palco libera il centro) |
 | La scena non si svuota sui frame di sistema | 3 |
-| 1366×768 senza tagli, verificato guardando | 4 |
-| Riuso di pillole/corsia/effetti/guardia | 1, 2, 3 (consumo, nessuna modifica) |
+| 1366×768 senza tagli, verificato guardando | 5 |
+| Riuso di corsia/effetti/guardia | 1, 2, 3 (consumo, nessuna modifica) |
+| Icone chiare, cornice che reagisce allo stato | 4 |
 
 **Scan placeholder:** nessun TBD. I Task 3 e 4 descrivono la composizione a parole invece di dare il codice completo, perché la fonte visiva è il mockup pubblicato: ricopiarne la resa qui creerebbe una seconda verità che divergerebbe — ed è esattamente l'errore che ha fatto fallire il piano precedente, dove i brief testuali hanno sostituito il disegno.
 
 **Coerenza dei tipi:** `Duellante` e `Miniatura` sono definiti nei Task 1 e 2 e consumati nel 3. La firma di `BattleArena` non cambia, quindi `BattleScreen` non si rompe.
 
-**Rischio noto:** `data-unit-key` compare due volte per le unità in scena (duellante + miniatura smorzata). Se `SceneFx` o il livello VFX prendono la prima corrispondenza, l'effetto può finire sulla miniatura invece che sul duellante. Il Task 3 lo affronta esplicitamente; il Task 4 lo verifica guardando.
+**Rischio noto:** `data-unit-key` compare due volte per le unità in scena (duellante + miniatura smorzata). Se `SceneFx` o il livello VFX prendono la prima corrispondenza, l'effetto può finire sulla miniatura invece che sul duellante. Il Task 3 lo affronta esplicitamente; il Task 5 lo verifica guardando.
 
 **Fuori scope:** il motore, i dati, il bilanciamento, `WizardCard`, e le altre schermate.
