@@ -82,6 +82,11 @@ export function simulateBattle(
     rightMenace?: number; rightDamageReduction?: number; rightIgnoresTaunt?: boolean
     /** Player's active Duos (computed at resolve time from the living team + relics). Player-only — never set for enemy-vs-enemy sims. */
     leftDuos?: ActiveDuo[]
+    /** I Duo del lato NEMICO. Prima non esisteva: il lato destro non riceveva mai
+     *  Duo, quindi una squadra nemica che li avrebbe accesi non li otteneva. I Duo
+     *  sono l'amplificazione degli archetipi, e gli archetipi valgono anche per i
+     *  nemici — a differenza dei Jolly, deliberatamente solo del giocatore. */
+    rightDuos?: ActiveDuo[]
     /** Node kind (normal/elite/boss) — read by some Duo stamps for scaling. */
     kind?: 'normal' | 'elite' | 'boss'
   } = {},
@@ -91,12 +96,23 @@ export function simulateBattle(
   const leftRelics = opts.leftRelics ?? []
   const rightRelics = opts.rightRelics ?? []
   const L = toBattleUnits(left, 'left', leftSyn, leftRelics, 0, 0, false, opts.leftDuos ?? [])
-  const R = toBattleUnits(right, 'right', rightSyn, rightRelics, opts.rightMenace ?? 0, opts.rightDamageReduction ?? 0, opts.rightIgnoresTaunt ?? false)
+  const R = toBattleUnits(right, 'right', rightSyn, rightRelics, opts.rightMenace ?? 0, opts.rightDamageReduction ?? 0, opts.rightIgnoresTaunt ?? false, opts.rightDuos ?? [])
+  // Due marchiature a lati INVERTITI: `stampDuoFields` e' gia' simmetrico (chi ha i
+  // Duo e chi li subisce sono due parametri distinti), quindi bastava chiamarlo
+  // anche per il nemico. Il difetto stava nel chiamante, non nella funzione.
   stampDuoFields(L, R, opts.leftDuos ?? [], opts.kind ?? 'normal')
+  stampDuoFields(R, L, opts.rightDuos ?? [], opts.kind ?? 'normal')
   // MIASMA: computed once per battle — cheaper than re-scanning leftDuos at every death site.
   const miasma = (opts.leftDuos ?? []).some(d => d.duo.id === 'miasma')
+  // Miasma/Untore non hanno un marchio per-unita': la simulazione legge questi
+  // booleani e poi CABLA il lato su cui agiscono (`side === 'right'` per Miasma,
+  // `'left'` per Untore). Le versioni del nemico sono quindi speculari, e restano
+  // due variabili distinte invece di una sola: fondere i due lati in un unico
+  // flag propagherebbe il Miasma del giocatore anche sui suoi stessi alleati.
+  const miasmaR = (opts.rightDuos ?? []).some(d => d.duo.id === 'miasma')
   // UNTORE: computed once per battle — same reasoning as MIASMA above.
   const untore = (opts.leftDuos ?? []).some(d => d.duo.id === 'untore')
+  const untoreR = (opts.rightDuos ?? []).some(d => d.duo.id === 'untore')
   const regen: Record<Side, number> = {
     left: totalRelicRegen(left, leftRelics),
     right: totalRelicRegen(right, rightRelics),
@@ -345,6 +361,18 @@ export function simulateBattle(
             })
           }
         }
+        // Speculare: l'Untore NEMICO morde il lato del giocatore quando una cura
+        // atterra su un nemico. Stessa forma, lati invertiti.
+        if (untoreR && realTarget.side === 'right') {
+          const bitten = maybeSpitPoison(L, rng, `${actor.side}:${actor.wizard.id}`)
+          if (bitten) {
+            pushLog({
+              turn, actorId: actor.wizard.id, actorSide: actor.side, action: 'Untore',
+              targetId: bitten.wizard.id, targetSide: bitten.side,
+              type: 'system', flags: ['duo'], duoId: 'untore',
+            })
+          }
+        }
       }
       if (entry.value) {
         const scoreKey = `${actor.side}:${actor.wizard.id}`
@@ -382,6 +410,7 @@ export function simulateBattle(
         // MIASMA: after the death is fully resolved, jump the dead enemy's veleno stacks
         // to one random living enemy (deterministic single rng.pick; no-op if none left).
         if (miasma && realTarget.side === 'right') logSpread(realTarget, turn, maybeSpreadPoison(realTarget, R, rng))
+        if (miasmaR && realTarget.side === 'left') logSpread(realTarget, turn, maybeSpreadPoison(realTarget, L, rng))
         // CARNEFICE (archetipo, entrambi i lati) + MIETITORE (Duo, player-only, raddoppia):
         // a direct-hit kill by a `carnefice`-flagged unit (either side) grants +ATK (raccolto)
         // to the killer and bumps the execute threshold for the killer's whole team. If the
@@ -412,6 +441,7 @@ export function simulateBattle(
         }
         // MIASMA: recoil self-kill can drop an enemy caster too.
         if (miasma && actor.side === 'right') logSpread(actor, turn, maybeSpreadPoison(actor, R, rng))
+        if (miasmaR && actor.side === 'left') logSpread(actor, turn, maybeSpreadPoison(actor, L, rng))
       }
       // onHpThreshold: HP of the target changed this action.
       checkThreshold(realTarget, turn)
@@ -449,6 +479,7 @@ export function simulateBattle(
         // MIASMA: a DoT-tick death (often veleno itself) also spreads — this operates on the
         // already-resolved death and does not recurse into any further deaths it might cause.
         if (miasma && u.side === 'right') logSpread(u, turn, maybeSpreadPoison(u, R, rng))
+        if (miasmaR && u.side === 'left') logSpread(u, turn, maybeSpreadPoison(u, L, rng))
       }
       if (u.alive && regen[u.side] > 0 && !u.corrotto) {
         const before = u.hp
@@ -494,6 +525,8 @@ export function simulateBattle(
             }
             // MIASMA: fatigue (anti-stall) kills also spread.
             if (miasma && u.side === 'right') logSpread(u, turn, maybeSpreadPoison(u, R, rng))
+            if (miasmaR && u.side === 'left') logSpread(u, turn, maybeSpreadPoison(u, L, rng))
+        if (miasmaR && u.side === 'left') logSpread(u, turn, maybeSpreadPoison(u, L, rng))
           }
         }
       }

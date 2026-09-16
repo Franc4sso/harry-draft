@@ -53,8 +53,19 @@
 /* ═══ CARTA (.c nel mockup) ═══ */
 
 .carta-combat {
+  /* NOTA sulle unita': il container di questa carta e' la RIGA (col-enemies /
+     col-allies), non la cornice — la riga e' rientrata di COL_W per lato per far
+     posto alle due legende. Le misure interne sono quindi tarate su 1066 (la
+     larghezza utile della riga), non su 1366: con la base sbagliata le etichette
+     delle statistiche scendevano a 5.1px, illeggibili. */
   position: relative;
-  width: 15.5198cqw;
+  /* Relativo alla RIGA (che ora e' il container `inline-size`), non alla cornice:
+     la riga e' rientrata di COL_W per lato per lasciare posto alle due legende.
+     Il valore tiene conto dei GAP: cinque carte piu' quattro spazi da 1.6% devono
+     stare nella riga, cioe' (100 - 4*1.6)/5 = 18.72. Il primo tentativo usava
+     212/1066 = 19.89 ignorando i gap, e le carte sbordavano di 34px finendo sotto
+     la legenda — misurato, non dedotto. */
+  width: 18.72cqw;
   aspect-ratio: 212 / 254;
   overflow: visible;
   border: 1px solid rgba(226, 214, 186, .2);
@@ -100,23 +111,23 @@
 
 .carta-combat .cc-rl {
   position: absolute;
-  left: 0.5857cqw;
-  bottom: 2.7818cqw;
+  left: 0.7505cqw;
+  bottom: 3.5647cqw;
   z-index: 3;
-  font: 800 0.4758cqw/1 Inter, sans-serif;
+  font: 800 0.6097cqw/1 Inter, sans-serif;
   letter-spacing: .16em;
   text-transform: uppercase;
 }
 
 .carta-combat .cc-nm {
   position: absolute;
-  left: 0.5857cqw;
-  right: 0.5857cqw;
-  bottom: 1.3909cqw;
+  left: 0.7505cqw;
+  right: 0.7505cqw;
+  bottom: 1.7823cqw;
   z-index: 3;
   font-family: Cinzel, Georgia, serif;
   font-weight: 900;
-  font-size: 1.0249cqw;
+  font-size: 1.3133cqw;
   color: #fff;
   line-height: 1.08;
   white-space: nowrap;
@@ -126,22 +137,22 @@
 
 .carta-combat .cc-sp {
   position: absolute;
-  left: 0.5857cqw;
-  right: 0.5857cqw;
-  bottom: 0.366cqw;
+  left: 0.7505cqw;
+  right: 0.7505cqw;
+  bottom: 0.469cqw;
   z-index: 3;
-  font: 600 0.6223cqw/1 Inter, sans-serif;
+  font: 600 0.7974cqw/1 Inter, sans-serif;
   color: var(--vg-gold-pale);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   display: flex;
   align-items: center;
-  gap: 0.366cqw;
+  gap: 0.469cqw;
 }
 
 .carta-combat .cc-hpw {
-  height: 0.4392cqw;
+  height: 0.5628cqw;
   background: rgba(0, 0, 0, .72);
   position: relative;
 }
@@ -155,9 +166,9 @@
 }
 .carta-combat .cc-hpt {
   position: absolute;
-  right: 0.366cqw;
-  top: -0.7321cqw;
-  font: 800 0.549cqw/0.6589cqw Inter, sans-serif;
+  right: 0.469cqw;
+  top: -0.9381cqw;
+  font: 800 0.7035cqw/0.8443cqw Inter, sans-serif;
   color: rgba(255, 255, 255, .66);
   font-variant-numeric: tabular-nums;
   z-index: 4;
@@ -165,7 +176,7 @@
 
 .carta-combat .cc-st {
   display: flex;
-  padding: 0.366cqw 0.2928cqw 0.4392cqw;
+  padding: 0.469cqw 0.3752cqw 0.5628cqw;
   gap: 1px;
   background: rgba(0, 0, 0, .4);
   border-top: 1px solid rgba(226, 214, 186, .07);
@@ -173,17 +184,17 @@
 .carta-combat .cc-st span {
   flex: 1;
   text-align: center;
-  font: 800 0.8419cqw/1.2 Inter, sans-serif;
+  font: 800 1.0788cqw/1.2 Inter, sans-serif;
   color: #fff;
   font-variant-numeric: tabular-nums;
 }
 .carta-combat .cc-st span u {
   display: block;
-  font: 700 0.4392cqw/1 Inter, sans-serif;
+  font: 700 0.5628cqw/1 Inter, sans-serif;
   letter-spacing: .11em;
   color: var(--vg-faint);
   text-decoration: none;
-  margin-bottom: 0.183cqw;
+  margin-bottom: 0.2345cqw;
 }
 
 /* Caduto */
@@ -205,7 +216,7 @@
   top: 46%;
   z-index: 6;
   text-align: center;
-  font: 900 0.6589cqw/1 Inter, sans-serif;
+  font: 900 0.8443cqw/1 Inter, sans-serif;
   letter-spacing: .24em;
   color: rgba(255, 255, 255, .62);
 }
@@ -213,26 +224,26 @@
 /* Pillole sommate: una per famiglia, col totale */
 .carta-combat .cc-pips {
   position: absolute;
-  top: 0.366cqw;
-  left: 0.366cqw;
+  top: 0.469cqw;
+  left: 0.469cqw;
   z-index: 6;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.2196cqw;
+  gap: 0.2814cqw;
   max-width: 92%;
 }
 .carta-combat .cc-pip {
   display: flex;
   align-items: center;
-  gap: 0.2196cqw;
-  height: 1.2445cqw;
-  padding: 0 0.366cqw 0 0.2928cqw;
-  font: 900 0.6589cqw/1 Inter, sans-serif;
+  gap: 0.2814cqw;
+  height: 1.5947cqw;
+  padding: 0 0.469cqw 0 0.3752cqw;
+  font: 900 0.8443cqw/1 Inter, sans-serif;
   color: #08060f;
   border: 1px solid rgba(8, 6, 15, .6);
 }
 .carta-combat .cc-pip b {
-  font: 900 0.7321cqw/1 Inter, sans-serif;
+  font: 900 0.9381cqw/1 Inter, sans-serif;
   font-variant-numeric: tabular-nums;
 }
 
@@ -304,18 +315,22 @@
  */
 .tab-lancia, .tab-colpita {
   position: absolute;
-  top: -9px;
+  /* In `cqw` come la carta: restando in px fissi il ribbon non cresceva con lei
+     (16px su una carta da 197 a 1366, gli stessi 16 su una da 382 a 2560), quindi
+     il suo peso DIMEZZAVA e, sporgendo sopra il bordo, si leggeva come tagliato
+     a meta'. Misurato: rapporto 8.13% -> 4.19%. */
+  top: -0.8443cqw;
   left: 50%;
   transform: translateX(-50%);
   z-index: 8;
-  font: 900 7.5px/16px Inter, sans-serif;
+  font: 900 0.7035cqw/1.5009cqw Inter, sans-serif;
   letter-spacing: .16em;
-  height: 16px;
-  padding: 0 9px;
+  height: 1.5009cqw;
+  padding: 0 0.8443cqw;
   white-space: nowrap;
   display: flex;
   align-items: center;
-  gap: 5px;
+  gap: 0.469cqw;
 }
 .tab-lancia {
   background: linear-gradient(180deg, var(--vg-gold-lit), var(--vg-gold));

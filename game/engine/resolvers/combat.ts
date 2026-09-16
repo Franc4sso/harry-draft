@@ -89,10 +89,17 @@ export function resolveCombat(state: RunState, node: RunNode, rng: Rng): CombatR
   const ready = battleReadyTeam(livingOf(state.team))
   const playerSyn = detectSynergies(ready)
   const leftDuos = detectDuos(ready, state.relics)
+  // I Duo NEMICI, che prima non venivano mai calcolati: il lato destro non ne
+  // riceveva nessuno, quindi una squadra avversaria che avrebbe acceso Cancrena o
+  // Muro Vivente non li otteneva. Gli archetipi valgono anche per i nemici e i Duo
+  // li amplificano; i Jolly restano invece solo del giocatore (e' quell'asimmetria
+  // a renderli sicuri per il bilanciamento), e infatti qui si passano le reliquie
+  // VERE del nemico, che non possono contenerli.
+  const rightDuos = detectDuos(enemy, rightRelics ?? [])
   const result = simulateBattle(ready, enemy, battleRng, {
     leftSyn: playerSyn, rightSyn: enemySyn, leftRelics: state.relics,
     rightRelics, rightMenace, rightDamageReduction, rightIgnoresTaunt,
-    leftDuos, kind: nodeType,
+    leftDuos, rightDuos, kind: nodeType,
   })
 
   // Persist HP onto the ORIGINAL (unleveled) roster via the existing helper, then grant

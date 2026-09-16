@@ -58,6 +58,14 @@ export function BattleScreen({
     () => detectDuos(livingOf(playerTeam), playerRelics ?? []),
     [playerTeam, playerRelics],
   )
+  // I Duo NEMICI, con la stessa regola: «non vedo le combo dei miei avversari, se
+  // li hanno» (utente). Adesso li hanno davvero — il motore li applica al lato
+  // destro — quindi la scena deve poterli mostrare. Stesse reliquie vere del
+  // nemico usate dal resolver, cosi' le due liste non possono divergere.
+  const enemyDuos = useMemo(
+    () => detectDuos(livingOf(enemy), rightRelics ?? []),
+    [enemy, rightRelics],
+  )
   // Lets the player dismiss the end modal to review the settled board/log,
   // then reopen it (or confirm) via the floating "Rivedi esito" button.
   const [dismissed, setDismissed] = useState(false)
@@ -195,7 +203,7 @@ export function BattleScreen({
       <div ref={arenaBandRef} className="flex min-h-0 w-full flex-1 flex-col items-center justify-start overflow-hidden">
         <BattleArena
           replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle}
-          enemyLevel={enemyLevel} speed={r.speed} duos={activeDuos} intensity={r.intensity}
+          enemyLevel={enemyLevel} speed={r.speed} duos={activeDuos} enemyDuos={enemyDuos} intensity={r.intensity}
           portraitHeight={PORTRAIT_HEIGHT}
         />
       </div>

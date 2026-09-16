@@ -62,6 +62,14 @@ const SLOT_W = 96
  *  precedente: 4 sigilli su 15 sparivano dietro il pannello. */
 const FOCUS_W = 380
 
+/** Lo stile del riquadro di fuoco, in una costante sola: i sigilli FUTURI lo
+ *  riusano in scala invece di avere una resa propria — «vorrei che le magie che
+ *  devono ancora arrivare, abbiano lo stesso stile delle magie che sono al
+ *  momento in focus» (utente). Estratto e condiviso, non ricopiato: due copie
+ *  divergerebbero alla prima modifica. */
+const FOCUS_RING = 'rgba(184,150,63,.45)'
+const FOCUS_BG = 'linear-gradient(135deg,rgba(28,22,48,.97),rgba(9,7,17,.97))'
+
 const FUTURE_COUNT = 3
 const PAST_COUNT = 2
 
@@ -88,15 +96,27 @@ export function NastroSigilli({ replay, index, className }: { replay: Replay; in
   const focusPos = focusEntry ? order.findIndex(s => s.entry === focusEntry) : -1
 
   // Past N + current + future FUTURE_COUNT, centered on the focused turn.
-  const startPos = focusPos < 0 ? 0 : Math.max(0, focusPos - PAST_COUNT)
-  const sequence = useMemo(() => {
-    if (focusPos < 0) return []
+  //
+  // `sequence` e `nowOffset` escono dallo STESSO calcolo, e non piu' da due conti
+  // paralleli. Prima `nowOffset` era `focusPos - startPos`, calcolato fuori dal
+  // `useMemo` che produceva la lista: quando le due sorgenti divergevano, la riga
+  // aveva N slot davanti al fuoco ma veniva traslata come se ne avesse un altro
+  // numero. Riprodotto e misurato in browser: fino al turno 16 lo scarto e' 0-1px,
+  // dal 17 diventa 97 -> 193 -> 289, con 4 slot davanti al fuoco contro una
+  // traslazione da 2 (2 x 96 = 192px, il drift osservato). E' il bug dell'utente
+  // — «dopo si bugga, lasciando tutte le magie a destra».
+  const { sequence, nowOffset } = useMemo(() => {
+    if (focusPos < 0) return { sequence: [] as RibbonSlot[], nowOffset: 0 }
+    const startPos = Math.max(0, focusPos - PAST_COUNT)
     const past = order.slice(startPos, focusPos)
     const future = order.slice(focusPos + 1, focusPos + 1 + FUTURE_COUNT)
-    return [...past, order[focusPos]!, ...future]
-  }, [order, focusPos, startPos])
-
-  const nowOffset = focusPos - startPos
+    return {
+      sequence: [...past, order[focusPos]!, ...future],
+      // La posizione del fuoco E' la lunghezza dei passati che sono DAVVERO
+      // nella lista: non puo' sfasarsi da cio' che viene reso.
+      nowOffset: past.length,
+    }
+  }, [order, focusPos])
 
   const focusUnit = focusEntry?.actorSide ? byKey[unitKey(focusEntry.actorSide, focusEntry.actorId)] : undefined
   const focusTarget = focusEntry?.targetSide && focusEntry?.targetId
@@ -149,10 +169,14 @@ export function NastroSigilli({ replay, index, className }: { replay: Replay; in
         : null
 
     // 36px future / 28px past — from the mockup's .oct sizing.
-    const size = isPast ? 28 : 36
+    // I futuri sono piu' grandi e portano la ghiera dorata del focus; i passati
+    // restano piccoli e smorzati, altrimenti la sequenza perde la direzione del
+    // tempo (non e' "tutto uguale", e' "cio' che arriva ha la forma di cio' che
+    // e' in scena adesso").
+    const size = isPast ? 28 : 40
     const ringColor = isPast ? 'rgba(226,214,186,.18)' : willSkip
       ? (skipKind === 'freeze' ? 'rgba(107,184,221,.5)' : 'rgba(217,189,106,.5)')
-      : (meta ? `${meta.color}55` : 'rgba(226,214,186,.25)')
+      : FOCUS_RING
 
     return (
       <div
@@ -170,12 +194,20 @@ export function NastroSigilli({ replay, index, className }: { replay: Replay; in
             width: size,
             height: size,
             border: `1.5px solid ${ringColor}`,
-            background: 'linear-gradient(180deg,#191430,#0a0813)',
+            background: isPast ? 'linear-gradient(180deg,#191430,#0a0813)' : FOCUS_BG,
+            boxShadow: isPast ? undefined : '0 0 0 2px rgba(6,5,11,.9), 0 0 0 3px rgba(184,150,63,.22)',
             clipPath: 'polygon(29% 0,71% 0,100% 29%,100% 71%,71% 100%,29% 100%,0 71%,0 29%)',
             transition: reduce ? undefined : 'all .42s cubic-bezier(.22,1,.36,1)',
           }}
         >
-          {Icon && <Icon size={isPast ? 12 : 16} />}
+          {/* Il colore del TIPO, pieno sui futuri come nel riquadro di fuoco (che
+              tinge la sua icona con `focusMeta.color`): e' il segno che dice a
+              colpo d'occhio se sta arrivando un attacco, una cura o un controllo. */}
+          {Icon && (
+            <span style={{ color: isPast ? undefined : meta?.color, lineHeight: 0 }}>
+              <Icon size={isPast ? 12 : 18} />
+            </span>
+          )}
           {willSkip && (
             <span
               data-testid="tacca-salta"
@@ -252,7 +284,16 @@ export function NastroSigilli({ replay, index, className }: { replay: Replay; in
         >
           {sequence.map((slot, i) => (
             <div
-              key={`${slot.turn}-${slot.key}`}
+              // La chiave include la POSIZIONE nella finestra. Con `${slot.turn}-${slot.key}`
+              // due slot potevano condividere la stessa chiave (la stessa unita' che agisce
+              // due volte nello stesso turno del replay): React li trattava come nodi nuovi
+              // e NON rimuoveva i vecchi, quindi la riga accumulava figli.
+              // MISURATO instrumentando il componente nel browser: `sequence.length` restava
+              // 6 e `nowOffset` 2 — entrambi corretti — mentre il DOM cresceva 7, 8, 9, 11,
+              // 13, 14 figli dal click 18 in poi. Gli slot in piu' spingevano lo slot di
+              // fuoco a destra (wideAt 2 -> 5) mentre `translateX` restava giustamente a
+              // -382px: da qui i 192px di sfalsamento e le magie tutte a destra.
+              key={`${i}-${slot.turn}-${slot.key}`}
               className="flex shrink-0 justify-center"
               style={{
                 // Lo slot del turno corrente E' il riquadro di fuoco: ne occupa la

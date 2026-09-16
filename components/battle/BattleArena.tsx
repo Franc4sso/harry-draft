@@ -11,7 +11,8 @@ import { ColpoSullaCarta } from './ColpoSullaCarta'
 import { ArenaBackdrop } from './ArenaBackdrop'
 import { PixiArena } from './PixiArena'
 import { Callout } from './Callout'
-import { DuoPills } from './DuoPills'
+import { SigilloDuo } from './SigilloDuo'
+import { LegendaBersagli } from './LegendaBersagli'
 import { cn } from '@/lib/theme'
 import { DUO_BY_ID } from '@/data/duos'
 import { SPELL_BY_ID } from '@/data/spells'
@@ -29,6 +30,26 @@ const BIG_SPELLS = new Set([
  *  floating number over it. Mirrors SceneFx's internal (unexported) `specFor` table for the
  *  cases the brief calls out by name: strike on the actor, kick/kickBig on the target,
  *  swerve for a dodge, shiver for a skipped turn, fall for a kill. */
+/** Larghezza delle colonne laterali, in unita' della cornice 1366. Le carte
+ *  occupano il centro; questo e' lo spazio che il piano tiene libero ai lati e
+ *  che ora ospita le due legende. 150 e non 120: misurato a schermo, a 120 la
+ *  legenda dei bersagli sbordava di 39px SOPRA la carta di bordo, illeggibile. */
+const COL_W = 150
+
+function ColonnaCombo({ titolo, duos, firingId }: { titolo: string; duos: ActiveDuo[]; firingId: string | null }) {
+  if (duos.length === 0) return <div />
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <h3 className="text-center text-[7px] font-extrabold uppercase leading-tight tracking-[.18em]" style={{ color: 'var(--vg-gold, #b8963f)' }}>
+        {titolo}
+      </h3>
+      {duos.map(active => (
+        <SigilloDuo key={active.duo.id} active={active} firing={active.duo.id === firingId} />
+      ))}
+    </div>
+  )
+}
+
 const MOTION_BY_KIND: Partial<Record<SceneKind, { actor?: string; target?: string }>> = {
   hit:     { actor: 'fx-strike', target: 'fx-kick' },
   crit:    { actor: 'fx-strike', target: 'fx-kickBig' },
@@ -59,7 +80,7 @@ const MOTION_BY_KIND: Partial<Record<SceneKind, { actor?: string; target?: strin
  * questo componente (non pixel fissi): la cornice reale non è sempre 1366×768 (brief).
  */
 export function BattleArena({
-  replay, hp, entry, frameKey = 0, leftTitle = 'La tua squadra', rightTitle = 'Avversari', enemyLevel = 1, speed = 1, duos = [], intensity = 0, portraitHeight = 118,
+  replay, hp, entry, frameKey = 0, leftTitle = 'La tua squadra', rightTitle = 'Avversari', enemyLevel = 1, speed = 1, duos = [], enemyDuos = [], intensity = 0, portraitHeight = 118,
 }: {
   replay: Replay
   hp: Record<string, number>
@@ -73,6 +94,8 @@ export function BattleArena({
   speed?: number
   /** Duo attivi del giocatore in questa battaglia (player-only). */
   duos?: ActiveDuo[]
+  /** I Duo del lato nemico. Vuoto se la squadra avversaria non ne accende. */
+  enemyDuos?: ActiveDuo[]
   /** Crescendo: calore del combattimento 0..1, amplifica i layer cinematici. Vedi `lib/vfx/crescendo.ts`. */
   intensity?: number
   /** Unused by this composition (every card renders at the mockup's fixed 212×254, not a
@@ -279,7 +302,6 @@ export function BattleArena({
       style={{ maxWidth: 'calc(var(--arena-h, 648px) * 1366 / 768)' }}
     >
       <ArenaBackdrop />
-      <DuoPills duos={duos} firingId={firingId} />
       {telegraph && (
         <div
           key={`tg-${frameKey}`}
@@ -307,7 +329,7 @@ export function BattleArena({
         className="relative w-full"
         style={{ aspectRatio: '1366 / 768', containerType: 'inline-size' }}
       >
-        <div data-testid="col-enemies" aria-label={rightTitle} className="absolute left-0 right-0 flex justify-center gap-[1.6%]" style={{ top: `${(46 / 768) * 100}%` }}>
+        <div data-testid="col-enemies" aria-label={rightTitle} className="absolute flex justify-center gap-[1.6%]" style={{ left: `${(COL_W / 1366) * 100}%`, right: `${(COL_W / 1366) * 100}%`, top: `${(46 / 768) * 100}%`, containerType: 'inline-size' }}>
           {renderRow(right)}
         </div>
 
@@ -327,9 +349,44 @@ export function BattleArena({
           <NastroSigilli replay={replay} index={frameKey} className="h-full" />
         </div>
 
-        <div data-testid="col-allies" aria-label={leftTitle} className="absolute left-0 right-0 flex justify-center gap-[1.6%]" style={{ top: `${(510 / 768) * 100}%` }}>
+        <div data-testid="col-allies" aria-label={leftTitle} className="absolute flex justify-center gap-[1.6%]" style={{ left: `${(COL_W / 1366) * 100}%`, right: `${(COL_W / 1366) * 100}%`, top: `${(510 / 768) * 100}%`, containerType: 'inline-size' }}>
           {renderRow(left)}
         </div>
+
+        {/* Le due legende vivono nelle COLONNE LATERALI, che il piano tiene libere
+            per vincolo ("niente occupa le colonne laterali"): misurate 120px per
+            lato, simmetriche. Stanno DENTRO lo stage, quindi seguono la cornice
+            quando cresce invece di restare ancorate al viewport.
+
+            A sinistra le combo: erano pill impilate una sotto l'altra — «vedere le
+            combo una sotto l'altra in un elenco, sono veramente brutte» — e ora
+            sono sigilli divisi nei due segnali che le generano, coi colori che il
+            resto del gioco usa gia' per quei segnali.
+
+            A destra il "chi attacca chi", che legge `TARGET_REASON_LABEL` (la
+            stessa fonte di `explainTarget`) e accende la riga della ragione del
+            turno corrente. */}
+        {(duos.length > 0 || enemyDuos.length > 0) && (
+          <div
+            data-testid="col-combo"
+            className="pointer-events-none absolute inset-y-0 z-20 flex flex-col justify-between py-[5%]"
+            style={{ left: 0, width: `${(COL_W / 1366) * 100}%` }}
+          >
+            {/* Le combo NEMICHE in alto, accanto alla loro fila; le mie in basso,
+                accanto alla mia. Prima non c'erano affatto — «non vedo le combo dei
+                miei avversari, se li hanno» — perche' il motore non le assegnava mai
+                al lato destro. Ora le ha, quindi vanno mostrate dalla parte giusta:
+                metterle tutte insieme direbbe che sono mie. */}
+            <ColonnaCombo titolo="Combo nemiche" duos={enemyDuos} firingId={firingId} />
+            <ColonnaCombo titolo="Le tue combo" duos={duos} firingId={firingId} />
+          </div>
+        )}
+
+        <LegendaBersagli
+          attiva={entry?.reason ?? null}
+          className="absolute top-[6%] z-20"
+          style={{ right: 0, width: `${(COL_W / 1366) * 100}%` }}
+        />
 
         <PixiArena entry={entry} frameKey={frameKey} speed={speed} intensity={intensity} />
         <ColpoSullaCarta event={sceneEvent} frameKey={frameKey} box={struckBox} />

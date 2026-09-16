@@ -26,6 +26,25 @@ const cartaBlock = (() => {
   return css.slice(i, css.indexOf('}', i))
 })()
 
+describe('anche cio che sporge dalla carta scala con lei', () => {
+  const tabBlock = (() => {
+    const i = css.indexOf('.tab-lancia, .tab-colpita {')
+    return css.slice(i, css.indexOf('}', i))
+  })()
+
+  it('il ribbon LANCIA/COLPITA non resta in pixel fissi', () => {
+    // MISURATO: la carta passa da 197px (a 1366) a 382px (a 2560), ma il ribbon
+    // restava 16px fissi — il suo peso sulla carta DIMEZZAVA (8.13% -> 4.19%).
+    // Sporgendo `top:-9px` sopra il bordo, a carta grande finiva a cavallo del
+    // bordo chiaro e si LEGGEVA come tagliato a metà: è il rilievo dell'utente
+    // sulle cose «in absolute vicino ai personaggi di sotto, tagliate a metà».
+    // Le pillole invece già scalavano (16 -> 31), perché stanno nel blocco
+    // convertito: il ribbon era semplicemente rimasto fuori dalla conversione.
+    expect(tabBlock).toMatch(/cqw/)
+    expect(tabBlock).not.toMatch(/height:\s*16px/)
+  })
+})
+
 describe('la carta di battaglia scala con la cornice', () => {
   it('NON ha una larghezza in pixel fissi', () => {
     expect(cartaBlock).not.toMatch(/width:\s*212px/)

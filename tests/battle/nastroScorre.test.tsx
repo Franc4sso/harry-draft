@@ -53,6 +53,56 @@ describe('i sigilli stanno dentro la cornice e non sotto il riquadro', () => {
   })
 })
 
+describe('il nastro non si sfalsa col passare dei turni', () => {
+  it('lo slot del fuoco e la traslazione vengono dalla STESSA lista', () => {
+    // BUG dell'utente: «all'inizio funziona bene la timeline, ma dopo si bugga,
+    // lasciando tutte le magie a destra». Riprodotto e MISURATO in browser: fino
+    // al turno 16 lo scarto fra slot-di-fuoco e pannello è 0-1px; dal turno 17
+    // diventa 97, poi 193, poi 289 — e gli slot passano da 6 a 14.
+    //
+    // Causa: `nowOffset` era calcolato a parte (`focusPos - startPos`) mentre la
+    // lista veniva da un `useMemo`. Quando le due sorgenti divergono, la riga ha
+    // N slot davanti al fuoco ma viene traslata come se ne avesse `nowOffset`:
+    // misurato 4 slot davanti contro una traslazione da 2, cioè 2*96 = 192px di
+    // sfalsamento — esattamente il `drift: 193` osservato.
+    //
+    // La posizione del fuoco DEVE essere letta dalla lista che si rende davvero.
+    expect(src).toMatch(/nowOffset:\s*past\.length/)
+  })
+
+  it('la chiave di ogni slot include la posizione, o il DOM accumula', () => {
+    // LA CAUSA VERA, trovata instrumentando il componente nel browser invece che
+    // deducendola: `sequence.length` restava 6 e `nowOffset` 2 — entrambi giusti —
+    // ma il DOM cresceva a 7, 8, 9, 11, 13, 14 figli dal click 18. La chiave era
+    // `${slot.turn}-${slot.key}`, che si RIPETE quando la stessa unità agisce due
+    // volte nello stesso turno: React trattava i duplicati come nodi nuovi e non
+    // rimuoveva i vecchi. Gli slot in eccesso spingevano lo slot di fuoco a destra
+    // (posizione 2 -> 5) mentre `translateX` restava correttamente a -382px: i
+    // 192px di sfalsamento, e le magie tutte a destra.
+    expect(src).toMatch(/key=\{`\$\{i\}-/)
+  })
+})
+
+describe('i futuri hanno lo stesso stile del focus', () => {
+  it('il sigillo futuro porta la cornice e lo sfondo del riquadro di fuoco', () => {
+    // Richiesta dell'utente: «vorrei che le magie che devono ancora arrivare,
+    // abbiano lo stesso stile delle magie che sono al momento in focus».
+    // I futuri erano ottagoni scuri con un anello smorzato (`${meta.color}55`);
+    // ora prendono la ghiera dorata e il fondo del pannello di fuoco, in scala.
+    // Cercare "rgba(184,150,63" e basta NON basta: quel colore esiste già nel
+    // riquadro di fuoco più in basso nel file, quindi il test passava senza che
+    // i futuri fossero cambiati. Si guarda la costante condivisa, che esiste solo
+    // se lo stile è stato davvero estratto e riusato.
+    expect(src).toMatch(/const FUTURO_STILE|FOCUS_RING/)
+  })
+
+  it('i passati restano distinti dai futuri', () => {
+    // Lo stile condiviso vale per i FUTURI: se anche i passati lo prendessero,
+    // la sequenza perderebbe la direzione del tempo.
+    expect(src).toMatch(/isPast/)
+  })
+})
+
 describe('il nastro scorre', () => {
   it('trasla sull asse X invece di ricomporsi di colpo', () => {
     expect(src).toMatch(/translateX/)
