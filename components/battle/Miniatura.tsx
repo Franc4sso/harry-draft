@@ -47,20 +47,27 @@ export function Miniatura({
       data-dimmed={dimmed ? 'true' : undefined}
       data-dead={dead ? 'true' : undefined}
       className={cn(
-        'relative flex h-[104px] w-[84px] flex-col overflow-hidden rounded-[9px] border-[1.5px] transition-[opacity,transform,filter] duration-300 motion-reduce:transition-none',
+        'relative flex h-[104px] w-[84px] flex-col overflow-hidden rounded-[9px] border-[1.5px] motion-reduce:!transition-none',
         dimmed && 'scale-[.94] opacity-30',
         dead && 'grayscale opacity-[.28]',
         className,
       )}
-      style={{ borderColor: sideColor, ...style }}
+      style={{
+        borderColor: sideColor,
+        // `.mini` nel mockup: transition: transform .32s cubic-bezier(.22,1,.36,1), opacity .32s, filter .4s
+        // (box-shadow .32s del mockup omesso: niente in questo componente lo anima)
+        transition: 'transform .32s cubic-bezier(.22,1,.36,1), opacity .32s, filter .4s',
+        ...style,
+      }}
     >
       <div className="relative min-h-0 flex-1 overflow-hidden">
         <PortraitImage id={unit.id} house={unit.house} alt={unit.name} variant="bust" />
 
+        {/* `.mini .p::after` nel mockup: radial-gradient(120% 80% at 50% 25%, transparent 40%, rgba(6,4,12,.75) 100%) */}
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0"
-          style={{ background: 'radial-gradient(120% 100% at 50% 20%, transparent 40%, rgba(7,5,14,.85) 100%)' }}
+          style={{ background: 'radial-gradient(120% 80% at 50% 25%, transparent 40%, rgba(6,4,12,.75) 100%)' }}
         />
 
         <StatusPips effects={effects} />

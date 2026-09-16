@@ -12,11 +12,26 @@ const fx = (k: string): ActiveEffect => ({ kind: k, statusId: k, remaining: 2, s
 describe('Miniatura', () => {
   it('mostra nome e vita, e nient altro di pesante', () => {
     render(<Miniatura unit={u()} hp={45} maxHp={90} effects={[]} />)
-    expect(screen.getByTestId('miniatura')).toHaveTextContent('Draco Malfoy')
+    const box = screen.getByTestId('miniatura')
+    expect(box).toHaveTextContent('Draco Malfoy')
     expect(screen.getByTestId('miniatura-hp').style.width).toBe('50%')
-    // niente banda statistiche né riga incantesimo: è la ragione per cui esiste
+    // Niente banda statistiche (StatBand, components/cards/parts/StatBand.tsx,
+    // data-testid="stat-band") né riga incantesimo (SpellLine, i suoi
+    // data-testid reali sono spell-headline/spell-verb/spell-accuracy-bar/
+    // spell-cadence — nessuno si chiama "spell-line", quindi si pinnano quelli
+    // veri): è la ragione per cui questo componente esiste, non un'asserzione
+    // decorativa che non potrebbe mai fallire.
     expect(screen.queryByTestId('stat-band')).toBeNull()
-    expect(screen.queryByTestId('spell-line')).toBeNull()
+    expect(screen.queryByTestId('spell-headline')).toBeNull()
+    expect(screen.queryByTestId('spell-verb')).toBeNull()
+    expect(screen.queryByTestId('spell-accuracy-bar')).toBeNull()
+    expect(screen.queryByTestId('spell-cadence')).toBeNull()
+    // Il testo dentro la miniatura è SOLO il nome: niente numeri di statistiche
+    // (HP/ATT/DIF/VEL), niente nome/precisione dell'incantesimo. Se qualcuno
+    // reintroducesse StatBand o SpellLine dentro Miniatura questo testo
+    // cambierebbe e l'assert cadrebbe — a differenza di un testid inventato
+    // che nessun componente reale emette.
+    expect(box).toHaveTextContent(/^Draco Malfoy$/)
   })
 
   it('mostra le pillole di stato anche in miniatura', () => {
