@@ -79,7 +79,30 @@ export function Callout({ entry, frameKey, appliedControl = null, duoName = null
       key={callout.key}
       data-testid="battle-callout"
       aria-hidden
-      className="pointer-events-none absolute left-1/2 top-[38%] z-20 -translate-x-1/2 -translate-y-1/2 select-none whitespace-nowrap font-display text-4xl font-bold uppercase tracking-[0.12em] sm:text-5xl"
+      // 2026-09-16 (Task 6). Era `top-[38%]` a `text-5xl` (48px), nato quando il
+      // centro della scena era VUOTO (il palco a due duellanti): con la vetrata a
+      // dieci carte quel punto cade in mezzo alla fila NEMICA e una parola lunga
+      // come ESECUZIONE copriva tre carte.
+      //
+      // La fascia centrale non ha piu' un varco grande: MISURATO dal vivo a
+      // 1366x768 — fila nemica fino a 356, riquadro di fuoco 348..464 (si
+      // sovrappongono gia' loro due di proposito), fila alleata da 493. L'unico
+      // vuoto reale e' 464..493, ventinove pixel. Due posizioni sono state
+      // provate e SCARTATE guardando, non deducendo: 53% non toccava nessuna
+      // carta (e la misura di ingombro diceva 0) ma finiva sopra il TESTO del
+      // riquadro; 41.7% ricadeva nel varco da ~40px tra fila e riquadro e
+      // sovrapponeva di nuovo.
+      //
+      // Quindi la parola sta in quel vuoto da 29px e si dimensiona per starci:
+      // 64.5% = 495/768, centrata in 464..493 tenendo conto dell'interlinea, che
+      // a 62.3% sforava ancora di tre pixel sul bordo del riquadro (misurato).
+      // `text-lg` (18px) invece di 48. E' piccola di proposito — il peso visivo
+      // dell'evento lo porta gia' `ColpoSullaCarta`, che scrive il numero e la
+      // parola SULLA CARTA colpita (Task 4, la richiesta esplicita dell'utente:
+      // «al centro dell'immagine, non cosi' sopra»). Questa resta la didascalia
+      // che nomina l'effetto per intero (ESECUZIONE, MIASMA, i nomi dei Duo),
+      // cosa che la carta non fa.
+      className="pointer-events-none absolute left-1/2 top-[64.5%] z-30 -translate-x-1/2 -translate-y-1/2 select-none whitespace-nowrap font-display text-base font-bold uppercase tracking-[0.12em] sm:text-lg"
       style={{
         color: callout.tone,
         textShadow: `0 0 30px ${callout.tone}, 0 4px 12px rgba(0,0,0,.8)`,

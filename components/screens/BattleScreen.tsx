@@ -1,19 +1,14 @@
 'use client'
 import { useMemo, useState } from 'react'
 import { Play, Pause, SkipForward, FastForward, ChevronRight } from 'lucide-react'
-import type { LogEntry, ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard } from '@/types'
+import type { ActiveRelic, ActiveSynergy, BattleResult, DraftedWizard } from '@/types'
 import { buildReplay } from '@/game/engine/combat/replay'
 import { detectDuos } from '@/game/engine/duos'
 import { livingOf } from '@/game/engine/roster'
 import { useBattleReplay, REPLAY_SPEEDS } from '@/hooks/useBattleReplay'
 import { BALANCE } from '@/data/constants'
 import { Hourglass } from 'lucide-react'
-import { TurnLane } from '@/components/battle/TurnLane'
 import { BattleArena } from '@/components/battle/BattleArena'
-import { ActionPanel } from '@/components/battle/ActionPanel'
-import { BattleLog } from '@/components/battle/BattleLog'
-import { BattleRecap } from '@/components/battle/BattleRecap'
-import { lastRealEntryAt } from '@/lib/initiative'
 import { BattleEndModal } from '@/components/battle/BattleEndModal'
 import { recapTotals } from '@/lib/battleRecap'
 
@@ -66,19 +61,6 @@ export function BattleScreen({
   // Lets the player dismiss the end modal to review the settled board/log,
   // then reopen it (or confirm) via the floating "Rivedi esito" button.
   const [dismissed, setDismissed] = useState(false)
-  // Sticky entry for the ActionPanel: hold the last REAL action across system
-  // frames so the panel doesn't flicker to "…" on every regen/DoT/KO tick.
-  // BattleArena keeps the TRUE current entry (r.entry) so floats/auras/laser
-  // track the real frame.
-  const stickyEntry = useMemo(() => lastRealEntryAt(replay, r.index), [replay, r.index])
-
-  // Recap frame slices: computed ONCE per tick (keyed on replay+index) and
-  // shared by identity between both bottom-bar panels, so React.memo(BattleRecap)
-  // can skip the second copy's render+recapTotals scan entirely instead of
-  // rescanning frames 0..index twice per tick.
-  const leftRecapFrames = useMemo(() => replay.frames.slice(0, r.index + 1), [replay, r.index])
-  const rightRecapFrames = leftRecapFrames
-
   // Fatigue ("Sfinimento") kicks in once the anti-stall system starts ticking
   // true damage every turn. Flag it as soon as the current turn passes the
   // threshold, or the moment a Fatica entry has actually played (whichever
@@ -186,51 +168,30 @@ export function BattleScreen({
           replay={replay} hp={r.hp} entry={r.entry} frameKey={r.index} rightTitle={rightTitle}
           enemyLevel={enemyLevel} speed={r.speed} duos={activeDuos} intensity={r.intensity}
           portraitHeight={PORTRAIT_HEIGHT}
-          center={<ActionPanel entry={stickyEntry} units={replay.units} />}
         />
       </div>
 
-      {/* Corsia del tempo — SOSTITUISCE l'InitiativeBar (Task 6). La barra
-          ricalcolava un ordine ordinando le unità vive per spd; la corsia legge
-          invece il futuro VERO del replay (initiativeAt sulle frame reali), mostra
-          CON QUALE incantesimo agirà ciascuno, e anticipa chi salterà il turno
-          (stordito/congelato) o userà solo un colpo base (silenziato) — letture che
-          la barra non dava affatto. Le due, mostrate insieme, si sarebbero
-          contraddette (ordini calcolati diversamente) e la barra da sola sforava
-          comunque il budget fisso di 768px insieme alla corsia: la barra è quindi
-          rimossa da questa schermata (il componente resta per altri usi).
+      {/* 2026-09-16 (Task 6) — QUI C'ERANO la corsia dei turni (100px) e la fascia
+          coi due resoconti danni piu' il registro (92px). Sono RIMOSSE dal
+          combattimento, e la ragione e' geometrica, non di gusto: `BattleArena`
+          posiziona le dieci carte a top ASSOLUTO (46/768 la fila nemica, 510/768
+          quella alleata, altezza 254), cioe' assume di avere per se' l'intera
+          cornice di 768px. Ogni striscia sorella le sottrae proprio lo spazio che
+          da' per scontato: 192px di strisce schiacciavano la fila alleata fino a
+          lasciarne visibili solo i volti — nomi, vita e statistiche coperti. Visto
+          in uno screenshot a 1366x768, non dedotto: le misure dicevano
+          `bottom 747 <= 768` e passavano mentre la fila era illeggibile, che e'
+          esattamente il modo di sbagliare contro cui il piano metteva in guardia.
 
-          Altezza 100, non i 128 del mockup: misurato, l'arena delle WizardCard
-          approvate (nome + riga incantesimo + banda statistiche sopra ai 118px
-          fissi del ritratto, PORTRAIT_HEIGHT sopra) occupa un minimo di ~591px,
-          non i 452 del mockup — e il ritratto non si rimpicciolisce mai (D1) né
-          l'arena si tocca (territorio approvato del Task 5). La corsia è la new
-          entry nel budget fisso di 768px, quindi è lei a pagare il conto: la sua
-          fascia si restringe (vedi TurnLane, avatar/gap ridotti per starci). */}
-      <div className="w-full max-w-5xl shrink-0" style={{ height: 100 }}>
-        <TurnLane replay={replay} index={r.index} className="h-full" />
-      </div>
-
-      {/* In fondo: i due resoconti danni e IL REGISTRO.
-          Il registro era stato tolto nel rifacimento della battaglia, e con lui
-          l'unico posto dove leggere cosa è successo: la narrazione del colpo era
-          diventata `sr-only` nell'ActionPanel, e le pillole di stato sulle carte
-          non esistono più. Senza registro, dal frame dopo l'applicazione il
-          giocatore non sa più che un mago è avvelenato o silenziato.
-          La StatusLegend è stata rimossa al suo posto: spiegava dieci icone di
-          stato che nessuno disegna più — una legenda di simboli inesistenti. */}
-      {/* `overflow-hidden` + altezza fissa: il registro cresce a ogni turno, e senza
-          un tetto spingeva il documento oltre i 768px mentre la battaglia avanzava
-          (misurato: 824px dopo sei turni). Ora scorre dentro la sua fascia. */}
-      <div className="flex w-full max-w-5xl shrink-0 items-stretch justify-center gap-2 overflow-hidden" style={{ height: 92 }}>
-        <BattleRecap frames={leftRecapFrames} units={replay.units} side="left" title="I tuoi danni" tone="ally" compact className="max-w-xs" />
-        <BattleRecap frames={rightRecapFrames} units={replay.units} side="right" title="Danni nemici" tone="enemy" compact className="max-w-xs" />
-        <BattleLog
-          entries={leftRecapFrames.map(f => f.entry).filter((e): e is LogEntry => !!e)}
-          units={replay.units}
-          className="min-w-0 max-w-sm flex-1"
-        />
-      </div>
+          Cosa NON si perde:
+          - l'ordine dei turni lo dice il nastro dei sigilli (stessa fonte,
+            `initiativeAt` sul futuro vero del replay) e in piu' dice con QUALE
+            incantesimo ciascuno agira';
+          - gli stati li dicono le pillole sommate sulla carta (Task 1+2), che
+            quando il registro fu reintrodotto non esistevano ancora;
+          - il racconto di cos'e' successo resta nel resoconto di fine scontro.
+          Cio' soddisfa il requisito dello spec «registro fuori dal combattimento».
+          I componenti restano in repo: e' la schermata a non montarli piu'. */}
 
       {r.modalReady && !dismissed && (
         <BattleEndModal

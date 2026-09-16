@@ -59,7 +59,7 @@ const MOTION_BY_KIND: Partial<Record<SceneKind, { actor?: string; target?: strin
  * questo componente (non pixel fissi): la cornice reale non è sempre 1366×768 (brief).
  */
 export function BattleArena({
-  replay, hp, entry, frameKey = 0, leftTitle = 'La tua squadra', rightTitle = 'Avversari', center, enemyLevel = 1, speed = 1, duos = [], intensity = 0, portraitHeight = 118,
+  replay, hp, entry, frameKey = 0, leftTitle = 'La tua squadra', rightTitle = 'Avversari', enemyLevel = 1, speed = 1, duos = [], intensity = 0, portraitHeight = 118,
 }: {
   replay: Replay
   hp: Record<string, number>
@@ -67,7 +67,6 @@ export function BattleArena({
   frameKey?: number
   leftTitle?: string
   rightTitle?: string
-  center?: React.ReactNode
   /** Level shown on every enemy card (menace was removed 2026-07-01). Players use their own. */
   enemyLevel?: number
   /** Replay playback speed — feeds the Pixi VFX layer's time budget. */
@@ -294,13 +293,15 @@ export function BattleArena({
           className="absolute inset-x-0"
           style={{ top: `${(316 / 768) * 100}%`, height: `${(180 / 768) * 100}%` }}
         >
+          {/* 2026-09-16 (Task 6): qui sopra il nastro c'era `stage-center`, che a z-20
+              sovrapponeva il `center` (l'ActionPanel) al riquadro di fuoco. I due
+              dicevano la stessa cosa — chi lancia, cosa, su chi — e a schermo si
+              leggevano accavallati. Il fuoco del nastro e' la forma del mockup
+              approvato, quindi resta lui. La prop `center` e' RIMOSSA del tutto
+              invece che lasciata inerte: una prop che accetta un nodo e lo butta
+              via in silenzio e' peggio di una prop assente — il test che la
+              copriva sarebbe rimasto verde senza piu' coprire nulla. */}
           <NastroSigilli replay={replay} index={frameKey} className="h-full" />
-          <div
-            data-testid="stage-center"
-            className="pointer-events-none absolute inset-x-0 top-0 z-20 text-center"
-          >
-            {center}
-          </div>
         </div>
 
         <div data-testid="col-allies" aria-label={leftTitle} className="absolute left-0 right-0 flex justify-center gap-[1.6%]" style={{ top: `${(510 / 768) * 100}%` }}>

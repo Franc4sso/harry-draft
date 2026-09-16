@@ -244,9 +244,30 @@ describe('BattleScreen', () => {
     expect(passo.compareDocumentPosition(arena) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
   })
 
-  it('la corsia dei turni è montata in battaglia', () => {
+  // 2026-09-16 (Task 6): la corsia dei turni (TurnLane) e' RIMOSSA dalla schermata,
+  // e il nastro dei sigilli del Task 5 prende il suo posto. Non e' una perdita di
+  // informazione: il nastro legge la stessa fonte (initiativeAt sul futuro vero del
+  // replay) e in piu' dice CON QUALE incantesimo agira' ciascuno. Tenerle entrambe
+  // significava mostrare due volte lo stesso ordine — e, misurato a schermo, i 100px
+  // della corsia piu' i 92px della fascia in fondo schiacciavano la fila alleata
+  // fuori dai 768px: l'arena posiziona le carte a top assoluto 46/768 e 510/768,
+  // quindi ogni striscia sorella le ruba proprio lo spazio che assume di avere.
+  // 2026-09-16 (Task 6): l'ActionPanel non e' piu' sovrapposto al nastro. Stava a
+  // z-20 sopra la fascia centrale e raddoppiava cio' che il riquadro di fuoco del
+  // nastro gia' dice — "Ora · X lancia", il nome dell'incantesimo e il dettaglio
+  // "su Y · 85%" — quindi a schermo si leggevano DUE pannelli accavallati sulla
+  // stessa informazione (visto nello screenshot, non dedotto). Vince il nastro:
+  // e' la forma del mockup approvato. Il componente resta e i suoi test pure.
+  it('un solo pannello al centro: il fuoco del nastro, non due sovrapposti', () => {
     renderBattleScreen()
-    expect(screen.getAllByTestId('lane-slot').length).toBeGreaterThanOrEqual(4)
+    expect(screen.queryByTestId('stage-center')).toBeNull()
+    expect(screen.getByTestId('nastro-focus')).toBeInTheDocument()
+  })
+
+  it('il nastro dei sigilli sostituisce la corsia dei turni in schermata', () => {
+    renderBattleScreen()
+    expect(screen.queryByTestId('turn-lane')).toBeNull()
+    expect(screen.getByTestId('nastro-sigilli')).toBeInTheDocument()
   })
 
   // TurnLane REPLACES InitiativeBar (Task 6 — la corsia mostra il futuro reale del
@@ -254,23 +275,25 @@ describe('BattleScreen', () => {
   // avrebbe fatte contraddire a vicenda e avrebbe sforato il budget di 768px).
   // InitiativeBar resta come componente (altri test lo montano direttamente), ma
   // BattleScreen non lo monta più: questo test lo accerta.
-  it('la corsia sostituisce la barra di iniziativa in schermata', () => {
+  it('ne la barra di iniziativa ne la corsia restano in schermata', () => {
     renderBattleScreen()
     expect(screen.queryByTestId('initiative-bar')).toBeNull()
-    expect(screen.getByTestId('turn-lane')).toBeInTheDocument()
+    expect(screen.queryByTestId('turn-lane')).toBeNull()
   })
 
-  it('shows dual damage recaps and the battle log', () => {
+  // 2026-09-16 (Task 6): «registro fuori dal combattimento» — requisito esplicito
+  // dello spec. I due resoconti danni e il registro NON sono piu' montati durante lo
+  // scontro: occupavano 92px della cornice fissa di 768px e, insieme alla corsia,
+  // coprivano la fila alleata (nomi, vita e statistiche invisibili — visto a schermo,
+  // non dedotto). Il bisogno che coprivano resta e lo soddisfano ora due cose gia'
+  // in campo: le pillole di stato sommate sulla carta (Task 1+2) dicono chi e'
+  // avvelenato o silenziato SENZA doverlo leggere a parole, e il resoconto di fine
+  // scontro (BattleEndModal) resta il posto dove si legge cos'e' successo.
+  it('il registro e i resoconti danni restano FUORI dal combattimento', () => {
     renderBattleScreen()
-    // Both recaps render twice (desktop grid + below-lg block); getAllByText asserts at least one present.
-    expect(screen.getAllByText(/I tuoi danni/i).length).toBeGreaterThanOrEqual(1)
-    expect(screen.getAllByText(/Danni nemici/i).length).toBeGreaterThanOrEqual(1)
-    // 2026-09-15: asseriva la StatusLegend, ora rimossa. Quella legenda spiegava
-    // dieci ICONE di stato che la carta nuova non disegna più — una legenda di
-    // simboli inesistenti. Il bisogno che copriva (capire cosa sta succedendo agli
-    // stati) è reale e ora lo soddisfa il REGISTRO, che dice a parole «Terry Boot
-    // subisce 6 danni da veleno» invece di mostrare un'icona da decifrare.
-    expect(screen.getByTestId('battle-log')).toBeInTheDocument()
+    expect(screen.queryByTestId('battle-log')).toBeNull()
+    expect(screen.queryAllByText(/I tuoi danni/i)).toHaveLength(0)
+    expect(screen.queryAllByText(/Danni nemici/i)).toHaveLength(0)
   })
 
   it('closing the end modal hides it and reveals a "Rivedi esito" reopen button; onFinish stays reachable', async () => {

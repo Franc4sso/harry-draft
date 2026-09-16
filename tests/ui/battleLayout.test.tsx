@@ -26,7 +26,16 @@ it('enemies sit in the left column, allies in the right column, in document orde
   expect(enemies.compareDocumentPosition(allies) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
 })
 
-it('renders the center node inside the stage', () => {
-  render(<BattleArena replay={replay} hp={{ 'left:a': 100, 'right:b': 100 }} entry={null} center={<div data-testid="center-slot">X</div>} />)
-  expect(screen.getByTestId('center-slot')).toBeInTheDocument()
+// 2026-09-16 (Task 6): la prop `center` e' RIMOSSA. Montava l'ActionPanel a z-20
+// SOPRA il riquadro di fuoco del nastro, e i due dicevano la stessa cosa (chi
+// lancia, cosa, su chi): a schermo erano due pannelli accavallati. Vince il nastro,
+// che e' la forma del mockup approvato e porta lui quell'informazione. La prop non
+// e' stata lasciata inerte nella firma: sarebbe diventata una prop che accetta un
+// nodo e lo scarta in silenzio, e questo test sarebbe rimasto verde senza piu'
+// coprire nulla. Al suo posto si accerta che il centro della scena sia occupato —
+// da UN solo pannello.
+it('al centro della scena c\'e\' il fuoco del nastro, e non un secondo pannello', () => {
+  render(<BattleArena replay={replay} hp={{ 'left:a': 100, 'right:b': 100 }} entry={null} />)
+  expect(screen.getByTestId('nastro-focus')).toBeInTheDocument()
+  expect(screen.queryByTestId('stage-center')).toBeNull()
 })
