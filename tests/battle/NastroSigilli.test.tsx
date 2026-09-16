@@ -7,6 +7,7 @@ import { detectSynergies } from '@/game/engine/synergy'
 import { draftWizard } from '@/game/engine/statRoll'
 import { createRng } from '@/game/engine/rng'
 import { WIZARD_BY_ID } from '@/data/wizards'
+import { lastRealActorAt } from '@/lib/initiative'
 
 const team = (ids: string[], s: string) =>
   ids.map(id => draftWizard(createRng(`${s}-${id}`), WIZARD_BY_ID[id]!, false))
@@ -52,7 +53,18 @@ describe('NastroSigilli', () => {
     // sull'ultima azione vera, come già fa il resto della scena.
     const replay = fixture()
     const sys = replay.frames.findIndex(f => f.entry?.type === 'system')
-    render(<NastroSigilli replay={replay} index={sys >= 0 ? sys : 2} />)
-    expect(screen.getByTestId('nastro-focus').textContent).toMatch(/\S/)
+    const idx = sys >= 0 ? sys : 2
+    // Verità di riferimento: chi ha agito per ultimo PRIMA/AL frame di sistema,
+    // calcolato con la stessa funzione che il componente usa per il fallback.
+    // Non basta che il fuoco non sia vuoto (frame.entry di un frame di sistema
+    // porta comunque un actorId/actorSide popolati per il suo effetto, quindi
+    // "non vuoto" passerebbe anche leggendo l'attore sbagliato) — deve essere
+    // proprio quest'unità.
+    const expectedKey = lastRealActorAt(replay, idx)
+    expect(expectedKey).not.toBeNull()
+    render(<NastroSigilli replay={replay} index={idx} />)
+    const focus = screen.getByTestId('nastro-focus')
+    expect(focus.textContent).toMatch(/\S/)
+    expect(focus).toHaveAttribute('data-unit', expectedKey)
   })
 })
