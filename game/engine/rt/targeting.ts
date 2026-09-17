@@ -3,6 +3,7 @@ import { adjacent, behind, colOf, colSlots, front, leftOf, rightOf, rowOf, rowSl
 import { alive, other, sideOf, unitAt, type RtState, type RtUnit } from './state'
 
 export function applyCopertura(state: RtState, side: RtSideId, target: RtUnit): RtUnit {
+  if (target.copertoDa) { const c = sideOf(state, side).units.find(u => u.key === target.copertoDa); if (c && !c.ko) return c }
   if (rowOf(target.slot) === 0) return target
   const f = unitAt(state, side, front(target.slot)!)
   return f && !f.ko ? f : target

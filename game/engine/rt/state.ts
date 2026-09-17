@@ -46,6 +46,7 @@ export interface RtSideState {
   lastGeloAt: number
   ultimoGeloAt: number
   soglieScattate: Set<string>
+  durataStatusPct: Partial<Record<'gelo' | 'silenzio' | 'lentezza' | 'vulnerabile', number>>
 }
 
 export interface TriggerEvent { trigger: Trigger; side: RtSideId; unitKey?: string; bersaglioKey?: string }
@@ -64,6 +65,7 @@ export interface RtState {
   depth: number
   frameStart: number
   queue: TriggerEvent[]
+  pendingInnesco: string[]
 }
 
 export const other = (side: RtSideId): RtSideId => (side === 'left' ? 'right' : 'left')
@@ -109,6 +111,7 @@ function makeSide(inputs: RtUnitInput[], side: RtSideId, mods: RtSideMods): RtSi
     side, hp: hpMax, hpMax, shield,
     segni: { fiamma: 0, veleno: 0, scossa: 0 }, vulnerabile: 0, conduzione: 0, fiammaFreeze: 0,
     units, mods, koFatti: 0, sogliaBonus: 0, lastGeloAt: -Infinity, ultimoGeloAt: -Infinity, soglieScattate: new Set(),
+    durataStatusPct: {},
   }
 }
 
@@ -118,7 +121,7 @@ export function createState(left: RtUnitInput[], right: RtUnitInput[], rng: Rng,
     sides: [makeSide(left, 'left', opts.leftMods ?? {}), makeSide(right, 'right', opts.rightMods ?? {})],
     rng, events: [], frames: [], reazioni: {}, memoriaDelta: {},
     kind: opts.kind ?? 'normal', maxSeconds: opts.maxSeconds ?? RT.maxSeconds,
-    depth: 0, frameStart: 0, queue: [],
+    depth: 0, frameStart: 0, queue: [], pendingInnesco: [],
   }
 }
 
