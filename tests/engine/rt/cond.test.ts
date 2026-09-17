@@ -34,6 +34,11 @@ describe('checkCond', () => {
     s.sides[0].hp = s.sides[0].hpMax * 0.4
     expect(checkCond(s, b, { hpPropriaSotto: 0.5 }, {})).toBe(true)
   })
+  it('hpNemicaSotto tiene conto della soglia Carnefice del lato', () => {
+    const s = mk(); const b = unitAt(s, 'left', 1)!
+    s.sides[1].hp = s.sides[1].hpMax * 0.33; s.sides[0].sogliaBonus = 0.05
+    expect(checkCond(s, b, { hpNemicaSotto: 0.3 }, {})).toBe(true)   // 0.30 + 0.05 = 0.35 > 0.33
+  })
   it('segnoNemico, bersaglio, entroSecondiDa, ogniNLanci, slotVuotiOKo, nessunAdiacente, chance', () => {
     const s = mk(); const b = unitAt(s, 'left', 1)!; const r0 = unitAt(s, 'right', 0)!
     s.sides[1].segni.scossa = 3

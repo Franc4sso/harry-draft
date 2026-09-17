@@ -61,6 +61,13 @@ describe('dealDamage', () => {
     dealDamage(s, a, 'right', 30, { diretto: true })
     expect(a.score).toBe(30)
   })
+  it('Sospeso: il prossimo Danno con lui bersaglio-unità vale ×1,5, applica Lentezza 1 s e consuma Sospeso', () => {
+    const s = mk(); const b = unitAt(s, 'right', 0)!
+    applyUnitStatus(s, b, { kind: 'sospeso', remaining: 3 })
+    expect(dealDamage(s, unitAt(s, 'left', 0), 'right', 40, { diretto: true, unitTarget: b }).total).toBe(60)
+    expect(hasStatus(b, 'sospeso')).toBe(false); expect(hasStatus(b, 'lentezza')).toBe(true)
+    expect(dealDamage(s, unitAt(s, 'left', 0), 'right', 40, { diretto: true, unitTarget: b }).total).toBe(40)
+  })
 })
 
 describe('heal e addShield', () => {

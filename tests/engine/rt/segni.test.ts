@@ -3,6 +3,7 @@ import { describe, it, expect } from 'vitest'
 import { createState, unitAt } from '@/game/engine/rt/state'
 import { applySegno, applyGelo } from '@/game/engine/rt/segni'
 import { applyUnitStatus, hasStatus, koUnit, rianimaUnit, statusOf } from '@/game/engine/rt/status'
+import { processQueue } from '@/game/engine/rt/triggers'
 import { createRng } from '@/game/engine/rng'
 import { squad } from './fixtures'
 
@@ -93,5 +94,10 @@ describe('applyGelo e KO', () => {
     const s = mk(); const b = unitAt(s, 'right', 0)!; b.ko = true; b.timer = 3
     expect(rianimaUnit(s, b)).toBe(true); expect(b.ko).toBe(false); expect(b.timer).toBe(0)
     expect(rianimaUnit(s, b)).toBe(false)
+  })
+  it('Contagio: al KO nemico il lato che ha fatto il KO aggiunge Veleno', () => {
+    const s = mk({ leftMods: { contagioOnKo: 3 } }); const a = unitAt(s, 'left', 0)!; const b = unitAt(s, 'right', 0)!
+    koUnit(s, b, a); processQueue(s)
+    expect(s.sides[1].segni.veleno).toBe(3)
   })
 })

@@ -2,7 +2,7 @@ import type { RtSideId } from '@/types/rt'
 import { enemyDannoSubitoPct } from './abilities'
 import { RT, near, round1 } from './constants'
 import { emit, noteCrescita, other, sideOf, type RtState, type RtUnit } from './state'
-import { hasStatus, reazione } from './status'
+import { applyUnitStatus, hasStatus, reazione } from './status'
 
 export interface DamageOpts { unitTarget?: RtUnit; diretto?: boolean; name?: string; magieOscure?: boolean; ignoreShield?: boolean; frantumaMult?: number; noReflect?: boolean }
 export interface DamageOut { total: number; toShield: number; toHp: number; frantuma: boolean }
@@ -23,6 +23,12 @@ export function dealDamage(state: RtState, attacker: RtUnit | null, targetSide: 
     reazione(state, 'Frantuma', targetSide)
     if (attacker) noteCrescita(state, attacker, 'reazione:frantuma')
     t.segni.scossa = Math.min(RT.scossa.cap, t.segni.scossa + RT.reazioni.frantumaScossa)
+  }
+  if (opts.diretto && ut && !ut.ko && hasStatus(ut, 'sospeso')) {
+    ut.statuses = ut.statuses.filter(s => s.kind !== 'sospeso')
+    dmg *= RT.sospesoMult
+    applyUnitStatus(state, ut, { kind: 'lentezza', remaining: RT.sospesoLentezza }, attacker ?? undefined)
+    reazione(state, 'Caduta', targetSide)
   }
   if (opts.diretto && scossaPreFrantuma > 0) dmg += scossaPreFrantuma * RT.scossa.perStack
   dmg = Math.round(dmg)

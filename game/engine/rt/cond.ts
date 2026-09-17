@@ -24,7 +24,7 @@ export function checkCond(state: RtState, actor: RtUnit, cond: Cond | undefined,
     const q = cond.inSquadra
     return alive(state, actor.side).some(u => u !== actor && (!q.wizardId || u.id === q.wizardId) && (!q.tag || u.tags.includes(q.tag)))
   }
-  if ('hpNemicaSotto' in cond) return en.hp < en.hpMax * cond.hpNemicaSotto
+  if ('hpNemicaSotto' in cond) return en.hp < en.hpMax * (cond.hpNemicaSotto + me.sogliaBonus)
   if ('hpPropriaSotto' in cond) return me.hp < me.hpMax * cond.hpPropriaSotto
   if ('segnoNemico' in cond) return en.segni[cond.segnoNemico.segno] >= cond.segnoNemico.min
   if ('bersaglio' in cond) {

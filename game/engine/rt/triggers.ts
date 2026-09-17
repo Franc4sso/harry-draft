@@ -1,11 +1,19 @@
 import { RT, near } from './constants'
 import { fireLine, linesOf } from './abilities'
+import { applySegno } from './segni'
 import { alive, emit, sideOf, unitByKey, type RtState, type TriggerEvent } from './state'
 
 export function enqueue(state: RtState, ev: TriggerEvent): void { state.queue.push(ev) }
 
 function fireFor(state: RtState, ev: TriggerEvent): void {
   const bersaglio = ev.bersaglioKey ? unitByKey(state, ev.bersaglioKey) ?? undefined : undefined
+  if (ev.trigger === 'koNemico' && ev.bersaglioKey) {
+    const mods = sideOf(state, ev.side).mods
+    const victim = unitByKey(state, ev.bersaglioKey)
+    const k = `contagio:${ev.bersaglioKey}`
+    const s = sideOf(state, ev.side)
+    if (mods.contagioOnKo && victim && !s.soglieScattate.has(k)) { s.soglieScattate.add(k); applySegno(state, null, victim.side, 'veleno', mods.contagioOnKo) }
+  }
   if (ev.unitKey) {
     const u = unitByKey(state, ev.unitKey)
     if (!u) return
