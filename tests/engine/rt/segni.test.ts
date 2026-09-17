@@ -6,29 +6,37 @@ import { applyUnitStatus, hasStatus, koUnit, rianimaUnit, statusOf } from '@/gam
 import { createRng } from '@/game/engine/rng'
 import { squad } from './fixtures'
 
+// Tutte le stat esplicite: def 0 → Scudo iniziale 0, HP 300 per lato (200 + 100).
+const A = { hp: 200, atk: 20, def: 0, spd: 20 }, B = { hp: 100, atk: 20, def: 0, spd: 20 }
 const mk = (opts = {}) => createState(
-  squad({ id: 'a', stats: { hp: 200, atk: 20, def: 0, spd: 20 } }, { id: 'a2' }),
-  squad({ id: 'b', stats: { hp: 200, atk: 20, def: 0, spd: 20 } }, { id: 'b2' }), createRng(1), opts)
+  squad({ id: 'a', stats: A }, { id: 'a2', stats: B }),
+  squad({ id: 'b', stats: A }, { id: 'b2', stats: B }), createRng(1), opts)
 
 describe('applySegno', () => {
   it('somma stack con cap (Fiamma/Scossa 20, Veleno illimitato) ed emette segno', () => {
     const s = mk()
     applySegno(s, unitAt(s, 'left', 0), 'right', 'fiamma', 15); applySegno(s, null, 'right', 'fiamma', 15)
     applySegno(s, null, 'right', 'veleno', 30); applySegno(s, null, 'right', 'scossa', 25)
-    expect(s.sides[1].segni).toEqual({ fiamma: 20, veleno: 30, scossa: 20 })
+    // Deflagrazione scatta su scossa (fiamma=20 è presente), consuma entrambi
+    expect(s.sides[1].segni).toEqual({ fiamma: 0, veleno: 30, scossa: 0 })
     expect(s.events[0]).toMatchObject({ kind: 'segno', segno: 'fiamma', stacks: 15, targetSide: 'right', side: 'left', slot: 0 })
   })
   it('Miasma: Fiamma su Veleno (e viceversa) → danno 4×veleno, Veleno resta', () => {
     const s = mk(); s.sides[1].segni.veleno = 5
     applySegno(s, unitAt(s, 'left', 0), 'right', 'fiamma', 1)
-    expect(s.sides[1].hp).toBe(180); expect(s.sides[1].segni.veleno).toBe(5); expect(s.reazioni.Miasma).toBe(1)
+    expect(s.sides[1].hp).toBe(280); expect(s.sides[1].segni.veleno).toBe(5); expect(s.reazioni.Miasma).toBe(1)
     applySegno(s, unitAt(s, 'left', 0), 'right', 'veleno', 1)
-    expect(s.reazioni.Miasma).toBe(2); expect(s.sides[1].hp).toBe(180 - 24)
+    expect(s.reazioni.Miasma).toBe(2); expect(s.sides[1].hp).toBe(280 - 24)
+  })
+  it('Miasma scatta anche senza sorgente (es. Contagio), senza Memoria', () => {
+    const s = mk(); s.sides[1].segni.veleno = 5
+    applySegno(s, null, 'right', 'fiamma', 1)
+    expect(s.sides[1].hp).toBe(280); expect(s.reazioni.Miasma).toBe(1); expect(s.memoriaDelta).toEqual({})
   })
   it('Deflagrazione: Fiamma con Scossa → consuma entrambi, danno 5×somma', () => {
     const s = mk(); s.sides[1].segni.scossa = 3
     applySegno(s, unitAt(s, 'left', 0), 'right', 'fiamma', 2)
-    expect(s.sides[1].hp).toBe(200 - 25); expect(s.sides[1].segni).toMatchObject({ fiamma: 0, scossa: 0 }); expect(s.reazioni.Deflagrazione).toBe(1)
+    expect(s.sides[1].hp).toBe(300 - 25); expect(s.sides[1].segni).toMatchObject({ fiamma: 0, scossa: 0 }); expect(s.reazioni.Deflagrazione).toBe(1)
   })
   it('Conduzione: Veleno con Scossa → conduzione 4 s (o mods), nessun consumo', () => {
     const s = mk({ leftMods: { conduzioneSecondi: 8 } }); s.sides[1].segni.scossa = 1

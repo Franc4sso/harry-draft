@@ -24,26 +24,25 @@ export function applySegno(state: RtState, source: RtUnit | null, targetSide: Rt
       reazione(state, 'Necrosi', targetSide, RT.reazioni.necrosiVeleno)
     }
   }
-  if (source) {
-    if ((segno === 'fiamma' && hadVeleno) || (segno === 'veleno' && hadFiamma)) {
-      const dmg = t.segni.veleno * RT.reazioni.miasmaPerStack
-      reazione(state, 'Miasma', targetSide, dmg)
-      dealDamage(state, source, targetSide, dmg, { name: 'Miasma' })
-      noteCrescita(state, source, 'reazione:miasma')
-    }
-    if ((segno === 'fiamma' && hadScossa) || (segno === 'scossa' && hadFiamma)) {
-      const dmg = (t.segni.fiamma + t.segni.scossa) * RT.reazioni.deflagrazionePerStack
-      t.segni.fiamma = 0; t.segni.scossa = 0
-      reazione(state, 'Deflagrazione', targetSide, dmg)
-      dealDamage(state, source, targetSide, dmg, { name: 'Deflagrazione' })
-      noteCrescita(state, source, 'reazione:deflagrazione')
-    }
-    if ((segno === 'veleno' && hadScossa) || (segno === 'scossa' && hadVeleno)) {
-      const atk = sideOf(state, other(targetSide))
-      t.conduzione = Math.max(t.conduzione, atk.mods.conduzioneSecondi ?? RT.reazioni.conduzioneSecondi)
-      reazione(state, 'Conduzione', targetSide)
-      noteCrescita(state, source, 'reazione:conduzione')
-    }
+  const src = source ?? null
+  if ((segno === 'fiamma' && hadVeleno) || (segno === 'veleno' && hadFiamma)) {
+    const dmg = t.segni.veleno * RT.reazioni.miasmaPerStack
+    reazione(state, 'Miasma', targetSide, dmg)
+    dealDamage(state, src, targetSide, dmg, { name: 'Miasma' })
+    if (src) noteCrescita(state, src, 'reazione:miasma')
+  }
+  if ((segno === 'fiamma' && hadScossa) || (segno === 'scossa' && hadFiamma)) {
+    const dmg = (t.segni.fiamma + t.segni.scossa) * RT.reazioni.deflagrazionePerStack
+    t.segni.fiamma = 0; t.segni.scossa = 0
+    reazione(state, 'Deflagrazione', targetSide, dmg)
+    dealDamage(state, src, targetSide, dmg, { name: 'Deflagrazione' })
+    if (src) noteCrescita(state, src, 'reazione:deflagrazione')
+  }
+  if ((segno === 'veleno' && hadScossa) || (segno === 'scossa' && hadVeleno)) {
+    const atk = sideOf(state, other(targetSide))
+    t.conduzione = Math.max(t.conduzione, atk.mods.conduzioneSecondi ?? RT.reazioni.conduzioneSecondi)
+    reazione(state, 'Conduzione', targetSide)
+    if (src) noteCrescita(state, src, 'reazione:conduzione')
   }
 }
 

@@ -107,7 +107,7 @@ export function koUnit(state: RtState, target: RtUnit, source?: RtUnit): boolean
     const ss = sideOf(state, source.side)
     ss.koFatti += 1
     if (ss.mods.mietitore) { const k = 'mietitore'; source.limits[k] = (source.limits[k] ?? 0) + 1; if (source.limits[k] <= 3) source.dannoFlatBonus += ss.mods.mietitore }
-    if (ss.mods.sogliaBonusPerKo) ss.sogliaBonus = Math.min(ss.mods.sogliaBonusPerKo.cap, ss.sogliaBonus + ss.mods.sogliaBonusPerKo.step)
+    if (ss.mods.sogliaBonusPerKo) ss.sogliaBonus = Math.min(ss.mods.sogliaBonusPerKo.cap, Math.round((ss.sogliaBonus + ss.mods.sogliaBonusPerKo.step) * 100) / 100)
     noteCrescita(state, source, 'ko')
   }
   state.queue.push({ trigger: 'koSubito', side: target.side, unitKey: target.key })
