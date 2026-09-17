@@ -114,6 +114,9 @@ export function koUnit(state: RtState, target: RtUnit, source?: RtUnit): boolean
   state.queue.push({ trigger: 'koSubito', side: target.side, unitKey: target.key })
   for (const u of alive(state, target.side)) state.queue.push({ trigger: 'koAlleato', side: target.side, unitKey: u.key, bersaglioKey: target.key })
   for (const u of alive(state, other(target.side))) state.queue.push({ trigger: 'koNemico', side: u.side, unitKey: u.key, bersaglioKey: target.key })
+  // Eventi di LATO (senza `unitKey`): le righe `mods.lines` scattano una volta sola, non una per unità viva.
+  state.queue.push({ trigger: 'koAlleato', side: target.side, bersaglioKey: target.key })
+  state.queue.push({ trigger: 'koNemico', side: other(target.side), bersaglioKey: target.key })
   return true
 }
 

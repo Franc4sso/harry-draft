@@ -7,21 +7,23 @@ export function enqueue(state: RtState, ev: TriggerEvent): void { state.queue.pu
 
 function fireFor(state: RtState, ev: TriggerEvent): void {
   const bersaglio = ev.bersaglioKey ? unitByKey(state, ev.bersaglioKey) ?? undefined : undefined
-  if (ev.trigger === 'koNemico' && ev.bersaglioKey) {
+  // Contagio: una volta per vittima, sull'evento di LATO (guardia `soglieScattate` comunque a prova di doppioni).
+  if (ev.trigger === 'koNemico' && !ev.unitKey && ev.bersaglioKey) {
     const mods = sideOf(state, ev.side).mods
     const victim = unitByKey(state, ev.bersaglioKey)
     const k = `contagio:${ev.bersaglioKey}`
     const s = sideOf(state, ev.side)
     if (mods.contagioOnKo && victim && !s.soglieScattate.has(k)) { s.soglieScattate.add(k); applySegno(state, null, victim.side, 'veleno', mods.contagioOnKo) }
   }
+  // Evento di unità → SOLO le righe di quell'unità. Evento di lato (senza `unitKey`) → SOLO `mods.lines`.
   if (ev.unitKey) {
     const u = unitByKey(state, ev.unitKey)
     if (!u) return
     for (const ol of linesOf(u)) if (ol.line.trigger === ev.trigger) fireLine(state, u, u.side, ol.line, ol.key, ol.abilityId, { bersaglio })
+    return
   }
   ;(sideOf(state, ev.side).mods.lines ?? []).forEach((line, i) => {
-    if (line.trigger === ev.trigger && (!ev.unitKey || ev.trigger === 'koAlleato' || ev.trigger === 'koNemico' || ev.trigger === 'squadraCura'))
-      fireLine(state, null, ev.side, line, `${ev.side}#m${i}`, 'mods', { bersaglio })
+    if (line.trigger === ev.trigger) fireLine(state, null, ev.side, line, `${ev.side}#m${i}`, 'mods', { bersaglio })
   })
 }
 

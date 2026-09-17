@@ -35,11 +35,17 @@ function anchor(state: RtState, owner: RtUnit | null, side: RtSideId): RtUnit | 
   return owner ?? alive(state, side)[0] ?? null
 }
 
+/** Le righe Continuo non consumano RNG: niente `nemicoCasuale`, e la `chance` è pre-risolta. */
+const condLimits = (state: RtState, owner: RtUnit | null, side: RtSideId): Record<string, number> => (owner ?? sideOf(state, side)).limits
+const noRngCtx = (state: RtState, owner: RtUnit | null, side: RtSideId, key: string) =>
+  ({ noRng: true as const, lineKey: key, limits: condLimits(state, owner, side) })
+
 export function fireLine(state: RtState, owner: RtUnit | null, side: RtSideId, line: AbilityLine, key: string, abilityId: string, ctx: { bersaglio?: RtUnit }): boolean {
   const actor = anchor(state, owner, side)
   if (!actor) return false
   if (owner && owner.ko && line.trigger !== 'koSubito') return false
-  const limits = (owner ?? actor).limits
+  // Righe di lato (`owner === null`): i contatori vivono sul LATO, non sull'unità-ancora (che cambia a ogni KO).
+  const limits = condLimits(state, owner, side)
   if (line.limit?.perBattle !== undefined && (limits[key] ?? 0) >= line.limit.perBattle) return false
   if (line.limit?.everySeconds !== undefined) { const last = limits[key + ':t']; if (last !== undefined && state.t - last < line.limit.everySeconds - 1e-9) return false }
   if (!checkCond(state, actor, line.cond, { bersaglio: ctx.bersaglio, lineKey: key })) return false
@@ -77,11 +83,6 @@ export function continuoMods(state: RtState, u: RtUnit): { dannoPct: number; cdP
   m.set(k, acc)
   return acc
 }
-/** Le righe Continuo non consumano RNG: niente `nemicoCasuale`, e la `chance` è pre-risolta. */
-const condLimits = (state: RtState, owner: RtUnit | null, side: RtSideId): Record<string, number> => (owner ?? sideOf(state, side)).limits
-const noRngCtx = (state: RtState, owner: RtUnit | null, side: RtSideId, key: string) =>
-  ({ noRng: true as const, lineKey: key, limits: condLimits(state, owner, side) })
-
 function computeContinuoMods(state: RtState, u: RtUnit): { dannoPct: number; cdPct: number; cdFlat: number } {
   const acc = { dannoPct: 0, cdPct: 0, cdFlat: 0 }
   for (const { owner, ol } of continuoLines(state, u.side)) {

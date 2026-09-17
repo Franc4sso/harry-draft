@@ -54,6 +54,33 @@ describe('fireLine', () => {
   })
 })
 
+describe('righe di lato (mods.lines)', () => {
+  it('koAlleato di lato scatta UNA volta per KO, non una per alleato vivo', () => {
+    const s = createState(squad({ id: 'a' }, { id: 'b' }, { id: 'c' }), squad({}), createRng(1),
+      { leftMods: { lines: [line({ trigger: 'koAlleato', target: 'tuttiAlleati', effect: { kind: 'scudo', n: 5 } })] } })
+    koUnit(s, unitAt(s, 'left', 2)!)
+    processQueue(s)
+    expect(s.sides[0].shield).toBe(5)   // due alleati vivi → un solo scatto
+  })
+  it('il limit perBattle di una riga di lato vive sul lato: non si azzera cambiando ancora', () => {
+    const s = createState(squad({ id: 'a' }, { id: 'b' }, { id: 'c' }), squad({}), createRng(1),
+      { leftMods: { lines: [line({ trigger: 'koAlleato', target: 'tuttiAlleati', effect: { kind: 'scudo', n: 5 }, limit: { perBattle: 1 } })] } })
+    koUnit(s, unitAt(s, 'left', 2)!)
+    processQueue(s)
+    expect(s.sides[0].shield).toBe(5)
+    koUnit(s, unitAt(s, 'left', 0)!)   // KO dell'ancora (slot minimo vivo): l'ancora diventa 'b'
+    processQueue(s)
+    expect(s.sides[0].shield).toBe(5)   // perBattle 1 rispettato anche col nuovo anchor
+  })
+  it('un evento di unità non fa scattare le righe di lato (e viceversa)', () => {
+    const s = createState(squad({ id: 'a', ability: ability([line({ trigger: 'koAlleato', target: 'se', effect: { kind: 'scudo', n: 7 } })]) }, { id: 'b' }), squad({}), createRng(1),
+      { leftMods: { lines: [line({ trigger: 'koAlleato', target: 'tuttiAlleati', effect: { kind: 'scudo', n: 3 } })] } })
+    koUnit(s, unitAt(s, 'left', 1)!)
+    processQueue(s)
+    expect(s.sides[0].shield).toBe(10)   // 7 dall'unità 'a' + 3 dal lato, una volta ciascuno
+  })
+})
+
 describe('continuo', () => {
   it('dannoPct/cdPct/cdFlat da righe Continuo con cond, per i bersagli inclusi', () => {
     const s = createState(squad(
