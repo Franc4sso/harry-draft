@@ -127,7 +127,7 @@ describe('castSpell — Multicast, Disarmo, Combo, Crescita', () => {
       { id: 'c', stats: A, memoria: { k: 5 }, spell: danno(1, { id: 'k', crescita: { kind: 'memoria', trigger: 'ko', per: 0.3, unit: 'cd' } }) },
       { id: 'd', stats: A, memoria: { d: 4 }, spell: danno(1, { id: 'd', crescita: { kind: 'memoria', trigger: 'vittoria', per: 0.5, unit: 'colpi' } }) },
     ])
-    castSpell(s, unitAt(s, 'left', 0)!); expect(s.events.at(-1)!.kind === 'danno' || true).toBe(true)
+    castSpell(s, unitAt(s, 'left', 0)!)
     expect(s.events.find(e => e.kind === 'danno' && e.side === 'left' && e.slot === 0)!.value).toBe(30)   // 20 + min(14,10)
     castSpell(s, unitAt(s, 'left', 1)!); expect(s.sides[1].segni.veleno).toBe(7)
     expect(spellCdBonus(unitAt(s, 'left', 2)!)).toBeCloseTo(1.5)

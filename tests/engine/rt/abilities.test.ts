@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest'
 import { createState, unitAt } from '@/game/engine/rt/state'
 import { fireLine, linesOf, withParam, paramFor, continuoMods, applyStaticContinuo } from '@/game/engine/rt/abilities'
 import { enqueue, processQueue, fireInizio, fireSoglie, fireOgniSecondi } from '@/game/engine/rt/triggers'
-import { effectiveCd, dannoMult } from '@/game/engine/rt/effects'
+import { effectiveCd, dannoMult, applyEffect } from '@/game/engine/rt/effects'
 import { dealDamage } from '@/game/engine/rt/damage'
 import { koUnit } from '@/game/engine/rt/status'
 import { createRng } from '@/game/engine/rng'
@@ -28,6 +28,13 @@ describe('linesOf / params', () => {
     expect(paramFor(l, 1)).toBe(1); expect(paramFor(l, 3)).toBe(3); expect(paramFor(l, 4)).toBe(3)
     expect(withParam(l.effect, 2)).toEqual({ kind: 'gelo', secondi: 2 })
     expect(withParam({ kind: 'innesco' }, 2)).toEqual({ kind: 'innesco' })
+    // Gli effetti senza numero principale tornano invariati; un kind sconosciuto esplode (assertNever).
+    for (const k of ['disarmo', 'ko', 'protego', 'purifica', 'rianima'] as const) expect(withParam({ kind: k }, 3)).toEqual({ kind: k })
+    expect(() => withParam({ kind: 'boh' } as never, 3)).toThrow(/effetto sconosciuto/)
+  })
+  it('applyEffect rifiuta un kind sconosciuto (assertNever)', () => {
+    const s = createState(squad({ id: 'a' }), squad({}), createRng(1))
+    expect(() => applyEffect(s, unitAt(s, 'left', 0)!, 'left', [], { kind: 'boh' } as never, { target: 'se' })).toThrow(/effetto sconosciuto/)
   })
 })
 

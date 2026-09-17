@@ -75,5 +75,6 @@ export function applyEffect(state: RtState, actor: RtUnit | null, actorSide: RtS
     case 'immune': for (const t of targets) t.immune.add(effect.a); return
     case 'copre': { if (!actor) return; const w = own.units.find(u => u.id === effect.wizardId); if (w) w.copertoDa = actor.key; return }
     case 'durataStatusPct': own.durataStatusPct[effect.status] = (own.durataStatusPct[effect.status] ?? 0) + effect.pct; return
+    default: { const _never: never = effect; throw new Error('effetto sconosciuto: ' + JSON.stringify(_never)) }
   }
 }

@@ -1,4 +1,4 @@
-import type { RtSideId } from '@/types/rt'
+import type { RtSideId, Segno } from '@/types/rt'
 import { levelCastMult, round1 } from './constants'
 import { checkCond } from './cond'
 import { addShield, dealDamage, heal } from './damage'
@@ -16,6 +16,7 @@ export function crescitaBonus(u: RtUnit): number {
   const raw = n * c.per
   return c.cap !== undefined ? Math.min(c.cap, raw) : raw
 }
+const SEGNI: readonly Segno[] = ['fiamma', 'veleno', 'scossa']
 const bonusIf = (u: RtUnit, unit: string) => (u.spell.crescita?.unit === unit ? crescitaBonus(u) : 0)
 /** Secondi tolti al cooldown dalla Crescita `cd`. Lo legge `simulate`. */
 export const spellCdBonus = (u: RtUnit) => bonusIf(u, 'cd')
@@ -23,7 +24,7 @@ export const spellCdBonus = (u: RtUnit) => bonusIf(u, 'cd')
 export function castSpell(state: RtState, u: RtUnit, opts: { innesco?: boolean } = {}): boolean {
   if (u.ko) return false
   const side = u.side, en: RtSideId = other(side)
-  const enemy = sideOf(state, en), own = sideOf(state, side)
+  const own = sideOf(state, side)
   const sp = u.spell
   const d = u.statuses.findIndex(s => s.kind === 'disarmo')
   if (d >= 0) {
@@ -44,7 +45,8 @@ export function castSpell(state: RtState, u: RtUnit, opts: { innesco?: boolean }
   // Spec §4.2: le reazioni 4-6 (Frantuma, Vapore, Necrosi) scattano UNA volta per cast, sulla prima risoluzione — non per colpo di Multicast.
   const reazioniFatte = new Set<string>()
   for (let i = 0; i < multicast; i++) {
-    if (own.mods.segnoOnCast) for (const [k, n] of Object.entries(own.mods.segnoOnCast)) if (n) applySegno(state, u, en, k as 'fiamma' | 'veleno' | 'scossa', n, { unitTarget: ut, reazioniFatte })
+    // Ordine fisso: `Object.entries` dipenderebbe dall'ordine di inserimento del chiamante.
+    if (own.mods.segnoOnCast) for (const k of SEGNI) { const n = own.mods.segnoOnCast[k]; if (n) applySegno(state, u, en, k, n, { unitTarget: ut, reazioniFatte }) }
     switch (sp.verb) {
       case 'danno': {
         let amount = u.stats.atk * (sp.potenza ?? 0) * levelCastMult(u.level) * dannoMult(state, u) * (1 + bonusIf(u, 'pct'))
@@ -76,11 +78,15 @@ export function castSpell(state: RtState, u: RtUnit, opts: { innesco?: boolean }
       case 'status': break
     }
     if (sp.segno) applySegno(state, u, en, sp.segno.kind, sp.segno.stacks + Math.round(bonusIf(u, 'segno')), { unitTarget: ut, reazioniFatte })
-    if (sp.gelo && ut) applyGelo(state, u, ut, round1(sp.gelo + bonusIf(u, 'secondi') + (own.durataStatusPct.gelo ?? 0) * sp.gelo))
+    if (sp.gelo && ut) applyGelo(state, u, ut, round1((sp.gelo + bonusIf(u, 'secondi')) * (1 + (own.durataStatusPct.gelo ?? 0))))
     if (sp.unitStatus && ut) {
       const us = sp.unitStatus
       if (us.kind === 'disarmo') applyUnitStatus(state, ut, { kind: 'disarmo', remaining: 1 }, u)
-      else applyUnitStatus(state, ut, { kind: us.kind, remaining: round1((us.secondi ?? 0) * (1 + (own.durataStatusPct[us.kind as 'silenzio' | 'lentezza'] ?? 0))), pct: us.pct }, u)
+      else {
+        // Solo Silenzio e Lentezza scalano con `durataStatusPct` (Indebolito e Sospeso non hanno una voce).
+        const pct = (us.kind === 'silenzio' || us.kind === 'lentezza') ? (own.durataStatusPct[us.kind] ?? 0) : 0
+        applyUnitStatus(state, ut, { kind: us.kind, remaining: round1((us.secondi ?? 0) * (1 + pct)), pct: us.pct }, u)
+      }
     }
     if (sp.teamStatus) applyVulnerabile(state, en, sp.teamStatus.secondi + bonusIf(u, 'secondi'))
   }

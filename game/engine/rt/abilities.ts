@@ -27,7 +27,10 @@ export function withParam(effect: Effect, v: number | undefined): Effect {
     case 'dannoPct': case 'indebolito': case 'cdPct': case 'hpPct': case 'durataStatusPct': return { ...effect, pct: v }
     case 'segno': return { ...effect, stacks: v }
     case 'gelo': case 'silenzio': case 'lentezza': case 'sospeso': case 'vulnerabile': case 'carica': case 'cdFlat': return { ...effect, secondi: v }
-    default: return effect
+    // Senza numero principale: il `param` del livello non ha dove andare.
+    case 'innesco': case 'disarmo': case 'ko': case 'protego': case 'purifica': case 'rianima':
+    case 'immune': case 'copre': case 'rimuoviSegnoProprio': return effect
+    default: { const _never: never = effect; throw new Error('effetto sconosciuto: ' + JSON.stringify(_never)) }
   }
 }
 

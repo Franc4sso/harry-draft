@@ -50,7 +50,6 @@ export interface RtSideState {
   sogliaBonus: number
   /** Ultimo istante in cui un Gelo è stato applicato al NEMICO (per `entroSecondiDa: gelo`). */
   lastGeloAt: number
-  ultimoGeloAt: number
   soglieScattate: Set<string>
   durataStatusPct: Partial<Record<'gelo' | 'silenzio' | 'lentezza' | 'vulnerabile', number>>
 }
@@ -116,7 +115,7 @@ function makeSide(inputs: RtUnitInput[], side: RtSideId, mods: RtSideMods): RtSi
   return {
     side, hp: hpMax, hpMax, shield,
     segni: { fiamma: 0, veleno: 0, scossa: 0 }, vulnerabile: 0, conduzione: 0, fiammaFreeze: 0,
-    units, mods, limits: {}, koFatti: 0, sogliaBonus: 0, lastGeloAt: -Infinity, ultimoGeloAt: -Infinity, soglieScattate: new Set(),
+    units, mods, limits: {}, koFatti: 0, sogliaBonus: 0, lastGeloAt: -Infinity, soglieScattate: new Set(),
     durataStatusPct: {},
   }
 }

@@ -3,7 +3,7 @@ import { describe, it, expect } from 'vitest'
 import { createState, unitAt } from '@/game/engine/rt/state'
 import { applyUnitStatus, tickUnitStatuses, tickTeamStatuses, applyVulnerabile, hasStatus, statusOf, consumeProtego } from '@/game/engine/rt/status'
 import { createRng } from '@/game/engine/rng'
-import { squad } from './fixtures'
+import { danno, squad } from './fixtures'
 
 const mk = (opts = {}) => createState(squad({ id: 'a' }), squad({ id: 'b' }), createRng(1), opts)
 
@@ -29,6 +29,14 @@ describe('status di unità', () => {
     applyUnitStatus(s, b, { kind: 'silenzio', remaining: 2 })
     expect(statusOf(b, 'gelo')!.remaining).toBe(2)
     expect(s.events.some(e => e.kind === 'reazione' && e.name === 'Impotente')).toBe(true)
+  })
+  it('la Crescita `disarmo` conta solo il Disarmo davvero inserito', () => {
+    const s = createState(squad({ id: 'a', spell: danno(1, { id: 'dz', crescita: { kind: 'crescendo', trigger: 'disarmo', per: 1, unit: 'segno' } }) }), squad({ id: 'b' }), createRng(1))
+    const a = unitAt(s, 'left', 0)!, b = unitAt(s, 'right', 0)!
+    applyUnitStatus(s, b, { kind: 'disarmo', remaining: 1 }, a)
+    expect(a.crescendo).toBe(1)
+    applyUnitStatus(s, b, { kind: 'disarmo', remaining: 1 }, a)   // già Disarmato: nessun inserimento
+    expect(a.crescendo).toBe(1)
   })
   it('Protego assorbe il prossimo effetto ostile e si consuma', () => {
     const s = mk(); const b = unitAt(s, 'right', 0)!

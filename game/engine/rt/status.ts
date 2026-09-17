@@ -38,10 +38,15 @@ export function applyUnitStatus(state: RtState, target: RtUnit, st: UnitStatus, 
     s = { ...s, remaining: round1(s.remaining * RT.reazioni.geloLentoMult) }
     reazione(state, 'GeloLento', target.side)
   }
-  if (s.kind === 'protego' || s.kind === 'disarmo') { if (!hasStatus(target, s.kind)) target.statuses.push({ kind: s.kind, remaining: 1 }) }
+  if (s.kind === 'protego' || s.kind === 'disarmo') {
+    // La Crescita `disarmo` conta solo il Disarmo davvero INSERITO, non quello già presente.
+    if (!hasStatus(target, s.kind)) {
+      target.statuses.push({ kind: s.kind, remaining: 1 })
+      if (s.kind === 'disarmo' && source) noteCrescita(state, source, 'disarmo')
+    }
+  }
   else upsert(target, s)
   if (s.kind === 'gelo') { const en = sideOf(state, other(target.side)); en.lastGeloAt = state.t; target.lastGeloAt = state.t }
-  if (s.kind === 'disarmo' && source) noteCrescita(state, source, 'disarmo')
   emit(state, { kind: 'status', side: target.side, slot: target.slot, status: s.kind, value: s.remaining, targetSide: source?.side, targetSlot: source?.slot })
   if ((s.kind === 'silenzio' && hasStatus(target, 'disarmo')) || (s.kind === 'disarmo' && hasStatus(target, 'silenzio'))) {
     reazione(state, 'Impotente', target.side)
