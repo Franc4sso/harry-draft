@@ -1,4 +1,5 @@
 import type { RtSideId } from '@/types/rt'
+import { enemyDannoSubitoPct } from './abilities'
 import { RT, near, round1 } from './constants'
 import { emit, noteCrescita, other, sideOf, type RtState, type RtUnit } from './state'
 import { hasStatus, reazione } from './status'
@@ -11,7 +12,7 @@ export function dealDamage(state: RtState, attacker: RtUnit | null, targetSide: 
   const atkSide = sideOf(state, other(targetSide))
   let dmg = amount
   if (t.vulnerabile > 0) dmg *= 1 + RT.vulnerabilePct
-  dmg *= 1 + (t.mods.dannoSubitoPct ?? 0)
+  dmg *= 1 + (t.mods.dannoSubitoPct ?? 0) + enemyDannoSubitoPct(state, targetSide)
   let frantuma = false
   const ut = opts.unitTarget
   const scossaPreFrantuma = t.segni.scossa
