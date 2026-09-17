@@ -63,6 +63,15 @@ describe('simulateRt', () => {
     const casts2 = r2.events.filter(e => e.kind === 'cast' && e.side === 'right').map(e => e.t)
     expect(casts2[0]).toBeGreaterThan(5); expect(casts2[0]).toBeLessThanOrEqual(8)
   })
+  it('chi viene congelato nello stesso tick non lancia: runCasts ricontrolla il Gelo dentro il giro', () => {
+    // entrambi pronti a t=3 (spd 38 → cd 3). Sinistra lancia prima (ordine di slot): il Gelo arriva e destra salta il turno.
+    const left = squad({ id: 'g', stats: { ...A, spd: 38 }, spell: { id: 'gl', name: 'Glacius', desc: '', verb: 'status', gelo: 2 } })
+    const right = squad({ id: 'a', stats: { ...A, spd: 38 }, spell: danno(1) })
+    const r = simulateRt(left, right, createRng(1), { maxSeconds: 12 })
+    const firstCast = r.events.find(e => e.kind === 'cast' && e.side === 'right')
+    expect(firstCast!.t).toBeGreaterThan(3)
+    expect(r.events.filter(e => e.kind === 'danno' && e.side === 'right' && e.t === 3)).toHaveLength(0)
+  })
   it('frame: uno per tick con eventi, con eventRange coerente e cd effettivo', () => {
     const r = simulateRt(squad({ id: 'a', stats: A }), squad({ id: 'd', stats: { hp: 30, atk: 0, def: 0, spd: 1 }, spell: nulla() }), createRng(1))
     for (const f of r.frames) {

@@ -34,7 +34,11 @@ function readyToCast(state: RtState): import('./state').RtUnit[] {
 function runCasts(state: RtState): void {
   for (let guard = 0; guard < 8; guard++) {
     let any = false
-    for (const u of readyToCast(state)) { castSpell(state, u); u.timer = 0; any = true }
+    // `readyToCast` è uno snapshot: un cast precedente dello stesso tick può aver congelato o messo KO l'unità.
+    for (const u of readyToCast(state)) {
+      if (u.ko || isFrozen(u)) continue
+      castSpell(state, u); u.timer = 0; any = true
+    }
     while (state.pendingInnesco.length) {
       const key = state.pendingInnesco.shift()!
       const u = unitByKey(state, key)
