@@ -1,6 +1,6 @@
 import type { RtSideId, UnitStatus, UnitStatusKind } from '@/types/rt'
 import { RT, near, round1 } from './constants'
-import { emit, other, sideOf, type RtState, type RtUnit } from './state'
+import { alive, emit, noteCrescita, other, sideOf, type RtState, type RtUnit } from './state'
 
 export const hasStatus = (u: RtUnit, kind: UnitStatusKind) => u.statuses.some(s => s.kind === kind && s.remaining > 1e-9)
 export const statusOf = (u: RtUnit, kind: UnitStatusKind): UnitStatus | undefined => u.statuses.find(s => s.kind === kind)
@@ -95,4 +95,30 @@ export function tickTeamStatuses(state: RtState): void {
     s.conduzione = Math.max(0, round1(s.conduzione - RT.tick))
     s.fiammaFreeze = Math.max(0, round1(s.fiammaFreeze - RT.tick))
   }
+}
+
+export function koUnit(state: RtState, target: RtUnit, source?: RtUnit): boolean {
+  if (target.ko || target.immune.has('ko')) return false
+  if (consumeProtego(target)) { emit(state, { kind: 'status', side: target.side, slot: target.slot, status: 'protego', name: 'assorbito', value: 0 }); return false }
+  target.ko = true
+  target.statuses = []
+  emit(state, { kind: 'ko', targetSide: target.side, targetSlot: target.slot, side: source?.side, slot: source?.slot, name: target.id })
+  if (source) {
+    const ss = sideOf(state, source.side)
+    ss.koFatti += 1
+    if (ss.mods.mietitore) { const k = 'mietitore'; source.limits[k] = (source.limits[k] ?? 0) + 1; if (source.limits[k] <= 3) source.dannoFlatBonus += ss.mods.mietitore }
+    if (ss.mods.sogliaBonusPerKo) ss.sogliaBonus = Math.min(ss.mods.sogliaBonusPerKo.cap, ss.sogliaBonus + ss.mods.sogliaBonusPerKo.step)
+    noteCrescita(state, source, 'ko')
+  }
+  state.queue.push({ trigger: 'koSubito', side: target.side, unitKey: target.key })
+  for (const u of alive(state, target.side)) state.queue.push({ trigger: 'koAlleato', side: target.side, unitKey: u.key, bersaglioKey: target.key })
+  for (const u of alive(state, other(target.side))) state.queue.push({ trigger: 'koNemico', side: u.side, unitKey: u.key, bersaglioKey: target.key })
+  return true
+}
+
+export function rianimaUnit(state: RtState, target: RtUnit, source?: RtUnit): boolean {
+  if (!target.ko) return false
+  target.ko = false; target.timer = 0; target.statuses = []
+  emit(state, { kind: 'rianima', targetSide: target.side, targetSlot: target.slot, side: source?.side, slot: source?.slot, name: target.id })
+  return true
 }
