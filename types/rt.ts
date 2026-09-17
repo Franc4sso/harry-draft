@@ -97,6 +97,7 @@ export interface SpellRt {
   combo?: ComboClause
   crescita?: CrescitaClause
   keywords?: string[]
+  frantumaMult?: number
 }
 
 export interface RtUnitInput {

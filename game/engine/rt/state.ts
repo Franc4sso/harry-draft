@@ -21,6 +21,8 @@ export interface RtUnit extends RtUnitInput {
   crescendo: number
   /** Ultimo istante in cui un alleato adiacente ha lanciato (per `entroSecondiDa`). */
   lastAdjacentCastAt: number
+  /** Ultimo istante in cui QUESTA unità è stata congelata (per il Crescendo `lancioSenzaGelo`). */
+  lastGeloAt: number
   score: number
   /** Contatori per `limit` (chiave = indice riga) e `ogniNLanci`. */
   limits: Record<string, number>
@@ -92,7 +94,7 @@ function makeUnit(input: RtUnitInput, side: RtSideId): RtUnit {
     timer: 0, cd: cooldownFor(input.stats.spd, input.level, input.spell.cdMod ?? 0),
     statuses: [], ko: false,
     multicastBonus: [], dannoPctBonus: [], dannoFlatBonus: 0, cdPctBonus: 0, cdFlatBonus: 0,
-    casts: 0, lastCastAt: -Infinity, crescendo: 0, lastAdjacentCastAt: -Infinity,
+    casts: 0, lastCastAt: -Infinity, crescendo: 0, lastAdjacentCastAt: -Infinity, lastGeloAt: -Infinity,
     score: 0, limits: {}, immune: new Set(),
   }
 }
