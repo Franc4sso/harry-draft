@@ -53,6 +53,17 @@ describe('simulateRt', () => {
     expect(aCasts[0]).toBe(0)          // innesco all'inizio
     expect(aCasts).toContain(3)        // carica 5 s a t=3 → timer 3+5 ≥ 5 → cast subito
   })
+  it('l\'Innesco accodato da ogniSecondi parte nello stesso istante, non al tick dopo', () => {
+    const left = squad(
+      { id: 't', stats: A, spell: nulla(), ability: ability([line({ trigger: 'ogniSecondi', target: 'destra', effect: { kind: 'innesco' }, limit: { everySeconds: 2 } })]) },
+      { id: 'a', stats: A, spell: danno(1) },
+    )
+    const r = simulateRt(left, squad({ id: 'd', stats: { hp: 5000, atk: 0, def: 0, spd: 1 }, spell: nulla() }), createRng(1), { maxSeconds: 6 })
+    const trig = r.events.find(e => e.kind === 'trigger' && e.name === 'ogniSecondi')!
+    const cast = r.events.find(e => e.kind === 'cast' && e.side === 'left' && e.slot === 1)!
+    expect(trig.t).toBe(2)
+    expect(cast.t).toBe(trig.t)   // non trig.t + 0.1
+  })
   it('Gelo ferma il timer, Lentezza lo dimezza', () => {
     const left = squad({ id: 'g', stats: { ...A, spd: 38 }, spell: { id: 'gl', name: 'Glacius', desc: '', verb: 'status', gelo: 2 } })
     const right = squad({ id: 'a', stats: A, spell: danno(1) })

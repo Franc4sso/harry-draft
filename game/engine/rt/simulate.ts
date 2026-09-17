@@ -31,6 +31,29 @@ function readyToCast(state: RtState): import('./state').RtUnit[] {
   return out
 }
 
+/** Anti-loop condiviso: segnala il lavoro rimasto e lo scarta, come fa `processQueue`. */
+function antiLoop(state: RtState, pending: number): void {
+  emit(state, { kind: 'trigger', name: 'anti-loop', value: pending })
+  state.pendingInnesco = []
+}
+
+/** Svuota `pendingInnesco` SUBITO: l'Innesco è nello stesso istante del trigger che lo accoda (spec §1.3), non al tick dopo.
+ *  Ritorna true se ha lanciato almeno una volta. */
+export function flushInnesco(state: RtState): boolean {
+  let did = false
+  for (let guard = 0; guard < 8; guard++) {
+    if (!state.pendingInnesco.length) return did
+    while (state.pendingInnesco.length) {
+      const key = state.pendingInnesco.shift()!
+      const u = unitByKey(state, key)
+      if (u && !u.ko && !isFrozen(u)) { castSpell(state, u, { innesco: true }); did = true }
+    }
+    processQueue(state)
+  }
+  if (state.pendingInnesco.length) antiLoop(state, state.pendingInnesco.length)
+  return did
+}
+
 function runCasts(state: RtState): void {
   for (let guard = 0; guard < 8; guard++) {
     let any = false
@@ -39,14 +62,11 @@ function runCasts(state: RtState): void {
       if (u.ko || isFrozen(u)) continue
       castSpell(state, u); u.timer = 0; any = true
     }
-    while (state.pendingInnesco.length) {
-      const key = state.pendingInnesco.shift()!
-      const u = unitByKey(state, key)
-      if (u && !u.ko && !isFrozen(u)) { castSpell(state, u, { innesco: true }); any = true }
-    }
+    if (flushInnesco(state)) any = true
     processQueue(state)
     if (!any) return
   }
+  if (state.pendingInnesco.length) antiLoop(state, state.pendingInnesco.length)
 }
 
 const ended = (state: RtState) => state.sides[0].hp <= 0 || state.sides[1].hp <= 0
@@ -69,6 +89,8 @@ export function simulateRt(left: RtUnitInput[], right: RtUnitInput[], rng: Rng, 
     fireSoglie(state)
     applySuddenDeath(state)
     processQueue(state)
+    // Gli Inneschi accodati da ogniSecondi/soglie (o dall'ultima passata della coda) partono in QUESTO tick, non al prossimo.
+    flushInnesco(state)
     pushFrameIfEvents(state)
   }
   const [L, R] = state.sides
