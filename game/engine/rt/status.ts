@@ -7,7 +7,7 @@ export const statusOf = (u: RtUnit, kind: UnitStatusKind): UnitStatus | undefine
 export const isFrozen = (u: RtUnit) => hasStatus(u, 'gelo')
 export const timerMult = (u: RtUnit) => (hasStatus(u, 'lentezza') ? RT.lentezzaTimerMult : 1)
 
-const HOSTILE: ReadonlySet<UnitStatusKind> = new Set(['gelo', 'silenzio', 'lentezza', 'indebolito', 'sospeso'])
+const HOSTILE: ReadonlySet<UnitStatusKind> = new Set(['gelo', 'silenzio', 'lentezza', 'indebolito', 'disarmo', 'sospeso'])
 
 export function consumeProtego(u: RtUnit): boolean {
   const i = u.statuses.findIndex(s => s.kind === 'protego')
