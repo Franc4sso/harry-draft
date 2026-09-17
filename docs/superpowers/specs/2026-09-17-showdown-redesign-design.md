@@ -353,7 +353,26 @@ Il whitelist `lib/roleSpellPools.ts` viene riscritto su questa tabella.
 
 ## 5. Abilità (60)
 
-Formato: **Nome** — Trigger: effetto con numeri `[lv1/lv2/lv3]`. **Lv4:** riga aggiuntiva. "Adiacente" = ortogonale. "In squadra" = presente e non KO. I tag lore (Weasley, ES, Ordine, Mangiamorte, Malandrini, Trio) sono quelli di `data/wizards.ts`.
+### 5.0 Budget di potere per rarità
+
+La rarità (`tier` 1–4) è potere, non solo probabilità di apparire. Vale per stat (già oggi), spell assegnata, abilità e combo.
+
+| Tier | Righe lv1 | Condizione | Numeri | Lv4 |
+|---|---|---|---|---|
+| 1 Leggendario | 2, entrambe incondizionate | — | ×1,0 | cambia la partita (Protego a tutti, Multicast, Carica di squadra) |
+| 2 Epico | 2, una può essere condizionata | lore o posizione | ×0,85 | forte |
+| 3 Raro | 1–2; la seconda sempre condizionata | lore o posizione | ×0,75 | media |
+| 4 Comune | 1, spesso condizionata o stretta | lore o posizione | ×0,6 | modesta |
+
+Regole:
+- Un Comune non può avere una riga incondizionata più forte della riga condizionata di un Raro della stessa famiglia (es. ⛨ iniziale: Comune ≤ 45, Raro ≤ 60, Epico ≤ 80 a lv3).
+- I detonatori di KO (Voldemort, Moody, Bellatrix lv4, Molly lv4) stanno solo su tier ≤ 3 e sempre con soglia.
+- Le spell "no cap" (Memoria infinita) sono distribuite su tutti i tier, ma i tier alti hanno il `per` più alto (Sectumsempra +2, Flipendo +5%).
+- Una combo (catena §5, coppia di Segni, Duo) non deve dipendere da un solo Comune: ogni catena ha almeno un tier ≤ 2 come perno.
+
+Verifica: statica al design (questa tabella) e **empirica** nell'harness (§8.5: `tierOrdering`, `comboBalance`, `inclusionDelta`).
+
+Formato: **Nome** — Trigger: effetto con numeri `[lv1/lv2/lv3]`. **Lv4:** riga aggiuntiva. "Adiacente" = ortogonale. "In squadra" = presente e non KO. I tag lore (Weasley, ES, Ordine, Mangiamorte, Malandrini, Trio) e il tier sono quelli di `data/wizards.ts` (T1: harry, dumbledore, voldemort · T2: snape, bellatrix, mcgonagall, sirius, lupin, moody, lucius, kingsley, fleur, viktor · T3: hermione, ron, draco, ginny, neville, luna, fred, george, molly, arthur, tonks, narcissa, dolohov, greyback, cho, cedric, slughorn, hagrid, flitwick, sprout · T4: il resto).
 
 ### Grifondoro
 
@@ -365,7 +384,7 @@ Formato: **Nome** — Trigger: effetto con numeri `[lv1/lv2/lv3]`. **Lv4:** riga
 | sirius | **Fuga da Azkaban** — Al lancio: se un Malandrino è in squadra, Carica [1/1,5/2] s a sé. Al KO nemico: Multicast +1 per 5 s. **Lv4:** Al KO nemico: Innesco di Lupin se in squadra. |
 | lupin | **Furia Lupesca** — Sotto 50% HP squadra: Multicast +1 e +[30/45/60]% danno. **Lv4:** Sotto 25%: la squadra è immune al Gelo. |
 | moody | **Vigilanza Costante** — All'inizio: Protego a tutta la prima fila. Al KO alleato: KO all'opposto ([1/2/3] volte per battaglia). **Lv4:** All'inizio: Protego anche alla seconda fila. |
-| hermione | **Mente Brillante** — Al lancio: Carica [1/1,5/2] s all'alleato davanti. Ogni 3° lancio: Silenzio 2 s all'opposto. **Lv4:** Le sue Lentezze durano il doppio. |
+| hermione | **Mente Brillante** — Al lancio: Carica [0,75/1/1,25] s all'alleato davanti. Ogni 3° lancio: Silenzio 2 s all'opposto. **Lv4:** Le sue Lentezze durano il doppio. |
 | ron | **Scacchi Magici** — All'inizio: Protego agli adiacenti. ⛨ iniziale +[30/45/60] per Weasley in squadra. **Lv4:** Al KO subìto: Innesco di tutti gli adiacenti. |
 | ginny | **Fattura Mocciovolante** — Al lancio: Multicast +1 se un Weasley adiacente. A vittoria: +[3/4/5] danno flat permanente. **Lv4:** Frantuma anche su bersaglio Lento (senza Gelo). |
 | neville | **Coraggio Tardivo** — Al KO alleato: +[40/60/80]% danno a tutti gli ES per il resto della battaglia. All'inizio: Protego a sé. **Lv4:** Al lancio: Rianima un alleato (una volta per battaglia). |
@@ -373,10 +392,10 @@ Formato: **Nome** — Trigger: effetto con numeri `[lv1/lv2/lv3]`. **Lv4:** riga
 | george | **Scherzo Ustionante** — Al lancio: se Fred è in squadra, Innesco di Fred (max 1 ogni [4/3/2] s). **Lv4:** Ogni Innesco di Fred: ⚡ +2. |
 | molly | **Istinto Materno** — Al lancio: Cura +[10/15/20] per Weasley in squadra. Quando la squadra cura: ⛨ +[10/15/20]. **Lv4:** Al KO di un Weasley: KO all'opposto. |
 | arthur | **Officina Weasley** — Al lancio: Carica [0,5/0,75/1] s a tutti i Weasley. **Lv4:** Carica anche gli adiacenti non Weasley. |
-| hagrid | **Cuore di Mezzogigante** — Continuo: HP di squadra +[15/20/25]%. All'inizio: ⛨ +60. **Lv4:** Al KO subìto: ⛨ +150. |
-| seamus | **Esplosione Facile** — Al lancio: 🔥 +[3/4/5]; 25%: esplode, 🔥 +2 anche alla propria squadra. **Lv4:** L'esplosione fa anche Danno 1,0 al nemico. |
+| hagrid | **Cuore di Mezzogigante** — Continuo: HP di squadra +[10/15/20]%. All'inizio: ⛨ +40. **Lv4:** Al KO subìto: ⛨ +150. |
+| seamus | **Esplosione Facile** — Al lancio: 🔥 +[1/2/3]; 25%: esplode, 🔥 +2 anche alla propria squadra. **Lv4:** L'esplosione fa anche Danno 1,0 al nemico. |
 | dean | **Tifoso** — Continuo: +[15/25/35]% danno se Seamus adiacente. **Lv4:** Continuo: +15% danno per ogni Grifondoro adiacente. |
-| parvati | **Divinazione Gemella** — Continuo: se Padma è in squadra, entrambe cd −[1/1,5/2] s. **Lv4:** Al lancio: Sospeso anche a un secondo nemico casuale. |
+| parvati | **Divinazione Gemella** — Continuo: se Padma è in squadra, entrambe cd −[0,5/0,75/1] s. **Lv4:** Al lancio: Sospeso anche a un secondo nemico casuale. |
 | lavender | **Won-Won** — Al lancio: Cura +[10/15/20] se Ron è adiacente. **Lv4:** Quando Ron va KO: Cura 80. |
 
 ### Serpeverde
@@ -388,14 +407,14 @@ Formato: **Nome** — Trigger: effetto con numeri `[lv1/lv2/lv3]`. **Lv4:** riga
 | bellatrix | **Tortura Cruciatus** — Continuo: le sue ⚡ valgono +[50/75/100]% se un Mangiamorte adiacente. Al lancio: 30% Gelo 1 s. **Lv4:** I Frantuma fatti da lei → KO se HP nemica < 40%. |
 | lucius | **Denaro e Influenza** — All'inizio: Carica [1/1,5/2] s a tutti i Mangiamorte. Al lancio: Vulnerabile 3 s. **Lv4:** Al lancio: Lentezza 2 s a tutta la prima fila nemica. |
 | draco | **Orgoglio Malfoy** — Al lancio: ☠ +[1/2/3] se un Serpeverde adiacente. A vittoria: +[3/4/5] danno flat permanente. **Lv4:** Se Goyle o Crabbe in squadra: Protego a sé all'inizio. |
-| narcissa | **Amore di Madre** — Quando la squadra cura: ⛨ pari a [50/75/100]% della cura. Al lancio: Rianima un Mangiamorte (una volta per battaglia). **Lv4:** Draco non può subire KO. |
+| narcissa | **Amore di Madre** — Quando la squadra cura: ⛨ pari a [30/45/60]% della cura. Al lancio: Rianima un Mangiamorte (una volta per battaglia). **Lv4:** Draco non può subire KO. |
 | dolohov | **Maledizione Viola** — Al lancio: se il nemico ha ☠, 🔥 +[2/3/4]. **Lv4:** I Miasma innescati da lui fanno ×1,5. |
 | greyback | **Morso del Lupo** — All'inizio: ☠ +[1/2/3] per alleato Veleno. Al KO nemico: ⛨ +40. **Lv4:** Al lancio: ☠ +2. |
 | slughorn | **Lumaclub** — Al lancio: Cura 22 e ☠ +[1/2/3] al nemico. **Lv4:** Cura +10 per ogni mago di tier ≤ 2 in squadra. |
-| pansy | **Pettegolezzo** — Al lancio: Silenzio [2/2,5/3] s e ☠ +1. **Lv4:** Silenzio anche all'adiacente del bersaglio. |
-| goyle | **Guardia del Corpo** — ⛨ iniziale +[40/60/80]; +20 se Draco in squadra. **Lv4:** Gli effetti di unità diretti a Draco vanno a Goyle. |
-| crabbe | **Guardia del Corpo** — ⛨ iniziale +[40/60/80]; +20 se Draco in squadra. **Lv4:** Al KO subìto: ⛨ +100. |
-| marcus | **Capitano Brutale** — Al lancio: Danno ×[1,5/1,75/2] se HP nemica < 50%. **Lv4:** Al KO nemico: Multicast +1 per il resto della battaglia (max 3). |
+| pansy | **Pettegolezzo** — Continuo: i suoi Silenzi applicano ☠ +[1/1/2]. **Lv4:** Silenzio anche all'adiacente del bersaglio. |
+| goyle | **Guardia del Corpo** — ⛨ iniziale +[25/35/45]; +20 se Draco in squadra. **Lv4:** Gli effetti di unità diretti a Draco vanno a Goyle. |
+| crabbe | **Guardia del Corpo** — ⛨ iniziale +[25/35/45]; +20 se Draco in squadra. **Lv4:** Al KO subìto: ⛨ +100. |
+| marcus | **Capitano Brutale** — Al lancio: Danno ×[1,25/1,4/1,55] se HP nemica < 50%. **Lv4:** Al KO nemico: Multicast +1 per il resto della battaglia (max 3). |
 | pettigrew | **Codardo** — All'inizio: Protego a sé. Al KO subìto: Innesco di tutti i Mangiamorte [/ + Carica 1 s / + Carica 2 s]. **Lv4:** Al KO subìto: torna in gioco dopo 5 s. |
 | theodore | **Ombra Silente** — Al lancio: se il bersaglio è Silenziato, ☠ +[3/4/5]. **Lv4:** I suoi Silenzi durano +1 s. |
 | blaise | **Distacco** — Continuo: +[10/15/20]% danno per ogni slot vuoto o KO nella propria squadra. **Lv4:** Al lancio: ☠ +2 se nessun alleato adiacente. |
@@ -411,28 +430,28 @@ Formato: **Nome** — Trigger: effetto con numeri `[lv1/lv2/lv3]`. **Lv4:** riga
 | luna | **Serenità** — Ogni 4 s: Cura [10/15/20]. Quando cura: Purifica un alleato adiacente. **Lv4:** La squadra è immune al Silenzio. |
 | cho | **Lacrime Gelide** — Al lancio: se l'opposto è già Gelato, Danno 1,5 (Frantuma ×[2/2,5/3]). **Lv4:** Al lancio: Gelo anche all'adiacente del bersaglio. |
 | flitwick | **Maestro d'Incantesimi** — Al lancio: Carica [0,5/0,75/1] s a tutti i Corvonero. Ogni 3° lancio: Gelo 1 s all'opposto. **Lv4:** Carica a tutta la squadra. |
-| padma | **Divinazione Gemella** — Continuo: se Parvati è in squadra, entrambe cd −[1/1,5/2] s. **Lv4:** Sospeso dura +2 s. |
+| padma | **Divinazione Gemella** — Continuo: se Parvati è in squadra, entrambe cd −[0,5/0,75/1] s. **Lv4:** Sospeso dura +2 s. |
 | terry | **Analisi** — Ogni [3/2/2] cast della squadra Corvonero: ⚡ +[1/1/2]. **Lv4:** E Vulnerabile 1 s. |
-| michael | **Precisione** — Al lancio: se il nemico ha ⚡ ≥ 3, Danno ×[1,3/1,5/1,7]. **Lv4:** Le Deflagrazioni lasciano ⚡ +2. |
-| roger | **Capitano Corvonero** — ⛨ iniziale +[30/45/60]. Continuo: +[10/15/20]% danno alla sua riga. **Lv4:** All'inizio: Carica 1 s alla sua riga. |
-| marietta | **Spifferona** — Al lancio: Vulnerabile [2/3/4] s. **Lv4:** Al lancio: Silenzio 1 s all'opposto. |
-| anthony | **Prefetto** — All'inizio: ⛨ +[40/60/80]. Continuo: gli adiacenti subiscono Gelo −50% durata. **Lv4:** All'inizio: Protego agli adiacenti. |
-| penelope | **Prefetta** — Al lancio: Carica [1/1,5/2] s all'alleato davanti. **Lv4:** Carica anche all'alleato dietro. |
+| michael | **Precisione** — Al lancio: se il nemico ha ⚡ ≥ 3, Danno ×[1,2/1,3/1,4]. **Lv4:** Le Deflagrazioni lasciano ⚡ +2. |
+| roger | **Capitano Corvonero** — ⛨ iniziale +[25/35/45]. **Lv4:** Continuo: +10% danno alla sua riga. |
+| marietta | **Spifferona** — Al lancio: Vulnerabile [1/1,5/2] s. **Lv4:** Al lancio: Silenzio 1 s all'opposto. |
+| anthony | **Prefetto** — All'inizio: ⛨ +[25/35/45]. **Lv4:** Continuo: gli adiacenti subiscono Gelo −50% durata. |
+| penelope | **Prefetta** — Al lancio: Carica [0,5/0,75/1] s all'alleato davanti. **Lv4:** Carica anche all'alleato dietro. |
 
 ### Tassorosso
 
 | Mago | Abilità |
 |---|---|
 | tonks | **Riflessi Mutanti** — Continuo: cd −[15/20/25]% per ogni membro dell'Ordine adiacente. **Lv4:** All'inizio: Carica 2 s a sé. |
-| cedric | **Campione di Hogwarts** — Al lancio: ⛨ +[15/20/25]. Continuo: +[30/40/50]% danno finché la squadra ha ⛨. **Lv4:** Al KO subìto: ⛨ +100 e Cura 50. |
+| cedric | **Campione di Hogwarts** — Al lancio: ⛨ +[15/20/25]. Continuo: +[20/30/40]% danno finché la squadra ha ⛨. **Lv4:** Al KO subìto: ⛨ +100 e Cura 50. |
 | sprout | **Serra** — Continuo: ogni 1 s Cura [3/4/5] se un Tassorosso adiacente. Al lancio: ⛨ +[15/20/25]. **Lv4:** Ogni 5 s: rimuove ☠ dalla propria squadra (Mandragola). |
 | hannah | **Tenacia** — Al lancio: Cura +[10/15/20] per Tassorosso in squadra. **Lv4:** Baluardo ×2. |
 | susan | **Memoria dei Caduti** — Al lancio: ⛨ +[20/30/40] se ha Rianimato. Al KO alleato: Carica 2 s a sé. **Lv4:** Rennervate rimuove tutti i KO. |
-| ernie | **Prefetto Zelante** — All'inizio: ⛨ +[40/60/80]. Al lancio: Protego. **Lv4:** Bastione ×2. |
+| ernie | **Prefetto Zelante** — Al lancio (Protego): ⛨ +[15/20/25]. **Lv4:** Bastione ×2. |
 | justin | **Nato Babbano** — Crescendo: +[5/8/10]% danno per cast in questa battaglia. **Lv4:** Multicast +1. |
 | zacharias | **Lingua Lunga** — Continuo: i nemici Silenziati fanno −[10/15/20]% danno. **Lv4:** Silenzio anche all'adiacente del bersaglio. |
 | leanne | **Amica Fedele** — Continuo: mentre la prima fila nemica ha almeno un Lento, il nemico subisce +[10/15/20]% danno. **Lv4:** Le sue Lentezze durano +1 s. |
-| eloise | **Pelle Dura** — ⛨ iniziale +[40/60/80]. Continuo: la squadra subisce −[5/8/10]% danno mentre ha ⛨. **Lv4:** Al KO subìto: ⛨ +120. |
+| eloise | **Pelle Dura** — ⛨ iniziale +[25/35/45]. **Lv4:** Continuo: la squadra subisce −8% danno mentre ha ⛨. |
 | megan | **Gelo Tassorosso** — Continuo: i Gelo della squadra durano +[0,3/0,5/0,7] s. **Lv4:** Necrosi ×2. |
 
 ### Catene attese (per i test di copertura)
@@ -694,6 +713,12 @@ interface RtFrame { t: number; hp: [number, number]; hpMax: [number, number]; sh
 - Bot (`tests/engine/support/`): draft per `teamScore` (copertura Segni × reazioni possibili + Duo + Trio + clausole soddisfabili), schieramento euristico (§6.4), spoglie (Rinforzo > Marchio-che-completa > Allenamento > Vita).
 - Gate `tests/engine/campaignBalanceRT.test.ts`: 120 seed, winRate in banda **misurata e registrata nel file** dopo la prima calibrazione (obiettivo iniziale 0,35–0,55), determinismo, durata media < 25 s, nessuna battaglia a 60 s.
 - Copertura: `reazioniCoverage` (ogni reazione ≥1 volta su 120 run), `abilitaCoverage` (ogni riga lv1 e lv4 scatta in una probe per mago con squadra costruita ad hoc), `crescitaCoverage` (ogni Memoria/Crescendo muove il contatore), `catene` (le 7 catene di §5 producono l'evento atteso).
+- **Bilanciamento per rarità e delle combo** (§5.0), eseguito a ogni modifica di dati:
+  - `tierOrdering`: ogni mago a lv1 in una squadra di riferimento neutra (5 manichini fissi) contro una scala di 20 squadre nemiche seedate → "contributo" = danno + cura + scudo + valore KO. Assert: media T1 > T2 > T3 > T4 con margine ≥ 15% tra tier adiacenti; nessun T4 sopra la mediana dei T3; nessun T3 sopra la mediana dei T2.
+  - `inclusionDelta`: per ogni mago, winRate della squadra di riferimento con lui vs senza (120 seed). Assert: delta ordinato per tier (medie), nessun mago con delta ≤ 0 (inutile) o ≥ 0,35 (obbligatorio).
+  - `comboBalance`: le 7 catene di §5 e le 4 mono-casa, come squadre canoniche a lv1 e a lv3, contro la stessa scala nemica. Assert: ogni squadra in banda [0,40, 0,70]; rapporto max/min tra squadre ≤ 1,5; nessuna squadra vince > 90% con Memoria azzerata.
+  - `crescitaSanity`: dopo 10 vittorie simulate, nessuna spell "no cap" da sola supera il 60% del danno di squadra nella scala nemica di area 2.
+  - I numeri misurati vanno registrati nel file del test con data, come per `campaignBalanceB`.
 - `endlessReplayParity` sul motore nuovo, `ENGINE_VERSION` → `endless-3`.
 - Sweep: per casa mono, per coppia di Segni, per boss.
 
