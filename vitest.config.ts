@@ -9,5 +9,6 @@ export default defineConfig({
     globals: true,
     setupFiles: ['./tests/setup.ts'],
     include: ['tests/**/*.test.{ts,tsx}'],
-  },
+    environmentMatchGlobs: [['tests/engine/rt/**', 'node']],
+  } as any,
 })
