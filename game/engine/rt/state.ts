@@ -1,5 +1,5 @@
 import type { Rng } from '@/game/engine/rng'
-import type { RtEvent, RtFrame, RtOptions, RtSideId, RtSideMods, RtUnitInput, Segno, UnitStatus } from '@/types/rt'
+import type { CrescitaTrigger, RtEvent, RtFrame, RtOptions, RtSideId, RtSideMods, RtUnitInput, Segno, Trigger, UnitStatus } from '@/types/rt'
 import { rtUnitKey } from '@/types/rt'
 import { RT, cooldownFor, levelHpMult } from './constants'
 
@@ -48,6 +48,8 @@ export interface RtSideState {
   soglieScattate: Set<string>
 }
 
+export interface TriggerEvent { trigger: Trigger; side: RtSideId; unitKey?: string; bersaglioKey?: string }
+
 export interface RtState {
   t: number
   tick: number
@@ -61,6 +63,7 @@ export interface RtState {
   maxSeconds: number
   depth: number
   frameStart: number
+  queue: TriggerEvent[]
 }
 
 export const other = (side: RtSideId): RtSideId => (side === 'left' ? 'right' : 'left')
@@ -115,6 +118,14 @@ export function createState(left: RtUnitInput[], right: RtUnitInput[], rng: Rng,
     sides: [makeSide(left, 'left', opts.leftMods ?? {}), makeSide(right, 'right', opts.rightMods ?? {})],
     rng, events: [], frames: [], reazioni: {}, memoriaDelta: {},
     kind: opts.kind ?? 'normal', maxSeconds: opts.maxSeconds ?? RT.maxSeconds,
-    depth: 0, frameStart: 0,
+    depth: 0, frameStart: 0, queue: [],
   }
+}
+
+/** Un evento di Crescita per l'unità: Memoria (delta per la run) o Crescendo (contatore di battaglia). */
+export function noteCrescita(state: RtState, u: RtUnit, trigger: CrescitaTrigger): void {
+  const c = u.spell.crescita
+  if (!c || c.trigger !== trigger) return
+  if (c.kind === 'memoria') state.memoriaDelta[u.key] = (state.memoriaDelta[u.key] ?? 0) + 1
+  else u.crescendo += 1
 }
