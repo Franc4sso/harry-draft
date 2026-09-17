@@ -4,7 +4,8 @@ import { RT, near, round1 } from './constants'
 import { alive, emit, noteCrescita, other, sideOf, type RtState, type RtUnit } from './state'
 import { applyUnitStatus, hasStatus, reazione } from './status'
 
-export interface DamageOpts { unitTarget?: RtUnit; diretto?: boolean; name?: string; magieOscure?: boolean; ignoreShield?: boolean; frantumaMult?: number; noReflect?: boolean }
+/** `reazioniFatte`: reazioni 4-6 (Frantuma, Vapore, Necrosi) già risolte in QUESTO cast — una sola volta, sulla prima risoluzione. */
+export interface DamageOpts { unitTarget?: RtUnit; diretto?: boolean; name?: string; magieOscure?: boolean; ignoreShield?: boolean; frantumaMult?: number; noReflect?: boolean; reazioniFatte?: Set<string> }
 export interface DamageOut { total: number; toShield: number; toHp: number; frantuma: boolean }
 
 export function dealDamage(state: RtState, attacker: RtUnit | null, targetSide: RtSideId, amount: number, opts: DamageOpts = {}): DamageOut {
@@ -16,10 +17,11 @@ export function dealDamage(state: RtState, attacker: RtUnit | null, targetSide: 
   let frantuma = false
   const ut = opts.unitTarget
   const scossaPreFrantuma = t.segni.scossa
-  if (opts.diretto && ut && !ut.ko && hasStatus(ut, 'gelo')) {
+  if (opts.diretto && ut && !ut.ko && hasStatus(ut, 'gelo') && !opts.reazioniFatte?.has('Frantuma')) {
     ut.statuses = ut.statuses.filter(s => s.kind !== 'gelo')
     dmg *= opts.frantumaMult ?? RT.reazioni.frantumaMult
     frantuma = true
+    opts.reazioniFatte?.add('Frantuma')
     reazione(state, 'Frantuma', targetSide)
     if (attacker) noteCrescita(state, attacker, 'reazione:frantuma')
     t.segni.scossa = Math.min(RT.scossa.cap, t.segni.scossa + RT.reazioni.frantumaScossa)

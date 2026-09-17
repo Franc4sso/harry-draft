@@ -99,6 +99,22 @@ describe('castSpell — Multicast, Disarmo, Combo, Crescita', () => {
     castSpell(s, unitAt(s, 'left', 0)!)
     expect(hasStatus(b, 'silenzio')).toBe(true)   // Frantuma ha consumato il Gelo dopo la valutazione della cond
   })
+  it('reazioni 4-6 una volta per cast: Necrosi e Frantuma non si moltiplicano col Multicast', () => {
+    // status + segno veleno ×3 su bersaglio gelato: senza il fix la Necrosi scatterebbe 3 volte (☠ 12, Gelo +3 s).
+    const s = createState(squad({ id: 'a', stats: A, spell: status({ multicast: 3, segno: { kind: 'veleno', stacks: 1 } }) }), squad({ id: 'b', stats: A }), createRng(1))
+    const b = unitAt(s, 'right', 0)!
+    applyUnitStatus(s, b, { kind: 'gelo', remaining: 5 })
+    castSpell(s, unitAt(s, 'left', 0)!)
+    expect(s.sides[1].segni.veleno).toBe(6)                   // 3 dalla spell + 3 da UNA Necrosi
+    expect(s.reazioni.Necrosi).toBe(1)
+    expect(statusOf(b, 'gelo')!.remaining).toBe(6)            // Gelo +1 s una volta sola
+    // Frantuma: solo il primo colpo raddoppia (e consuma il Gelo).
+    const s2 = createState(squad({ id: 'a', stats: A, spell: danno(0.5, { multicast: 3 }) }), squad({ id: 'b', stats: A }), createRng(1))
+    applyUnitStatus(s2, unitAt(s2, 'right', 0)!, { kind: 'gelo', remaining: 5 })
+    castSpell(s2, unitAt(s2, 'left', 0)!)
+    expect(s2.reazioni.Frantuma).toBe(1)
+    expect(s2.events.filter(e => e.kind === 'danno').map(e => e.value)).toEqual([20, 12, 12])   // 10×2, poi 10 + 2 di Scossa (lasciata da Frantuma)
+  })
   it('frantumaMult della spell', () => {
     const s = mk([{ id: 'a', stats: A, spell: danno(1, { frantumaMult: 2.5 }) }]); const b = unitAt(s, 'right', 0)!
     applyUnitStatus(s, b, { kind: 'gelo', remaining: 5 })

@@ -6,7 +6,7 @@ import { applyUnitStatus, applyVulnerabile, hasStatus, koUnit, reazione, statusO
 
 const CAP: Record<Segno, number> = { fiamma: RT.fiamma.cap, veleno: Infinity, scossa: RT.scossa.cap }
 
-export function applySegno(state: RtState, source: RtUnit | null, targetSide: RtSideId, segno: Segno, stacks: number, opts: { unitTarget?: RtUnit } = {}): void {
+export function applySegno(state: RtState, source: RtUnit | null, targetSide: RtSideId, segno: Segno, stacks: number, opts: { unitTarget?: RtUnit; reazioniFatte?: Set<string> } = {}): void {
   if (stacks <= 0) return
   const t = sideOf(state, targetSide)
   const hadVeleno = t.segni.veleno > 0, hadFiamma = t.segni.fiamma > 0, hadScossa = t.segni.scossa > 0
@@ -14,11 +14,13 @@ export function applySegno(state: RtState, source: RtUnit | null, targetSide: Rt
   emit(state, { kind: 'segno', side: source?.side, slot: source?.slot, targetSide, segno, stacks, value: t.segni[segno] })
   const ut = opts.unitTarget
   if (ut && !ut.ko && hasStatus(ut, 'gelo')) {
-    if (segno === 'fiamma') {
+    if (segno === 'fiamma' && !opts.reazioniFatte?.has('Vapore')) {
+      opts.reazioniFatte?.add('Vapore')
       ut.statuses = ut.statuses.filter(s => s.kind !== 'gelo')
       applyVulnerabile(state, targetSide, RT.reazioni.vaporeSecondi)
       reazione(state, 'Vapore', targetSide)
-    } else if (segno === 'veleno') {
+    } else if (segno === 'veleno' && !opts.reazioniFatte?.has('Necrosi')) {
+      opts.reazioniFatte?.add('Necrosi')
       t.segni.veleno += RT.reazioni.necrosiVeleno
       const g = statusOf(ut, 'gelo'); if (g) g.remaining += RT.reazioni.necrosiGeloPlus
       reazione(state, 'Necrosi', targetSide, RT.reazioni.necrosiVeleno)

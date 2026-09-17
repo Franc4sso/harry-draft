@@ -41,15 +41,17 @@ export function castSpell(state: RtState, u: RtUnit, opts: { innesco?: boolean }
   emit(state, { kind: 'cast', side, slot: u.slot, name: sp.name, value: multicast })
   const ut = unitTarget(state, side, u.slot, { ignoraCopertura: own.mods.ignoraCopertura }) ?? undefined
   const comboOk = sp.combo ? checkCond(state, u, sp.combo.cond, { bersaglio: ut }) : false
+  // Spec §4.2: le reazioni 4-6 (Frantuma, Vapore, Necrosi) scattano UNA volta per cast, sulla prima risoluzione — non per colpo di Multicast.
+  const reazioniFatte = new Set<string>()
   for (let i = 0; i < multicast; i++) {
-    if (own.mods.segnoOnCast) for (const [k, n] of Object.entries(own.mods.segnoOnCast)) if (n) applySegno(state, u, en, k as 'fiamma' | 'veleno' | 'scossa', n, { unitTarget: ut })
+    if (own.mods.segnoOnCast) for (const [k, n] of Object.entries(own.mods.segnoOnCast)) if (n) applySegno(state, u, en, k as 'fiamma' | 'veleno' | 'scossa', n, { unitTarget: ut, reazioniFatte })
     switch (sp.verb) {
       case 'danno': {
         let amount = u.stats.atk * (sp.potenza ?? 0) * levelCastMult(u.level) * dannoMult(state, u) * (1 + bonusIf(u, 'pct'))
         const oscura = !!sp.keywords?.includes('magieOscure')
         if (oscura && own.mods.magieOscure) amount *= 1 + own.mods.magieOscure.bonus
         amount = Math.round(amount) + dannoFlat(state, u) + Math.round(bonusIf(u, 'danno'))
-        dealDamage(state, u, en, amount, { diretto: true, unitTarget: ut, name: sp.name, magieOscure: oscura, frantumaMult: sp.frantumaMult })
+        dealDamage(state, u, en, amount, { diretto: true, unitTarget: ut, name: sp.name, magieOscure: oscura, frantumaMult: sp.frantumaMult, reazioniFatte })
         break
       }
       // `squadraCura` e Untore vivono in `heal()`: scattano da OGNI cura, non solo da questo verbo.
@@ -73,7 +75,7 @@ export function castSpell(state: RtState, u: RtUnit, opts: { innesco?: boolean }
       }
       case 'status': break
     }
-    if (sp.segno) applySegno(state, u, en, sp.segno.kind, sp.segno.stacks + Math.round(bonusIf(u, 'segno')), { unitTarget: ut })
+    if (sp.segno) applySegno(state, u, en, sp.segno.kind, sp.segno.stacks + Math.round(bonusIf(u, 'segno')), { unitTarget: ut, reazioniFatte })
     if (sp.gelo && ut) applyGelo(state, u, ut, round1(sp.gelo + bonusIf(u, 'secondi') + (own.durataStatusPct.gelo ?? 0) * sp.gelo))
     if (sp.unitStatus && ut) {
       const us = sp.unitStatus
