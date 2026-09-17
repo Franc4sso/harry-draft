@@ -3,6 +3,8 @@ import type { CrescitaTrigger, RtEvent, RtFrame, RtOptions, RtSideId, RtSideMods
 import { rtUnitKey } from '@/types/rt'
 import { RT, cooldownFor, levelHpMult } from './constants'
 
+export { rtUnitKey } from '@/types/rt'
+
 export interface RtUnit extends RtUnitInput {
   key: string
   side: RtSideId

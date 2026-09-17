@@ -26,6 +26,7 @@ export const RT = {
 const EPS = 1e-9
 export const near = (a: number, b: number) => Math.abs(a - b) < EPS
 export const round1 = (x: number) => Math.round(x * 10) / 10
+export const round2 = (x: number) => Math.round(x * 100) / 100
 
 export function cooldownFor(spd: number, level: 1 | 2 | 3 | 4, cdMod = 0): number {
   const base = Math.min(RT.cdClampMax, Math.max(RT.cdClampMin, 9 - spd / 5))
