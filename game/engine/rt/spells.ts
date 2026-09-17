@@ -52,12 +52,8 @@ export function castSpell(state: RtState, u: RtUnit, opts: { innesco?: boolean }
         dealDamage(state, u, en, amount, { diretto: true, unitTarget: ut, name: sp.name, magieOscure: oscura, frantumaMult: sp.frantumaMult })
         break
       }
-      case 'cura': {
-        heal(state, side, (sp.cura ?? 0) + bonusIf(u, 'cura'), u)
-        if (own.mods.untore) applySegno(state, u, en, 'veleno', 1, { unitTarget: ut })
-        state.queue.push({ trigger: 'squadraCura', side, unitKey: u.key })
-        break
-      }
+      // `squadraCura` e Untore vivono in `heal()`: scattano da OGNI cura, non solo da questo verbo.
+      case 'cura': heal(state, side, (sp.cura ?? 0) + bonusIf(u, 'cura'), u); break
       case 'scudo': addShield(state, side, (sp.scudo ?? 0) + bonusIf(u, 'scudo'), u); break
       case 'carica': if (sp.carica) applyEffect(state, u, side, selectTargets(state, u, sp.carica.target), { kind: 'carica', secondi: sp.carica.secondi + bonusIf(u, 'secondi') }, { target: sp.carica.target }); break
       case 'protego': {

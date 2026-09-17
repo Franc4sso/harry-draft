@@ -1,7 +1,7 @@
 import { RT, near } from './constants'
 import { fireLine, linesOf } from './abilities'
 import { applySegno } from './segni'
-import { alive, emit, sideOf, unitByKey, type RtState, type TriggerEvent } from './state'
+import { alive, emit, other, sideOf, unitByKey, type RtState, type TriggerEvent } from './state'
 
 export function enqueue(state: RtState, ev: TriggerEvent): void { state.queue.push(ev) }
 
@@ -14,6 +14,10 @@ function fireFor(state: RtState, ev: TriggerEvent): void {
     const k = `contagio:${ev.bersaglioKey}`
     const s = sideOf(state, ev.side)
     if (mods.contagioOnKo && victim && !s.soglieScattate.has(k)) { s.soglieScattate.add(k); applySegno(state, null, victim.side, 'veleno', mods.contagioOnKo) }
+  }
+  // Untore: «Ogni Cura della squadra» → +1 Veleno al nemico. Sull'evento di LATO: una volta per cura.
+  if (ev.trigger === 'squadraCura' && !ev.unitKey && sideOf(state, ev.side).mods.untore) {
+    applySegno(state, null, other(ev.side), 'veleno', 1)
   }
   // Evento di unità → SOLO le righe di quell'unità. Evento di lato (senza `unitKey`) → SOLO `mods.lines`.
   if (ev.unitKey) {

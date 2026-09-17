@@ -1,7 +1,7 @@
 import type { RtSideId } from '@/types/rt'
 import { enemyDannoSubitoPct } from './abilities'
 import { RT, near, round1 } from './constants'
-import { emit, noteCrescita, other, sideOf, type RtState, type RtUnit } from './state'
+import { alive, emit, noteCrescita, other, sideOf, type RtState, type RtUnit } from './state'
 import { applyUnitStatus, hasStatus, reazione } from './status'
 
 export interface DamageOpts { unitTarget?: RtUnit; diretto?: boolean; name?: string; magieOscure?: boolean; ignoreShield?: boolean; frantumaMult?: number; noReflect?: boolean }
@@ -61,6 +61,11 @@ export function heal(state: RtState, side: RtSideId, amount: number, source?: Rt
   if (excess > 0 && s.mods.curaEccessoToScudo) s.shield += Math.round(excess * s.mods.curaEccessoToScudo)
   emit(state, { kind: 'cura', side: source?.side, slot: source?.slot, targetSide: side, value: n })
   if (source) source.score += n
+  // `squadraCura` da OGNI cura (spell, riga d'abilità, riga di lato), non solo dal verbo `cura`.
+  if (n > 0) {
+    state.queue.push({ trigger: 'squadraCura', side })
+    for (const ally of alive(state, side)) state.queue.push({ trigger: 'squadraCura', side, unitKey: ally.key })
+  }
   return n
 }
 

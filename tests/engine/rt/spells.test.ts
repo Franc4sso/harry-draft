@@ -5,7 +5,8 @@ import { castSpell, spellCdBonus } from '@/game/engine/rt/spells'
 import { applyUnitStatus, hasStatus, statusOf } from '@/game/engine/rt/status'
 import { processQueue } from '@/game/engine/rt/triggers'
 import { createRng } from '@/game/engine/rng'
-import { ability, cura, danno, scudo, squad, status } from './fixtures'
+import { applyEffect } from '@/game/engine/rt/effects'
+import { ability, cura, danno, nulla, scudo, squad, status } from './fixtures'
 
 const A = { hp: 200, atk: 20, def: 0, spd: 20 }
 const mk = (l: any[], r: any[] = [{ id: 'b', stats: A }, { id: 'b2', stats: A }], opts = {}) => createState(squad(...l), squad(...r), createRng(1), opts)
@@ -37,8 +38,9 @@ describe('castSpell — verbi', () => {
       { id: 'k', stats: A, spell: { id: 'rid', name: 'Riddikulus', desc: '', verb: 'buff', buff: { dannoPct: 0.15, max: 3 } } },
     ], undefined, { leftMods: { untore: true } })
     s.sides[0].hp = 500
-    castSpell(s, unitAt(s, 'left', 0)!); expect(s.sides[0].hp).toBe(530); expect(s.sides[1].segni.veleno).toBe(1)
+    castSpell(s, unitAt(s, 'left', 0)!); expect(s.sides[0].hp).toBe(530)
     expect(s.queue.some(q => q.trigger === 'squadraCura')).toBe(true)
+    processQueue(s); expect(s.sides[1].segni.veleno).toBe(1)   // Untore scatta sull'evento di lato `squadraCura`
     castSpell(s, unitAt(s, 'left', 1)!); expect(s.sides[0].shield).toBe(25)
     castSpell(s, unitAt(s, 'left', 2)!); expect(unitAt(s, 'left', 1)!.timer).toBe(1); expect(unitAt(s, 'left', 5)!.timer).toBe(1)
     castSpell(s, unitAt(s, 'left', 3)!); expect(hasStatus(unitAt(s, 'left', 0)!, 'protego') || hasStatus(unitAt(s, 'left', 4)!, 'protego')).toBe(true)
@@ -47,6 +49,26 @@ describe('castSpell — verbi', () => {
     const hp = s.sides[0].hp; castSpell(s, unitAt(s, 'left', 4)!); expect(s.sides[0].hp).toBe(Math.min(s.sides[0].hpMax, hp + 26))   // nessun KO → cura 20, +30% Baluardo (c'è Scudo)
     for (let i = 0; i < 5; i++) castSpell(s, unitAt(s, 'left', 5)!)
     expect(unitAt(s, 'left', 0)!.dannoPctBonus.reduce((a, b) => a + b.pct, 0)).toBeCloseTo(0.45)   // max 3
+  })
+  it('ogni cura accoda squadraCura: anche da una riga d\'abilità, non solo dal verbo', () => {
+    const s = mk([{ id: 'a', stats: A }, { id: 'b', stats: A }, { id: 'c', stats: A }])
+    s.sides[0].hp = 100
+    applyEffect(s, unitAt(s, 'left', 0)!, 'left', [], { kind: 'cura', n: 10 }, { target: 'squadraPropria' })
+    const ev = s.queue.filter(q => q.trigger === 'squadraCura')
+    expect(ev.filter(q => !q.unitKey)).toHaveLength(1)                       // un evento di lato
+    expect(ev.filter(q => q.unitKey).map(q => q.unitKey).sort()).toEqual(['left:a', 'left:b', 'left:c'])
+  })
+  it('Untore scatta anche da una cura che non viene dal verbo `cura`', () => {
+    const s = mk([{ id: 'a', stats: A }], undefined, { leftMods: { untore: true } })
+    s.sides[0].hp = 100
+    applyEffect(s, unitAt(s, 'left', 0)!, 'left', [], { kind: 'cura', n: 10 }, { target: 'squadraPropria' })
+    processQueue(s)
+    expect(s.sides[1].segni.veleno).toBe(1)
+  })
+  it('una cura da 0 non accoda nulla', () => {
+    const s = mk([{ id: 'a', stats: A, spell: nulla() }])
+    castSpell(s, unitAt(s, 'left', 0)!)
+    expect(s.queue.filter(q => q.trigger === 'squadraCura')).toHaveLength(0)
   })
   it('status verb: unitStatus e teamStatus', () => {
     const s = mk([{ id: 'a', stats: A, spell: status({ unitStatus: { kind: 'silenzio', secondi: 3 }, teamStatus: { kind: 'vulnerabile', secondi: 2 } }) }])
