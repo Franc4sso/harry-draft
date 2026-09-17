@@ -7,16 +7,18 @@ import { unitTarget } from '@/game/engine/rt/targeting'
 import { createRng } from '@/game/engine/rng'
 import { squad } from './fixtures'
 
+// Stat esplicite, def 0 → Scudo iniziale 0. Sinistra HP 400 (200+100+100), destra HP 300 (200+100).
+const A = { hp: 200, atk: 20, def: 0, spd: 20 }, B = { hp: 100, atk: 20, def: 0, spd: 20 }
 const mk = (opts = {}) => createState(
-  squad({ id: 'a', stats: { hp: 200, atk: 20, def: 0, spd: 20 } }, { id: 'a2' }, undefined, { id: 'a3' }),
-  squad({ id: 'b', stats: { hp: 200, atk: 20, def: 0, spd: 20 } }, { id: 'b2' }), createRng(1), opts)
+  squad({ id: 'a', stats: A }, { id: 'a2', stats: B }, undefined, { id: 'a3', stats: B }),
+  squad({ id: 'b', stats: A }, { id: 'b2', stats: B }), createRng(1), opts)
 const ctx = (target: any = 'se') => ({ target })
 
 describe('applyEffect — squadra', () => {
   it('danno: potenza × atk × levelCastMult, diretto, bersaglio-unità = opposto', () => {
     const s = mk(); const a = unitAt(s, 'left', 0)!; a.level = 2
     applyEffect(s, a, 'left', [], { kind: 'danno', potenza: 1.5 }, ctx('opposto'))
-    expect(s.sides[1].hp).toBe(200 - Math.round(20 * 1.5 * 1.35))
+    expect(s.sides[1].hp).toBe(300 - Math.round(20 * 1.5 * 1.35))
   })
   it('cura e scudo sul proprio lato, segno e vulnerabile sul nemico, squadraPropria inverte', () => {
     const s = mk(); const a = unitAt(s, 'left', 0)!; s.sides[0].hp = 100
@@ -29,7 +31,7 @@ describe('applyEffect — squadra', () => {
   })
   it('hpPct e scudoIniziale alzano il lato', () => {
     const s = mk(); const a = unitAt(s, 'left', 0)!
-    applyEffect(s, a, 'left', [], { kind: 'hpPct', pct: 0.1 }, ctx()); expect(s.sides[0].hpMax).toBe(220); expect(s.sides[0].hp).toBe(220)
+    applyEffect(s, a, 'left', [], { kind: 'hpPct', pct: 0.1 }, ctx()); expect(s.sides[0].hpMax).toBe(440); expect(s.sides[0].hp).toBe(440)
     applyEffect(s, a, 'left', [], { kind: 'scudoIniziale', n: 40 }, ctx()); expect(s.sides[0].shield).toBe(40)
   })
 })
@@ -40,8 +42,9 @@ describe('applyEffect — unità', () => {
     applyEffect(s, a, 'left', [b], { kind: 'silenzio', secondi: 2 }, ctx('opposto')); expect(statusOf(b, 'silenzio')!.remaining).toBe(2)
     applyEffect(s, a, 'left', [b], { kind: 'indebolito', pct: 0.2, secondi: 3 }, ctx('opposto')); expect(statusOf(b, 'indebolito')!.pct).toBe(0.2)
     applyEffect(s, a, 'left', [b], { kind: 'purifica' }, ctx('opposto')); expect(b.statuses).toHaveLength(2)   // purifica è amica: su un nemico non fa nulla
-    applyEffect(s, a, 'left', [a], { kind: 'protego' }, ctx('se')); expect(hasStatus(a, 'protego')).toBe(true)
+    // PRIMA del Protego: la Lentezza è ostile e un Protego attivo la assorbirebbe
     applyUnitStatus(s, a, { kind: 'lentezza', remaining: 2 })
+    applyEffect(s, a, 'left', [a], { kind: 'protego' }, ctx('se')); expect(hasStatus(a, 'protego')).toBe(true)
     applyEffect(s, a, 'left', [a], { kind: 'purifica' }, ctx('se')); expect(hasStatus(a, 'lentezza')).toBe(false); expect(hasStatus(a, 'protego')).toBe(true)
     applyEffect(s, a, 'left', [b2], { kind: 'ko' }, ctx('opposto')); expect(b2.ko).toBe(true)
     applyEffect(s, a, 'left', [b2], { kind: 'rianima' }, ctx('opposto')); expect(b2.ko).toBe(true)   // amica: non rianima nemici
