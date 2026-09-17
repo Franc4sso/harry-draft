@@ -77,13 +77,18 @@ export function continuoMods(state: RtState, u: RtUnit): { dannoPct: number; cdP
   m.set(k, acc)
   return acc
 }
+/** Le righe Continuo non consumano RNG: niente `nemicoCasuale`, e la `chance` è pre-risolta. */
+const condLimits = (state: RtState, owner: RtUnit | null, side: RtSideId): Record<string, number> => (owner ?? sideOf(state, side)).limits
+const noRngCtx = (state: RtState, owner: RtUnit | null, side: RtSideId, key: string) =>
+  ({ noRng: true as const, lineKey: key, limits: condLimits(state, owner, side) })
+
 function computeContinuoMods(state: RtState, u: RtUnit): { dannoPct: number; cdPct: number; cdFlat: number } {
   const acc = { dannoPct: 0, cdPct: 0, cdFlat: 0 }
   for (const { owner, ol } of continuoLines(state, u.side)) {
     const e = ol.line.effect
-    if (!DYN.has(e.kind) || ol.line.target === 'squadraNemica') continue
+    if (!DYN.has(e.kind) || ol.line.target === 'squadraNemica' || ol.line.target === 'nemicoCasuale') continue
     const actor = anchor(state, owner, u.side)!
-    if (!checkCond(state, actor, ol.line.cond, {})) continue
+    if (!checkCond(state, actor, ol.line.cond, noRngCtx(state, owner, u.side, ol.key))) continue
     const targets = ol.line.target === 'squadraPropria' ? alive(state, u.side) : selectTargets(state, actor, ol.line.target, ol.line.targetArg)
     if (!targets.includes(u)) continue
     const eff = withParam(e, paramFor(ol.line, actor.level))
@@ -94,28 +99,44 @@ function computeContinuoMods(state: RtState, u: RtUnit): { dannoPct: number; cdP
   return acc
 }
 
-/** Somma delle righe Continuo `dannoPct` su `squadraNemica` del lato OPPOSTO a `side`: quanto in più subisce `side`. */
+/** Somma delle righe Continuo `dannoPct` su `squadraNemica` del lato OPPOSTO a `side`: quanto in più subisce `side`.
+ *  Memoizzata come `continuoMods`: è letta a ogni `dealDamage`. */
+const memoDst = new WeakMap<RtState, Map<string, number>>()
 export function enemyDannoSubitoPct(state: RtState, side: RtSideId): number {
+  let m = memoDst.get(state); if (!m) { m = new Map(); memoDst.set(state, m) }
+  const k = `${side}@enemyDST:${state.tick}:${state.events.length}:${alive(state, 'left').length}:${alive(state, 'right').length}`
+  const hit = m.get(k); if (hit !== undefined) return hit
   let pct = 0
   for (const { owner, ol } of continuoLines(state, other(side))) {
     if (ol.line.target !== 'squadraNemica' || ol.line.effect.kind !== 'dannoPct') continue
     const actor = anchor(state, owner, other(side))!
-    if (!checkCond(state, actor, ol.line.cond, {})) continue
+    if (!checkCond(state, actor, ol.line.cond, noRngCtx(state, owner, other(side), ol.key))) continue
     const eff = withParam(ol.line.effect, paramFor(ol.line, actor.level)) as Extract<Effect, { kind: 'dannoPct' }>
     pct += eff.pct
   }
+  if (m.size > 64) m.clear()
+  m.set(k, pct)
   return pct
 }
 
 export function applyStaticContinuo(state: RtState): void {
+  // 1) Pre-risoluzione delle `chance` di OGNI riga Continuo: una sola estrazione per battaglia, in ordine deterministico.
+  for (const side of ['left', 'right'] as const) for (const { owner, ol } of continuoLines(state, side)) {
+    const cond = ol.line.cond
+    if (!cond || !('chance' in cond)) continue
+    const limits = condLimits(state, owner, side)
+    const ck = ol.key + ':chance'
+    if (limits[ck] !== undefined) continue
+    limits[ck] = state.rng.chance(cond.chance) ? 1 : 0
+  }
   for (const side of ['left', 'right'] as const) for (const { owner, ol } of continuoLines(state, side)) {
     if (!STATIC.has(ol.line.effect.kind)) continue
     const key = ol.key + ':static'
-    const limits = (owner ?? anchor(state, null, side))!.limits
+    const limits = condLimits(state, owner, side)
     if (limits[key]) continue
     limits[key] = 1
     const actor = anchor(state, owner, side)!
-    if (!checkCond(state, actor, ol.line.cond, {})) continue
+    if (!checkCond(state, actor, ol.line.cond, noRngCtx(state, owner, side, ol.key))) continue
     const targets = selectTargets(state, actor, ol.line.target, ol.line.targetArg)
     applyEffect(state, owner ?? actor, side, targets, withParam(ol.line.effect, paramFor(ol.line, actor.level)), { target: ol.line.target, abilityId: ol.abilityId })
   }

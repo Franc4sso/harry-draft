@@ -43,6 +43,8 @@ export interface RtSideState {
   fiammaFreeze: number
   units: RtUnit[]
   mods: RtSideMods
+  /** Contatori per `limit`/`:static`/`:chance` delle righe di lato (`mods.lines`): il lato è stabile, l'unità-ancora no. */
+  limits: Record<string, number>
   koFatti: number
   /** Soglia "HP nemica < X%" bonus accumulato (Carnefice). */
   sogliaBonus: number
@@ -114,7 +116,7 @@ function makeSide(inputs: RtUnitInput[], side: RtSideId, mods: RtSideMods): RtSi
   return {
     side, hp: hpMax, hpMax, shield,
     segni: { fiamma: 0, veleno: 0, scossa: 0 }, vulnerabile: 0, conduzione: 0, fiammaFreeze: 0,
-    units, mods, koFatti: 0, sogliaBonus: 0, lastGeloAt: -Infinity, ultimoGeloAt: -Infinity, soglieScattate: new Set(),
+    units, mods, limits: {}, koFatti: 0, sogliaBonus: 0, lastGeloAt: -Infinity, ultimoGeloAt: -Infinity, soglieScattate: new Set(),
     durataStatusPct: {},
   }
 }

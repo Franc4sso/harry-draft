@@ -3,7 +3,10 @@ import { adjacent } from './grid'
 import { alive, other, sideOf, unitAt, type RtState, type RtUnit } from './state'
 import { hasStatus } from './status'
 
-export interface CondCtx { bersaglio?: RtUnit; lineKey?: string }
+/** `noRng`: le righe Continuo non possono consumare RNG (sono lette molte volte per tick).
+ *  Con `noRng` la `chance` è già stata risolta una volta per battaglia in `applyStaticContinuo`
+ *  e vive in `limits[lineKey + ':chance']` (1 = vera, 0/assente = falsa). */
+export interface CondCtx { bersaglio?: RtUnit; lineKey?: string; noRng?: true; limits?: Record<string, number> }
 
 export function checkCond(state: RtState, actor: RtUnit, cond: Cond | undefined, ctx: CondCtx): boolean {
   if (!cond) return true
@@ -39,7 +42,10 @@ export function checkCond(state: RtState, actor: RtUnit, cond: Cond | undefined,
     return state.t - at <= q.secondi + 1e-9
   }
   if ('ogniNLanci' in cond) return actor.casts > 0 && actor.casts % cond.ogniNLanci === 0
-  if ('chance' in cond) return state.rng.chance(cond.chance)
+  if ('chance' in cond) {
+    if (ctx.noRng) return ((ctx.limits ?? {})[(ctx.lineKey ?? '') + ':chance'] ?? 0) === 1
+    return state.rng.chance(cond.chance)
+  }
   if ('slotVuotiOKo' in cond) return alive(state, actor.side).length < 6
   if ('nessunAdiacente' in cond) return !adjacent(actor.slot).some(s => { const u = unitAt(state, actor.side, s); return u && !u.ko })
   return false

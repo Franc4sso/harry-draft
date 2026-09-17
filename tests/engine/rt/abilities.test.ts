@@ -71,6 +71,38 @@ describe('continuo', () => {
     dealDamage(s, unitAt(s, 'left', 0), 'right', 100, { diretto: true })
     expect(s.sides[1].hp).toBe(200 - 110)
   })
+  it('la cond `chance` di una riga Continuo è pre-risolta una volta e non consuma più RNG', () => {
+    const mk = (seed: number) => createState(squad({ id: 'a', ability: ability([line({ trigger: 'continuo', target: 'se', effect: { kind: 'dannoPct', pct: 0.2 }, cond: { chance: 0.5 } })]) }), squad({}), createRng(seed))
+    const s = mk(7)
+    applyStaticContinuo(s)
+    const a = unitAt(s, 'left', 0)!
+    let draws = 0
+    const real = s.rng.chance.bind(s.rng)
+    s.rng.chance = (p: number) => { draws += 1; return real(p) }
+    const vals: number[] = []
+    for (let i = 0; i < 50; i++) vals.push(continuoMods(s, a).dannoPct)
+    expect(draws).toBe(0)                                    // (a) zero RNG
+    expect(new Set(vals).size).toBe(1)                       // (b) stabile
+    expect(vals[0]).toBe(0.2)                                // seed 7 → chance vera
+    const s2 = mk(1)
+    applyStaticContinuo(s2)
+    expect(continuoMods(s2, unitAt(s2, 'left', 0)!).dannoPct).toBe(0)   // (c) seed 1 → chance falsa
+  })
+  it('due stati identici con righe Continuo `chance` danno la stessa sequenza di continuoMods', () => {
+    const mk = () => {
+      const s = createState(squad(
+        { id: 'a', ability: ability([line({ trigger: 'continuo', target: 'tuttiAlleati', effect: { kind: 'dannoPct', pct: 0.2 }, cond: { chance: 0.5 } })]) },
+        { id: 'b', ability: ability([line({ trigger: 'continuo', target: 'se', effect: { kind: 'cdPct', pct: -0.1 }, cond: { chance: 0.5 } })]) }),
+        squad({}), createRng(42), { leftMods: { lines: [line({ trigger: 'continuo', target: 'squadraPropria', effect: { kind: 'cdFlat', secondi: -1 }, cond: { chance: 0.5 } })] } })
+      applyStaticContinuo(s)
+      return s
+    }
+    const seq = (s: ReturnType<typeof mk>) => [0, 1].flatMap(slot => {
+      const u = unitAt(s, 'left', slot)!
+      return Array.from({ length: 5 }, (_, i) => { s.tick = i; const m = continuoMods(s, u); return `${m.dannoPct}/${m.cdPct}/${m.cdFlat}` })
+    })
+    expect(seq(mk())).toEqual(seq(mk()))
+  })
   it('applyStaticContinuo applica hpPct/scudoIniziale/immune/copre/durataStatusPct una volta', () => {
     const s = createState(squad(
       { id: 'a', ability: ability([line({ trigger: 'continuo', target: 'squadraPropria', effect: { kind: 'hpPct', pct: 0.1 } }), line({ trigger: 'continuo', target: 'se', effect: { kind: 'durataStatusPct', status: 'gelo', pct: 0.5 } })]) }), squad({}), createRng(1))
