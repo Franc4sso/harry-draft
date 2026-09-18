@@ -91,7 +91,9 @@ function computeContinuoMods(state: RtState, u: RtUnit): { dannoPct: number; cdP
   for (const { owner, ol } of continuoLines(state, u.side)) {
     const e = ol.line.effect
     if (!DYN.has(e.kind) || ol.line.target === 'squadraNemica' || ol.line.target === 'nemicoCasuale') continue
-    const actor = anchor(state, owner, u.side)!
+    // Riga di lato con la squadra interamente KO: nessuna ancora viva → la riga non si applica.
+    const actor = anchor(state, owner, u.side)
+    if (!actor) continue
     if (!checkCond(state, actor, ol.line.cond, noRngCtx(state, owner, u.side, ol.key))) continue
     const targets = ol.line.target === 'squadraPropria' ? alive(state, u.side) : selectTargets(state, actor, ol.line.target, ol.line.targetArg)
     if (!targets.includes(u)) continue
@@ -113,7 +115,8 @@ export function enemyDannoSubitoPct(state: RtState, side: RtSideId): number {
   let pct = 0
   for (const { owner, ol } of continuoLines(state, other(side))) {
     if (ol.line.target !== 'squadraNemica' || ol.line.effect.kind !== 'dannoPct') continue
-    const actor = anchor(state, owner, other(side))!
+    const actor = anchor(state, owner, other(side))
+    if (!actor) continue
     if (!checkCond(state, actor, ol.line.cond, noRngCtx(state, owner, other(side), ol.key))) continue
     const eff = withParam(ol.line.effect, paramFor(ol.line, actor.level)) as Extract<Effect, { kind: 'dannoPct' }>
     pct += eff.pct
@@ -139,7 +142,8 @@ export function applyStaticContinuo(state: RtState): void {
     const limits = condLimits(state, owner, side)
     if (limits[key]) continue
     limits[key] = 1
-    const actor = anchor(state, owner, side)!
+    const actor = anchor(state, owner, side)
+    if (!actor) continue
     if (!checkCond(state, actor, ol.line.cond, noRngCtx(state, owner, side, ol.key))) continue
     const targets = selectTargets(state, actor, ol.line.target, ol.line.targetArg)
     applyEffect(state, owner ?? actor, side, targets, withParam(ol.line.effect, paramFor(ol.line, actor.level)), { target: ol.line.target, abilityId: ol.abilityId })

@@ -92,6 +92,14 @@ describe('simulateRt', () => {
     }
     expect(r.frames[0]!.units['left:a']!.cd).toBe(5)
   })
+  it('squadra nemica spazzata via a t=0 con righe di lato Continuo: frame e `fine`, nessuna eccezione', () => {
+    const left = squad({ id: 'k', stats: A, spell: nulla(), ability: ability([line({ trigger: 'inizio', target: 'tuttiNemici', effect: { kind: 'ko' } })]) })
+    const right = squad({ id: 'v', stats: A, spell: danno(1) })
+    const r = simulateRt(left, right, createRng(1), { maxSeconds: 6, rightMods: { lines: [line({ trigger: 'continuo', target: 'tuttiAlleati', effect: { kind: 'dannoPct', pct: 0.2 } })] } })
+    expect(r.frames.length).toBeGreaterThan(0)
+    expect(r.events.at(-1)!.kind).toBe('fine')
+    expect(r.koRight).toEqual(['v'])
+  })
   it('memoriaDelta e reazioni nel risultato; koLeft/koRight', () => {
     const left = squad({ id: 'a', stats: A, spell: danno(1, { id: 'x', segno: { kind: 'fiamma', stacks: 1 }, crescita: { kind: 'memoria', trigger: 'reazione:miasma', per: 1, unit: 'segno' } }) }, { id: 'p', stats: A, spell: danno(0.1, { segno: { kind: 'veleno', stacks: 1 } }) })
     const r = simulateRt(left, squad({ id: 'd', stats: { hp: 400, atk: 0, def: 0, spd: 1 }, spell: nulla() }), createRng(1))

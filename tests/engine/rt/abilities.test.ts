@@ -1,7 +1,7 @@
 // @vitest-environment node
 import { describe, it, expect } from 'vitest'
 import { createState, unitAt } from '@/game/engine/rt/state'
-import { fireLine, linesOf, withParam, paramFor, continuoMods, applyStaticContinuo } from '@/game/engine/rt/abilities'
+import { fireLine, linesOf, withParam, paramFor, continuoMods, applyStaticContinuo, enemyDannoSubitoPct } from '@/game/engine/rt/abilities'
 import { enqueue, processQueue, fireInizio, fireSoglie, fireOgniSecondi } from '@/game/engine/rt/triggers'
 import { effectiveCd, dannoMult, applyEffect } from '@/game/engine/rt/effects'
 import { dealDamage } from '@/game/engine/rt/damage'
@@ -136,6 +136,20 @@ describe('continuo', () => {
       return Array.from({ length: 5 }, (_, i) => { s.tick = i; const m = continuoMods(s, u); return `${m.dannoPct}/${m.cdPct}/${m.cdFlat}` })
     })
     expect(seq(mk())).toEqual(seq(mk()))
+  })
+  it('una riga di lato senza ancora viva (lato tutto KO) viene ignorata, non esplode', () => {
+    // `snapshotFrame` legge `continuoMods` anche sulle unità KO: con il lato azzerato `anchor` è null.
+    const s = createState(squad({ id: 'a' }), squad({ id: 'b' }), createRng(1),
+      { leftMods: { lines: [line({ trigger: 'continuo', target: 'tuttiAlleati', effect: { kind: 'dannoPct', pct: 0.2 } })] },
+        rightMods: { lines: [line({ trigger: 'continuo', target: 'squadraNemica', effect: { kind: 'dannoPct', pct: 0.3 } })] } })
+    const a = unitAt(s, 'left', 0)!
+    expect(continuoMods(s, a).dannoPct).toBe(0.2)
+    koUnit(s, a)
+    koUnit(s, unitAt(s, 'right', 0)!)
+    expect(() => continuoMods(s, a)).not.toThrow()
+    expect(continuoMods(s, a)).toEqual({ dannoPct: 0, cdPct: 0, cdFlat: 0 })
+    expect(enemyDannoSubitoPct(s, 'left')).toBe(0)
+    expect(() => applyStaticContinuo(s)).not.toThrow()
   })
   it('applyStaticContinuo applica hpPct/scudoIniziale/immune/copre/durataStatusPct una volta', () => {
     const s = createState(squad(
