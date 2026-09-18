@@ -65,10 +65,12 @@ export interface AbilityLine {
   /** Argomento del bersaglio: tag per `alleatiTag`, casa per `alleatiCasa`, ruolo per `alleatiRuolo`. */
   targetArg?: string
   cond?: Cond
-  limit?: { perBattle?: number; everySeconds?: number }
+  limit?: { perBattle?: number; everySeconds?: number; /** opt-out esplicito della regola "ogni riga Al lancio ha un cooldown" */ senzaCooldown?: true }
+  /** Testo per la UI (una frase). */
+  desc?: string
 }
 
-export interface Ability { id: string; name: string; lines: AbilityLine[]; lv4?: AbilityLine }
+export interface Ability { id: string; name: string; lines: AbilityLine[]; lv4?: AbilityLine; desc?: string }
 
 export type CrescitaTrigger =
   | 'lancio' | 'vittoria' | 'battaglia' | 'boss'
@@ -202,3 +204,15 @@ export interface RtBattleResult {
 }
 
 export function rtUnitKey(side: RtSideId, id: string): string { return `${side}:${id}` }
+
+/** Traduzione rt di una reliquia (i bonus alle stat restano in applyRelicBonuses). */
+export interface RelicRt {
+  id: string
+  mods?: Partial<RtSideMods>
+  /** Righe di lato (attore = lato). */
+  lines?: AbilityLine[]
+  /** Righe del portatore (solo reliquie `assignable`): finiscono in `extraLines` del mago assegnato. */
+  carrierLines?: AbilityLine[]
+}
+/** Dati di run che il Piano 3 aggiungerà a DraftedWizard; l'adapter li accetta a parte finché non esistono. */
+export interface RtRunExtras { memoria?: Record<string, number>; permanenti?: { dannoFlat?: number; dannoPct?: number } }
