@@ -340,7 +340,7 @@ export const GRIFONDORO: Ability[] = [
   ], lv4: riga('sottoSoglia', 'tuttiAlleati', { kind: 'immune', a: 'gelo' }, { cond: { hpPropriaSotto: 0.25 }, desc: 'Sotto 25% HP: la squadra è immune al Gelo' }) },
   { id: 'moody', name: 'Vigilanza Costante', desc: 'Protegge la sua fila e vendica un alleato caduto con un KO.', lines: [
     riga('inizio', 'riga', { kind: 'protego' }, { desc: 'All\'inizio: Protego alla sua fila' }),
-    riga('koAlleato', 'opposto', { kind: 'ko' }, { limit: una(), desc: 'Al KO alleato (una volta): KO all\'opposto' }),
+    riga('koAlleato', 'opposto', { kind: 'ko' }, { cond: { hpNemicaSotto: 0.5 }, limit: una(), desc: 'Al KO alleato (una volta): KO all\'opposto se HP nemica < 50%' }),
   ], lv4: riga('inizio', 'tuttiAlleati', { kind: 'protego' }, { desc: 'All\'inizio: Protego a tutti' }) },
   { id: 'hermione', name: 'Mente Brillante', desc: 'Carica chi le sta davanti e ogni tre lanci silenzia l\'opposto.', lines: [
     riga('lancio', 'davanti', { kind: 'carica', secondi: 0.75 }, { params: [0.75, 1, 1.25], limit: cd(4), desc: 'Al lancio (ogni 4 s): Carica all\'alleato davanti' }),
@@ -367,7 +367,7 @@ export const GRIFONDORO: Ability[] = [
   { id: 'molly', name: 'Istinto Materno', desc: 'Cura extra con i Weasley e scudo a ogni cura.', lines: [
     riga('squadraCura', 'squadraPropria', { kind: 'scudo', n: 10 }, { params: [10, 15, 20], limit: cd(3), desc: 'Quando la squadra cura (ogni 3 s): Scudo +10' }),
     riga('lancio', 'squadraPropria', { kind: 'cura', n: 10 }, { params: [10, 15, 20], cond: { inSquadra: { tag: 'weasley' } }, limit: cd(5), desc: 'Al lancio (ogni 5 s): Cura +10 se un Weasley è in squadra' }),
-  ], lv4: riga('koAlleato', 'opposto', { kind: 'ko' }, { limit: una(), desc: 'Al KO alleato (una volta): KO all\'opposto' }) },
+  ], lv4: riga('koAlleato', 'opposto', { kind: 'ko' }, { cond: { hpNemicaSotto: 0.5 }, limit: una(), desc: 'Al KO alleato (una volta): KO all\'opposto se HP nemica < 50%' }) },
   { id: 'arthur', name: 'Officina Weasley', desc: 'Carica tutti i Weasley a ogni lancio.', lines: [
     riga('lancio', 'alleatiTag', { kind: 'carica', secondi: 0.5 }, { params: [0.5, 0.75, 1], targetArg: 'weasley', limit: cd(3), desc: 'Al lancio (ogni 3 s): Carica a tutti i Weasley' }),
   ], lv4: riga('lancio', 'adiacenti', { kind: 'carica', secondi: 0.5 }, { limit: cd(3), desc: 'Al lancio (ogni 3 s): Carica agli adiacenti' }) },
