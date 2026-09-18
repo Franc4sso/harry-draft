@@ -75,6 +75,20 @@ describe('applyGelo e KO', () => {
     applyGelo(s, unitAt(s, 'left', 0), b2, 1)
     expect(b2.ko).toBe(false); expect(hasStatus(b2, 'gelo')).toBe(true)
   })
+  it('Esecuzione a Freddo ha un cooldown interno di 4 s: il secondo Gelo nello stesso istante non esegue', () => {
+    const s = mk({ leftMods: { esecuzioneAFreddo: true } })
+    const b = unitAt(s, 'right', 0)!, b2 = unitAt(s, 'right', 1)!
+    s.sides[1].hp = 90
+    s.t = 0
+    applyGelo(s, unitAt(s, 'left', 0), b, 1)
+    expect(b.ko).toBe(true)
+    applyGelo(s, unitAt(s, 'left', 0), b2, 1)
+    expect(b2.ko, 'secondo Gelo entro il cooldown: nessuna esecuzione').toBe(false)
+    expect(hasStatus(b2, 'gelo')).toBe(true)
+    s.t = 4
+    applyGelo(s, unitAt(s, 'left', 0), b2, 1)
+    expect(b2.ko, 'a 4 s il cooldown è scaduto: esegue').toBe(true)
+  })
   it('koUnit: Protego lo annulla; immune lo annulla; accoda i trigger; Mietitore e Carnefice', () => {
     const s = mk({ leftMods: { mietitore: 6, sogliaBonusPerKo: { step: 0.05, cap: 0.25 } } })
     const a = unitAt(s, 'left', 0)!; const b = unitAt(s, 'right', 0)!; const b2 = unitAt(s, 'right', 1)!

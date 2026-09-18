@@ -52,7 +52,10 @@ export function applyGelo(state: RtState, source: RtUnit | null, target: RtUnit,
   const ok = applyUnitStatus(state, target, { kind: 'gelo', remaining: secondi }, source ?? undefined)
   if (!ok) return false
   const atk = sideOf(state, other(target.side)); const t = sideOf(state, target.side)
-  if (atk.mods.esecuzioneAFreddo && !target.bossLeader && t.hp < t.hpMax * 0.5) {
+  // Cooldown interno per lato: l'esecuzione non può ripetersi prima di RT.esecuzioneAFreddoCd secondi.
+  if (atk.mods.esecuzioneAFreddo && !target.bossLeader && t.hp < t.hpMax * 0.5
+      && state.t - (atk.limits['eaf:t'] ?? -Infinity) >= RT.esecuzioneAFreddoCd) {
+    atk.limits['eaf:t'] = state.t
     reazione(state, 'EsecuzioneAFreddo', target.side)
     koUnit(state, target, source ?? undefined)
   }

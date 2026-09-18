@@ -21,6 +21,7 @@ export const RT = {
   triggerDepthMax: 8,
   sospesoMult: 1.5,
   sospesoLentezza: 1,
+  esecuzioneAFreddoCd: 4,
 } as const
 
 const EPS = 1e-9

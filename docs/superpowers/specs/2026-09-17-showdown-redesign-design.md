@@ -476,7 +476,7 @@ Formato: **Nome** — Trigger: effetto con numeri `[lv1/lv2/lv3]`. **Lv4:** riga
 | Miasma (Duo) | veleno + magieOscure | Ogni KO nemico: ☠ +3. Rinominato **Contagio** per non collidere con la reazione Miasma. |
 | Untore | veleno + supporto | Ogni Cura della squadra: ☠ +1. |
 | Muro Vivente | scudirigen + taunt | Finché la squadra ha ⛨, riflette il 50% del danno assorbito dallo Scudo. |
-| Esecuzione a Freddo | esecuzione + controllo | Gelo applicato a un nemico mentre l'HP nemica è < 50% → KO. Leader boss immune. |
+| Esecuzione a Freddo | esecuzione + controllo | Gelo applicato a un nemico mentre l'HP nemica è < 50% → KO. Leader boss immune. Cooldown interno 4 s. |
 | Mietitore | esecuzione + magieOscure | Ogni KO nemico: +6 danno flat a chi ha fatto il KO (max 3 stack) per il resto della battaglia. |
 
 Il segnale `taunt` (1 Tank) resta come segnale di composizione. Grado 2 (3 maghi con tag) → keyword mult +50% come oggi.
