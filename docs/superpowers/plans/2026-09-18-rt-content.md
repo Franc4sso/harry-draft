@@ -453,7 +453,7 @@ export const SERPEVERDE: Ability[] = [
     riga('lancio', 'squadraPropria', { kind: 'cura', n: 10 }, { cond: { adiacente: { casa: 'Serpeverde' } }, limit: cd(5), desc: 'Al lancio (ogni 5 s): Cura +10 se un Serpeverde è adiacente' }),
   ], lv4: riga('lancio', 'squadraPropria', { kind: 'cura', n: 10 }, { limit: cd(5), desc: 'Al lancio (ogni 5 s): Cura +10' }) },
   { id: 'pansy', name: 'Pettegolezzo', desc: 'Ogni lingua bloccata è una goccia di veleno.', lines: [
-    riga('lancio', 'squadraNemica', { kind: 'segno', segno: 'veleno', stacks: 1 }, { params: [1, 1, 2], limit: cd(3), desc: 'Al lancio (ogni 3 s): Veleno +1' }),
+    riga('lancio', 'squadraNemica', { kind: 'segno', segno: 'veleno', stacks: 1 }, { params: [1, 1, 2], limit: libera(), desc: 'Al lancio: Veleno +1' }),
   ], lv4: riga('lancio', 'nemicoCasuale', { kind: 'silenzio', secondi: 2 }, { limit: cd(8), desc: 'Al lancio (ogni 8 s): Silenzio 2 s a un nemico casuale' }) },
   { id: 'goyle', name: 'Guardia del Corpo', desc: 'Scudo all\'inizio; a livello 4 copre Draco.', lines: [
     riga('inizio', 'squadraPropria', { kind: 'scudoIniziale', n: 25 }, { params: [25, 35, 45], desc: 'All\'inizio: Scudo +25' }),
@@ -578,12 +578,12 @@ export const TASSOROSSO: Ability[] = [
   ], lv4: riga('lancio', 'squadraPropria', { kind: 'cura', n: 20 }, { limit: cd(5), desc: 'Al lancio (ogni 5 s): Cura +20' }) },
   { id: 'susan', name: 'Memoria dei Caduti', desc: 'Si carica quando un alleato cade.', lines: [
     riga('koAlleato', 'se', { kind: 'carica', secondi: 2 }, { limit: cd(2), desc: 'Al KO alleato: Carica 2 s a sé' }),
-  ], lv4: riga('lancio', 'alleatoSlotMinimo', { kind: 'rianima' }, { limit: cd(12), desc: 'Al lancio (ogni 12 s): Rianima un alleato' }) },
+  ], lv4: riga('koAlleato', 'tuttiAlleati', { kind: 'carica', secondi: 1 }, { desc: 'Al KO alleato: Carica 1 s a tutta la squadra' }) },
   { id: 'ernie', name: 'Prefetto Zelante', desc: 'Scudo a ogni lancio.', lines: [
     riga('lancio', 'squadraPropria', { kind: 'scudo', n: 15 }, { params: [15, 20, 25], limit: cd(3), desc: 'Al lancio (ogni 3 s): Scudo +15' }),
   ], lv4: riga('inizio', 'riga', { kind: 'protego' }, { desc: 'All\'inizio: Protego alla sua fila' }) },
   { id: 'justin', name: 'Nato Babbano', desc: 'Impara combattendo: ogni lancio lo rende più forte.', lines: [
-    riga('lancio', 'se', { kind: 'dannoPct', pct: 0.05, durata: 'battaglia' }, { params: [0.05, 0.08, 0.1], limit: libera(), desc: 'Al lancio: +5% danno per il resto della battaglia' }),
+    riga('lancio', 'se', { kind: 'dannoPct', pct: 0.05, durata: 'battaglia' }, { params: [0.05, 0.08, 0.1], limit: una(8), desc: 'Al lancio (max 8): +5% danno per il resto della battaglia' }),
   ], lv4: riga('lancio', 'se', { kind: 'multicast', n: 1, durata: 'battaglia' }, { limit: una(), desc: 'Una volta: Multicast +1 per il resto della battaglia' }) },
   { id: 'zacharias', name: 'Lingua Lunga', desc: 'Indebolisce l\'opposto.', lines: [
     riga('lancio', 'opposto', { kind: 'indebolito', pct: 0.1, secondi: 3 }, { params: [0.1, 0.15, 0.2], limit: cd(4), desc: 'Al lancio (ogni 4 s): Indebolito 10% per 3 s all\'opposto' }),
