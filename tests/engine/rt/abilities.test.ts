@@ -110,17 +110,38 @@ describe('continuo', () => {
     const s = mk(7)
     applyStaticContinuo(s)
     const a = unitAt(s, 'left', 0)!
-    let draws = 0
-    const real = s.rng.chance.bind(s.rng)
-    s.rng.chance = (p: number) => { draws += 1; return real(p) }
+    const counted = { n: 0 }
+    for (const k of ['next', 'int', 'chance', 'pick', 'shuffle'] as const) {
+      const orig = (s.rng as any)[k].bind(s.rng)
+      ;(s.rng as any)[k] = (...args: any[]) => { counted.n++; return orig(...args) }
+    }
     const vals: number[] = []
     for (let i = 0; i < 50; i++) vals.push(continuoMods(s, a).dannoPct)
-    expect(draws).toBe(0)                                    // (a) zero RNG
+    expect(counted.n).toBe(0)                                // (a) zero RNG (qualsiasi metodo)
     expect(new Set(vals).size).toBe(1)                       // (b) stabile
     expect(vals[0]).toBe(0.2)                                // seed 7 → chance vera
     const s2 = mk(1)
     applyStaticContinuo(s2)
     expect(continuoMods(s2, unitAt(s2, 'left', 0)!).dannoPct).toBe(0)   // (c) seed 1 → chance falsa
+  })
+  it('una riga Continuo `target: opposto` è saltata: niente RNG anche quando unitTarget cadrebbe sul fallback casuale', () => {
+    // Riga di sinistra su slot 0, target 'opposto' → unitTarget guarderebbe il lato destro: slot 0 e tutta la riga
+    // [0,1,2] KO, ma slot 3 (retro) vivo → fallback `rng.pick(pool)`. La riga deve essere scartata PRIMA di selectTargets.
+    const s = createState(
+      squad({ id: 'a', ability: ability([line({ trigger: 'continuo', target: 'opposto', effect: { kind: 'cdFlat', secondi: -1 } })]) }),
+      squad({ id: 'r0' }, { id: 'r1' }, { id: 'r2' }, { id: 'r3' }),
+      createRng(1))
+    const a = unitAt(s, 'left', 0)!
+    koUnit(s, unitAt(s, 'right', 0)!); koUnit(s, unitAt(s, 'right', 1)!); koUnit(s, unitAt(s, 'right', 2)!)
+    const counted = { n: 0 }
+    for (const k of ['next', 'int', 'chance', 'pick', 'shuffle'] as const) {
+      const orig = (s.rng as any)[k].bind(s.rng)
+      ;(s.rng as any)[k] = (...args: any[]) => { counted.n++; return orig(...args) }
+    }
+    const vals: { cdFlat: number }[] = []
+    for (let i = 0; i < 50; i++) vals.push(continuoMods(s, a))
+    expect(counted.n).toBe(0)
+    expect(vals.every(v => v.cdFlat === 0)).toBe(true)
   })
   it('due stati identici con righe Continuo `chance` danno la stessa sequenza di continuoMods', () => {
     const mk = () => {

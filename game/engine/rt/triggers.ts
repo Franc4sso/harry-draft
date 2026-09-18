@@ -13,7 +13,7 @@ function fireFor(state: RtState, ev: TriggerEvent): void {
     const victim = unitByKey(state, ev.bersaglioKey)
     const k = `contagio:${ev.bersaglioKey}`
     const s = sideOf(state, ev.side)
-    if (mods.contagioOnKo && victim && !s.soglieScattate.has(k)) { s.soglieScattate.add(k); applySegno(state, null, victim.side, 'veleno', mods.contagioOnKo) }
+    if (mods.contagioOnKo && victim && !s.soglieScattate.has(k) && alive(state, ev.side).length > 0) { s.soglieScattate.add(k); applySegno(state, null, victim.side, 'veleno', mods.contagioOnKo) }
   }
   // Untore: «Ogni Cura della squadra» → +1 Veleno al nemico. Sull'evento di LATO: una volta per cura.
   if (ev.trigger === 'squadraCura' && !ev.unitKey && sideOf(state, ev.side).mods.untore) {

@@ -100,4 +100,10 @@ describe('applyGelo e KO', () => {
     koUnit(s, b, a); processQueue(s)
     expect(s.sides[1].segni.veleno).toBe(3)
   })
+  it('Contagio non scatta se il lato che avrebbe fatto il KO è già tutto KO (mutual wipe)', () => {
+    const s = mk({ leftMods: { contagioOnKo: 3 } })
+    unitAt(s, 'left', 0)!.ko = true; unitAt(s, 'left', 1)!.ko = true
+    koUnit(s, unitAt(s, 'right', 0)!); processQueue(s)
+    expect(s.sides[1].segni.veleno).toBe(0)
+  })
 })

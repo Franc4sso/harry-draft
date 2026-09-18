@@ -1,4 +1,4 @@
-import type { AbilityLine, Effect, RtSideId } from '@/types/rt'
+import type { AbilityLine, Effect, RtSideId, Target } from '@/types/rt'
 import { checkCond } from './cond'
 import { applyEffect } from './effects'
 import { alive, emit, other, sideOf, type RtState, type RtUnit } from './state'
@@ -65,6 +65,12 @@ export function fireLine(state: RtState, owner: RtUnit | null, side: RtSideId, l
 
 const DYN = new Set<Effect['kind']>(['dannoPct', 'cdPct', 'cdFlat'])
 const STATIC = new Set<Effect['kind']>(['hpPct', 'scudoIniziale', 'immune', 'copre', 'durataStatusPct'])
+/** Bersagli che una riga Continuo può valutare: solo lato proprio. Gli altri (opposto, nemicoCasuale, ecc.)
+ *  non possono mai includere `u` E alcuni (opposto, nemicoCasuale) consumano RNG dal fallback casuale di `unitTarget`. */
+const CONTINUO_ALLY_TARGETS: ReadonlySet<Target> = new Set<Target>([
+  'se', 'dietro', 'davanti', 'sinistra', 'destra', 'adiacenti', 'riga', 'colonna',
+  'tuttiAlleati', 'alleatiTag', 'alleatiCasa', 'alleatiRuolo', 'alleatoSlotMinimo', 'squadraPropria',
+])
 
 function continuoLines(state: RtState, side: RtSideId): { owner: RtUnit | null; ol: OwnedLine }[] {
   const out: { owner: RtUnit | null; ol: OwnedLine }[] = []
@@ -90,7 +96,8 @@ function computeContinuoMods(state: RtState, u: RtUnit): { dannoPct: number; cdP
   const acc = { dannoPct: 0, cdPct: 0, cdFlat: 0 }
   for (const { owner, ol } of continuoLines(state, u.side)) {
     const e = ol.line.effect
-    if (!DYN.has(e.kind) || ol.line.target === 'squadraNemica' || ol.line.target === 'nemicoCasuale') continue
+    // solo bersagli alleati: gli altri non possono includere u e alcuni (opposto, nemicoCasuale) consumano RNG
+    if (!DYN.has(e.kind) || !CONTINUO_ALLY_TARGETS.has(ol.line.target)) continue
     // Riga di lato con la squadra interamente KO: nessuna ancora viva → la riga non si applica.
     const actor = anchor(state, owner, u.side)
     if (!actor) continue
