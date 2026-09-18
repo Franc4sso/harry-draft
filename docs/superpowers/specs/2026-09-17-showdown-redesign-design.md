@@ -248,7 +248,7 @@ Potenza = moltiplicatore di `atk`. Cura/Scudo = valori flat (scalano col livello
 | diffindo | Diffindo | Danno 0,7 ×2 (Multicast 2) | ogni colpo su squadra con ⚡ → ⚡ +1 | Crescendo: +1 colpo ogni 3 cast |
 | bombarda | Bombarda | Danno 2,4 | 🔥 +1 | — (sicura) |
 | avada | Avada Kedavra | Danno 3,2, cd +2, magieOscure | HP nemica < 25% → KO opposto | Memoria: cd −0,3 s per KO fatto (min 3 s) |
-| sectumsempra | Sectumsempra | Danno 2,4, magieOscure | Vulnerabile 2 s | Memoria: +2 danno flat per vittoria (no cap) |
+| sectumsempra | Sectumsempra | Danno 2,4, magieOscure | Vulnerabile 2 s | Memoria: +1 danno flat per vittoria (no cap) |
 | expelliarmus | Expelliarmus | Danno 1,4 | Disarmo; se entro 2 s da un Gelo alleato → Silenzio 2 s | Memoria: +1 danno flat per Disarmo riuscito (no cap) |
 | levicorpus | Levicorpus | Danno 0,5 | Sospeso 3 s | Crescendo: Sospeso +0,5 s per cast |
 | tarantallegra | Tarantallegra | Status | Lentezza 2 s; su squadra con ⚡ → anche Gelo 1 s | — (sicura: Lentezza 2,4 s) |
@@ -367,7 +367,7 @@ La rarità (`tier` 1–4) è potere, non solo probabilità di apparire. Vale per
 Regole:
 - Un Comune non può avere una riga incondizionata più forte della riga condizionata di un Raro della stessa famiglia (es. ⛨ iniziale: Comune ≤ 45, Raro ≤ 60, Epico ≤ 80 a lv3).
 - I detonatori di KO (Voldemort, Moody, Bellatrix lv4, Molly lv4) stanno solo su tier ≤ 3 e sempre con soglia.
-- Le spell "no cap" (Memoria infinita) sono distribuite su tutti i tier, ma i tier alti hanno il `per` più alto (Sectumsempra +2, Flipendo +5%).
+- Le spell "no cap" (Memoria infinita) sono distribuite su tutti i tier, ma i tier alti hanno il `per` più alto (Sectumsempra +1, Flipendo +5%).
 - Una combo (catena §5, coppia di Segni, Duo) non deve dipendere da un solo Comune: ogni catena ha almeno un tier ≤ 2 come perno.
 
 Verifica: statica al design (questa tabella) e **empirica** nell'harness (§8.5: `tierOrdering`, `comboBalance`, `inclusionDelta`).
@@ -386,7 +386,7 @@ Formato: **Nome** — Trigger: effetto con numeri `[lv1/lv2/lv3]`. **Lv4:** riga
 | sirius | **Fuga da Azkaban** — Al lancio: se un Malandrino è in squadra, Carica [1/1,5/2] s a sé. Al KO nemico: Multicast +1 per 5 s. **Lv4:** Al KO nemico: Innesco di Lupin se in squadra. |
 | lupin | **Furia Lupesca** — Sotto 50% HP squadra: Multicast +1 e +[30/45/60]% danno. **Lv4:** Sotto 25%: la squadra è immune al Gelo. |
 | moody | **Vigilanza Costante** — All'inizio: Protego a tutta la prima fila. Al KO alleato: KO all'opposto ([1/2/3] volte per battaglia). **Lv4:** All'inizio: Protego anche alla seconda fila. |
-| hermione | **Mente Brillante** — Al lancio: Carica [0,75/1/1,25] s all'alleato davanti. Ogni 3° lancio: Silenzio 2 s all'opposto. **Lv4:** Le sue Lentezze durano il doppio. |
+| hermione | **Mente Brillante** — Al lancio: Carica [0,75/1/1,25] s all'alleato davanti. Ogni 3° lancio: Silenzio 2 s all'opposto. **Lv4:** Le Lentezze della squadra durano il doppio. |
 | ron | **Scacchi Magici** — All'inizio: Protego agli adiacenti. ⛨ iniziale +[30/45/60] per Weasley in squadra. **Lv4:** Al KO subìto: Innesco di tutti gli adiacenti. |
 | ginny | **Fattura Mocciovolante** — Al lancio: Multicast +1 se un Weasley adiacente. A vittoria: +[3/4/5] danno flat permanente. **Lv4:** Frantuma anche su bersaglio Lento (senza Gelo). |
 | neville | **Coraggio Tardivo** — Al KO alleato: +[40/60/80]% danno a tutti gli ES per il resto della battaglia. All'inizio: Protego a sé. **Lv4:** Al lancio: Rianima un alleato (una volta per battaglia). |
@@ -405,7 +405,7 @@ Formato: **Nome** — Trigger: effetto con numeri `[lv1/lv2/lv3]`. **Lv4:** riga
 | Mago | Abilità |
 |---|---|
 | voldemort | **Terrore Immortale** — Al lancio: KO l'opposto se HP nemica < [30/35/40]%. A vittoria: +[5/7/10]% danno permanente ai Mangiamorte. **Lv4:** Al KO nemico: Carica 2 s a tutti i Mangiamorte. |
-| snape | **Pozioni Letali** — Al lancio: ☠ +[2/3/4]. Al KO nemico: ☠ +[4/6/8]. **Lv4:** Le sue Vulnerabili durano il doppio. |
+| snape | **Pozioni Letali** — Al lancio: ☠ +[2/3/4]. Al KO nemico: ☠ +[4/6/8]. **Lv4:** Le Vulnerabili della squadra durano il doppio. |
 | bellatrix | **Tortura Cruciatus** — Continuo: le sue ⚡ valgono +[50/75/100]% se un Mangiamorte adiacente. Al lancio: 30% Gelo 1 s. **Lv4:** I Frantuma fatti da lei → KO se HP nemica < 40%. |
 | lucius | **Denaro e Influenza** — All'inizio: Carica [1/1,5/2] s a tutti i Mangiamorte. Al lancio: Vulnerabile 3 s. **Lv4:** Al lancio: Lentezza 2 s a tutta la prima fila nemica. |
 | draco | **Orgoglio Malfoy** — Al lancio: ☠ +[1/2/3] se un Serpeverde adiacente. A vittoria: +[3/4/5] danno flat permanente. **Lv4:** Se Goyle o Crabbe in squadra: Protego a sé all'inizio. |
@@ -418,8 +418,8 @@ Formato: **Nome** — Trigger: effetto con numeri `[lv1/lv2/lv3]`. **Lv4:** riga
 | crabbe | **Guardia del Corpo** — ⛨ iniziale +[25/35/45]; +20 se Draco in squadra. **Lv4:** Al KO subìto: ⛨ +100. |
 | marcus | **Capitano Brutale** — Al lancio: Danno ×[1,25/1,4/1,55] se HP nemica < 50%. **Lv4:** Al KO nemico: Multicast +1 per il resto della battaglia (max 3). |
 | pettigrew | **Codardo** — All'inizio: Protego a sé. Al KO subìto: Innesco di tutti i Mangiamorte [/ + Carica 1 s / + Carica 2 s]. **Lv4:** Al KO subìto: torna in gioco dopo 5 s. |
-| theodore | **Ombra Silente** — Al lancio: se il bersaglio è Silenziato, ☠ +[3/4/5]. **Lv4:** I suoi Silenzi durano +1 s. |
-| blaise | **Distacco** — Continuo: +[10/15/20]% danno per ogni slot vuoto o KO nella propria squadra. **Lv4:** Al lancio: ☠ +2 se nessun alleato adiacente. |
+| theodore | **Ombra Silente** — Al lancio: se il bersaglio è Silenziato, ☠ +[3/4/5]. **Lv4:** I Silenzi della squadra durano +50%. |
+| blaise | **Distacco** — Continuo: +[10/15/20]% danno se nessun alleato è adiacente (lupo solitario). **Lv4:** Al lancio (ogni 4 s): ☠ +2 se la squadra ha slot vuoti o KO. |
 | astoria | **Cura Discreta** — Al lancio: Cura +[8/12/16] per Serpeverde in squadra. **Lv4:** Quando cura: Purifica un alleato. |
 
 ### Corvonero
@@ -450,9 +450,9 @@ Formato: **Nome** — Trigger: effetto con numeri `[lv1/lv2/lv3]`. **Lv4:** riga
 | hannah | **Tenacia** — Al lancio: Cura +[10/15/20] per Tassorosso in squadra. **Lv4:** Baluardo ×2. |
 | susan | **Memoria dei Caduti** — Al lancio: ⛨ +[20/30/40] se ha Rianimato. Al KO alleato: Carica 2 s a sé. **Lv4:** Rennervate rimuove tutti i KO. |
 | ernie | **Prefetto Zelante** — Al lancio (Protego): ⛨ +[15/20/25]. **Lv4:** Bastione ×2. |
-| justin | **Nato Babbano** — Crescendo: +[5/8/10]% danno per cast in questa battaglia. **Lv4:** Multicast +1. |
+| justin | **Nato Babbano** — Crescendo: +[5/8/10]% danno per cast in questa battaglia. **Lv4:** Una volta per battaglia: Multicast +1 per 6 s. |
 | zacharias | **Lingua Lunga** — Continuo: i nemici Silenziati fanno −[10/15/20]% danno. **Lv4:** Silenzio anche all'adiacente del bersaglio. |
-| leanne | **Amica Fedele** — Continuo: mentre la prima fila nemica ha almeno un Lento, il nemico subisce +[10/15/20]% danno. **Lv4:** Le sue Lentezze durano +1 s. |
+| leanne | **Amica Fedele** — Continuo: mentre la prima fila nemica ha almeno un Lento, il nemico subisce +[10/15/20]% danno. **Lv4:** Le Lentezze della squadra durano +50%. |
 | eloise | **Pelle Dura** — ⛨ iniziale +[25/35/45]. **Lv4:** Continuo: la squadra subisce −8% danno mentre ha ⛨. |
 | megan | **Gelo Tassorosso** — Continuo: i Gelo della squadra durano +[0,3/0,5/0,7] s. **Lv4:** Necrosi ×2. |
 
@@ -504,7 +504,7 @@ Il segnale `taunt` (1 Tank) resta come segnale di composizione. Grado 2 (3 maghi
 - Stesso roster, stesse spell, stesse abilità, stessi Duo/Trio/archetipi (`rightDuos` già esiste).
 - Numero: normale area 0: 3 · elite area 0: 4 · area 1: 4–5 · area 2: 5–6 · boss finale: 6. `enemyCountByArea = [4, 5, 6]`, `normalEnemyCount = [3, 4, 5]`.
 - Livello: area 0: 1–2 · area 1: 2–3 · area 2: 3–4 · boss +1 (cap 4). Elite = livello massimo della banda.
-- **Memoria simulata**: ogni spell nemica parte con `memoria = round(k × livelloArea)`, `k` = 2 per area, in unità della propria Memoria (es. Sectumsempra +4 danno in area 1). Endless: `k = 2 + 0,5 × piano`.
+- **Memoria simulata**: ogni spell nemica parte con `memoria = round(k × livelloArea)`, `k` = 2 per area, in unità della propria Memoria (es. Sectumsempra +2 danno in area 1). Endless: `k = 2 + 0,5 × piano`.
 - **Combo garantite** (il generatore prova fino a 24 volte, poi accetta): area 0 = un Segno solo; area 1 = due Segni → ≥1 reazione possibile, ≥1 clausola posizionale soddisfatta; area 2 = due Segni + un Duo + un Trio.
 - **Schieramento nemico**: Tank e maghi con "prima fila" davanti; Supporto e Controllo dietro; le clausole "dietro/davanti/adiacente" soddisfatte dove possibile; il resto per slot crescente.
 - `capSupporto` (≤1) e `ensureOffense` restano. `powerOf` → `teamScore` (§8.2).

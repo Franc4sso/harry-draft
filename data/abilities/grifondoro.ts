@@ -30,7 +30,7 @@ export const GRIFONDORO: Ability[] = [
   { id: 'hermione', name: 'Mente Brillante', desc: 'Carica chi le sta davanti e ogni tre lanci silenzia l\'opposto.', lines: [
     riga('lancio', 'davanti', { kind: 'carica', secondi: 0.75 }, { params: [0.75, 1, 1.25], limit: cd(4), desc: 'Al lancio (ogni 4 s): Carica all\'alleato davanti' }),
     riga('lancio', 'opposto', { kind: 'silenzio', secondi: 2 }, { cond: { ogniNLanci: 3 }, limit: libera(), desc: 'Ogni 3° lancio: Silenzio 2 s all\'opposto' }),
-  ], lv4: riga('continuo', 'se', { kind: 'durataStatusPct', status: 'lentezza', pct: 1 }, { desc: 'Le sue Lentezze durano il doppio' }) },
+  ], lv4: riga('continuo', 'se', { kind: 'durataStatusPct', status: 'lentezza', pct: 1 }, { desc: 'Le Lentezze della squadra durano il doppio' }) },
   { id: 'ron', name: 'Scacchi Magici', desc: 'Protego agli adiacenti; scudo extra con i Weasley in squadra.', lines: [
     riga('inizio', 'adiacenti', { kind: 'protego' }, { desc: 'All\'inizio: Protego agli adiacenti' }),
     riga('inizio', 'squadraPropria', { kind: 'scudoIniziale', n: 30 }, { params: [30, 45, 60], cond: { inSquadra: { tag: 'weasley' } }, desc: 'All\'inizio: Scudo +30 se un Weasley è in squadra' }),

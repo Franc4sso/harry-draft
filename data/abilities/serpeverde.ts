@@ -10,7 +10,7 @@ export const SERPEVERDE: Ability[] = [
   { id: 'snape', name: 'Pozioni Letali', desc: 'Veleno a ogni lancio, molto di più a ogni KO nemico.', lines: [
     riga('lancio', 'squadraNemica', { kind: 'segno', segno: 'veleno', stacks: 2 }, { params: [2, 3, 4], limit: cd(3), desc: 'Al lancio (ogni 3 s): Veleno +2' }),
     riga('koNemico', 'squadraNemica', { kind: 'segno', segno: 'veleno', stacks: 4 }, { params: [4, 6, 8], desc: 'Al KO nemico: Veleno +4' }),
-  ], lv4: riga('continuo', 'se', { kind: 'durataStatusPct', status: 'vulnerabile', pct: 1 }, { desc: 'Le sue Vulnerabili durano il doppio' }) },
+  ], lv4: riga('continuo', 'se', { kind: 'durataStatusPct', status: 'vulnerabile', pct: 1 }, { desc: 'Le Vulnerabili della squadra durano il doppio' }) },
   { id: 'bellatrix', name: 'Tortura Cruciatus', desc: 'Più forte con un Mangiamorte accanto; a volte gela.', lines: [
     riga('continuo', 'se', { kind: 'dannoPct', pct: 0.25 }, { params: [0.25, 0.4, 0.5], cond: { adiacente: { tag: 'deatheater' } }, desc: '+25% danno se un Mangiamorte è adiacente' }),
     riga('lancio', 'opposto', { kind: 'gelo', secondi: 1 }, { limit: cd(6), desc: 'Al lancio (ogni 6 s): Gelo 1 s all\'opposto' }),
@@ -55,10 +55,10 @@ export const SERPEVERDE: Ability[] = [
   ], lv4: riga('koSubito', 'alleatiTag', { kind: 'innesco' }, { targetArg: 'deatheater', desc: 'Al KO subìto: Innesco dei Mangiamorte' }) },
   { id: 'theodore', name: 'Ombra Silente', desc: 'Veleno nel silenzio.', lines: [
     riga('lancio', 'squadraNemica', { kind: 'segno', segno: 'veleno', stacks: 2 }, { params: [2, 3, 4], limit: cd(4), desc: 'Al lancio (ogni 4 s): Veleno +2' }),
-  ], lv4: riga('continuo', 'se', { kind: 'durataStatusPct', status: 'silenzio', pct: 0.5 }, { desc: 'I suoi Silenzi durano +50%' }) },
+  ], lv4: riga('continuo', 'se', { kind: 'durataStatusPct', status: 'silenzio', pct: 0.5 }, { desc: 'I Silenzi della squadra durano +50%' }) },
   { id: 'blaise', name: 'Distacco', desc: 'Più forte quando la squadra ha buchi.', lines: [
-    riga('continuo', 'se', { kind: 'dannoPct', pct: 0.1 }, { params: [0.1, 0.15, 0.2], cond: { slotVuotiOKo: true }, desc: '+10% danno se ci sono slot vuoti o KO' }),
-  ], lv4: riga('lancio', 'squadraNemica', { kind: 'segno', segno: 'veleno', stacks: 2 }, { cond: { nessunAdiacente: true }, limit: cd(4), desc: 'Al lancio (ogni 4 s): Veleno +2 se nessun alleato è adiacente' }) },
+    riga('continuo', 'se', { kind: 'dannoPct', pct: 0.1 }, { params: [0.1, 0.15, 0.2], cond: { nessunAdiacente: true }, desc: '+10% danno se nessun alleato è adiacente (lupo solitario)' }),
+  ], lv4: riga('lancio', 'squadraNemica', { kind: 'segno', segno: 'veleno', stacks: 2 }, { cond: { slotVuotiOKo: true }, limit: cd(4), desc: 'Al lancio (ogni 4 s): Veleno +2 se la squadra ha buchi' }) },
   { id: 'astoria', name: 'Cura Discreta', desc: 'Cura di più con Serpeverde accanto.', lines: [
     riga('lancio', 'squadraPropria', { kind: 'cura', n: 8 }, { params: [8, 12, 16], cond: { adiacente: { casa: 'Serpeverde' } }, limit: cd(5), desc: 'Al lancio (ogni 5 s): Cura +8 se un Serpeverde è adiacente' }),
   ], lv4: riga('squadraCura', 'adiacenti', { kind: 'purifica' }, { limit: cd(4), desc: 'Quando la squadra cura (ogni 4 s): Purifica gli adiacenti' }) },

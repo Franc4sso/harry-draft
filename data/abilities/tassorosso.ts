@@ -25,13 +25,13 @@ export const TASSOROSSO: Ability[] = [
   ], lv4: riga('inizio', 'riga', { kind: 'protego' }, { desc: 'All\'inizio: Protego alla sua fila' }) },
   { id: 'justin', name: 'Nato Babbano', desc: 'Impara combattendo: ogni lancio lo rende più forte.', lines: [
     riga('lancio', 'se', { kind: 'dannoPct', pct: 0.05, durata: 'battaglia' }, { params: [0.05, 0.08, 0.1], limit: una(8), desc: 'Al lancio (max 8): +5% danno per il resto della battaglia' }),
-  ], lv4: riga('lancio', 'se', { kind: 'multicast', n: 1, durata: 'battaglia' }, { limit: una(), desc: 'Una volta: Multicast +1 per il resto della battaglia' }) },
+  ], lv4: riga('lancio', 'se', { kind: 'multicast', n: 1, durata: 6 }, { limit: una(), desc: 'Una volta: Multicast +1 per 6 s' }) },
   { id: 'zacharias', name: 'Lingua Lunga', desc: 'Indebolisce l\'opposto.', lines: [
     riga('lancio', 'opposto', { kind: 'indebolito', pct: 0.1, secondi: 3 }, { params: [0.1, 0.15, 0.2], limit: cd(4), desc: 'Al lancio (ogni 4 s): Indebolito 10% per 3 s all\'opposto' }),
   ], lv4: riga('lancio', 'nemicoCasuale', { kind: 'silenzio', secondi: 2 }, { limit: cd(8), desc: 'Al lancio (ogni 8 s): Silenzio 2 s a un nemico casuale' }) },
   { id: 'leanne', name: 'Amica Fedele', desc: 'Rende il nemico Vulnerabile.', lines: [
     riga('lancio', 'squadraNemica', { kind: 'vulnerabile', secondi: 1 }, { params: [1, 1.5, 2], limit: cd(4), desc: 'Al lancio (ogni 4 s): Vulnerabile 1 s' }),
-  ], lv4: riga('continuo', 'se', { kind: 'durataStatusPct', status: 'lentezza', pct: 0.5 }, { desc: 'Le sue Lentezze durano +50%' }) },
+  ], lv4: riga('continuo', 'se', { kind: 'durataStatusPct', status: 'lentezza', pct: 0.5 }, { desc: 'Le Lentezze della squadra durano +50%' }) },
   { id: 'eloise', name: 'Pelle Dura', desc: 'Scudo all\'inizio.', lines: [
     riga('inizio', 'squadraPropria', { kind: 'scudoIniziale', n: 25 }, { params: [25, 35, 45], desc: 'All\'inizio: Scudo +25' }),
   ], lv4: riga('inizio', 'squadraPropria', { kind: 'scudoIniziale', n: 40 }, { desc: 'All\'inizio: Scudo +40' }) },
