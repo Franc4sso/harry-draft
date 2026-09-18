@@ -2,8 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { SPELLS_RT, SPELL_RT_BY_ID } from '@/data/spellsRt'
 import { RT_SPELL_BY_WIZARD } from '@/data/rtLoadout'
 import { WIZARDS, WIZARD_BY_ID } from '@/data/wizards'
-import { GRIFONDORO } from '@/data/abilities/grifondoro'
-import { SERPEVERDE } from '@/data/abilities/serpeverde'
+import { ABILITIES, ABILITY_BY_ID, GRIFONDORO, SERPEVERDE, CORVONERO, TASSOROSSO } from '@/data/abilities'
 import type { Ability, AbilityLine } from '@/types/rt'
 
 const VERB_BY_ROLE = { Attaccante: ['danno'], Tank: ['scudo', 'protego'], Supporto: ['cura', 'carica', 'rianima'], Controllo: ['status'] } as const
@@ -57,8 +56,6 @@ describe('loadout rt (mago → spell)', () => {
   })
 })
 
-const ABILITIES_SO_FAR: Ability[] = [...GRIFONDORO, ...SERPEVERDE]   // Task 4: sostituire con ABILITIES da '@/data/abilities'
-
 const CONTINUO_TARGET_VIETATI = new Set(['opposto', 'nemicoCasuale', 'adiacenteDelBersaglio'])
 function checkLine(a: Ability, l: AbilityLine, where: string) {
   const w = `${a.id} ${where}`
@@ -81,7 +78,7 @@ function checkLine(a: Ability, l: AbilityLine, where: string) {
 
 describe('abilità: regole generali', () => {
   it('ogni abilità: id = wizard, lv4 presente, righe valide', () => {
-    for (const a of ABILITIES_SO_FAR) {
+    for (const a of ABILITIES) {
       expect(WIZARD_BY_ID[a.id], a.id).toBeTruthy()
       expect(a.lv4, `${a.id} lv4`).toBeTruthy()
       a.lines.forEach((l, i) => checkLine(a, l, `#${i}`))
@@ -91,12 +88,42 @@ describe('abilità: regole generali', () => {
   it('budget per rarità (§5.0): righe lv1 senza contare "vittoria"', () => {
     // Una cond "strutturale" non conta: la soglia di un KO (spec: i KO hanno sempre soglia) e l'hpPropriaSotto di una sottoSoglia.
     const contaCond = (l: AbilityLine) => !!l.cond && !(l.effect.kind === 'ko' && 'hpNemicaSotto' in l.cond) && l.trigger !== 'sottoSoglia'
-    for (const a of ABILITIES_SO_FAR) {
+    for (const a of ABILITIES) {
       const tier = WIZARD_BY_ID[a.id]!.tier
       const lines = a.lines.filter(l => l.trigger !== 'vittoria')
       if (tier === 1 || tier === 2) { expect(lines.length, a.id).toBe(2); expect(lines.filter(contaCond).length, `${a.id}: T${tier} al più una cond`).toBeLessThanOrEqual(1) }
       if (tier === 3) { expect(lines.length, a.id).toBeGreaterThanOrEqual(1); expect(lines.length, a.id).toBeLessThanOrEqual(2); if (lines.length === 2) expect(contaCond(lines[1]!), `${a.id}: T3 seconda riga condizionata`).toBe(true) }
       if (tier === 4) expect(lines.length, a.id).toBe(1)
+    }
+  })
+})
+
+describe('abilità: catalogo', () => {
+  it('60 abilità, una per mago, nessun mago senza', () => {
+    expect(ABILITIES.length).toBe(WIZARDS.length)
+    for (const w of WIZARDS) expect(ABILITY_BY_ID[w.id], w.id).toBeTruthy()
+  })
+  it('la casa di ogni abilità coincide con il file (Grifondoro in grifondoro.ts, ecc.)', () => {
+    for (const [house, list] of [['Grifondoro', GRIFONDORO], ['Serpeverde', SERPEVERDE], ['Corvonero', CORVONERO], ['Tassorosso', TASSOROSSO]] as const)
+      for (const a of list) expect(WIZARD_BY_ID[a.id]!.house, a.id).toBe(house)
+  })
+  it('varietà: almeno 8 ultimate (perBattle), almeno 6 righe libere, almeno 10 Continuo, almeno 6 sottoSoglia/koSubito', () => {
+    const all = ABILITIES.flatMap(a => [...a.lines, a.lv4!])
+    expect(all.filter(l => l.limit?.perBattle).length).toBeGreaterThanOrEqual(8)
+    expect(all.filter(l => l.limit?.senzaCooldown).length).toBeGreaterThanOrEqual(6)
+    expect(all.filter(l => l.trigger === 'continuo').length).toBeGreaterThanOrEqual(10)
+    expect(all.filter(l => l.trigger === 'sottoSoglia' || l.trigger === 'koSubito').length).toBeGreaterThanOrEqual(6)
+  })
+  it('i riferimenti a maghi/tag/case esistono', () => {
+    const tags = new Set(WIZARDS.flatMap(w => w.tags ?? []))
+    for (const a of ABILITIES) for (const l of [...a.lines, a.lv4!]) {
+      if (l.target === 'alleatiTag') expect(tags.has(l.targetArg!), `${a.id}: tag ${l.targetArg}`).toBe(true)
+      if (l.target === 'alleatiCasa') expect(['Grifondoro', 'Serpeverde', 'Corvonero', 'Tassorosso']).toContain(l.targetArg)
+      const c = l.cond as Record<string, unknown> | undefined
+      const ref = (c?.adiacente ?? c?.inSquadra) as { wizardId?: string; tag?: string } | undefined
+      if (ref?.wizardId) expect(WIZARD_BY_ID[ref.wizardId], `${a.id}: ${ref.wizardId}`).toBeTruthy()
+      if (ref?.tag) expect(tags.has(ref.tag), `${a.id}: tag ${ref.tag}`).toBe(true)
+      if (l.effect.kind === 'copre') expect(WIZARD_BY_ID[l.effect.wizardId], `${a.id}: copre ${l.effect.wizardId}`).toBeTruthy()
     }
   })
 })
