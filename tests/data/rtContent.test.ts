@@ -152,10 +152,11 @@ describe('tratti e reliquie rt', () => {
   })
   it('le reliquie con hook/keyword nel motore vecchio hanno una traduzione non vuota', () => {
     for (const r of RELICS) {
-      const old = !!(r.triggers?.length || r.keywordMult || r.grantsExecute || r.grantsAlwaysHit || r.grantsShieldConvert || r.grantsDarkMagic)
+      const old = !!(r.triggers?.length || r.keywordMult || r.grantsExecute || r.grantsAlwaysHit || r.grantsShieldConvert || r.grantsDarkMagic || r.drawback?.regen)
       const rt = RELICS_RT[r.id]!
       const has = !!((rt.lines?.length ?? 0) || (rt.carrierLines?.length ?? 0) || (rt.mods && Object.keys(rt.mods).length))
-      if (old && r.id !== 'coppa-tassorosso') expect(has, `${r.id}: aveva hook/keyword, ora vuota`).toBe(true)
+      // drawback di regen non esprimibile: ruling Piano 2, testo al Piano 5
+      if (old && r.id !== 'coppa-tassorosso' && r.id !== 'sete-di-sangue') expect(has, `${r.id}: aveva hook/keyword, ora vuota`).toBe(true)
     }
   })
   it('nessuna riga di lato con trigger lancio (il motore non la farebbe scattare)', () => {
