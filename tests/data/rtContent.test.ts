@@ -3,6 +3,10 @@ import { SPELLS_RT, SPELL_RT_BY_ID } from '@/data/spellsRt'
 import { RT_SPELL_BY_WIZARD } from '@/data/rtLoadout'
 import { WIZARDS, WIZARD_BY_ID } from '@/data/wizards'
 import { ABILITIES, ABILITY_BY_ID, GRIFONDORO, SERPEVERDE, CORVONERO, TASSOROSSO } from '@/data/abilities'
+import { TRAIT_LINES_RT } from '@/data/traitsRt'
+import { RELICS_RT } from '@/data/relicsRt'
+import { TRAITS } from '@/data/traits'
+import { RELICS } from '@/data/relics'
 import type { Ability, AbilityLine } from '@/types/rt'
 
 const VERB_BY_ROLE = { Attaccante: ['danno'], Tank: ['scudo', 'protego'], Supporto: ['cura', 'carica', 'rianima'], Controllo: ['status'] } as const
@@ -124,6 +128,34 @@ describe('abilità: catalogo', () => {
       if (ref?.wizardId) expect(WIZARD_BY_ID[ref.wizardId], `${a.id}: ${ref.wizardId}`).toBeTruthy()
       if (ref?.tag) expect(tags.has(ref.tag), `${a.id}: tag ${ref.tag}`).toBe(true)
       if (l.effect.kind === 'copre') expect(WIZARD_BY_ID[l.effect.wizardId], `${a.id}: copre ${l.effect.wizardId}`).toBeTruthy()
+    }
+  })
+})
+
+describe('tratti e reliquie rt', () => {
+  it('ogni tratto shiny ha una traduzione con righe valide', () => {
+    for (const t of TRAITS) {
+      const lines = TRAIT_LINES_RT[t.id]
+      expect(lines, t.id).toBeTruthy(); expect(lines!.length).toBeGreaterThan(0)
+      lines!.forEach((l, i) => checkLine({ id: t.id, name: t.name, lines: [], lv4: undefined } as unknown as Ability, l, `tratto #${i}`))
+    }
+    expect(Object.keys(TRAIT_LINES_RT).length).toBe(TRAITS.length)
+  })
+  it('ogni reliquia ha una voce rt (anche vuota) e le righe sono valide', () => {
+    for (const r of RELICS) {
+      const rt = RELICS_RT[r.id]
+      expect(rt, r.id).toBeTruthy()
+      ;[...(rt!.lines ?? []), ...(rt!.carrierLines ?? [])].forEach((l, i) => checkLine({ id: r.id, name: r.name, lines: [], lv4: undefined } as unknown as Ability, l, `reliquia #${i}`))
+      if (rt!.carrierLines?.length) expect(r.assignable, `${r.id}: carrierLines solo su reliquie assegnabili`).toBe(true)
+    }
+    expect(Object.keys(RELICS_RT).length).toBe(RELICS.length)
+  })
+  it('le reliquie con hook/keyword nel motore vecchio hanno una traduzione non vuota', () => {
+    for (const r of RELICS) {
+      const old = !!(r.triggers?.length || r.keywordMult || r.grantsExecute || r.grantsAlwaysHit || r.grantsShieldConvert || r.grantsDarkMagic)
+      const rt = RELICS_RT[r.id]!
+      const has = !!((rt.lines?.length ?? 0) || (rt.carrierLines?.length ?? 0) || (rt.mods && Object.keys(rt.mods).length))
+      if (old && r.id !== 'coppa-tassorosso') expect(has, `${r.id}: aveva hook/keyword, ora vuota`).toBe(true)
     }
   })
 })
