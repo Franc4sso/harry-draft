@@ -1,7 +1,9 @@
 import { describe, it, expect } from 'vitest'
 import { SPELLS_RT, SPELL_RT_BY_ID } from '@/data/spellsRt'
 import { RT_SPELL_BY_WIZARD } from '@/data/rtLoadout'
-import { WIZARDS } from '@/data/wizards'
+import { WIZARDS, WIZARD_BY_ID } from '@/data/wizards'
+import { GRIFONDORO } from '@/data/abilities/grifondoro'
+import type { Ability, AbilityLine } from '@/types/rt'
 
 const VERB_BY_ROLE = { Attaccante: ['danno'], Tank: ['scudo', 'protego'], Supporto: ['cura', 'carica', 'rianima'], Controllo: ['status'] } as const
 
@@ -50,6 +52,50 @@ describe('loadout rt (mago → spell)', () => {
       expect(spells.filter(applies).length, `${house} applicatori`).toBeGreaterThanOrEqual(2)
       expect(spells.filter(detonator).length, `${house} detonatori`).toBeGreaterThanOrEqual(2)
       expect(spells.filter(support).length, `${house} sostegno`).toBeGreaterThanOrEqual(1)
+    }
+  })
+})
+
+const ABILITIES_SO_FAR: Ability[] = [...GRIFONDORO]   // Task 4: sostituire con ABILITIES da '@/data/abilities'
+
+const CONTINUO_TARGET_VIETATI = new Set(['opposto', 'nemicoCasuale', 'adiacenteDelBersaglio'])
+function checkLine(a: Ability, l: AbilityLine, where: string) {
+  const w = `${a.id} ${where}`
+  if (l.trigger === 'lancio') {
+    const ok = (l.limit?.everySeconds ?? 0) > 0 || (l.limit?.perBattle ?? 0) > 0 || l.limit?.senzaCooldown === true
+    expect(ok, `${w}: ogni riga 'lancio' ha cooldown, perBattle o senzaCooldown`).toBe(true)
+  }
+  if (l.trigger === 'continuo') {
+    expect(CONTINUO_TARGET_VIETATI.has(l.target), `${w}: continuo con bersaglio ${l.target}`).toBe(false)
+    expect(['dannoPct', 'cdPct', 'cdFlat', 'hpPct', 'scudoIniziale', 'immune', 'copre', 'durataStatusPct'], `${w}: effetto continuo ${l.effect.kind}`).toContain(l.effect.kind)
+  }
+  if (l.trigger === 'lancio' || l.trigger === 'inizio' || l.trigger === 'ogniSecondi' || l.trigger === 'sottoSoglia') {
+    expect(l.target !== 'adiacenteDelBersaglio' && !(l.cond && 'bersaglio' in l.cond), `${w}: nessun bersaglio nel contesto`).toBe(true)
+  }
+  if (l.trigger === 'ogniSecondi') expect((l.limit?.everySeconds ?? 0) > 0, `${w}: ogniSecondi senza everySeconds`).toBe(true)
+  if (l.trigger === 'sottoSoglia') expect(l.cond && 'hpPropriaSotto' in l.cond, `${w}: sottoSoglia senza hpPropriaSotto`).toBe(true)
+  if (l.params) { expect(l.params.length).toBe(3); expect(l.params[0] <= l.params[1] && l.params[1] <= l.params[2] || l.params[0] >= l.params[1] && l.params[1] >= l.params[2], `${w}: params monotoni`).toBe(true) }
+  if (l.target === 'alleatiTag' || l.target === 'alleatiCasa' || l.target === 'alleatiRuolo') expect(l.targetArg, `${w}: targetArg`).toBeTruthy()
+}
+
+describe('abilità: regole generali', () => {
+  it('ogni abilità: id = wizard, lv4 presente, righe valide', () => {
+    for (const a of ABILITIES_SO_FAR) {
+      expect(WIZARD_BY_ID[a.id], a.id).toBeTruthy()
+      expect(a.lv4, `${a.id} lv4`).toBeTruthy()
+      a.lines.forEach((l, i) => checkLine(a, l, `#${i}`))
+      checkLine(a, a.lv4!, 'lv4')
+    }
+  })
+  it('budget per rarità (§5.0): righe lv1 senza contare "vittoria"', () => {
+    // Una cond "strutturale" non conta: la soglia di un KO (spec: i KO hanno sempre soglia) e l'hpPropriaSotto di una sottoSoglia.
+    const contaCond = (l: AbilityLine) => !!l.cond && !(l.effect.kind === 'ko' && 'hpNemicaSotto' in l.cond) && l.trigger !== 'sottoSoglia'
+    for (const a of ABILITIES_SO_FAR) {
+      const tier = WIZARD_BY_ID[a.id]!.tier
+      const lines = a.lines.filter(l => l.trigger !== 'vittoria')
+      if (tier === 1 || tier === 2) { expect(lines.length, a.id).toBe(2); expect(lines.filter(contaCond).length, `${a.id}: T${tier} al più una cond`).toBeLessThanOrEqual(1) }
+      if (tier === 3) { expect(lines.length, a.id).toBeGreaterThanOrEqual(1); expect(lines.length, a.id).toBeLessThanOrEqual(2); if (lines.length === 2) expect(contaCond(lines[1]!), `${a.id}: T3 seconda riga condizionata`).toBe(true) }
+      if (tier === 4) expect(lines.length, a.id).toBe(1)
     }
   })
 })
