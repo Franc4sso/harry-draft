@@ -61,10 +61,10 @@ export function heal(state: RtState, side: RtSideId, amount: number, source?: Rt
   s.hp += applied
   const excess = n - applied
   if (excess > 0 && s.mods.curaEccessoToScudo) s.shield += Math.round(excess * s.mods.curaEccessoToScudo)
-  emit(state, { kind: 'cura', side: source?.side, slot: source?.slot, targetSide: side, value: n })
   if (source) source.score += n
   // `squadraCura` da OGNI cura (spell, riga d'abilità, riga di lato), non solo dal verbo `cura`.
   if (n > 0) {
+    emit(state, { kind: 'cura', side: source?.side, slot: source?.slot, targetSide: side, value: n })
     state.queue.push({ trigger: 'squadraCura', side })
     for (const ally of alive(state, side)) state.queue.push({ trigger: 'squadraCura', side, unitKey: ally.key })
   }

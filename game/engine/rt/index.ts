@@ -1,4 +1,5 @@
 export { simulateRt, snapshotFrame } from './simulate'
 export { createState, rtUnitKey as unitKey } from './state'
 export { RT, cooldownFor, levelCastMult, levelHpMult } from './constants'
+export { fromDrafted, sideModsFor, toRtSide, simulateTeams } from './adapter'
 export type * from '@/types/rt'
