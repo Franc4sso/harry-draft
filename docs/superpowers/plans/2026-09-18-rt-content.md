@@ -418,6 +418,7 @@ import { riga, cd, una, libera } from './util'
 export const SERPEVERDE: Ability[] = [
   { id: 'voldemort', name: 'Terrore Immortale', desc: 'Giustizia l\'opposto quando il nemico è agli sgoccioli; a vittoria i Mangiamorte crescono.', lines: [
     riga('lancio', 'opposto', { kind: 'ko' }, { cond: { hpNemicaSotto: 0.3 }, limit: cd(6), desc: 'Al lancio (ogni 6 s): KO all\'opposto se HP nemica < 30%' }),
+    riga('lancio', 'squadraNemica', { kind: 'vulnerabile', secondi: 2 }, { limit: cd(4), desc: 'Al lancio (ogni 4 s): il terrore, Vulnerabile 2 s' }),
     riga('vittoria', 'alleatiTag', { kind: 'dannoPct', pct: 0.05 }, { params: [0.05, 0.07, 0.1], targetArg: 'deatheater', desc: 'A vittoria: +5% danno permanente ai Mangiamorte' }),
   ], lv4: riga('koNemico', 'alleatiTag', { kind: 'carica', secondi: 2 }, { targetArg: 'deatheater', limit: cd(3), desc: 'Al KO nemico: Carica 2 s ai Mangiamorte' }) },
   { id: 'snape', name: 'Pozioni Letali', desc: 'Veleno a ogni lancio, molto di più a ogni KO nemico.', lines: [
