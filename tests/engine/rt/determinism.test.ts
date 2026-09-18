@@ -3,7 +3,7 @@
 import { describe, it, expect } from 'vitest'
 import { simulateRt } from '@/game/engine/rt'
 import { createRng } from '@/game/engine/rng'
-import type { AbilityLine, Effect, RtSideMods, RtUnitInput, SpellRt, Target, Trigger } from '@/types/rt'
+import type { AbilityLine, Cond, Effect, RtSideMods, RtUnitInput, SpellRt, Target, Trigger } from '@/types/rt'
 import { unit } from './fixtures'
 
 const TRIGGERS: Trigger[] = ['inizio', 'lancio', 'continuo', 'koSubito', 'koAlleato', 'koNemico', 'adiacenteLancia', 'squadraCura', 'sottoSoglia', 'ogniSecondi']
@@ -15,6 +15,11 @@ const EFFECTS: Effect[] = [
   { kind: 'dannoPct', pct: 0.2, durata: 'battaglia' }, { kind: 'cdFlat', secondi: -0.5 }, { kind: 'vulnerabile', secondi: 2 }, { kind: 'hpPct', pct: 0.1 }, { kind: 'immune', a: 'gelo' },
   { kind: 'rimuoviSegnoProprio', segno: 'fiamma' }, { kind: 'dannoFlat', n: 3 }, { kind: 'cdPct', pct: -0.1 }, { kind: 'copre', wizardId: 'nessuno' },
   { kind: 'durataStatusPct', status: 'gelo', pct: 0.5 }, { kind: 'scudoIniziale', n: 25 }, { kind: 'indebolito', pct: 0.2, secondi: 2 }, { kind: 'sospeso', secondi: 3 },
+]
+const COND: Cond[] = [
+  { adiacente: { tag: 'x' } }, { inSquadra: { tag: 'x' } }, { hpNemicaSotto: 0.5 }, { hpPropriaSotto: 0.5 },
+  { segnoNemico: { segno: 'scossa', min: 2 } }, { bersaglio: 'gelato' }, { entroSecondiDa: { evento: 'gelo', secondi: 2 } },
+  { ogniNLanci: 2 }, { chance: 0.5 }, { slotVuotiOKo: true }, { nessunAdiacente: true },
 ]
 const VERBS: SpellRt[] = [
   { id: 'd', name: 'D', desc: '', verb: 'danno', potenza: 1.5 }, { id: 'f', name: 'F', desc: '', verb: 'danno', potenza: 1, segno: { kind: 'fiamma', stacks: 3 } },
@@ -34,10 +39,10 @@ function randomSquad(seed: number): RtUnitInput[] {
       let target = rng.pick(TARGETS)
       // `dannoPct` su `squadraNemica` è rifiutato dal motore per design (va espresso come riga Continuo): il fuzz non lo genera.
       if (effect.kind === 'dannoPct' && target === 'squadraNemica') target = 'squadraPropria'
-      return { trigger: rng.pick(TRIGGERS), target, effect, limit: { everySeconds: 3 } }
+      return { trigger: rng.pick(TRIGGERS), target, effect, limit: { everySeconds: 3 }, cond: rng.chance(0.6) ? rng.pick(COND) : undefined }
     })
     // id/name espliciti dal seed: `unit()` usa un contatore globale che renderebbe due squad "uguali" diverse.
-    return unit({ id: `u${seed}s${slot}`, name: `U${seed}s${slot}`, slot, level: rng.int(1, 4) as 1 | 2 | 3 | 4, stats: { hp: rng.int(50, 160), atk: rng.int(10, 40), def: rng.int(5, 40), spd: rng.int(8, 38) }, spell: rng.pick(VERBS), ability: { id: `ab${slot}`, name: 'x', lines } })
+    return unit({ id: `u${seed}s${slot}`, name: `U${seed}s${slot}`, slot, tags: rng.chance(0.4) ? ['x'] : [], level: rng.int(1, 4) as 1 | 2 | 3 | 4, stats: { hp: rng.int(50, 160), atk: rng.int(10, 40), def: rng.int(5, 40), spd: rng.int(8, 38) }, spell: rng.pick(VERBS), ability: { id: `ab${slot}`, name: 'x', lines } })
   })
 }
 
@@ -64,8 +69,13 @@ function randomMods(seed: number): RtSideMods {
   if (rng.chance(0.3)) m.curaPct = 0.3
   if (rng.chance(0.2)) m.ignoraCopertura = true
   if (rng.chance(0.4)) {
-    const lineEffects: Effect[] = [{ kind: 'scudo', n: 20 }, { kind: 'cura', n: 15 }, { kind: 'segno', segno: 'scossa', stacks: 2 }, { kind: 'protego' }, { kind: 'vulnerabile', secondi: 3 }]
-    m.lines = [{ trigger: rng.pick(['inizio', 'ogniSecondi', 'koAlleato', 'koNemico', 'squadraCura', 'sottoSoglia'] as const), target: rng.pick(['tuttiAlleati', 'squadraPropria', 'squadraNemica', 'tuttiNemici', 'nemicoCasuale'] as const), effect: rng.pick(lineEffects), limit: { everySeconds: 3 }, cond: rng.chance(0.5) ? { hpPropriaSotto: 0.5 } : undefined }]
+    const lineEffects: Effect[] = [{ kind: 'scudo', n: 20 }, { kind: 'cura', n: 15 }, { kind: 'segno', segno: 'scossa', stacks: 2 }, { kind: 'protego' }, { kind: 'vulnerabile', secondi: 3 }, { kind: 'dannoPct', pct: 0.2 }, { kind: 'cdPct', pct: -0.1 }]
+    const trigger = rng.pick(['inizio', 'ogniSecondi', 'koAlleato', 'koNemico', 'squadraCura', 'sottoSoglia', 'continuo'] as const)
+    const effect = rng.pick(lineEffects)
+    let target = rng.pick(['tuttiAlleati', 'squadraPropria', 'squadraNemica', 'tuttiNemici', 'nemicoCasuale'] as const)
+    // come per le righe d'unità: `dannoPct` su `squadraNemica` fuori da una riga Continuo è rifiutato per design.
+    if (effect.kind === 'dannoPct' && target === 'squadraNemica' && trigger !== 'continuo') target = 'squadraPropria'
+    m.lines = [{ trigger, target, effect, limit: { everySeconds: 3 }, cond: rng.chance(0.6) ? rng.pick(COND) : undefined }]
   }
   return m
 }
