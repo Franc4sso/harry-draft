@@ -3,6 +3,7 @@ import { SPELLS_RT, SPELL_RT_BY_ID } from '@/data/spellsRt'
 import { RT_SPELL_BY_WIZARD } from '@/data/rtLoadout'
 import { WIZARDS, WIZARD_BY_ID } from '@/data/wizards'
 import { GRIFONDORO } from '@/data/abilities/grifondoro'
+import { SERPEVERDE } from '@/data/abilities/serpeverde'
 import type { Ability, AbilityLine } from '@/types/rt'
 
 const VERB_BY_ROLE = { Attaccante: ['danno'], Tank: ['scudo', 'protego'], Supporto: ['cura', 'carica', 'rianima'], Controllo: ['status'] } as const
@@ -56,7 +57,7 @@ describe('loadout rt (mago → spell)', () => {
   })
 })
 
-const ABILITIES_SO_FAR: Ability[] = [...GRIFONDORO]   // Task 4: sostituire con ABILITIES da '@/data/abilities'
+const ABILITIES_SO_FAR: Ability[] = [...GRIFONDORO, ...SERPEVERDE]   // Task 4: sostituire con ABILITIES da '@/data/abilities'
 
 const CONTINUO_TARGET_VIETATI = new Set(['opposto', 'nemicoCasuale', 'adiacenteDelBersaglio'])
 function checkLine(a: Ability, l: AbilityLine, where: string) {
