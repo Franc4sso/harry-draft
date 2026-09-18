@@ -158,4 +158,10 @@ describe('tratti e reliquie rt', () => {
       if (old && r.id !== 'coppa-tassorosso') expect(has, `${r.id}: aveva hook/keyword, ora vuota`).toBe(true)
     }
   })
+  it('nessuna riga di lato con trigger lancio (il motore non la farebbe scattare)', () => {
+    for (const r of RELICS) {
+      const rt = RELICS_RT[r.id]!
+      for (const l of rt.lines ?? []) expect(l.trigger, `${r.id}: riga di lato con trigger lancio`).not.toBe('lancio')
+    }
+  })
 })

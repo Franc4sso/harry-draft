@@ -23,9 +23,10 @@ export const RELICS_RT: Record<string, RelicRt> = Object.fromEntries(([
   R('cuore-del-tasso', { mods: { scudoProdottoMult: 1.5 } }),
   // ── veleno ──
   R('ampolla-veleno', { mods: { velenoMult: 1.5 } }),
-  R('pugnale-bellatrix', { lines: [riga('lancio', 'squadraNemica', { kind: 'segno', segno: 'veleno', stacks: 1 }, { limit: cd(2) })] }),
-  R('boccino-doro', { lines: [riga('lancio', 'squadraNemica', { kind: 'segno', segno: 'veleno', stacks: 1 }, { cond: { chance: 0.25 }, limit: { senzaCooldown: true } })] }),
-  R('zanna-vorace', { lines: [riga('lancio', 'squadraNemica', { kind: 'segno', segno: 'veleno', stacks: 2 }, { limit: cd(2) })] }),
+  // "a ogni colpo" non esiste per le righe di lato (il motore non accoda eventi 'lancio' di lato): diventano tick periodici.
+  R('pugnale-bellatrix', { lines: [riga('ogniSecondi', 'squadraNemica', { kind: 'segno', segno: 'veleno', stacks: 1 }, { limit: cd(2) })] }),
+  R('boccino-doro', { lines: [riga('ogniSecondi', 'squadraNemica', { kind: 'segno', segno: 'veleno', stacks: 1 }, { limit: cd(1.5) })] }),
+  R('zanna-vorace', { lines: [riga('ogniSecondi', 'squadraNemica', { kind: 'segno', segno: 'veleno', stacks: 2 }, { limit: cd(2) })] }),
   R('calice-avvelenato', { mods: { velenoMult: 2 } }),
   // ── magie oscure ──
   R('marchio-nero', { mods: { magieOscure: { bonus: 0.5, recoil: 0.2 } } }),

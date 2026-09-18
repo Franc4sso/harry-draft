@@ -15,7 +15,7 @@ export const TRAIT_LINES_RT: Record<string, AbilityLine[]> = {
   ferocia:        [riga('lancio', 'se', { kind: 'dannoFlat', n: 6 }, { limit: { perBattle: 5 }, desc: 'Al lancio (max 5): +6 danno per il resto della battaglia' })],
   rigenerazione:  [riga('ogniSecondi', 'squadraPropria', { kind: 'cura', n: 12 }, { limit: cd(3), desc: 'Ogni 3 s: Cura 12' })],
   anticipo:       [riga('inizio', 'se', { kind: 'carica', secondi: 2 }, { desc: 'All\'inizio: Carica 2 s a sé' })],
-  crescendo:      [riga('ogniSecondi', 'se', { kind: 'dannoPct', pct: 0.06, durata: 'battaglia' }, { limit: cd(3), desc: 'Ogni 3 s: +6% danno per il resto della battaglia' })],
+  crescendo:      [riga('ogniSecondi', 'se', { kind: 'dannoPct', pct: 0.06, durata: 'battaglia' }, { limit: { everySeconds: 3, perBattle: 10 }, desc: 'Ogni 3 s (max 10): +6% danno per il resto della battaglia' })],
   vendetta:       [riga('koAlleato', 'se', { kind: 'dannoPct', pct: 0.3, durata: 'battaglia' }, { desc: 'Al KO alleato: +30% danno' })],
   frantumazione:  [riga('lancio', 'squadraNemica', { kind: 'vulnerabile', secondi: 2 }, { cond: { chance: 0.5 }, limit: cd(3), desc: 'Al lancio: 50% Vulnerabile 2 s' })],
   gelo:           [riga('lancio', 'opposto', { kind: 'gelo', secondi: 2 }, { cond: { chance: 0.25 }, limit: cd(4), desc: 'Al lancio: 25% Gelo 2 s' })],
