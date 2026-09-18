@@ -39,7 +39,7 @@ export const SERPEVERDE: Ability[] = [
     riga('lancio', 'squadraPropria', { kind: 'cura', n: 10 }, { cond: { adiacente: { casa: 'Serpeverde' } }, limit: cd(5), desc: 'Al lancio (ogni 5 s): Cura +10 se un Serpeverde è adiacente' }),
   ], lv4: riga('lancio', 'squadraPropria', { kind: 'cura', n: 10 }, { limit: cd(5), desc: 'Al lancio (ogni 5 s): Cura +10' }) },
   { id: 'pansy', name: 'Pettegolezzo', desc: 'Ogni lingua bloccata è una goccia di veleno.', lines: [
-    riga('lancio', 'squadraNemica', { kind: 'segno', segno: 'veleno', stacks: 1 }, { params: [1, 1, 2], limit: cd(3), desc: 'Al lancio (ogni 3 s): Veleno +1' }),
+    riga('lancio', 'squadraNemica', { kind: 'segno', segno: 'veleno', stacks: 1 }, { params: [1, 1, 2], limit: libera(), desc: 'Al lancio: Veleno +1' }),
   ], lv4: riga('lancio', 'nemicoCasuale', { kind: 'silenzio', secondi: 2 }, { limit: cd(8), desc: 'Al lancio (ogni 8 s): Silenzio 2 s a un nemico casuale' }) },
   { id: 'goyle', name: 'Guardia del Corpo', desc: 'Scudo all\'inizio; a livello 4 copre Draco.', lines: [
     riga('inizio', 'squadraPropria', { kind: 'scudoIniziale', n: 25 }, { params: [25, 35, 45], desc: 'All\'inizio: Scudo +25' }),

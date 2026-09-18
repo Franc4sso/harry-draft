@@ -1,5 +1,5 @@
 import type { Ability } from '@/types/rt'
-import { riga, cd, una, libera } from './util'
+import { riga, cd, una } from './util'
 
 export const TASSOROSSO: Ability[] = [
   { id: 'tonks', name: 'Riflessi Mutanti', desc: 'Più veloce con l\'Ordine accanto.', lines: [
@@ -17,14 +17,14 @@ export const TASSOROSSO: Ability[] = [
   { id: 'hannah', name: 'Tenacia', desc: 'Cura di più con Tassorosso accanto.', lines: [
     riga('lancio', 'squadraPropria', { kind: 'cura', n: 10 }, { params: [10, 15, 20], cond: { adiacente: { casa: 'Tassorosso' } }, limit: cd(5), desc: 'Al lancio (ogni 5 s): Cura +10 se un Tassorosso è adiacente' }),
   ], lv4: riga('lancio', 'squadraPropria', { kind: 'cura', n: 20 }, { limit: cd(5), desc: 'Al lancio (ogni 5 s): Cura +20' }) },
-  { id: 'susan', name: 'Memoria dei Caduti', desc: 'Si carica quando un alleato cade.', lines: [
+  { id: 'susan', name: 'Memoria dei Caduti', desc: 'Si carica quando un alleato cade; a livello 4 tutta la squadra scatta.', lines: [
     riga('koAlleato', 'se', { kind: 'carica', secondi: 2 }, { limit: cd(2), desc: 'Al KO alleato: Carica 2 s a sé' }),
-  ], lv4: riga('lancio', 'alleatoSlotMinimo', { kind: 'rianima' }, { limit: cd(12), desc: 'Al lancio (ogni 12 s): Rianima un alleato' }) },
+  ], lv4: riga('koAlleato', 'tuttiAlleati', { kind: 'carica', secondi: 1 }, { desc: 'Al KO alleato: Carica 1 s a tutta la squadra' }) },
   { id: 'ernie', name: 'Prefetto Zelante', desc: 'Scudo a ogni lancio.', lines: [
     riga('lancio', 'squadraPropria', { kind: 'scudo', n: 15 }, { params: [15, 20, 25], limit: cd(3), desc: 'Al lancio (ogni 3 s): Scudo +15' }),
   ], lv4: riga('inizio', 'riga', { kind: 'protego' }, { desc: 'All\'inizio: Protego alla sua fila' }) },
   { id: 'justin', name: 'Nato Babbano', desc: 'Impara combattendo: ogni lancio lo rende più forte.', lines: [
-    riga('lancio', 'se', { kind: 'dannoPct', pct: 0.05, durata: 'battaglia' }, { params: [0.05, 0.08, 0.1], limit: libera(), desc: 'Al lancio: +5% danno per il resto della battaglia' }),
+    riga('lancio', 'se', { kind: 'dannoPct', pct: 0.05, durata: 'battaglia' }, { params: [0.05, 0.08, 0.1], limit: una(8), desc: 'Al lancio (max 8): +5% danno per il resto della battaglia' }),
   ], lv4: riga('lancio', 'se', { kind: 'multicast', n: 1, durata: 'battaglia' }, { limit: una(), desc: 'Una volta: Multicast +1 per il resto della battaglia' }) },
   { id: 'zacharias', name: 'Lingua Lunga', desc: 'Indebolisce l\'opposto.', lines: [
     riga('lancio', 'opposto', { kind: 'indebolito', pct: 0.1, secondi: 3 }, { params: [0.1, 0.15, 0.2], limit: cd(4), desc: 'Al lancio (ogni 4 s): Indebolito 10% per 3 s all\'opposto' }),

@@ -1,5 +1,5 @@
 import type { Ability } from '@/types/rt'
-import { riga, cd, una, libera } from './util'
+import { riga, cd, libera } from './util'
 
 export const CORVONERO: Ability[] = [
   { id: 'kingsley', name: 'Pugno dell\'Auror', desc: 'Rallenta l\'opposto; scudo extra con l\'Ordine in squadra.', lines: [
