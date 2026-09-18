@@ -372,6 +372,8 @@ Regole:
 
 Verifica: statica al design (questa tabella) e **empirica** nell'harness (§8.5: `tierOrdering`, `comboBalance`, `inclusionDelta`).
 
+**Cooldown delle righe "Al lancio" (regola utente, 2026-09-18).** Un mago lancia molte volte per battaglia, quindi ogni riga con trigger **Al lancio** (e ogni Combo di spell che scatta al lancio) dichiara un **cooldown in secondi** (`limit.everySeconds`): la riga scatta al primo lancio e poi solo quando il cooldown è passato. Valori di riferimento: 2–4 s per effetti piccoli (+Segno, Carica ≤1 s), 6–10 s per effetti grossi (KO, Innesco, Multicast, Silenzio ≥2 s); i tier alti hanno cooldown più corti a parità di effetto. Il motore lo supporta già (`AbilityLine.limit.everySeconds`, Task 9 del Piano 1); il Piano 2 lo rende obbligatorio con un test di validazione dati (`ogni riga 'lancio' ha everySeconds > 0`) e i numeri di §5 vanno completati con il cooldown per riga.
+
 Formato: **Nome** — Trigger: effetto con numeri `[lv1/lv2/lv3]`. **Lv4:** riga aggiuntiva. "Adiacente" = ortogonale. "In squadra" = presente e non KO. I tag lore (Weasley, ES, Ordine, Mangiamorte, Malandrini, Trio) e il tier sono quelli di `data/wizards.ts` (T1: harry, dumbledore, voldemort · T2: snape, bellatrix, mcgonagall, sirius, lupin, moody, lucius, kingsley, fleur, viktor · T3: hermione, ron, draco, ginny, neville, luna, fred, george, molly, arthur, tonks, narcissa, dolohov, greyback, cho, cedric, slughorn, hagrid, flitwick, sprout · T4: il resto).
 
 ### Grifondoro
